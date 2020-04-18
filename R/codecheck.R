@@ -47,7 +47,7 @@ codecheck_metadata <- function(root) {
 ## latex summary of metadata
 
 ## Temporary hack to make URL
-url_it = function(url) {
+.url_it = function(url) {
   url = sub("<", "\\\\url{", url)
   url = sub(">", "}", url)
   url
