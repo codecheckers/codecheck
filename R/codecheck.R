@@ -45,6 +45,14 @@ codecheck_metadata <- function(root) {
 
 
 ## latex summary of metadata
+
+## Temporary hack to make URL
+url_it = function(url) {
+  url = sub("<", "\\\\url{", url)
+  url = sub(">", "}", url)
+  url
+}
+
 .authors <- function(y) {
   authors = y$paper$authors
   num_authors = length(authors)
@@ -82,9 +90,9 @@ codecheck_metadata <- function(root) {
 latex_summary_of_metadata <- function(metadata) {
   summary_entries = list(
     "Title" =            metadata$paper$title,
-    "Authors" =          authors(metadata),
+    "Authors" =          .authors(metadata),
     "Reference" =        .url_it(metadata$paper$reference),
-    "Codechecker" =      codecheckers(metadata),
+    "Codechecker" =      .codecheckers(metadata),
     "Date of check" =   metadata$check_time,
     "Summary" =         metadata$summary,
     "Repository" =      .url_it(metadata$repository))
