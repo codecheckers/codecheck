@@ -107,6 +107,20 @@ latex_summary_of_metadata <- function(metadata) {
       comment=FALSE)
 }
 
+##' Print the latex code to include the CODECHECK logo
+##'
+##' 
+##' @title Print the latex code to include the CODECHECK logo
+##' @return 
+##' @author Stephen Eglen
+latex_codecheck_logo <- function() {
+  logo_file = system.file("extdata", "codecheck-logo.pdf", package="codecheck")
+  print(sprintf("\\centerline{\\includegraphics[width=4cm]{%s}}",
+                logo_file))
+  print("\\vspace*{2cm}")
+}  
+
+
 ######################################################################
 ## Code for woking with zenodo records.
 
