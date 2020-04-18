@@ -42,6 +42,63 @@ codecheck_metadata <- function(root) {
 .copy_manifest_files <- function(root, metadata) {
 }
 
+
+
+## latex summary of metadata
+.authors <- function(y) {
+  authors = y$paper$authors
+  num_authors = length(authors)
+  for (i in 1:num_authors)
+    if (i==1) {
+      author_list = authors[[i]]
+    } else {
+      author_list = paste(author_list, authors[[i]], sep=', ')
+    }
+  author_list
+}
+
+.codecheckers <- function(y) {
+  ## TODO: this doesn't handle multiple codecheckers
+  ## TODO: should convert to url properly.
+  num_checkers = length(y$codechecker)
+  checkers = ""
+  for (i in 1:num_checkers) {
+    checker = y$codechecker[[i]]
+    orcid = checker$ORCID
+    p = paste(checker$name,
+              sprintf('\\orcidicon{%s} ', orcid))
+    checkers=paste(checkers, p, sep=" ")
+  }
+  checkers
+}
+##' Print a latex table to summarise CODECHECK metadata
+##'
+##' Format a latex table that summarises the main CODECHECK metadata,
+##' excluding the MANIFEST.
+##' @title Print a latex table to summarise CODECHECK metadata
+##' @param metadata - the codecheck metadata list.
+##' @return The latex table, suitable for including in the Rmd
+##' @author Stephen Eglen
+latex_summary_of_metadata <- function(metadata) {
+  summary_entries = list(
+    "Title" =            metadata$paper$title,
+    "Authors" =          authors(metadata),
+    "Reference" =        .url_it(metadata$paper$reference),
+    "Codechecker" =      codecheckers(metadata),
+    "Date of check" =   metadata$check_time,
+    "Summary" =         metadata$summary,
+    "Repository" =      .url_it(metadata$repository))
+  summary_df = data.frame(Item=names(summary_entries),
+                          Value=unlist(summary_entries, use.names=FALSE))
+
+  print(xtable(summary_df, align=c('l', 'l', 'p{10cm}'),
+             caption='CODECHECK summary'),
+      include.rownames=FALSE,
+      include.colnames=TRUE,
+      sanitize.text.function = function(x){x},
+      comment=FALSE)
+}
+
 ######################################################################
 ## Code for woking with zenodo records.
 
