@@ -1,0 +1,226 @@
+---
+output:
+  pdf_document:
+    toc: false
+    includes:
+       in_header: codecheck-preamble.sty
+  html_document:
+    self_contained: false
+    toc: true
+    toc_float: false
+---
+
+
+\centerline{\includegraphics[width=4cm]{codecheck_logo.pdf}}
+
+\vspace*{2cm}
+
+
+```{r rsetup-knitr,eval=TRUE,include=FALSE}
+require(knitr)
+require(xtable)
+require(yaml)
+require(tibble)
+require(readr)
+require(rprojroot)
+options(width=60)
+opts_chunk$set(cache=FALSE)
+
+yml_file = "codecheck.yml"
+root_project = find_root(yml_file)
+dest_dir = file.path(root_project, "codecheck", "outputs")
+
+yaml_data = read_yaml( file.path(root_project, yml_file) )
+
+manifest = yaml_data$manifest
+
+## Create the outputs directory if missing
+if ( !dir.exists(dest_dir) ) {
+  dir.create(dest_dir)
+}
+
+copy_files_to_dest_dir = function(root_project,
+                                  manifest,
+                                  dest_dir,
+                                  keep_full_path=FALSE) {
+  ## Copy each file mentioned in MANIFEST into DEST_DIR.
+  ## If KEEP_FULL_PATH is TRUE, we keep the full path for the output files.
+  ## This is useful when there are two output files with the same name in
+  ## different folders, e.g. expt1/out.pdf and expt2/out.pdf
+  ##
+  ## Return a vector of the names of the files created.
+  outputs = sapply(manifest, function(x) x$file)
+  src_files = file.path(root_project, outputs)
+  missing = !file.exists(src_files)
+  if (any(missing)) {
+    err = paste("Manifest files missing:\n",
+                paste(src_files[missing], sep='\n'))
+    stop(err)
+  }
+
+  dest_files = file.path(dest_dir,
+                         if ( keep_full_path) outputs else basename(outputs))
+  file.copy(src_files, dest_files, overwrite=TRUE)
+  dest_files
+}
+
+  
+get_outputs = function(manifest) {
+  files = sapply(manifest, function(x) x$file)
+  comments = sapply(manifest, function(x) x$comment)
+  sizes = file.size(dest_files)
+  url=sprintf('<a href="%s">%s</a>', dest_files, files)
+  table = cbind(files, comments, sizes, url)
+  table
+}
+
+dest_files = copy_files_to_dest_dir(root_project, manifest,
+                                    dest_dir, keep_full_path=FALSE)
+                                    
+```
+
+
+```{r,include=FALSE}
+## Temporary hack to make URL
+url_it = function(url) {
+  url = sub("<", "\\\\url{", url)
+  url = sub(">", "}", url)
+  url
+}
+```
+
+---
+title: `r paste("CODECHECK certificate", yaml_data$certificate)`
+subtitle: `r url_it(yaml_data$report)`
+---
+
+
+```{r, include=FALSE}
+codecheckers <- function(y) {
+  ## TODO: this doesn't handle multiple codecheckers
+  ## TODO: should convert to url properly.
+  num_checkers = length(y$codechecker)
+  checkers = ""
+  for (i in 1:num_checkers) {
+    checker = y$codechecker[[i]]
+    orcid = checker$ORCID
+    p = paste(checker$name,
+              sprintf('\\orcidicon{%s} ', orcid))
+    checkers=paste(checkers, p, sep=" ")
+  }
+  checkers
+}
+
+authors <- function(y) {
+  authors = y$paper$authors
+  num_authors = length(authors)
+  for (i in 1:num_authors)
+    if (i==1) {
+      author_list = authors[[i]]
+    } else {
+      author_list = paste(author_list, authors[[i]], sep=', ')
+    }
+  author_list
+}
+
+```
+
+```{r,include=FALSE}
+summary_entries = list(
+  "Title" =            yaml_data$paper$title,
+  "Authors" =          authors(yaml_data),
+  "Reference" =        url_it(yaml_data$paper$reference),
+  "Codechecker" =      codecheckers(yaml_data),
+  "Date of check" =   yaml_data$check_time,
+  "Summary" =         yaml_data$summary,
+  "Repository" =      url_it(yaml_data$repository))
+summary_df = data.frame(Item=names(summary_entries),
+                Value=unlist(summary_entries, use.names=FALSE))
+```
+
+
+```{r,echo=FALSE,results='asis'}
+##kable(df, booktabs=FALSE, align=c('l', 'p{12cm}'), caption="CODECHECK Summary")
+print(xtable(summary_df, align=c('l', 'l', 'p{10cm}'),
+             caption='CODECHECK summary'),
+      include.rownames=FALSE,
+      include.colnames=TRUE,
+      sanitize.text.function = function(x){x},
+      comment=FALSE)
+```
+
+
+```{r, echo=FALSE,results='asis'}
+outputs = get_outputs(manifest)
+xt = xtable(outputs[,1:3], caption="Summary of output files generated")
+colnames(xt) = c("File", "Comment", "Size")
+print(xt,
+      include.rownames=FALSE,
+      comment=FALSE)
+```
+
+
+# Summary
+
+This code was straightforward to codecheck.  The code came from Iain
+Davies, a Cambridge mathematics student, who worked on reimplementing
+the Hancock et al paper.  I asked him to ensure that the code for each
+figure could be re-run to generate a pdf.
+
+
+\clearpage
+
+# CODECHECKER notes
+
+The github repo
+<https://github.com/IainDaviesMaths/Reproduction-Hancock> contained
+all the necessary code.  The code was written in Matlab.
+
+## Running the software to regenerate outputs.
+
+The root Makefile contained targets to regenerate all of the figures using:
+```{bash, eval=FALSE}
+make -j7 all
+```
+This took 7m 10s to complete on a large workstation.
+
+\setcounter{table}{0}
+\setcounter{figure}{0}
+\captionsetup[table]{labelformat=addC}
+\captionsetup[figure]{labelformat=addC}
+
+
+\clearpage
+
+```{r, echo=FALSE, fig.cap=outputs[1:7,"comments"]}
+knitr::include_graphics(dest_files[1])
+cat('\n\n')
+knitr::include_graphics(dest_files[2])
+cat('\n\n')
+knitr::include_graphics(dest_files[3])
+cat('\n\n')
+knitr::include_graphics(dest_files[4])
+cat('\n\n')
+knitr::include_graphics(dest_files[5])
+cat('\n\n')
+knitr::include_graphics(dest_files[6])
+cat('\n\n')
+knitr::include_graphics(dest_files[7])
+```
+
+\clearpage
+# About this document
+
+This document was created using Rmarkdown.  `make codecheck.pdf` will
+regenerate the file.
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+<!-- 
+  rmarkdown::render("davies2020-codecheck.Rmd", output_format="pdf_document") 
+  -->

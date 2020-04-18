@@ -1,0 +1,14 @@
+Package: codecheck
+Title: Helper Functions for CODECHECK project
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Stephen",
+           family = "Eglen",
+           role = c("aut", "cre"),
+           email = "sje30@cam.ac.uk",
+           comment = c(ORCID = "0000-0001-8607-8025"))
+Description: This contains helper functions for CODECHECKERS (https://codecheck.org.uk).
+License: MIT
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
