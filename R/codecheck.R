@@ -34,13 +34,40 @@ codecheck_metadata <- function(root) {
 ##' The metadata should specify the manifest -- the files to copy into the
 ##' codecheck/oututs folder.  Each of the files in the manifest is copied into
 ##' the destination directory and then the manifest is returned as a dataframe.
+##' If KEEP_FULL_PATH is TRUE, we keep the full path for the output files.
+##' This is useful when there are two output files with the same name in
+##' different folders, e.g. expt1/out.pdf and expt2/out.pdf
+
 ##' @title 
 ##' @param root - Path to the root folder of the proejct.
 ##' @param metadata - the codecheck metadata list.
+##' @param dest_dir - folder where outputs are to be copied to (codecheck/outputs)
+##' @param keep_full_path - TRUE to keep relative pathname of figures.
 ##' @return A dataframe containing one row per manifest file.
 ##' @author Stephen Eglen
-.copy_manifest_files <- function(root, metadata) {
+copy_manifest_files <- function(root, metadata, dest_dir,
+                                keep_full_path = FALSE) {
+  outputs = sapply(manifest, function(x) x$file)
+  src_files = file.path(root_project, outputs)
+  missing = !file.exists(src_files)
+  if (any(missing)) {
+    err = paste("Manifest files missing:\n",
+                paste(src_files[missing], sep='\n'))
+    stop(err)
+  }
+
+  dest_files = file.path(dest_dir,
+                         if ( keep_full_path) outputs else basename(outputs))
+  file.copy(src_files, dest_files, overwrite=TRUE)
+  dest_files
+  manifest_df = data.frame(output=outputs,
+                           comment=sapply(manifest, function(x) x$comment),
+                           dest=dest_files,
+                           size = file.size(dest_files),
+                           stringsAsFactors = FALSE)
+  manifest_df
 }
+
 
 
 
@@ -111,7 +138,7 @@ latex_summary_of_metadata <- function(metadata) {
 ##'
 ##' 
 ##' @title Print the latex code to include the CODECHECK logo
-##' @return 
+##' @return NULL
 ##' @author Stephen Eglen
 latex_codecheck_logo <- function() {
   logo_file = system.file("extdata", "codecheck_logo.pdf", package="codecheck")
@@ -119,6 +146,7 @@ latex_codecheck_logo <- function() {
               logo_file))
   cat("\\vspace*{2cm}")
 }  
+
 
 
 ######################################################################
