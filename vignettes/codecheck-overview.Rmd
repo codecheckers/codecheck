@@ -1,0 +1,99 @@
+---
+title: "Introduction to the codecheck package"
+author: "Stephen J Eglen and Daniel Nüst"
+date: "`r Sys.Date()`"
+output: rmarkdown::pdf_vignette
+vignette: >
+  %\VignetteIndexEntry{codecheck: Introduction to the codecheck package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(codecheck)
+```
+
+
+## Installing the package
+
+The latest version of the package can be installed using:
+```{r install, eval=FALSE}
+remotes::install_github("codecheckers/codecheck")
+
+```
+
+## Clone the project
+
+Clone the project that you wish to check into codecheckers/
+organisation.
+
+## Get a certificate number 
+
+Go onto the register repo and add an issue for the new paper to
+reproduce, and add an extra row at the bottom of register.csv.
+Certificate numbers are simply YYYY-NNN where YYYY is the date and NNN
+is a 3 digit number that starts at 001 and increases by 1 each time.
+
+## Write a codecheck certificate
+
+In the top-level of the repo to replicate ("the root"), start R and
+run the following to generate several template files.  These will then
+need to be committed into the repo.
+
+```{r, eval=FALSE}
+create_codecheck_files()
+```
+
+These create several files that need to be edited for the codecheck
+process:
+
+1. *codecheck.yml* contains the metadata for the reproduction.
+2. *codecheck/codecheck.Rmd* is a suggested Rmarkdown script to
+	edit, along with *Makefile* and *codecheck-preamble.sty* to help
+	compile the PDF.
+3. *codecheck/zenodo-codecheck.R* for help in loading the certificate
+   to Zenodo along with the corresponding metadata.
+
+
+
+## Submitting the certificate to Zenodo
+
+There is no requirement to use the following code to generate the
+record on Zenodo -- if you prefer to do it manually, that is fine.
+However, we encourage codecheckers to use this API as it will save
+time and ensure that certificates have similar structure.
+
+You will first need a zenodo account and to generate a token to use
+the API.  This token can be generated from
+<https://zenodo.org/account/settings/applications/tokens/new/>. The
+token should not be stored in your R script, but should be typed in or
+read from a local file and stored in the variable `my_token` in the
+file `codecheck/codecheck-zenodo.R`.
+
+The metadata contained in `codecheck.yml` is uploaded using some
+helper functions from the codecheck package.  To start with, you can
+create a new empty record on Zenodo using `get_zenodo_record()` and
+then store the resulting URL in `codecheck.yml`.  The rest of the
+metadata can remain as before.
+
+Once you are ready, upload the certificate itself using the
+function `set_zenodo_certificate()`.  Whilst the zenodo record is in
+draft form, you can delete files from the website, and then re-add
+them using the API.
+
+Once you have uploaded the certificate and checked the metadata, you
+can then publish the record.
+
+
+
+
+
+
+
