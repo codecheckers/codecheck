@@ -152,13 +152,100 @@ latex_codecheck_logo <- function() {
 ######################################################################
 ## Code for woking with zenodo records.
 
-.create_zenodo_record <- function(zen) {
+
+
+##' Create a new Zenodo record and return its pre-assigned DOI
+##'
+##' Run this only once per new codecheck.
+##' @title Create a new Zenodo record and return its pre-assigned DOI
+##' @param zen - Object from zen4R to interact with Zenodo
+##' @return Number of zenodo record created.
+##' @author Stephen Eglen
+create_zenodo_record <- function(zen) {
+  myrec <- zenodo$createEmptyRecord()
+  this_doi = myrec$metadata$prereserve_doi$doi
+  cat("The following URL is your Zenodo DOI.\n")
+  cat("Please add this to codecheck.yml in report: field\n")
+  print(this_doi)
+  cat("Remember to reload the yaml file after editing it.\n")
+  get_zenodo_record(this_doi)
 }
 
-.set_zenodo_metadata <- function(zen, metadata) {
+##' Extract the Zenodo record number from the report URL
+##'
+##' The report paramater should contain a URL like:
+##' http://doi.org/10.5281/zenodo.3750741 where the final part of the
+##' URL is zenodo.X where X is a number containing at least 7 digits.
+##' X is returned.  If we cannot extract the number X, we return an
+##' error, in which case the function create_zenodo_record() can be
+##' run to create a new record.  Alternatively, the report URL is
+##' pre-assigned a DOI when manually creating the record.
+##' 
+##' @title Extract the Zenodo record number from the report URL
+##' @param report - string containing the report URL on Zenodo.
+##' @return the Zenodo record number (a number with at least 7 digits).
+##' @author Stephen Eglen
+get_zenodo_record <- function(report) {
+  result = str_match(report, "(10\\.5281/zenodo\\.[0-9]{7,})")[2]
+  if(is.na(result))
+    stop("metadata$report does not contain suitable record.")
+  result
 }
 
-.set_zenodo_certificate <- function(zen, certificate="codecheck.pdf") {
+set_zenodo_metadata <- function(zen, record, metadata) {
+  draft <- zen$getDepositionByConceptDOI(record)
+
+  draft$setPublicationType("report")
+  draft$setCommunities(communities = c("codecheck"))
+  draft$setTitle(paste("CODECHECK certificate", metadata$certificate))
+  draft$setLanguage(language = "eng")
+
+  draft$metadata$creators = NULL
+  num_creators = length(metadata$codechecker)
+  for (i in 1:num_creators) {
+    draft$addCreator(
+                    name  = metadata$codechecker[[i]]$name,
+                    orcid = metadata$codechecker[[i]]$ORCID)
+  }
+
+
+  description_text = paste("CODECHECK certificate for paper:",
+                           metadata$paper$title)
+  repo_url = gsub("[<>]", "", metadata$repository)
+  description_text = paste(description_text,
+                           sprintf('<p><p>Repository: <a href="%s">%s</a>',
+                                   repo_url, repo_url))
+  draft$setDescription(description_text)
+  draft$setKeywords(keywords = c("CODECHECK"))
+  draft$setNotes(notes = c("See file LICENSE for license of the contained code. The report document codecheck.pdf is published under CC-BY 4.0 International."))
+  draft$setAccessRight(accessRight = "open")
+  draft$setLicense(licenseId = "other-open")
+  draft$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$repository)
+  draft$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$paper$reference)
+
+  draft <- zen$depositRecord(draft)
+  cat(paste0("Check your record online at https://zenodo.org/deposit/",
+             str_match(record, "10\\.5281/zenodo\\.([0-9]{7,})")[2],
+             "\n"))
+}
+
+
+
+##' Upload the CODECHECK certificate to Zenodo.
+##'
+##' Upload the CODECHECK certificate to Zenodo as a draft.  Warning: if
+##' the file has already been uploaded once, you will need to delete it via
+##' the web interface before being able to upload a new versin.
+##' @title 
+##' @param zen - Object from zen4R to interact with Zenodo
+##' @param report - string containing the report URL on Zenodo.
+##' @param certificate name of the PDF file.
+##' @return 
+##' @author Stephen Eglen
+set_zenodo_certificate <- function(zen, record, certificate) {
+  draft <- zen$getDepositionByConceptDOI(record)
+  stopifnot(file.exists(certificate))
+  zen$uploadFile(certificate, draft$id)
 }
 
 ## We deliberately do not provide a function to publish the certificate.
