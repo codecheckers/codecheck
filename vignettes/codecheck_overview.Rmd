@@ -1,0 +1,56 @@
+---
+title: "Introduction to the codecheck package"
+author: "Stephen J Eglen and Daniel Nüst"
+date: "`r Sys.Date()`"
+output: rmarkdown::pdf_vignette
+vignette: >
+  %\VignetteIndexEntry{codecheck: Introduction to the codecheck package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+## Installing the package
+
+The latest version of the package can be installed using:
+```{r install, eval=FALSE}
+remotes::install_github("codecheckers/codecheck")
+
+```
+
+## Clone the project
+
+Clone the project that you wish to check into codecheckers/
+organisation.
+
+## Get a certificate number 
+
+Go onto the register repo and add an issue for the new paper to
+reproduce, and add an extra row at the bottom of register.csv.
+Certificate numbers are simply YYYY-NNN where YYYY is the date and NNN
+is a 3 digit number that starts at 001 and increases by 1 each time.
+
+## Write a codecheck certificate
+
+In the top-level of the repo to replicate ("the root"), start R and
+run the following to generate several template files.  These will then
+need to be committed into the repo.
+
+```{r, eval=FALSE}
+create_codecheck_files()
+```
+
+These create several files that need to be edited for the codecheck
+process:
+
+1. *codecheck.yml* contains the metadata for the reproduction.
+2. *codecheck/codecheck.Rmd* is a suggested Rmarkdown script to
+	edit, along with *Makefile* and *codecheck-preamble.sty* to help
+	compile the PDF.
+3. *codecheck/zenodo-codecheck.R* for help in loading the certificate
+   to Zenodo along with the corresponding metadata.
+
+
+
+## Submitting the certificate to Zenodo
+
