@@ -115,9 +115,9 @@ latex_summary_of_metadata <- function(metadata) {
 ##' @author Stephen Eglen
 latex_codecheck_logo <- function() {
   logo_file = system.file("extdata", "codecheck_logo.pdf", package="codecheck")
-  print(sprintf("\\centerline{\\includegraphics[width=4cm]{%s}}",
-                logo_file))
-  print("\\vspace*{2cm}")
+  cat(sprintf("\\centerline{\\includegraphics[width=4cm]{%s}}",
+              logo_file))
+  cat("\\vspace*{2cm}")
 }  
 
 
