@@ -1,8 +1,8 @@
 ---
-title: "Introduction to the codecheck package"
+title: "codecheck: Introduction to the codecheck package"
 author: "Stephen J Eglen and Daniel Nüst"
 date: "`r Sys.Date()`"
-output: rmarkdown::pdf_vignette
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{codecheck: Introduction to the codecheck package}
   %\VignetteEngine{knitr::rmarkdown}
@@ -84,3 +84,4 @@ can then publish the record.
 
 
 
+## Archive your repo onto zenodo
