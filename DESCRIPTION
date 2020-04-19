@@ -9,6 +9,9 @@ Authors@R:
            comment = c(ORCID = "0000-0001-8607-8025"))
 Description: This contains helper functions for CODECHECKERS (https://codecheck.org.uk).
 License: MIT
+Imports:
+  yaml,
+  stringr
 Depends: zen4R, xtable
 Encoding: UTF-8
 LazyData: true
