@@ -38,7 +38,7 @@ codecheck_metadata <- function(root) {
 ##' This is useful when there are two output files with the same name in
 ##' different folders, e.g. expt1/out.pdf and expt2/out.pdf
 
-##' @title 
+##' @title Copy files from manifest into the codecheck folder and summarise.
 ##' @param root - Path to the root folder of the proejct.
 ##' @param metadata - the codecheck metadata list.
 ##' @param dest_dir - folder where outputs are to be copied to (codecheck/outputs)
