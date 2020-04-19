@@ -48,7 +48,7 @@ codecheck_metadata <- function(root) {
 copy_manifest_files <- function(root, metadata, dest_dir,
                                 keep_full_path = FALSE) {
   outputs = sapply(manifest, function(x) x$file)
-  src_files = file.path(root_project, outputs)
+  src_files = file.path(root, outputs)
   missing = !file.exists(src_files)
   if (any(missing)) {
     err = paste("Manifest files missing:\n",
