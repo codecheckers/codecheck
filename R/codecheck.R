@@ -236,7 +236,7 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 ##' Upload the CODECHECK certificate to Zenodo as a draft.  Warning: if
 ##' the file has already been uploaded once, you will need to delete it via
 ##' the web interface before being able to upload a new versin.
-##' @title 
+##' @title Upload the CODECHECK certificate to Zenodo.
 ##' @param zen - Object from zen4R to interact with Zenodo
 ##' @param report - string containing the report URL on Zenodo.
 ##' @param certificate name of the PDF file.
