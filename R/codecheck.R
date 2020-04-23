@@ -74,10 +74,22 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 ## latex summary of metadata
 
 ## Temporary hack to make URL
-.url_it = function(url) {
-  url = sub("<", "\\\\url{", url)
-  url = sub(">", "}", url)
-  url
+## .url_it = function(url) {
+##   url = sub("<", "\\\\url{", url)
+##   url = sub(">", "}", url)
+##   url
+## }
+
+## https://daringfireball.net/2010/07/improved_regex_for_matching_urls
+## To use the URL in R, I had to escape the \ characters and " -- this version
+## does not work:
+## .url_regexp = "(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))"
+
+.url_regexp = "(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))"
+
+.url_it  <- function(x) {
+  wrapit <- function(url) { paste0("\\url{", url, "}") }
+  str_replace_all(x, url_regexp, wrapit)
 }
 
 .authors <- function(y) {
@@ -250,3 +262,6 @@ set_zenodo_certificate <- function(zen, record, certificate) {
 
 ## We deliberately do not provide a function to publish the certificate.
 ## You should go check it yourself.
+
+
+
