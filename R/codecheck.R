@@ -89,7 +89,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 
 .url_it  <- function(x) {
   wrapit <- function(url) { paste0("\\url{", url, "}") }
-  str_replace_all(x, url_regexp, wrapit)
+  str_replace_all(x, .url_regexp, wrapit)
 }
 
 .authors <- function(y) {
