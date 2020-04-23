@@ -7,8 +7,9 @@ paper:
     - name: Peter J. B. Hancock
     - name: Roland J. Baddeley
     - name: Leslie S. Smith
-  reference: Network (1992) 3:61-70
-    <http://pdfs.semanticscholar.org/7dcf/a42cfe3b59becb441844b72558b361693608.pdf>
+  reference: >
+    Network (1992) 3:61-70
+    http://pdfs.semanticscholar.org/7dcf/a42cfe3b59becb441844b72558b361693608.pdf
 
 manifest:
   - file: Figure2.png
@@ -35,7 +36,7 @@ codechecker:
 summary: >
   Matlab code written by Iain Davies to reproduce original
   paper; natural images provided by Peter Hancock.
-repository: <https://github.com/codecheckers/Reproduction-Hancock>
+repository: https://github.com/codecheckers/Reproduction-Hancock
 check_time: "2020-04-13 10:00:00"
-certificate: 2020-002
-report: <http://doi.org/10.5281/zenodo.FIXME>
+certificate: 2020-XYZ
+report: http://doi.org/10.5281/zenodo.FIXME
