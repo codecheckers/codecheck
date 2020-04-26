@@ -9,26 +9,31 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
 ## Installing the package
 
 The latest version of the package can be installed using:
 ```{r install, eval=FALSE}
 remotes::install_github("codecheckers/codecheck")
-
 ```
+
+## Pre-requisites for being a CODECHECKER>
+
+1. Member of the github codecheckers community.
+2. Have a Zenodo account.
+3. Experience with Rmarkdown and R is helpful, but not essential.
 
 ## Clone the project
 
-Clone the project that you wish to check into codecheckers/
+Clone the project that you wish to check into `codecheckers/`
 organisation.
 
 ## Get a certificate number 
 
-Go onto the register repo and add an issue for the new paper to
-reproduce, and add an extra row at the bottom of register.csv.
-Certificate numbers are simply YYYY-NNN where YYYY is the date and NNN
-is a 3 digit number that starts at 001 and increases by 1 each time.
+Go onto <https://github.com/codecheckers/register> and add an issue
+for the new paper to reproduce, and add an extra row at the bottom of
+`register.csv`.  Certificate numbers are simply YYYY-NNN where YYYY is
+the date and NNN is a 3 digit number that starts at 001 and increases
+by 1 each time.
 
 ## Write a codecheck certificate
 
@@ -37,6 +42,7 @@ run the following to generate several template files.  These will then
 need to be committed into the repo.
 
 ```{r, eval=FALSE}
+require(codecheck)
 create_codecheck_files()
 ```
 
@@ -50,6 +56,11 @@ process:
 3. *codecheck/zenodo-codecheck.R* for help in loading the certificate
    to Zenodo along with the corresponding metadata.
 
+## Completing the metadata file *codecheck.yml*
+
+The *codecheck.yml* file contains all the relevant metadata for the
+certificate.  Simply edit it to your needs, bearing in mind the
+specification comments at <https://codecheck.org.uk/spec/config/1.0>.
 
 
 ## Submitting the certificate to Zenodo
@@ -80,8 +91,4 @@ them using the API.
 Once you have uploaded the certificate and checked the metadata, you
 can then publish the record.
 
-
-
-
-
-## Archive your repo onto zenodo
+## Archive your repo onto zenodo so that we have a backup!
