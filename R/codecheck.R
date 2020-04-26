@@ -198,14 +198,14 @@ create_zenodo_record <- function(zen) {
 ##' @return the Zenodo record number (a number with at least 7 digits).
 ##' @author Stephen Eglen
 get_zenodo_record <- function(report) {
-  result = str_match(report, "(10\\.5281/zenodo\\.[0-9]{7,})")[2]
+  result = str_match(report, "10\\.5281/zenodo\\.([0-9]{7,})")[2]
   if(is.na(result))
     stop("metadata$report does not contain suitable record.")
-  result
+  as.integer(result)
 }
 
 set_zenodo_metadata <- function(zen, record, metadata) {
-  draft <- zen$getDepositionByConceptDOI(record)
+  draft <- zen$getDepositionById(record)
 
   draft$setPublicationType("report")
   draft$setCommunities(communities = c("codecheck"))
@@ -237,7 +237,8 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 
   draft <- zen$depositRecord(draft)
   cat(paste0("Check your record online at https://zenodo.org/deposit/",
-             str_match(record, "10\\.5281/zenodo\\.([0-9]{7,})")[2],
+             ##str_match(record, "10\\.5281/zenodo\\.([0-9]{7,})")[2],
+             record,
              "\n"))
 }
 
@@ -255,7 +256,7 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 ##' @return 
 ##' @author Stephen Eglen
 set_zenodo_certificate <- function(zen, record, certificate) {
-  draft <- zen$getDepositionByConceptDOI(record)
+  draft <- zen$getDepositionById(record)
   stopifnot(file.exists(certificate))
   zen$uploadFile(certificate, draft$id)
 }
