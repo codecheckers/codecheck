@@ -9,9 +9,9 @@
 ##' @author Stephen J. Eglen
 create_codecheck_files <- function() {
   if (file.exists("codecheck.yml"))
-    error("codecheck.yml already exists, so stopping.")
+    stop("codecheck.yml already exists, so stopping.")
   if (dir.exists("codecheck"))
-    error("codecheck folder exists, so stopping.")
+    stop("codecheck folder exists, so stopping.")
   templates <- system.file("extdata", "templates", package="codecheck")
   file.copy(file.path(templates, "codecheck.yml"), ".")
   file.copy(file.path(templates, "codecheck"), ".", recursive=TRUE)
