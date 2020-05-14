@@ -7,6 +7,7 @@
 ##' @title Create template files for the codecheck process.
 ##' @return Nothing
 ##' @author Stephen J. Eglen
+##' @export
 create_codecheck_files <- function() {
   if (file.exists("codecheck.yml"))
     stop("codecheck.yml already exists, so stopping.")
@@ -17,13 +18,14 @@ create_codecheck_files <- function() {
   file.copy(file.path(templates, "codecheck"), ".", recursive=TRUE)
 }
 
+
 ##' Return the metadata for the codecheck project in root folder of project
 ##'
-##' 
 ##' @title Return the metadata for the codecheck project in root folder of project
 ##' @param root Path to the root folder of the project.
 ##' @return A list containing the metadata found in the codecheck.yml file
 ##' @author Stephen Eglen
+##' @export
 codecheck_metadata <- function(root) {
   read_yaml( file.path(root, "codecheck.yml") )
 }
@@ -45,6 +47,7 @@ codecheck_metadata <- function(root) {
 ##' @param keep_full_path - TRUE to keep relative pathname of figures.
 ##' @return A dataframe containing one row per manifest file.
 ##' @author Stephen Eglen
+##' @export
 copy_manifest_files <- function(root, metadata, dest_dir,
                                 keep_full_path = FALSE) {
   outputs = sapply(manifest, function(x) x$file)
@@ -126,6 +129,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 ##' @param metadata - the codecheck metadata list.
 ##' @return The latex table, suitable for including in the Rmd
 ##' @author Stephen Eglen
+##' @export
 latex_summary_of_metadata <- function(metadata) {
   summary_entries = list(
     "Title" =            metadata$paper$title,
@@ -152,6 +156,7 @@ latex_summary_of_metadata <- function(metadata) {
 ##' @title Print the latex code to include the CODECHECK logo
 ##' @return NULL
 ##' @author Stephen Eglen
+##' @export
 latex_codecheck_logo <- function() {
   logo_file = system.file("extdata", "codecheck_logo.pdf", package="codecheck")
   cat(sprintf("\\centerline{\\includegraphics[width=4cm]{%s}}",
@@ -173,6 +178,7 @@ latex_codecheck_logo <- function() {
 ##' @param zen - Object from zen4R to interact with Zenodo
 ##' @return Number of zenodo record created.
 ##' @author Stephen Eglen
+##' @export
 create_zenodo_record <- function(zen) {
   myrec <- zenodo$createEmptyRecord()
   this_doi = myrec$metadata$prereserve_doi$doi
@@ -197,6 +203,7 @@ create_zenodo_record <- function(zen) {
 ##' @param report - string containing the report URL on Zenodo.
 ##' @return the Zenodo record number (a number with at least 7 digits).
 ##' @author Stephen Eglen
+##' @export
 get_zenodo_record <- function(report) {
   result = str_match(report, "10\\.5281/zenodo\\.([0-9]{7,})")[2]
   if(is.na(result))
@@ -255,6 +262,7 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 ##' @param certificate name of the PDF file.
 ##' @return 
 ##' @author Stephen Eglen
+##' @export
 set_zenodo_certificate <- function(zen, record, certificate) {
   draft <- zen$getDepositionById(record)
   stopifnot(file.exists(certificate))
