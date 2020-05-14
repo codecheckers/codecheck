@@ -11,11 +11,26 @@
 create_codecheck_files <- function() {
   if (file.exists("codecheck.yml"))
     stop("codecheck.yml already exists, so stopping.")
+  else 
   if (dir.exists("codecheck"))
     stop("codecheck folder exists, so stopping.")
+  copy_codecheck_yml_template()
+  copy_codecheck_report_template()
+}
+
+copy_codecheck_yaml_template <- function(target = ".") {
   templates <- system.file("extdata", "templates", package="codecheck")
-  file.copy(file.path(templates, "codecheck.yml"), ".")
-  file.copy(file.path(templates, "codecheck"), ".", recursive=TRUE)
+  file.copy(file.path(templates, "codecheck.yml"), target)
+}
+
+copy_codecheck_report_template <- function(target = ".") {
+  templates <- system.file("extdata", "templates", package="codecheck")
+  file.copy(file.path(templates, "codecheck"), target, recursive = TRUE)
+}
+
+copy_codecheck_zenodo_script <- function(target = "codecheck") {
+  templates <- system.file("extdata", "templates", package="codecheck")
+  file.copy(file.path(templates, "codecheck-zenodo.R"), target)
 }
 
 
