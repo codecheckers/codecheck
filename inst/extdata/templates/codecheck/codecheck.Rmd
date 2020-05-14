@@ -60,7 +60,7 @@ manifest_df = copy_manifest_files(root, manifest,
 
 ---
 title: `r paste("CODECHECK certificate", metadata$certificate)`
-subtitle: `r .url_it(metadata$report)`
+subtitle: `r codecheck:::as_latex_url(metadata$report)`
 ---
 
 

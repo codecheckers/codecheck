@@ -91,13 +91,6 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 
 ## latex summary of metadata
 
-## Temporary hack to make URL
-## .url_it = function(url) {
-##   url = sub("<", "\\\\url{", url)
-##   url = sub(">", "}", url)
-##   url
-## }
-
 ## https://daringfireball.net/2010/07/improved_regex_for_matching_urls
 ## To use the URL in R, I had to escape the \ characters and " -- this version
 ## does not work:
@@ -105,7 +98,12 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 
 .url_regexp = "(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))"
 
-.url_it  <- function(x) {
+##' Wrap URL for LaTeX
+##' 
+##' @param url - TRUE to keep relative pathname of figures.
+##' @return A string with the passed url as a latex `\url{}`
+##' @author Stephen Eglen
+as_latex_url  <- function(x) {
   wrapit <- function(url) { paste0("\\url{", url, "}") }
   str_replace_all(x, .url_regexp, wrapit)
 }
@@ -136,6 +134,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   }
   checkers
 }
+
 ##' Print a latex table to summarise CODECHECK metadata
 ##'
 ##' Format a latex table that summarises the main CODECHECK metadata,
@@ -149,11 +148,11 @@ latex_summary_of_metadata <- function(metadata) {
   summary_entries = list(
     "Title" =            metadata$paper$title,
     "Authors" =          .authors(metadata),
-    "Reference" =        .url_it(metadata$paper$reference),
+    "Reference" =        as_latex_url(metadata$paper$reference),
     "Codechecker" =      .codecheckers(metadata),
     "Date of check" =   metadata$check_time,
     "Summary" =         metadata$summary,
-    "Repository" =      .url_it(metadata$repository))
+    "Repository" =      as_latex_url(metadata$repository))
   summary_df = data.frame(Item=names(summary_entries),
                           Value=unlist(summary_entries, use.names=FALSE))
 
