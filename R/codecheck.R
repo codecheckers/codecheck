@@ -227,6 +227,12 @@ get_zenodo_record <- function(report) {
 
 set_zenodo_metadata <- function(zen, record, metadata) {
   draft <- zen$getDepositionById(record)
+  if (is.null(draft)) {
+    draft <- zen$getRecordById(record)
+  }
+  
+  if (is.null(draft))
+    stop("Neither deposition nor record found for ID ", record)
 
   draft$setPublicationType("report")
   draft$setCommunities(communities = c("codecheck"))
