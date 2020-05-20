@@ -113,9 +113,9 @@ as_latex_url  <- function(x) {
   num_authors = length(authors)
   for (i in 1:num_authors)
     if (i==1) {
-      author_list = authors[[i]]
+      author_list = authors[[i]]$name
     } else {
-      author_list = paste(author_list, authors[[i]], sep=', ')
+      author_list = paste(author_list, authors[[i]]$name, sep=', ')
     }
   author_list
 }
