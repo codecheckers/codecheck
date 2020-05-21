@@ -24,24 +24,20 @@ opts_chunk$set(cache=FALSE)
 root = find_root("codecheck.yml")
 ```
 
-```{r, echo=FALSE,results='asis'}
+```{r codecheck_logo, echo=FALSE,results='asis'}
 latex_codecheck_logo()
 ```
 
-```{r rsetup-knitr,eval=TRUE,include=FALSE}
+```{r manifest, eval=TRUE, include=FALSE}
 metadata = codecheck_metadata(root)
 manifest = metadata$manifest
 
 dest_dir = file.path(root, "codecheck", "outputs")
-
-
 ## Create the outputs directory if missing
 if ( !dir.exists(dest_dir) ) {
   dir.create(dest_dir)
 }
 
-
-  
 ## get_outputs = function(manifest) {
 ##   files = sapply(manifest, function(x) x$file)
 ##   comments = sapply(manifest, function(x) x$comment)
@@ -53,64 +49,49 @@ if ( !dir.exists(dest_dir) ) {
 
 manifest_df = copy_manifest_files(root, manifest,
                                   dest_dir, keep_full_path=FALSE)
-                                    
 ```
-
-
 
 ---
 title: `r paste("CODECHECK certificate", metadata$certificate)`
-subtitle: `r .url_it(metadata$report)`
+subtitle: `r codecheck:::as_latex_url(metadata$report)`
 ---
 
-
-
-```{r,echo=FALSE,results='asis'}
+```{r summary_metadata, echo=FALSE, results='asis'}
 latex_summary_of_metadata(metadata)
 ```
 
-
-```{r, echo=FALSE,results='asis'}
+```{r summary_manifest, echo=FALSE, results='asis'}
 xt = xtable(manifest_df[, c("output", "comment", "size")],
             digits=0,
             caption="Summary of output files generated")
 print(xt, include.rownames=FALSE, comment=FALSE)
 ```
 
-
 # Summary
 
-This code was straightforward to codecheck.  The code came from Iain
-Davies, a Cambridge mathematics student, who worked on reimplementing
-the Hancock et al paper.  I asked him to ensure that the code for each
-figure could be re-run to generate a pdf.
-
+This code was (not) straightforward to codecheck.
+[... ADD MORE INTERESTING FINDINGS HERE..]
 
 \clearpage
 
 # CODECHECKER notes
 
-The github repo
-<https://github.com/IainDaviesMaths/Reproduction-Hancock> contained
-all the necessary code.  The code was written in Matlab.
+The GitHub repo ...
+Code was written in ...
+I went through the following steps ...
+One hard problem was ...
 
-## Running the software to regenerate outputs.
-
-The root Makefile contained targets to regenerate all of the figures using:
-```{bash, eval=FALSE}
-make -j7 all
-```
-This took 7m 10s to complete on a large workstation.
+This took ... minutes to complete on {a large workstation, my laptop}.
 
 \setcounter{table}{0}
 \setcounter{figure}{0}
 \captionsetup[table]{labelformat=addC}
 \captionsetup[figure]{labelformat=addC}
 
-
 \clearpage
 
 ```{r, echo=FALSE, fig.cap=manifest_df[1:7,"comment"]}
+# TODO turn into a loop 
 knitr::include_graphics(manifest_df[1, "dest"])
 cat('\n\n')
 knitr::include_graphics(manifest_df[2, "dest"])
@@ -129,16 +110,14 @@ knitr::include_graphics(manifest_df[7, "dest"])
 \clearpage
 # About this document
 
-This document was created using Rmarkdown.  `make codecheck.pdf` will
-regenerate the file.
+This document was created using [R Markdown](https://rmarkdown.rstudio.com/) using the [`codecheck`](https://github.com/codecheckers/codecheck) R package.
+`make codecheck.pdf` will regenerate the report file.
 
 ```{r}
 sessionInfo()
 ```
 
-
-
-
-<!-- 
-  rmarkdown::render("hancock1992-codecheck.Rmd", output_format="pdf_document") 
-  -->
+```{r, include=FALSE, eval=FALSE}
+# render this document in RStudio
+rmarkdown::render("codecheck.Rmd", output_format = "pdf_document") 
+```

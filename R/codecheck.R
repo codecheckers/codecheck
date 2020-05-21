@@ -7,23 +7,40 @@
 ##' @title Create template files for the codecheck process.
 ##' @return Nothing
 ##' @author Stephen J. Eglen
+##' @export
 create_codecheck_files <- function() {
   if (file.exists("codecheck.yml"))
     stop("codecheck.yml already exists, so stopping.")
+  else 
   if (dir.exists("codecheck"))
     stop("codecheck folder exists, so stopping.")
-  templates <- system.file("extdata", "templates", package="codecheck")
-  file.copy(file.path(templates, "codecheck.yml"), ".")
-  file.copy(file.path(templates, "codecheck"), ".", recursive=TRUE)
+  copy_codecheck_yml_template()
+  copy_codecheck_report_template()
 }
+
+copy_codecheck_yaml_template <- function(target = ".") {
+  templates <- system.file("extdata", "templates", package="codecheck")
+  file.copy(file.path(templates, "codecheck.yml"), target)
+}
+
+copy_codecheck_report_template <- function(target = ".") {
+  templates <- system.file("extdata", "templates", package="codecheck")
+  file.copy(file.path(templates, "codecheck"), target, recursive = TRUE)
+}
+
+copy_codecheck_zenodo_script <- function(target = "codecheck") {
+  templates <- system.file("extdata", "templates", package="codecheck")
+  file.copy(file.path(templates, "codecheck-zenodo.R"), target)
+}
+
 
 ##' Return the metadata for the codecheck project in root folder of project
 ##'
-##' 
 ##' @title Return the metadata for the codecheck project in root folder of project
 ##' @param root Path to the root folder of the project.
 ##' @return A list containing the metadata found in the codecheck.yml file
 ##' @author Stephen Eglen
+##' @export
 codecheck_metadata <- function(root) {
   read_yaml( file.path(root, "codecheck.yml") )
 }
@@ -45,6 +62,7 @@ codecheck_metadata <- function(root) {
 ##' @param keep_full_path - TRUE to keep relative pathname of figures.
 ##' @return A dataframe containing one row per manifest file.
 ##' @author Stephen Eglen
+##' @export
 copy_manifest_files <- function(root, metadata, dest_dir,
                                 keep_full_path = FALSE) {
   outputs = sapply(manifest, function(x) x$file)
@@ -73,13 +91,6 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 
 ## latex summary of metadata
 
-## Temporary hack to make URL
-## .url_it = function(url) {
-##   url = sub("<", "\\\\url{", url)
-##   url = sub(">", "}", url)
-##   url
-## }
-
 ## https://daringfireball.net/2010/07/improved_regex_for_matching_urls
 ## To use the URL in R, I had to escape the \ characters and " -- this version
 ## does not work:
@@ -87,7 +98,12 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 
 .url_regexp = "(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))"
 
-.url_it  <- function(x) {
+##' Wrap URL for LaTeX
+##' 
+##' @param url - TRUE to keep relative pathname of figures.
+##' @return A string with the passed url as a latex `\url{}`
+##' @author Stephen Eglen
+as_latex_url  <- function(x) {
   wrapit <- function(url) { paste0("\\url{", url, "}") }
   str_replace_all(x, .url_regexp, wrapit)
 }
@@ -97,9 +113,9 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   num_authors = length(authors)
   for (i in 1:num_authors)
     if (i==1) {
-      author_list = authors[[i]]
+      author_list = authors[[i]]$name
     } else {
-      author_list = paste(author_list, authors[[i]], sep=', ')
+      author_list = paste(author_list, authors[[i]]$name, sep=', ')
     }
   author_list
 }
@@ -118,6 +134,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   }
   checkers
 }
+
 ##' Print a latex table to summarise CODECHECK metadata
 ##'
 ##' Format a latex table that summarises the main CODECHECK metadata,
@@ -126,15 +143,16 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 ##' @param metadata - the codecheck metadata list.
 ##' @return The latex table, suitable for including in the Rmd
 ##' @author Stephen Eglen
+##' @export
 latex_summary_of_metadata <- function(metadata) {
   summary_entries = list(
     "Title" =            metadata$paper$title,
     "Authors" =          .authors(metadata),
-    "Reference" =        .url_it(metadata$paper$reference),
+    "Reference" =        as_latex_url(metadata$paper$reference),
     "Codechecker" =      .codecheckers(metadata),
     "Date of check" =   metadata$check_time,
     "Summary" =         metadata$summary,
-    "Repository" =      .url_it(metadata$repository))
+    "Repository" =      as_latex_url(metadata$repository))
   summary_df = data.frame(Item=names(summary_entries),
                           Value=unlist(summary_entries, use.names=FALSE))
 
@@ -152,6 +170,7 @@ latex_summary_of_metadata <- function(metadata) {
 ##' @title Print the latex code to include the CODECHECK logo
 ##' @return NULL
 ##' @author Stephen Eglen
+##' @export
 latex_codecheck_logo <- function() {
   logo_file = system.file("extdata", "codecheck_logo.pdf", package="codecheck")
   cat(sprintf("\\centerline{\\includegraphics[width=4cm]{%s}}",
@@ -173,6 +192,7 @@ latex_codecheck_logo <- function() {
 ##' @param zen - Object from zen4R to interact with Zenodo
 ##' @return Number of zenodo record created.
 ##' @author Stephen Eglen
+##' @export
 create_zenodo_record <- function(zen) {
   myrec <- zenodo$createEmptyRecord()
   this_doi = myrec$metadata$prereserve_doi$doi
@@ -197,6 +217,7 @@ create_zenodo_record <- function(zen) {
 ##' @param report - string containing the report URL on Zenodo.
 ##' @return the Zenodo record number (a number with at least 7 digits).
 ##' @author Stephen Eglen
+##' @export
 get_zenodo_record <- function(report) {
   result = str_match(report, "10\\.5281/zenodo\\.([0-9]{7,})")[2]
   if(is.na(result))
@@ -206,6 +227,12 @@ get_zenodo_record <- function(report) {
 
 set_zenodo_metadata <- function(zen, record, metadata) {
   draft <- zen$getDepositionById(record)
+  if (is.null(draft)) {
+    draft <- zen$getRecordById(record)
+  }
+  
+  if (is.null(draft))
+    stop("Neither deposition nor record found for ID ", record)
 
   draft$setPublicationType("report")
   draft$setCommunities(communities = c("codecheck"))
@@ -255,6 +282,7 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 ##' @param certificate name of the PDF file.
 ##' @return 
 ##' @author Stephen Eglen
+##' @export
 set_zenodo_certificate <- function(zen, record, certificate) {
   draft <- zen$getDepositionById(record)
   stopifnot(file.exists(certificate))
