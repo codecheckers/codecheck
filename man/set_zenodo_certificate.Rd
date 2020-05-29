@@ -13,6 +13,9 @@ set_zenodo_certificate(zen, record, certificate)
 
 \item{report}{- string containing the report URL on Zenodo.}
 }
+\value{
+
+}
 \description{
 Upload the CODECHECK certificate to Zenodo.
 }
