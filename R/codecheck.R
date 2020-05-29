@@ -28,10 +28,6 @@ copy_codecheck_report_template <- function(target = ".") {
   file.copy(file.path(templates, "codecheck"), target, recursive = TRUE)
 }
 
-copy_codecheck_zenodo_script <- function(target = "codecheck") {
-  templates <- system.file("extdata", "templates", package="codecheck")
-  file.copy(file.path(templates, "codecheck-zenodo.R"), target)
-}
 
 
 ##' Return the metadata for the codecheck project in root folder of project
