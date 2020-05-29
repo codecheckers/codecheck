@@ -14,7 +14,7 @@ create_codecheck_files <- function() {
   else 
   if (dir.exists("codecheck"))
     stop("codecheck folder exists, so stopping.")
-  copy_codecheck_yml_template()
+  copy_codecheck_yaml_template()
   copy_codecheck_report_template()
 }
 
