@@ -77,7 +77,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   manifest_df = data.frame(output=outputs,
                            comment=sapply(manifest, function(x) x$comment),
                            dest=dest_files,
-                           size = file.size(dest_files),
+                           "size (b)"= file.size(dest_files),
                            stringsAsFactors = FALSE)
   manifest_df
 }
