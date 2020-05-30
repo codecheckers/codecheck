@@ -133,10 +133,12 @@ as_latex_url  <- function(x) {
 .names <- function(people) {
   num_people = length(people)
   text = ""
+  sep = ""
   for (i in 1:num_people) {
     person = people[[i]]
     p = .name_with_orcid(person)
-    text=paste(text, p, sep=", ")
+    text=paste(text, p, sep=sep)
+    sep=", "
   }
   text
 }
