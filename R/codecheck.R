@@ -115,22 +115,9 @@ as_latex_url  <- function(x) {
   }
 }
 
-.authors <- function(y) {
-  authors = y$paper$authors
-  num_authors = length(authors)
-  for (i in 1:num_authors) {
-    author = authors[[i]]
-    author_text = .name_with_orcid(author)
-    if (i==1) {
-      author_list = author_text
-    } else {
-      author_list = paste(author_list, author_text, sep=', ')
-    }
-  }
-  author_list
-}
-
 .names <- function(people) {
+  ## PEOPLE here is typically either metadata$paper$authors or
+  ## metadata$codechecker
   num_people = length(people)
   text = ""
   sep = ""
