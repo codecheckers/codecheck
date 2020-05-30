@@ -104,31 +104,41 @@ as_latex_url  <- function(x) {
   str_replace_all(x, .url_regexp, wrapit)
 }
 
+
+.name_with_orcid <- function(person) {
+  name <- person$name
+  orcid <- person$ORCID
+  if (is.null(orcid)) {
+    name
+  } else {
+    paste(name, sprintf('\\orcidicon{%s} ', orcid))
+  }
+}
+
 .authors <- function(y) {
   authors = y$paper$authors
   num_authors = length(authors)
-  for (i in 1:num_authors)
+  for (i in 1:num_authors) {
+    author = authors[[i]]
+    author_text = .name_with_orcid(author)
     if (i==1) {
-      author_list = authors[[i]]$name
+      author_list = author_text
     } else {
-      author_list = paste(author_list, authors[[i]]$name, sep=', ')
+      author_list = paste(author_list, author_text, sep=', ')
     }
+  }
   author_list
 }
 
-.codecheckers <- function(y) {
-  ## TODO: this doesn't handle multiple codecheckers
-  ## TODO: should convert to url properly.
-  num_checkers = length(y$codechecker)
-  checkers = ""
-  for (i in 1:num_checkers) {
-    checker = y$codechecker[[i]]
-    orcid = checker$ORCID
-    p = paste(checker$name,
-              sprintf('\\orcidicon{%s} ', orcid))
-    checkers=paste(checkers, p, sep=" ")
+.names <- function(people) {
+  num_people = length(people)
+  text = ""
+  for (i in 1:num_people) {
+    person = people[[i]]
+    p = .name_with_orcid(person)
+    text=paste(text, p, sep=", ")
   }
-  checkers
+  text
 }
 
 ##' Print a latex table to summarise CODECHECK metadata
@@ -143,9 +153,9 @@ as_latex_url  <- function(x) {
 latex_summary_of_metadata <- function(metadata) {
   summary_entries = list(
     "Title" =            metadata$paper$title,
-    "Authors" =          .authors(metadata),
+    "Authors" =          .names(metadata$paper$authors),
     "Reference" =        as_latex_url(metadata$paper$reference),
-    "Codechecker" =      .codecheckers(metadata),
+    "Codechecker" =      .names(metadata$codechecker),
     "Date of check" =   metadata$check_time,
     "Summary" =         metadata$summary,
     "Repository" =      as_latex_url(metadata$repository))
