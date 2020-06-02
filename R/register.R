@@ -26,7 +26,7 @@ register_clear_cache <- function() {
 #' 
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
-                            outputs = c("html", "md")) {
+                            outputs = c("html", "md", "json")) {
   register_table <- register
   
   # add report links if available
@@ -79,15 +79,29 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
     # hack to reduce colum width of 4th column
     md_table <- readLines("register.md")
     md_table[6] <- "|:-----------|:--------------------------|:---------------------|:---|:--------------------------------------|:----------|"
-    writeLines(md_table, "register.md")
-  # TODO: fix table colum width, e.g. via using a register.Rmd with kableExtra
+    writeLines(md_table, "docs/register.md")
+    file.remove("register.md")
+    # TODO: fix table colum width, e.g. via using a register.Rmd with kableExtra
   }
   
   # render register to HTML
   if("html" %in% outputs) {
-    rmarkdown::render("register.md",
-                      output_yaml = "docs/html_document.yml",
-                      output_file = "docs/index.html")
+    rmarkdown::render(input = "docs/register.md",
+                      # next paths are relative to input file
+                      output_yaml = "html_document.yml",
+                      output_file = "index.html")
+  }
+  
+  # render register to JSON
+  if("json" %in% outputs) {
+    jsonlite::write_json(register_table[, c(
+      "Certificate",
+      "Repository",
+      "Type",
+      "Report",
+      "Check date")],
+      path = "docs/register.json",
+      pretty = TRUE)
   }
   
   return(register_table)
