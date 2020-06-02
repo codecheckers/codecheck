@@ -94,11 +94,39 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   
   # render register to JSON
   if("json" %in% outputs) {
+    # get paper titles
+    titles <- c()
+    for (i in seq_len(nrow(register))) {
+      config_yml <- get_codecheck_yml(register[i, ]$Repo)
+      
+      title <- NA
+      if (!is.null(config_yml)) {
+        title <- config_yml$paper$title
+      }
+      
+      titles <- c(titles, title)
+    }
+    
+    # get paper titles
+    titles <- c()
+    for (i in seq_len(nrow(register))) {
+      config_yml <- get_codecheck_yml(register[i, ]$Repo)
+      
+      title <- NA
+      if (!is.null(config_yml)) {
+        title <- config_yml$paper$title
+      }
+      
+      titles <- c(titles, title)
+    }
+    register_table$Title <- stringr::str_trim(titles)
+    
     jsonlite::write_json(register_table[, c(
       "Certificate",
       "Repository",
       "Type",
       "Report",
+      "Title",
       "Check date")],
       path = "docs/register.json",
       pretty = TRUE)
