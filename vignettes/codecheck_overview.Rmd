@@ -56,6 +56,10 @@ process:
 3. *codecheck/zenodo-codecheck.R* for help in loading the certificate
    to Zenodo along with the corresponding metadata.
 
+
+There is also a Makefile so that `make` within the codecheck folder
+will rebuild `codecheck.pdf`.
+
 ## Completing the metadata file *codecheck.yml*
 
 The *codecheck.yml* file contains all the relevant metadata for the
