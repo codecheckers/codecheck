@@ -6,7 +6,7 @@
 \usage{
 register_render(
   register = read.csv("register.csv", as.is = TRUE),
-  outputs = c("html", "md")
+  outputs = c("html", "md", "json")
 )
 }
 \arguments{
