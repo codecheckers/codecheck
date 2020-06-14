@@ -191,13 +191,14 @@ latex_codecheck_logo <- function() {
   cat("\\vspace*{2cm}")
 }  
 
-##' Print a citation for the document
+##' Print a citation for the codecheck certificate.
 ##'
 ##' Turn the metadata into a readable citation for this document.
-##' @title 
+##' @title Print a citation for the codecheck certificate.
 ##' @param metadata - the codecheck metadata list.
 ##' @return 
 ##' @author Stephen Eglen
+##' @export
 citation <- function(metadata) {
   year = substring(metadata$check_time,1,4)
   names = .names(metadata$codechecker, add.orcid=FALSE)
