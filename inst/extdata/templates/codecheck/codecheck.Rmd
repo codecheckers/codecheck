@@ -38,15 +38,6 @@ if ( !dir.exists(dest_dir) ) {
   dir.create(dest_dir)
 }
 
-## get_outputs = function(manifest) {
-##   files = sapply(manifest, function(x) x$file)
-##   comments = sapply(manifest, function(x) x$comment)
-##   sizes = file.size(dest_files)
-##   url=sprintf('<a href="%s">%s</a>', dest_files, files)
-##   table = cbind(files, comments, sizes, url)
-##   table
-## }
-
 manifest_df = copy_manifest_files(root, manifest,
                                   dest_dir, keep_full_path=FALSE)
 ```
@@ -61,11 +52,9 @@ latex_summary_of_metadata(metadata)
 ```
 
 ```{r summary_manifest, echo=FALSE, results='asis'}
-xt = xtable(manifest_df[, c("output", "comment", "size")],
-            digits=0,
-            caption="Summary of output files generated")
-print(xt, include.rownames=FALSE, comment=FALSE)
+latex_summary_of_manifest(manifest_df)
 ```
+
 
 # Summary
 
