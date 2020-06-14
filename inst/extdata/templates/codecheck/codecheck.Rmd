@@ -108,6 +108,33 @@ knitr::include_graphics(manifest_df[7, "dest"])
 ```
 
 \clearpage
+
+
+
+## Acknowledgements
+
+I would like to thank Dr Bhatt and his team for promptly answering any
+queries I had with this reproduction.  CODECHECK is financially
+supported by the Mozilla foundation.
+
+
+# Citing this document
+
+```{r}
+citation(metadata)
+```
+
+# About CODECHECK
+
+This certificate confirms that the codechecker could independently
+reproduce the results of a computational analysis given the data and
+code from a third party.  A CODECHECK does not check whether the
+original computation analysis is correct.  However, as all materials
+required for the reproduction are freely available by following the
+links in this document, the reader can then study for themselves the
+code and data.
+
+
 # About this document
 
 This document was created using [R Markdown](https://rmarkdown.rstudio.com/) using the [`codecheck`](https://github.com/codecheckers/codecheck) R package.
