@@ -105,17 +105,17 @@ as_latex_url  <- function(x) {
 }
 
 
-.name_with_orcid <- function(person) {
+.name_with_orcid <- function(person, add.orcid=TRUE) {
   name <- person$name
   orcid <- person$ORCID
-  if (is.null(orcid)) {
+  if (is.null(orcid) || !(add.orcid)) {
     name
   } else {
     paste(name, sprintf('\\orcidicon{%s} ', orcid))
   }
 }
 
-.names <- function(people) {
+.names <- function(people, add.orcid=TRUE) {
   ## PEOPLE here is typically either metadata$paper$authors or
   ## metadata$codechecker
   num_people = length(people)
@@ -123,7 +123,7 @@ as_latex_url  <- function(x) {
   sep = ""
   for (i in 1:num_people) {
     person = people[[i]]
-    p = .name_with_orcid(person)
+    p = .name_with_orcid(person, add.orcid)
     text=paste(text, p, sep=sep)
     sep=", "
   }
@@ -159,6 +159,24 @@ latex_summary_of_metadata <- function(metadata) {
       comment=FALSE)
 }
 
+##' Print a latex table to summarise CODECHECK manfiest
+##'
+##' Format a latex table that summarises the main CODECHECK manifest
+##' @title Print a latex table to summarise CODECHECK metadata
+##' @param manifest_df - The manifest data frame
+##' @return The latex table, suitable for including in the Rmd
+##' @author Stephen Eglen
+##' @export
+latex_summary_of_manifest <- function(manifest_df) {
+  m = manifest_df[, c("output", "comment", "size")]
+  names(m) = c("Output", "Comment", "Size (b)")
+  xt = xtable(m,
+              digits=0,
+              caption="Summary of output files generated",
+              align=c('l', 'p{5cm}', 'p{5cm}', 'p{2cm}'))
+  print(xt, include.rownames=FALSE, comment=FALSE)
+}
+
 ##' Print the latex code to include the CODECHECK logo
 ##'
 ##' 
@@ -172,6 +190,21 @@ latex_codecheck_logo <- function() {
               logo_file))
   cat("\\vspace*{2cm}")
 }  
+
+##' Print a citation for the document
+##'
+##' Turn the metadata into a readable citation for this document.
+##' @title 
+##' @param metadata - the codecheck metadata list.
+##' @return 
+##' @author Stephen Eglen
+citation <- function(metadata) {
+  year = substring(metadata$check_time,1,4)
+  names = .names(metadata$codechecker, add.orcid=FALSE)
+  citation = sprintf("%s (%s). CODECHECK Certificate %s.  Zenodo. %s",
+                     names, year, metadata$certificate, metadata$report)
+  cat(citation)
+}
 
 
 
