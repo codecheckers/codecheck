@@ -23,6 +23,7 @@ register_clear_cache <- function() {
 #' @importFrom parsedate parse_date
 #' @importFrom rmarkdown render
 #' @importFrom knitr kable
+#' @importFrom utils capture.output read.csv
 #' 
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
