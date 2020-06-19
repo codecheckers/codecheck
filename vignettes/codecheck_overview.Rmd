@@ -95,4 +95,6 @@ them using the API.
 Once you have uploaded the certificate and checked the metadata, you
 can then publish the record.
 
-## Archive your repo onto zenodo so that we have a backup!
+## Archive your repo onto zenodo so that we have a backup
+
+## close issue on register repo and update register html pages.
