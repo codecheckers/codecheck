@@ -9,7 +9,7 @@ Authors@R:
             comment = c(ORCID = "0000-0001-8607-8025")),
     person(given = "Daniel",
            family = "Nuest",
-           role = c("aut", "cre"),
+           role = c("aut"),
            email = "daniel.nuest@uni-muenster.de",
            comment = c(ORCID = "0000-0002-0024-5046")))
 Description: This contains helper functions for CODECHECKERS (https://codecheck.org.uk).
