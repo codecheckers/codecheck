@@ -7,7 +7,7 @@
 as_latex_url(x)
 }
 \arguments{
-\item{url}{- TRUE to keep relative pathname of figures.}
+\item{x}{- A string that may contain URLs that should be hyperlinked.}
 }
 \value{
 A string with the passed url as a latex `\url{}`

@@ -4,10 +4,21 @@
 \alias{latex_summary_of_manifest}
 \title{Print a latex table to summarise CODECHECK metadata}
 \usage{
-latex_summary_of_manifest(manifest_df)
+latex_summary_of_manifest(
+  metadata,
+  manifest_df,
+  root,
+  align = c("l", "p{6cm}", "p{6cm}", "p{2cm}")
+)
 }
 \arguments{
+\item{metadata}{- the codecheck metadata list.}
+
 \item{manifest_df}{- The manifest data frame}
+
+\item{root}{- root directory of the project}
+
+\item{align}{- alignment flags for the table.}
 }
 \value{
 The latex table, suitable for including in the Rmd
