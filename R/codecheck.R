@@ -233,7 +233,7 @@ latex_codecheck_logo <- function() {
 ##' Turn the metadata into a readable citation for this document.
 ##' @title Print a citation for the codecheck certificate.
 ##' @param metadata - the codecheck metadata list.
-##' @return 
+##' @return NULL
 ##' @author Stephen Eglen
 ##' @export
 citation <- function(metadata) {
@@ -348,13 +348,13 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 ##' @param zen - Object from zen4R to interact with Zenodo
 ##' @param report - string containing the report URL on Zenodo.
 ##' @param certificate name of the PDF file.
-##' @return 
+##' @return NULL
 ##' @author Stephen Eglen
 ##' @export
 set_zenodo_certificate <- function(zen, record, certificate) {
   draft <- zen$getDepositionById(record)
   stopifnot(file.exists(certificate))
-  zen$uploadFile(certificate, draft$id)
+  invisible(zen$uploadFile(certificate, draft$id))
 }
 
 ## We deliberately do not provide a function to publish the certificate.
