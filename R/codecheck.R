@@ -72,6 +72,15 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 
   dest_files = file.path(dest_dir,
                          if ( keep_full_path) outputs else basename(outputs))
+
+  ## See if we need to make extra directories in the codecheck/outputs
+  if (keep_full_path) {
+    for (d in dest_files) {
+      dir = dirname(d)
+      if ( !dir.exists(dir) )
+        dir.create(dir, recursive=TRUE)
+    }
+  }
   file.copy(src_files, dest_files, overwrite=TRUE)
   dest_files
   manifest_df = data.frame(output=outputs,
@@ -164,17 +173,30 @@ latex_summary_of_metadata <- function(metadata) {
 ##' Format a latex table that summarises the main CODECHECK manifest
 ##' @title Print a latex table to summarise CODECHECK metadata
 ##' @param manifest_df - The manifest data frame
+##' @param root - root directory of the project
+##' @param align - alignment flags for the table.
 ##' @return The latex table, suitable for including in the Rmd
 ##' @author Stephen Eglen
 ##' @export
-latex_summary_of_manifest <- function(manifest_df) {
+latex_summary_of_manifest <- function(manifest_df,
+                                      root,
+                                      align=c('l', 'p{6cm}', 'p{6cm}', 'p{2cm}')
+                                      ) {
   m = manifest_df[, c("output", "comment", "size")]
+  urls = sub(root, sprintf('%s/blob/master', metadata$repository), manifest_df$dest)
+  m1 = sprintf('\\href{%s}{\\path{%s}}',
+               urls,
+               m[,1],
+               m[,1])
+  m[,1] = m1
   names(m) = c("Output", "Comment", "Size (b)")
   xt = xtable(m,
               digits=0,
               caption="Summary of output files generated",
-              align=c('l', 'p{5cm}', 'p{5cm}', 'p{2cm}'))
-  print(xt, include.rownames=FALSE, comment=FALSE)
+              align=align)
+  print(xt, include.rownames=FALSE,
+        sanitize.text.function = function(x){x},
+        comment=FALSE)
 }
 
 ##' Print the latex code to include the CODECHECK logo
