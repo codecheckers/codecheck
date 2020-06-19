@@ -36,6 +36,7 @@ copy_codecheck_report_template <- function(target = ".") {
 ##' @param root Path to the root folder of the project.
 ##' @return A list containing the metadata found in the codecheck.yml file
 ##' @author Stephen Eglen
+##' @importFrom yaml read_yaml
 ##' @export
 codecheck_metadata <- function(root) {
   read_yaml( file.path(root, "codecheck.yml") )
@@ -61,6 +62,7 @@ codecheck_metadata <- function(root) {
 ##' @export
 copy_manifest_files <- function(root, metadata, dest_dir,
                                 keep_full_path = FALSE) {
+  manifest = metadata$manifest
   outputs = sapply(manifest, function(x) x$file)
   src_files = file.path(root, outputs)
   missing = !file.exists(src_files)
@@ -99,15 +101,25 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 ## https://daringfireball.net/2010/07/improved_regex_for_matching_urls
 ## To use the URL in R, I had to escape the \ characters and " -- this version
 ## does not work:
-## .url_regexp = "(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))"
+## .url_regexp = "(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?...]))"
 
-.url_regexp = "(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))"
+## Have also converted the unicode into \uxxxx escapes to keep
+## devtools::check() happy
+## « -> \u00ab
+## » -> \u00bb
+## “ -> \u201c  
+## ” -> \u201d
+## ‘ -> \u2018
+## ’ -> \u2019
+
+.url_regexp = "(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?\u00ab\u00bb\u201c\u201d\u2018\u2019]))"
 
 ##' Wrap URL for LaTeX
 ##' 
-##' @param url - TRUE to keep relative pathname of figures.
+##' @param x - A string that may contain URLs that should be hyperlinked.
 ##' @return A string with the passed url as a latex `\url{}`
 ##' @author Stephen Eglen
+##' @importFrom stringr str_replace_all 
 as_latex_url  <- function(x) {
   wrapit <- function(url) { paste0("\\url{", url, "}") }
   str_replace_all(x, .url_regexp, wrapit)
@@ -147,6 +159,7 @@ as_latex_url  <- function(x) {
 ##' @param metadata - the codecheck metadata list.
 ##' @return The latex table, suitable for including in the Rmd
 ##' @author Stephen Eglen
+##' @importFrom xtable xtable
 ##' @export
 latex_summary_of_metadata <- function(metadata) {
   summary_entries = list(
@@ -172,13 +185,15 @@ latex_summary_of_metadata <- function(metadata) {
 ##'
 ##' Format a latex table that summarises the main CODECHECK manifest
 ##' @title Print a latex table to summarise CODECHECK metadata
+##' @param metadata - the codecheck metadata list.
 ##' @param manifest_df - The manifest data frame
 ##' @param root - root directory of the project
 ##' @param align - alignment flags for the table.
 ##' @return The latex table, suitable for including in the Rmd
 ##' @author Stephen Eglen
+##' @importFrom xtable xtable
 ##' @export
-latex_summary_of_manifest <- function(manifest_df,
+latex_summary_of_manifest <- function(metadata, manifest_df,
                                       root,
                                       align=c('l', 'p{6cm}', 'p{6cm}', 'p{2cm}')
                                       ) {
@@ -243,9 +258,10 @@ citation <- function(metadata) {
 ##' @param zen - Object from zen4R to interact with Zenodo
 ##' @return Number of zenodo record created.
 ##' @author Stephen Eglen
+##' 
 ##' @export
 create_zenodo_record <- function(zen) {
-  myrec <- zenodo$createEmptyRecord()
+  myrec <- zen$createEmptyRecord()
   this_doi = myrec$metadata$prereserve_doi$doi
   cat("The following URL is your Zenodo DOI.\n")
   cat("Please add this to codecheck.yml in report: field\n")
@@ -268,6 +284,7 @@ create_zenodo_record <- function(zen) {
 ##' @param report - string containing the report URL on Zenodo.
 ##' @return the Zenodo record number (a number with at least 7 digits).
 ##' @author Stephen Eglen
+##' @importFrom stringr str_match
 ##' @export
 get_zenodo_record <- function(report) {
   result = str_match(report, "10\\.5281/zenodo\\.([0-9]{7,})")[2]
