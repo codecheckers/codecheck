@@ -52,7 +52,7 @@ latex_summary_of_metadata(metadata)
 ```
 
 ```{r summary_manifest, echo=FALSE, results='asis'}
-latex_summary_of_manifest(manifest_df)
+latex_summary_of_manifest(metadata, manifest_df)
 ```
 
 
