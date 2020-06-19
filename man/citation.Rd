@@ -9,9 +9,6 @@ citation(metadata)
 \arguments{
 \item{metadata}{- the codecheck metadata list.}
 }
-\value{
-
-}
 \description{
 Print a citation for the codecheck certificate.
 }
