@@ -38,7 +38,7 @@ if ( !dir.exists(dest_dir) ) {
   dir.create(dest_dir)
 }
 
-manifest_df = copy_manifest_files(root, manifest,
+manifest_df = copy_manifest_files(root, metadata,
                                   dest_dir, keep_full_path=FALSE)
 ```
 
@@ -52,7 +52,7 @@ latex_summary_of_metadata(metadata)
 ```
 
 ```{r summary_manifest, echo=FALSE, results='asis'}
-latex_summary_of_manifest(metadata, manifest_df)
+latex_summary_of_manifest(metadata, manifest_df, root)
 ```
 
 
