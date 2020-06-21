@@ -346,7 +346,7 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 ##' the web interface before being able to upload a new versin.
 ##' @title Upload the CODECHECK certificate to Zenodo.
 ##' @param zen - Object from zen4R to interact with Zenodo
-##' @param report - string containing the report URL on Zenodo.
+##' @param record - string containing the report URL on Zenodo.
 ##' @param certificate name of the PDF file.
 ##' @return NULL
 ##' @author Stephen Eglen
