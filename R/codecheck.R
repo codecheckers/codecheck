@@ -236,7 +236,7 @@ latex_codecheck_logo <- function() {
 ##' @return NULL
 ##' @author Stephen Eglen
 ##' @export
-citation <- function(metadata) {
+cite_certificate <- function(metadata) {
   year = substring(metadata$check_time,1,4)
   names = .names(metadata$codechecker, add.orcid=FALSE)
   citation = sprintf("%s (%s). CODECHECK Certificate %s.  Zenodo. %s",

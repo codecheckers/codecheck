@@ -110,7 +110,7 @@ supported by the Mozilla foundation.
 # Citing this document
 
 ```{r, results='asis',echo=FALSE}
-citation(metadata)
+cite_certificate(metadata)
 ```
 
 # About CODECHECK
