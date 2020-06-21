@@ -15,7 +15,7 @@ register_clear_cache <- function() {
 #' - `.html`
 #' - `.md``
 #' 
-#' @param register_table A `data.frame` with all required information for the register's view
+#' @param register A `data.frame` with all required information for the register's view
 #' @param outputs The output formats to create
 #' 
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
@@ -24,6 +24,7 @@ register_clear_cache <- function() {
 #' @importFrom rmarkdown render
 #' @importFrom knitr kable
 #' @importFrom utils capture.output read.csv
+#' @import     jsonlite 
 #' 
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
@@ -144,7 +145,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 #' 
 #' - Does the repo have a LICENSE?
 #' 
-#' @param register_table A `data.frame` with all required information for the register's view
+#' @param register A `data.frame` with all required information for the register's view
 #' 
 #' @importFrom gh gh
 #' @export
