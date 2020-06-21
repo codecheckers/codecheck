@@ -10,9 +10,9 @@ register_render(
 )
 }
 \arguments{
-\item{outputs}{The output formats to create}
+\item{register}{A `data.frame` with all required information for the register's view}
 
-\item{register_table}{A `data.frame` with all required information for the register's view}
+\item{outputs}{The output formats to create}
 }
 \value{
 A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories

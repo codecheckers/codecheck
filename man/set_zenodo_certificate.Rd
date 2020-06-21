@@ -9,9 +9,9 @@ set_zenodo_certificate(zen, record, certificate)
 \arguments{
 \item{zen}{- Object from zen4R to interact with Zenodo}
 
-\item{certificate}{name of the PDF file.}
+\item{record}{- string containing the report URL on Zenodo.}
 
-\item{report}{- string containing the report URL on Zenodo.}
+\item{certificate}{name of the PDF file.}
 }
 \description{
 Upload the CODECHECK certificate to Zenodo.

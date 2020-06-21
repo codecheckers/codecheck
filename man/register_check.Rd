@@ -7,7 +7,7 @@
 register_check(register = read.csv("register.csv", as.is = TRUE))
 }
 \arguments{
-\item{register_table}{A `data.frame` with all required information for the register's view}
+\item{register}{A `data.frame` with all required information for the register's view}
 }
 \description{
 This functions starts of a `data.frame` read from the local register file.
