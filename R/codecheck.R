@@ -10,38 +10,42 @@
 ##' @export
 create_codecheck_files <- function() {
   if (file.exists("codecheck.yml"))
-    stop("codecheck.yml already exists, so stopping.")
-  else 
+    warning("codecheck.yml already exists, so not overwriting it.",
+            "See the template file at ",
+            system.file("extdata", "templates/codecheck.yml", package="codecheck"),
+            " for required metadata and examples.")
+  else
+    copy_codecheck_yaml_template()
+  
   if (dir.exists("codecheck"))
     stop("codecheck folder exists, so stopping.")
-  copy_codecheck_yaml_template()
-  copy_codecheck_report_template()
+  else
+    copy_codecheck_report_template()
 }
 
 copy_codecheck_yaml_template <- function(target = ".") {
   templates <- system.file("extdata", "templates", package="codecheck")
   file.copy(file.path(templates, "codecheck.yml"), target)
+  cat("Created codecheck.yml file at ", target, "\n")
 }
 
 copy_codecheck_report_template <- function(target = ".") {
   templates <- system.file("extdata", "templates", package="codecheck")
   file.copy(file.path(templates, "codecheck"), target, recursive = TRUE)
+  cat("Created codecheck report files at ", target, ":", toString(list.files("codecheck")), "\n")
 }
-
-
 
 ##' Return the metadata for the codecheck project in root folder of project
 ##'
 ##' @title Return the metadata for the codecheck project in root folder of project
-##' @param root Path to the root folder of the project.
+##' @param root Path to the root folder of the project, defaults to current working directory
 ##' @return A list containing the metadata found in the codecheck.yml file
 ##' @author Stephen Eglen
 ##' @importFrom yaml read_yaml
 ##' @export
-codecheck_metadata <- function(root) {
-  read_yaml( file.path(root, "codecheck.yml") )
+codecheck_metadata <- function(root = getwd()) {
+  read_yaml(file.path(root, "codecheck.yml") )
 }
-
 
 ##' Copy manifest files into the root/codecheck/outputs folder; return manifest.
 ##'
@@ -51,7 +55,7 @@ codecheck_metadata <- function(root) {
 ##' If KEEP_FULL_PATH is TRUE, we keep the full path for the output files.
 ##' This is useful when there are two output files with the same name in
 ##' different folders, e.g. expt1/out.pdf and expt2/out.pdf
-
+##' 
 ##' @title Copy files from manifest into the codecheck folder and summarise.
 ##' @param root - Path to the root folder of the proejct.
 ##' @param metadata - the codecheck metadata list.
@@ -93,11 +97,8 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   manifest_df
 }
 
-
-
-
 ## latex summary of metadata
-
+## 
 ## https://daringfireball.net/2010/07/improved_regex_for_matching_urls
 ## To use the URL in R, I had to escape the \ characters and " -- this version
 ## does not work:
@@ -265,7 +266,7 @@ create_zenodo_record <- function(zen) {
   this_doi = myrec$metadata$prereserve_doi$doi
   cat("The following URL is your Zenodo DOI.\n")
   cat("Please add this to codecheck.yml in report: field\n")
-  print(this_doi)
+  print(paste0("https://doi.org/", this_doi))
   cat("Remember to reload the yaml file after editing it.\n")
   get_zenodo_record(this_doi)
 }
