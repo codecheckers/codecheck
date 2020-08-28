@@ -72,40 +72,40 @@ One hard problem was ...
 
 This took ... minutes to complete on {a large workstation, my laptop}.
 
-\setcounter{table}{0}
-\setcounter{figure}{0}
-\captionsetup[table]{labelformat=addC}
-\captionsetup[figure]{labelformat=addC}
-
 \clearpage
 
-```{r, echo=FALSE, fig.cap=manifest_df[1:7,"comment"]}
-# TODO turn into a loop 
-knitr::include_graphics(manifest_df[1, "dest"])
-cat('\n\n')
-knitr::include_graphics(manifest_df[2, "dest"])
-cat('\n\n')
-knitr::include_graphics(manifest_df[3, "dest"])
-cat('\n\n')
-knitr::include_graphics(manifest_df[4, "dest"])
-cat('\n\n')
-knitr::include_graphics(manifest_df[5, "dest"])
-cat('\n\n')
-knitr::include_graphics(manifest_df[6, "dest"])
-cat('\n\n')
-knitr::include_graphics(manifest_df[7, "dest"])
+```{r, echo=FALSE, results="asis"}
+for(i in c(1:nrow(manifest_df))) {
+  path <- manifest_df[i,"dest"]
+  if(stringr::str_ends(path, "(png|pdf|jpg)")) {
+    # include graphics with knitr has to happen at top level in chunks, see https://github.com/yihui/knitr/issues/1260
+    # see also https://stackoverflow.com/questions/51268623/insert-images-using-knitrinclude-graphics-in-a-for-loop
+    # knitr::include_graphics(manifest_df[1, "dest"], error = TRUE)
+    # Therefore, generate Markdown code here:
+    cat("## ", basename(path), "\n\n")
+    cat("**Comment:** ", manifest_df[i,"comment"], "\n\n")
+    cat(paste0("![", "Test ", "](", path, ")\n"))
+  } else if (stringr::str_ends(path, "(Rout|txt)")) {
+    cat("**File: ", basename(path), "**\n\n")
+    cat("\\scriptsize \n\n", "```txt\n")
+    cat(readLines(path), sep = "\n")
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
+  } else {
+    cat("**File: ", basename(path), "**\n\n")
+    cat("Cannot inlcude output file as figure.")
+  }
+  
+  cat("\\clearpage \n\n")
+}
 ```
 
 \clearpage
-
-
 
 ## Acknowledgements
 
 I would like to thank Dr Bhatt and his team for promptly answering any
 queries I had with this reproduction.  CODECHECK is financially
 supported by the Mozilla foundation.
-
 
 # Citing this document
 
