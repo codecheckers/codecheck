@@ -4,10 +4,6 @@ output:
     toc: false
     includes:
        in_header: codecheck-preamble.sty
-  html_document:
-    self_contained: false
-    toc: true
-    toc_float: false
 ---
 
 ```{r rsetup,eval=TRUE,include=FALSE}
