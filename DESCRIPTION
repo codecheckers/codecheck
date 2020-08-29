@@ -1,6 +1,6 @@
 Package: codecheck
 Title: Helper Functions for CODECHECK project
-Version: 0.0.0.9005
+Version: 0.0.0.9006
 Authors@R: 
     c(person(given = "Stephen",
             family = "Eglen",
@@ -18,6 +18,6 @@ Depends: gh, R.cache, parsedate
 Imports: yaml, xtable, stringr, rmarkdown, knitr, jsonlite, assertthat
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Remotes: eblondel/zen4R
 VignetteBuilder: knitr

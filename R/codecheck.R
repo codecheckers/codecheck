@@ -57,7 +57,7 @@ codecheck_metadata <- function(root = getwd()) {
 ##' different folders, e.g. expt1/out.pdf and expt2/out.pdf
 ##' 
 ##' @title Copy files from manifest into the codecheck folder and summarise.
-##' @param root - Path to the root folder of the proejct.
+##' @param root - Path to the root folder of the project.
 ##' @param metadata - the codecheck metadata list.
 ##' @param dest_dir - folder where outputs are to be copied to (codecheck/outputs)
 ##' @param keep_full_path - TRUE to keep relative pathname of figures.
@@ -89,6 +89,27 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   }
   file.copy(src_files, dest_files, overwrite=TRUE)
   dest_files
+  manifest_df = data.frame(output=outputs,
+                           comment=sapply(manifest, function(x) x$comment),
+                           dest=dest_files,
+                           size=file.size(dest_files),
+                           stringsAsFactors = FALSE)
+  manifest_df
+}
+
+##' List manifest.
+##'
+##' @title Summarise manifest files.
+##' @param root - Path to the root folder of the project.
+##' @param metadata - the codecheck metadata list.
+##' @param dest_dir - folder where outputs have been copied to (codecheck/outputs)
+##' @return A dataframe containing one row per manifest file.
+##' @author Daniel Nüst
+##' @export
+list_manifest_files <- function(root, metadata, check_dir) {
+  manifest = metadata$manifest
+  outputs = sapply(manifest, function(x) x$file)
+  dest_files = file.path(check_dir, basename(outputs))
   manifest_df = data.frame(output=outputs,
                            comment=sapply(manifest, function(x) x$comment),
                            dest=dest_files,

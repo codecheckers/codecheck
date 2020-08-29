@@ -7,7 +7,7 @@
 copy_manifest_files(root, metadata, dest_dir, keep_full_path = FALSE)
 }
 \arguments{
-\item{root}{- Path to the root folder of the proejct.}
+\item{root}{- Path to the root folder of the project.}
 
 \item{metadata}{- the codecheck metadata list.}
 
