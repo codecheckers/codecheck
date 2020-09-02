@@ -11,7 +11,7 @@ list_manifest_files(root, metadata, check_dir)
 
 \item{metadata}{- the codecheck metadata list.}
 
-\item{dest_dir}{- folder where outputs have been copied to (codecheck/outputs)}
+\item{check_dir}{- folder where outputs have been copied to (codecheck/outputs)}
 }
 \value{
 A dataframe containing one row per manifest file.

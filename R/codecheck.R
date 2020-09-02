@@ -102,7 +102,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 ##' @title Summarise manifest files.
 ##' @param root - Path to the root folder of the project.
 ##' @param metadata - the codecheck metadata list.
-##' @param dest_dir - folder where outputs have been copied to (codecheck/outputs)
+##' @param check_dir - folder where outputs have been copied to (codecheck/outputs)
 ##' @return A dataframe containing one row per manifest file.
 ##' @author Daniel Nüst
 ##' @export
