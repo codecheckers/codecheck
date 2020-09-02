@@ -5,7 +5,9 @@
 #' @importFrom R.cache getCacheRootPath
 #' @export
 register_clear_cache <- function() {
-  unlink(R.cache::getCacheRootPath())
+  path <- R.cache::getCacheRootPath()
+  message("Deleting cache path ", path)
+  unlink(path, recursive = TRUE)
 }
 
 #' Function for rendering the register into different view
@@ -45,7 +47,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
   register_table$Report <- reports
   
-  # turn IDs into links for table rendering
+  # turn issue numbers into links for table rendering
   register_table$Issue <- sapply(X = register$Issue,
                                  FUN = function(issue_id) {
                                    if (!is.na(issue_id)) {
@@ -55,6 +57,18 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                                             issue_id, ")")
                                    } else {
                                      issue_id
+                                   }
+                                 })
+
+  # turn repositories into links for table rendering
+  register_table$Repository <- sapply(X = register$Repository,
+                                 FUN = function(repository_name) {
+                                   if (!is.na(repository_name)) {
+                                     urrl <- paste0("https://github.com/codecheckers/",
+                                                    repository_name)
+                                     paste0("[", repository_name, "](", urrl, ")")
+                                   } else {
+                                     repository_name
                                    }
                                  })
   
@@ -83,7 +97,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
     md_table[6] <- "|:-----------|:--------------------------|:---------------------|:---|:--------------------------------------|:----------|"
     writeLines(md_table, "docs/register.md")
     file.remove("register.md")
-    # TODO: fix table colum width, e.g. via using a register.Rmd with kableExtra
+    # TODO: fix table column width, e.g. via using a register.Rmd with kableExtra
   }
   
   # render register to HTML
@@ -96,39 +110,43 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   
   # render register to JSON
   if("json" %in% outputs) {
-    # get paper titles
+    # get paper titles and references
     titles <- c()
+    references <- c()
     for (i in seq_len(nrow(register))) {
       config_yml <- get_codecheck_yml(register[i, ]$Repo)
       
       title <- NA
+      reference <- NA
       if (!is.null(config_yml)) {
         title <- config_yml$paper$title
+        reference <- config_yml$paper$reference
       }
       
       titles <- c(titles, title)
+      references <- c(references, reference)
     }
-    
-    # get paper titles
-    titles <- c()
-    for (i in seq_len(nrow(register))) {
-      config_yml <- get_codecheck_yml(register[i, ]$Repo)
-      
-      title <- NA
-      if (!is.null(config_yml)) {
-        title <- config_yml$paper$title
-      }
-      
-      titles <- c(titles, title)
-    }
+
     register_table$Title <- stringr::str_trim(titles)
-    
+    register_table$`Paper reference` <- stringr::str_trim(references)
+    register_table$`Repository Link` <- sapply(
+      X = register$Repository,
+      FUN = function(repository_name) {
+        if (!is.na(repository_name)) {
+          paste0("https://github.com/codecheckers/", repository_name)
+        } else {
+          NA
+        }
+      }
+    )
+  
     jsonlite::write_json(register_table[, c(
       "Certificate",
-      "Repository",
+      "Repository Link",
       "Type",
       "Report",
       "Title",
+      "Paper reference",
       "Check date")],
       path = "docs/register.json",
       pretty = TRUE)
@@ -141,7 +159,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 #' 
 #' This functions starts of a `data.frame` read from the local register file.
 #' 
-#' Futher test ideas:
+#' **Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+#' 
+#' Further test ideas:
 #' 
 #' - Does the repo have a LICENSE?
 #' 
@@ -157,13 +177,13 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE)) {
     # check certificate IDs if there is a codecheck.yml
     codecheck_yaml <- get_codecheck_yml(entry$Repository)
     if (!is.null(codecheck_yaml)) {
+      # validate config file
+      validate_codecheck_yml(codecheck_yaml)
+      
+      # check certificate ID
       if (entry$Certificate != codecheck_yaml$certificate) {
         stop("Certificate mismatch, register: ", entry$Certificate,
              " vs. repo ", codecheck_yaml$certificate)
-      }
-      
-      if (is.null(codecheck_yaml$report)) {
-        warning("Report mis missing for ", entry$Certificate)
       }
     } else {
       warning(entry$Certificate, " does not have a codecheck.yml file")
@@ -183,5 +203,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE)) {
                 entry$Issue, ">")
       }
     }
+    
+    cat("Completed checking registry entry", toString(register[i, "Certificate"]), "\n")
   }
 }
