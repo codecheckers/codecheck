@@ -14,7 +14,7 @@ Authors@R:
            comment = c(ORCID = "0000-0002-0024-5046")))
 Description: This contains helper functions for CODECHECKERS (https://codecheck.org.uk).
 License: MIT + file LICENSE
-Depends: gh, R.cache, parsedate
+Depends: R (>= 4.0.0), gh, R.cache, parsedate
 Imports: yaml, xtable, stringr, rmarkdown, knitr, jsonlite, assertthat
 Encoding: UTF-8
 LazyData: true
