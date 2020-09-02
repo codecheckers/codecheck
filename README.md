@@ -9,6 +9,8 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![Travis build
 status](https://travis-ci.com/nuest/codecheck.svg?branch=master)](https://travis-ci.com/nuest/codecheck)
+[![R build
+status](https://github.com/codecheckers/codecheck/workflows/R-CMD-check/badge.svg)](https://github.com/codecheckers/codecheck/actions)
 <!-- badges: end -->
 
 `codecheck` is an assistant for conducting CODECHECKs, written in the R
