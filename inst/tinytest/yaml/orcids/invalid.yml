@@ -1,0 +1,24 @@
+---
+version: https://codecheck.org.uk/spec/config/1.0
+
+paper:
+  title: Test
+  authors:
+    - name: A. B.
+      ORCID: 0000-not-an-orcid
+  reference: https://link
+
+manifest:
+  - file: Figure1.png
+    comment: Figure 1
+
+codechecker:
+  - name: C. Check
+    ORCID: 0000-0001-8607-8025
+
+summary: Code works!
+repository: https://github.com/codecheckers/test
+check_time: "2020-04-13 10:00:00"
+certificate: 9999-999
+report: https://doi.org/10.1000/xyz123
+

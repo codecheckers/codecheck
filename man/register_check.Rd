@@ -13,7 +13,9 @@ register_check(register = read.csv("register.csv", as.is = TRUE))
 This functions starts of a `data.frame` read from the local register file.
 }
 \details{
-Futher test ideas:
+**Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+
+Further test ideas:
 
 - Does the repo have a LICENSE?
 }

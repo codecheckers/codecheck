@@ -33,7 +33,19 @@ remotes::install_github("codecheckers/codecheck")
 
 ## Usage
 
-The the main vignette.
+See the main vignette.
+
+## Development
+
+The package uses
+[`tinytest`](https://cran.r-project.org/package=tinytest) for tests. Run
+`test_all("/path/to/package")` to run all tests interactively. Even
+better, run the tests in a fresh install/temporary directory using
+
+``` r
+# assuming . is the package path
+build_install_test(".")
+```
 
 ## License
 
