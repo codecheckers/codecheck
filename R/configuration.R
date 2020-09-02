@@ -1,3 +1,4 @@
+#' @author Daniel Nüst
 #' @importFrom gh gh
 get_codecheck_yml_uncached <- function(repo) {
   repo_files <- gh::gh("GET /repos/codecheckers/:repo/contents/",
@@ -24,6 +25,7 @@ get_codecheck_yml_cached <- R.cache::addMemoization(get_codecheck_yml_uncached)
 #' 
 #' @param repo Repository in the codecheckers organisation on GitHub
 #' 
+#' @author Daniel Nüst
 #' @importFrom R.cache addMemoization
 #' 
 #' @export
@@ -39,7 +41,9 @@ get_codecheck_yml <- function(repo) {
 #' @param configuration R object of class `list`, or a path to a file
 #' @return `TRUE` if the provided configuration is valid, otherwise the function stops with an error
 #' 
+#' @author Daniel Nüst
 #' @importFrom rorcid check_dois
+#' 
 #' @export
 validate_codecheck_yml <- function(configuration) {
   codecheck_yml <- NULL

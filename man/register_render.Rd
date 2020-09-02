@@ -24,3 +24,6 @@ NOTE: You should put a GitHub API token inth the environment variable `GITHUB_PA
 - `.html`
 - `.md``
 }
+\author{
+Daniel Nüst
+}

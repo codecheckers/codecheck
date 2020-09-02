@@ -2,6 +2,7 @@
 #' 
 #' @return 0 for success, 1 for failure, invisibly (see `unlink`)
 #' 
+#' @author Daniel Nüst
 #' @importFrom R.cache getCacheRootPath
 #' @export
 register_clear_cache <- function() {
@@ -22,6 +23,7 @@ register_clear_cache <- function() {
 #' 
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #' 
+#' @author Daniel Nüst
 #' @importFrom parsedate parse_date
 #' @importFrom rmarkdown render
 #' @importFrom knitr kable
@@ -167,6 +169,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 #' 
 #' @param register A `data.frame` with all required information for the register's view
 #' 
+#' @author Daniel Nüst
 #' @importFrom gh gh
 #' @export
 register_check <- function(register = read.csv("register.csv", as.is = TRUE)) {

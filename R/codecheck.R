@@ -139,7 +139,7 @@ list_manifest_files <- function(root, metadata, check_dir) {
 ##' Wrap URL for LaTeX
 ##' 
 ##' @param x - A string that may contain URLs that should be hyperlinked.
-##' @return A string with the passed url as a latex `\url{}`
+##' @return A string with the passed URL as a latex `\url{http://the.url}`
 ##' @author Stephen Eglen
 ##' @importFrom stringr str_replace_all 
 as_latex_url  <- function(x) {

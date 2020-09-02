@@ -12,3 +12,6 @@ get_codecheck_yml(repo)
 \description{
 Get the CODECHECK configuration file from a repository
 }
+\author{
+Daniel Nüst
+}

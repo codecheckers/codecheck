@@ -15,3 +15,6 @@ validate_codecheck_yml(configuration)
 \description{
 This functions checks "MUST"-contents only, see https://codecheck.org.uk/spec/config/latest/
 }
+\author{
+Daniel Nüst
+}
