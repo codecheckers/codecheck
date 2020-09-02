@@ -40,14 +40,13 @@ get_codecheck_yml <- function(repo) {
 #' @return `TRUE` if the provided configuration is valid, otherwise the function stops with an error
 #' 
 #' @importFrom rorcid check_dois
-#' @importFrom methods extends
 #' @export
 validate_codecheck_yml <- function(configuration) {
   codecheck_yml <- NULL
   if (is.character(configuration) && file.exists(configuration)) {
     # TODO: validate that file encoding is UTF-8, if a file is given
     codecheck_yml <- yaml::read_yaml(configuration)
-  } else if (methods::extends(configuration, "list")) {
+  } else if (inherits(configuration, "list")) {
     codecheck_yml <- configuration
   } else {
     stop("Could not load codecheck configuration from input '", configuration, "'")
