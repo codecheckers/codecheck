@@ -64,13 +64,23 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 
   # turn repositories into links for table rendering
   register_table$Repository <- sapply(X = register$Repository,
-                                 FUN = function(repository_name) {
-                                   if (!is.na(repository_name)) {
-                                     urrl <- paste0("https://github.com/codecheckers/",
-                                                    repository_name)
-                                     paste0("[", repository_name, "](", urrl, ")")
+                                 FUN = function(repository) {
+                                   spec <- parse_repository_spec(repository)
+                                   
+                                   if (!is.na(spec)) {
+                                     urrl <- "#"
+                                     
+                                     if (spec[["type"]] == "github") {
+                                       urrl <- paste0("https://github.com/", spec[["repo"]])
+                                       paste0("[", spec[["repo"]], "](", urrl, ")")
+                                     } else if (spec[["type"]] == "osf") {
+                                       urrl <- paste0("https://osf.io/", spec[["repo"]])
+                                       paste0("[", spec[["repo"]], "](", urrl, ")")
+                                     } else {
+                                       repository
+                                     }
                                    } else {
-                                     repository_name
+                                     repository
                                    }
                                  })
   
@@ -133,11 +143,14 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
     register_table$`Paper reference` <- stringr::str_trim(references)
     register_table$`Repository Link` <- sapply(
       X = register$Repository,
-      FUN = function(repository_name) {
-        if (!is.na(repository_name)) {
-          paste0("https://github.com/codecheckers/", repository_name)
+      FUN = function(repository) {
+        spec <- parse_repository_spec(repository)
+        if (spec[["type"]] == "github") {
+          paste0("https://github.com/", spec[["repo"]])
+        } else if (spec[["type"]] == "osf") {
+          paste0("https://osf.io/", spec[["repo"]])
         } else {
-          NA
+          repository
         }
       }
     )
@@ -168,12 +181,16 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 #' - Does the repo have a LICENSE?
 #' 
 #' @param register A `data.frame` with all required information for the register's view
+#' @param from The first register entry to check
+#' @param to The last register entry to check
 #' 
 #' @author Daniel Nüst
 #' @importFrom gh gh
 #' @export
-register_check <- function(register = read.csv("register.csv", as.is = TRUE)) {
-  for (i in seq_len(nrow(register))) {
+register_check <- function(register = read.csv("register.csv", as.is = TRUE),
+                           from = 1,
+                           to = nrow(register)) {
+  for (i in seq(from = from, to = to)) {
     cat("Checking", toString(register[i, ]), "\n")
     entry <- register[i, ]
     
