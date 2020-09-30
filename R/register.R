@@ -107,7 +107,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
     )
     # hack to reduce column width of 4th column
     md_table <- readLines("register.md")
-    md_table[6] <- md_column_widths
+    md_table[6] <- md_columns_widths
     writeLines(md_table, "docs/register.md")
     file.remove("register.md")
     # TODO: fix table column width, e.g. via using a register.Rmd with kableExtra
@@ -200,7 +200,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
       path = "docs/register.json",
       pretty = TRUE)
     
-    jsonlite::write_json(register_table[1:10, c(
+    jsonlite::write_json(tail(register_table, 10)[, c(
       "Certificate",
       "Repository Link",
       "Type",
