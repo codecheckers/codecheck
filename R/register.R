@@ -67,7 +67,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                                  FUN = function(repository) {
                                    spec <- parse_repository_spec(repository)
                                    
-                                   if (!is.na(spec)) {
+                                   if (!any(is.na(spec))) {
                                      urrl <- "#"
                                      
                                      if (spec[["type"]] == "github") {
@@ -97,16 +97,17 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
   check_times <- parsedate::parse_date(check_times)
   register_table$`Check date` <- format(check_times, "%Y-%m-%d")
-  
+
+  md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"  
   if("md" %in% outputs) {
     capture.output(
       cat("---\ntitle: CODECHECK Register\n---"),
       knitr::kable(register_table, format = "markdown"),
       file = "register.md"
     )
-    # hack to reduce colum width of 4th column
+    # hack to reduce column width of 4th column
     md_table <- readLines("register.md")
-    md_table[6] <- "|:-----------|:--------------------------|:---------------------|:---|:--------------------------------------|:----------|"
+    md_table[6] <- md_column_widths
     writeLines(md_table, "docs/register.md")
     file.remove("register.md")
     # TODO: fix table column width, e.g. via using a register.Rmd with kableExtra
@@ -114,10 +115,43 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   
   # render register to HTML
   if("html" %in% outputs) {
-    rmarkdown::render(input = "docs/register.md",
+    # add icons to the Repository column for HTML output, use a copy of the register.md
+    # so the inline HTML is not in the .md output
+    register_table$Repository <- sapply(X = register$Repository,
+                                        FUN = function(repository) {
+                                          spec <- parse_repository_spec(repository)
+                                          
+                                          if (!any(is.na(spec))) {
+                                            urrl <- "#"
+                                            
+                                            if (spec[["type"]] == "github") {
+                                              urrl <- paste0("https://github.com/", spec[["repo"]])
+                                              paste0("<i class='fa fa-github'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
+                                            } else if (spec[["type"]] == "osf") {
+                                              urrl <- paste0("https://osf.io/", spec[["repo"]])
+                                              paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
+                                            } else {
+                                              repository
+                                            }
+                                          } else {
+                                            repository
+                                          }
+                                        })
+    capture.output(
+      cat("---\ntitle: CODECHECK Register\n---"),
+      knitr::kable(register_table, format = "markdown"),
+      file = "docs/register-icons.md"
+    )
+    md_table <- readLines("docs/register-icons.md")
+    file.remove("docs/register-icons.md")
+    md_table[6] <- md_columns_widths
+    writeLines(md_table, "docs/register-icons.md")
+    
+    rmarkdown::render(input = "docs/register-icons.md",
                       # next paths are relative to input file
                       output_yaml = "html_document.yml",
                       output_file = "index.html")
+    file.remove("docs/register-icons.md")
   }
   
   # render register to JSON
