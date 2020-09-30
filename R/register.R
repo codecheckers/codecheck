@@ -210,6 +210,16 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
       "Check date")],
       path = "docs/featured.json",
       pretty = TRUE)
+    
+    jsonlite::write_json(list(
+        source = "https://codecheck.org.uk/register/register.json",
+        cert_count = nrow(register_table)
+        # TODO count conferences, preprints, 
+        # journals, etc.
+      ),
+      auto_unbox = TRUE,
+      path = "docs/stats.json",
+      pretty = TRUE)
   }
   
   return(register_table)
