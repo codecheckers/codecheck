@@ -165,6 +165,17 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
       "Check date")],
       path = "docs/register.json",
       pretty = TRUE)
+    
+    jsonlite::write_json(register_table[1:10, c(
+      "Certificate",
+      "Repository Link",
+      "Type",
+      "Report",
+      "Title",
+      "Paper reference",
+      "Check date")],
+      path = "docs/featured.json",
+      pretty = TRUE)
   }
   
   return(register_table)
