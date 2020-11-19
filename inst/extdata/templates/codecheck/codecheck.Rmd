@@ -4,6 +4,7 @@ output:
     toc: false
     includes:
        in_header: codecheck-preamble.sty
+    latex_engine: xelatex
 ---
 
 ```{r rsetup,eval=TRUE,include=FALSE}
@@ -51,7 +52,6 @@ latex_summary_of_metadata(metadata)
 latex_summary_of_manifest(metadata, manifest_df, root)
 ```
 
-
 # Summary
 
 This code was (not) straightforward to codecheck.
@@ -70,10 +70,12 @@ This took ... minutes to complete on {a large workstation, my laptop}.
 
 \clearpage
 
-```{r, echo=FALSE, results="asis"}
+# Manifest files
+
+```{r, echo=FALSE, results="asis", width=100}
 for(i in c(1:nrow(manifest_df))) {
   path <- manifest_df[i,"dest"]
-  if(stringr::str_ends(path, "(png|pdf|jpg)")) {
+  if(stringr::str_ends(path, "(png|pdf|jpg|jpeg)")) {
     # include graphics with knitr has to happen at top level in chunks, see https://github.com/yihui/knitr/issues/1260
     # see also https://stackoverflow.com/questions/51268623/insert-images-using-knitrinclude-graphics-in-a-for-loop
     # knitr::include_graphics(manifest_df[1, "dest"], error = TRUE)
@@ -82,12 +84,17 @@ for(i in c(1:nrow(manifest_df))) {
     cat("**Comment:** ", manifest_df[i,"comment"], "\n\n")
     cat(paste0("![", "Test ", "](", path, ")\n"))
   } else if (stringr::str_ends(path, "(Rout|txt)")) {
-    cat("**File: ", basename(path), "**\n\n")
+    cat("## ", basename(path), "\n\n")
     cat("\\scriptsize \n\n", "```txt\n")
     cat(readLines(path), sep = "\n")
     cat("\n\n``` \n\n", "\\normalsize \n\n")
+  } else if (stringr::str_ends(path, "csv")) {
+    cat("## ", basename(path), "\n\n", "Summary statistics of tabular data:", "\n\n")
+    cat("\\scriptsize \n\n", "```txt\n")
+    print(skimr::skim(read.csv(path)))
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
   } else {
-    cat("**File: ", basename(path), "**\n\n")
+    cat("## ", basename(path), "\n\n")
     cat("Cannot inlcude output file as figure.")
   }
   

@@ -32,4 +32,5 @@ Remotes: eblondel/zen4R
 VignetteBuilder: knitr
 Suggests: 
     tinytest,
-    ttdo
+    ttdo,
+    skimr
