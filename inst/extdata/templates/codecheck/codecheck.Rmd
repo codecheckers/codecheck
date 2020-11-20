@@ -61,12 +61,29 @@ This code was (not) straightforward to codecheck.
 
 # CODECHECKER notes
 
+```{r git_sha, echo=FALSE}
+gitInfo <- ""
+if(git2r::in_repository(root)) {
+  gitInfo <- paste0("This check is based on the commit `", git2r::last_commit()$sha, "`.")
+}
+```
+
 The GitHub repo ...
+`r gitInfo`
 Code was written in ...
 I went through the following steps ...
 One hard problem was ...
+I added the following files ... using tools/methods ...
 
 This took ... minutes to complete on {a large workstation, my laptop}.
+
+## Recommendations
+
+I suggest to the authors to consider the following suggestions for their next publication or workflow:
+
+- ...
+
+(document here if any of the suggestions were taken up by the authors in the meantime - do not remove any, keep track of contributions via feedback)
 
 \clearpage
 
