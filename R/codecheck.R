@@ -61,11 +61,13 @@ codecheck_metadata <- function(root = getwd()) {
 ##' @param metadata - the codecheck metadata list.
 ##' @param dest_dir - folder where outputs are to be copied to (codecheck/outputs)
 ##' @param keep_full_path - TRUE to keep relative pathname of figures.
+##' @param overwrite - TRUE to overwrite the output files even if they already exist
 ##' @return A dataframe containing one row per manifest file.
 ##' @author Stephen Eglen
 ##' @export
 copy_manifest_files <- function(root, metadata, dest_dir,
-                                keep_full_path = FALSE) {
+                                keep_full_path = FALSE,
+                                overwrite = FALSE) {
   manifest = metadata$manifest
   outputs = sapply(manifest, function(x) x$file)
   src_files = file.path(root, outputs)
@@ -87,8 +89,10 @@ copy_manifest_files <- function(root, metadata, dest_dir,
         dir.create(dir, recursive=TRUE)
     }
   }
-  file.copy(src_files, dest_files, overwrite=TRUE)
-  dest_files
+  
+  if (overwrite) message("Overwriting output files: ", toString(dest_files))
+  file.copy(src_files, dest_files, overwrite = overwrite)
+  
   manifest_df = data.frame(output=outputs,
                            comment=sapply(manifest, function(x) x$comment),
                            dest=dest_files,

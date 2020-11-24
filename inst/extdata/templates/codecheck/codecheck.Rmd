@@ -8,14 +8,14 @@ output:
 ---
 
 ```{r rsetup,eval=TRUE,include=FALSE}
-require(codecheck)
-require(knitr)
-require(rprojroot)
-require(yaml)
-require(xtable)
-require(tibble)
-require(readr)
-options(width=60)
+require("codecheck")
+require("knitr")
+require("rprojroot")
+require("yaml")
+require("xtable")
+require("tibble")
+require("readr")
+options(width = 60)
 opts_chunk$set(cache=FALSE)
 
 root = find_root("codecheck.yml")
@@ -36,7 +36,9 @@ if ( !dir.exists(dest_dir) ) {
 }
 
 manifest_df = copy_manifest_files(root, metadata,
-                                  dest_dir, keep_full_path=FALSE)
+                                  dest_dir, keep_full_path = FALSE,
+                                  overwrite = FALSE,
+                                  )
 ```
 
 ---
