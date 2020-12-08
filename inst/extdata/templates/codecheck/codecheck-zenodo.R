@@ -3,7 +3,7 @@
 library("codecheck")
 
 ## This assumes your working directory is the codecheck directory
-metadata = read_yaml( "../codecheck.yml") 
+metadata = read_yaml( "../codecheck.yml")
 
 ## To interact with the Zenodo API, you need to create a token.  This should
 ## not be shared, or stored in this script.  Here I am using the Unix password
@@ -25,7 +25,7 @@ codecheck:::set_zenodo_metadata(zenodo, record, metadata)
 
 ## If you have already uploaded the certificate once, you will need to
 ## delete it via the web page before uploading it again.
-## codecheck:::set_zenodo_certificate(zenodo, record, "codecheck.pdf") 
+## codecheck:::set_zenodo_certificate(zenodo, record, "codecheck.pdf")
 
 ## You may also create a ZIP archive of of any data or code files that
 ## you think should be included in the CODECHECK's record.

@@ -1,6 +1,6 @@
 Package: codecheck
-Title: Helper Functions for CODECHECK project
-Version: 0.0.0.9005
+Title: Helper Functions for CODECHECK Project
+Version: 0.0.0.9010
 Authors@R: 
     c(person(given = "Stephen",
             family = "Eglen",
@@ -12,12 +12,25 @@ Authors@R:
            role = c("aut"),
            email = "daniel.nuest@uni-muenster.de",
            comment = c(ORCID = "0000-0002-0024-5046")))
-Description: This contains helper functions for CODECHECKERS (https://codecheck.org.uk).
+Description: This contains helper functions for CODECHECKERS (<https://codecheck.org.uk>).
 License: MIT + file LICENSE
-Depends: gh, R.cache, parsedate
-Imports: yaml, xtable, stringr, rmarkdown, knitr, jsonlite, assertthat
+Depends: R (>= 4.0.0), gh, R.cache, parsedate
+Imports: 
+    yaml,
+    xtable,
+    stringr,
+    rmarkdown,
+    knitr,
+    jsonlite,
+    assertthat,
+    rorcid,
+    osfr
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Remotes: eblondel/zen4R
 VignetteBuilder: knitr
+Suggests: 
+    tinytest,
+    ttdo,
+    skimr

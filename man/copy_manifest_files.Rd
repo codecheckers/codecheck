@@ -4,16 +4,24 @@
 \alias{copy_manifest_files}
 \title{Copy files from manifest into the codecheck folder and summarise.}
 \usage{
-copy_manifest_files(root, metadata, dest_dir, keep_full_path = FALSE)
+copy_manifest_files(
+  root,
+  metadata,
+  dest_dir,
+  keep_full_path = FALSE,
+  overwrite = FALSE
+)
 }
 \arguments{
-\item{root}{- Path to the root folder of the proejct.}
+\item{root}{- Path to the root folder of the project.}
 
 \item{metadata}{- the codecheck metadata list.}
 
 \item{dest_dir}{- folder where outputs are to be copied to (codecheck/outputs)}
 
 \item{keep_full_path}{- TRUE to keep relative pathname of figures.}
+
+\item{overwrite}{- TRUE to overwrite the output files even if they already exist}
 }
 \value{
 A dataframe containing one row per manifest file.

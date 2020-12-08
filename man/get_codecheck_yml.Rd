@@ -4,11 +4,14 @@
 \alias{get_codecheck_yml}
 \title{Get the CODECHECK configuration file from a repository}
 \usage{
-get_codecheck_yml(repo)
+get_codecheck_yml(x)
 }
 \arguments{
-\item{repo}{Repository in the codecheckers organisation on GitHub}
+\item{x}{Repository in the codecheckers organisation on GitHub}
 }
 \description{
 Get the CODECHECK configuration file from a repository
+}
+\author{
+Daniel Nüst
 }

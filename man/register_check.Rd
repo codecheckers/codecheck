@@ -4,16 +4,29 @@
 \alias{register_check}
 \title{Function for checking all entries in the register}
 \usage{
-register_check(register = read.csv("register.csv", as.is = TRUE))
+register_check(
+  register = read.csv("register.csv", as.is = TRUE),
+  from = 1,
+  to = nrow(register)
+)
 }
 \arguments{
 \item{register}{A `data.frame` with all required information for the register's view}
+
+\item{from}{The first register entry to check}
+
+\item{to}{The last register entry to check}
 }
 \description{
 This functions starts of a `data.frame` read from the local register file.
 }
 \details{
-Futher test ideas:
+**Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+
+Further test ideas:
 
 - Does the repo have a LICENSE?
+}
+\author{
+Daniel Nüst
 }

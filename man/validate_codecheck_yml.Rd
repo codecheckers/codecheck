@@ -7,17 +7,14 @@
 validate_codecheck_yml(configuration)
 }
 \arguments{
-\item{configuration}{R object of class `yaml`}
+\item{configuration}{R object of class `list`, or a path to a file}
 }
 \value{
-`TRUE` if the provided configuration is valid, `FALSE` otherwise.
+`TRUE` if the provided configuration is valid, otherwise the function stops with an error
 }
 \description{
 This functions checks "MUST"-contents only, see https://codecheck.org.uk/spec/config/latest/
 }
-\details{
-For each entry in the registry we can do some basic checks, e.g. like
-- checking the certificate numbers match
-- checking the yaml exists?
-- linting the yaml?
+\author{
+Daniel Nüst
 }

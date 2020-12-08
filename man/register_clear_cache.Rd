@@ -12,3 +12,6 @@ register_clear_cache()
 \description{
 Function for clearing the register cache
 }
+\author{
+Daniel Nüst
+}

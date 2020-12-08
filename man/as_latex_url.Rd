@@ -10,7 +10,7 @@ as_latex_url(x)
 \item{x}{- A string that may contain URLs that should be hyperlinked.}
 }
 \value{
-A string with the passed url as a latex `\url{}`
+A string with the passed URL as a latex `\url{http://the.url}`
 }
 \description{
 Wrap URL for LaTeX

@@ -4,10 +4,10 @@
 \alias{codecheck_metadata}
 \title{Return the metadata for the codecheck project in root folder of project}
 \usage{
-codecheck_metadata(root)
+codecheck_metadata(root = getwd())
 }
 \arguments{
-\item{root}{Path to the root folder of the project.}
+\item{root}{Path to the root folder of the project, defaults to current working directory}
 }
 \value{
 A list containing the metadata found in the codecheck.yml file
