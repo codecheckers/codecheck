@@ -19,9 +19,7 @@
     "R"
   ],
   "access_right": "open",
-  "license": {
-    "id": "MIT",
-  },
+  "license": "MIT",
   "upload_type": "software",
   "related_identifiers": [
       {
