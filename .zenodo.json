@@ -1,0 +1,40 @@
+{
+  "creators": [
+    {
+      "affiliation": "Department of Applied Mathematics and Theoretical Physics, University of Cambridge, UK",
+      "name": "Eglen, Stephen",
+      "orcid": "0000-0001-8607-8025"
+    },
+    {
+      "affiliation": "Institute for Geoinformatics, University of Münster, Germany",
+      "name": "Nüst, Daniel",
+      "orcid": "0000-0002-0024-5046"
+    }
+  ],
+  "keywords": [
+    "CODECHECK",
+    "reproducible research",
+    "reproducibility",
+    "Open Science",
+    "R"
+  ],
+  "access_right": "open",
+  "license": {
+    "id": "MIT",
+  },
+  "upload_type": "software",
+  "related_identifiers": [
+      {
+        "identifier": "https://github.com/codecheckers/codecheck",
+        "relation": "isDerivedFrom",
+        "scheme": "url"
+      },
+      {
+        "identifier": "https://codecheck.org.uk",
+        "relation": "isSupplementTo",
+        "scheme": "url"
+      }
+    ],
+  "description": "<p>R package with helper functions for writing CODECHECK certificates about code executions as part of peer review, see https://codecheck.org.uk. Also includes functions for managing the CODECHECK register at https://codecheck.org.uk/register.</p>"
+  "title": "codecheck R package: Helper Functions for CODECHECK Project"
+}
