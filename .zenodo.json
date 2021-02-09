@@ -34,7 +34,5 @@
         "relation": "isSupplementTo",
         "scheme": "url"
       }
-    ],
-  "description": "<p>R package with helper functions for writing CODECHECK certificates about code executions as part of peer review, see https://codecheck.org.uk. Also includes functions for managing the CODECHECK register at https://codecheck.org.uk/register.</p>"
-  "title": "codecheck R package: Helper Functions for CODECHECK Project"
+    ]
 }
