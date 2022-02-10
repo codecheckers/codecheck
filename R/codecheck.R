@@ -227,7 +227,6 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
   urls = sub(root, sprintf('%s/blob/master', metadata$repository), manifest_df$dest)
   m1 = sprintf('\\href{%s}{\\path{%s}}',
                urls,
-               m[,1],
                m[,1])
   m[,1] = m1
   names(m) = c("Output", "Comment", "Size (b)")
