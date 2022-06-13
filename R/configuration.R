@@ -187,8 +187,15 @@ validate_codecheck_yml <- function(configuration) {
   
   # the repository URL should exist
   if(assertthat::has_name(codecheck_yml, "repository")) {
-    assertthat::assert_that(url_exists(codecheck_yml$repository, quiet = TRUE) == TRUE,
-                            msg = paste0(codecheck_yml$repository, " - URL does not exist"))
+    if(is.vector(codecheck_yml$repository)) {
+      for(r in codecheck_yml$repository) {
+        assertthat::assert_that(url_exists(r, quiet = TRUE) == TRUE,
+                                msg = paste0(r, " - URL does not exist"))  
+      }
+    } else {
+      assertthat::assert_that(url_exists(codecheck_yml$repository, quiet = TRUE) == TRUE,
+                              msg = paste0(codecheck_yml$repository, " - URL does not exist"))
+    }
   }
   
   return(TRUE)

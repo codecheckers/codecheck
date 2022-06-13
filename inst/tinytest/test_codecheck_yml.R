@@ -26,6 +26,10 @@ expect_error(validate_codecheck_yml("yaml/author_name_missing/codecheck.yml"),
 expect_error(validate_codecheck_yml("yaml/codechecker_name_missing/codecheck.yml"),
              pattern = "codecheckers must have a 'name'")
 
-# urls ----
+# repository/ies ----
 expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck.yml"),
              pattern = "URL does not exist")
+expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-with-list.yml"),
+             pattern = "does_not_exist")
+expect_silent(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-valid.yml"))
+expect_true(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-valid.yml"))
