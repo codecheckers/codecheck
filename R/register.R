@@ -27,7 +27,7 @@ register_clear_cache <- function() {
 #' @importFrom parsedate parse_date
 #' @importFrom rmarkdown render
 #' @importFrom knitr kable
-#' @importFrom utils capture.output read.csv
+#' @importFrom utils capture.output read.csv tail
 #' @import     jsonlite 
 #' 
 #' @export
@@ -200,7 +200,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
       path = "docs/register.json",
       pretty = TRUE)
     
-    jsonlite::write_json(tail(register_table, 10)[, c(
+    jsonlite::write_json(utils::tail(register_table, 10)[, c(
       "Certificate",
       "Repository Link",
       "Type",

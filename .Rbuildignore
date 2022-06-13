@@ -4,3 +4,5 @@
 ^\.httr-oauth$
 ^\.travis\.yml$
 ^\.github$
+^\.zenodo\.json$
+^CITATION\.cff$
