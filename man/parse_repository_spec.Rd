@@ -20,6 +20,7 @@ Supported variants:
 
 - `osf::ABC12`
 - `github::codecheckers/Piccolo-2020`
+- `gitlab::cdchck/Piccolo-2020`
 }
 \author{
 Daniel Nüst

@@ -76,6 +76,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                                      } else if (spec[["type"]] == "osf") {
                                        urrl <- paste0("https://osf.io/", spec[["repo"]])
                                        paste0("[", spec[["repo"]], "](", urrl, ")")
+                                     } else if (spec[["type"]] == "gitlab") {
+                                       urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+                                       paste0("[", spec[["repo"]], "](", urrl, ")")
                                      } else {
                                        repository
                                      }
@@ -130,6 +133,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                                             } else if (spec[["type"]] == "osf") {
                                               urrl <- paste0("https://osf.io/", spec[["repo"]])
                                               paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
+                                            } else if (spec[["type"]] == "gitlab") {
+                                              urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+                                              paste0("<i class='fa fa-gitlab'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
                                             } else {
                                               repository
                                             }
@@ -183,6 +189,8 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
           paste0("https://github.com/", spec[["repo"]])
         } else if (spec[["type"]] == "osf") {
           paste0("https://osf.io/", spec[["repo"]])
+        } else if (spec[["type"]] == "gitlab") {
+          paste0("https://gitlab.com/", spec[["repo"]])
         } else {
           repository
         }

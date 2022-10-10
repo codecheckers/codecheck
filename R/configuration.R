@@ -7,7 +7,8 @@ get_codecheck_yml_uncached <- function(x) {
   
   result <- switch (spec[["type"]],
     "github" = get_codecheck_yml_github(spec[["repo"]]),
-    "osf" = get_codecheck_yml_osf(spec[["repo"]])
+    "osf" = get_codecheck_yml_osf(spec[["repo"]]),
+    "gitlab" = get_codecheck_yml_gitlab(spec[["repo"]])
   )
   
   return(result)
@@ -41,7 +42,7 @@ get_codecheck_yml_github <- function(x) {
     config_file <- yaml::read_yaml(text = config_file_response$message)
     return(config_file)
   } else {
-    warning("codecheck.yml not found in list of repository files for ", x)
+    warning("codecheck.yml not found in repository ", x)
     return(NULL)
   }
 }
@@ -63,7 +64,28 @@ get_codecheck_yml_osf <- function(x) {
     file.remove(local_file)
     return(config_file)
   } else {
-    warning("codecheck.yml not found in list of repository files for https://osf.io/", x)
+    warning("codecheck.yml not found in repository https://osf.io/", x)
+    return(NULL)
+  }
+}
+
+#' Retrieve a codecheck.yml file from an GitLab.com project
+#' 
+#' It seems https://statnmap.github.io/gitlabr/ always requires authentication
+#' 
+#' @author Daniel Nüst
+#' @param x the project name on GitLab.com
+#' @importFrom httr GET content
+#' @importFrom yaml yaml.load
+get_codecheck_yml_gitlab <- function(x) {
+  response <- httr::GET(paste0("https://gitlab.com/", x, "/-/raw/main/codecheck.yml?inline=false"))
+  
+  if (response$status == 200) {
+    content <- httr::content(response, as = "text", encoding = "UTF-8")
+    config_file <- yaml::yaml.load(content)
+    return(config_file)
+  } else {
+    warning("codecheck.yml not found in repository https://gitlab.com/", x)
     return(NULL)
   }
 }
@@ -76,6 +98,7 @@ get_codecheck_yml_osf <- function(x) {
 #' 
 #' - `osf::ABC12`
 #' - `github::codecheckers/Piccolo-2020`
+#' - `gitlab::cdchck/Piccolo-2020`
 #' 
 #' @author Daniel Nüst
 #' @param x the repository specification to parse
@@ -83,10 +106,6 @@ get_codecheck_yml_osf <- function(x) {
 parse_repository_spec <- function(x) {
   pieces <- strsplit(x, "::", fixed = TRUE)[[1]]
   
-  #if (length(pieces) == 1) {
-    #type <- "github"
-    #repo <- paste0("codecheckers/", pieces)
-  #} else
   if (length(pieces) == 2) {
     type <- pieces[1]
     repo <- pieces[2]
@@ -94,7 +113,7 @@ parse_repository_spec <- function(x) {
     stop("Malformed repository specification '", x, "'")
   }
   
-  if (! type %in% c("github", "osf")) {
+  if (! type %in% c("github", "osf", "gitlab")) {
     stop("Unsupported repository type '", type, "'")
   }
   
