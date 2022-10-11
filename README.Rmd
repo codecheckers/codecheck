@@ -31,11 +31,9 @@ Furthermore, the package contains some helper functions for managing the [CODECH
 
 The package is not on [CRAN](https://CRAN.R-project.org) yet.
 Install the development version from [GitHub](https://github.com/codecheckers/codecheck) with:
-Note this currently requires the development version of `zen4R`.
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("eblondel/zen4R")
 remotes::install_github("codecheckers/codecheck")
 ```
 
@@ -56,5 +54,5 @@ build_install_test(".")
 
 ## License
 
-Copyright 2020 S. Eglen & D. Nüst.
+Copyright 2022 S. Eglen & D. Nüst.
 The `codecheck` package is published under the MIT license, see file `LICENSE`.

@@ -25,12 +25,10 @@ register](https://codecheck.org.uk/register/).
 
 The package is not on [CRAN](https://CRAN.R-project.org) yet. Install
 the development version from
-[GitHub](https://github.com/codecheckers/codecheck) with: Note this
-currently requires the development version of `zen4R`.
+[GitHub](https://github.com/codecheckers/codecheck) with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("eblondel/zen4R")
 remotes::install_github("codecheckers/codecheck")
 ```
 
@@ -52,5 +50,5 @@ build_install_test(".")
 
 ## License
 
-Copyright 2020 S. Eglen & D. Nüst. The `codecheck` package is published
+Copyright 2022 S. Eglen & D. Nüst. The `codecheck` package is published
 under the MIT license, see file `LICENSE`.

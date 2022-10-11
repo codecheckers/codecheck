@@ -160,7 +160,10 @@ validate_codecheck_yml <- function(configuration) {
   # MUST have manifest
   assertthat::assert_that(assertthat::has_name(codecheck_yml, "manifest"),
                           msg = paste0("codecheck.yml must have a root-level node 'manifest'",
-                                       "but the available ones are: ", names(codecheck_yml)))
+                                       "but the available ones are: ",
+                                       toString(names(codecheck_yml))
+                                       )
+                          )
   
   # each element of the manifest MUST have a file
   sapply(X = codecheck_yml$manifest, FUN = function(manifest_item) {

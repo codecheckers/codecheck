@@ -269,12 +269,7 @@ cite_certificate <- function(metadata) {
   cat(citation)
 }
 
-
-
-######################################################################
-## Code for woking with zenodo records.
-
-
+# Zenodo records interaction ----
 
 ##' Create a new Zenodo record and return its pre-assigned DOI
 ##'
@@ -283,6 +278,7 @@ cite_certificate <- function(metadata) {
 ##' @param zen - Object from zen4R to interact with Zenodo
 ##' @return Number of zenodo record created.
 ##' @author Stephen Eglen
+##' @importFrom zen4R ZenodoRecord
 ##' 
 ##' @export
 create_zenodo_record <- function(zen) {
@@ -340,7 +336,6 @@ set_zenodo_metadata <- function(zen, record, metadata) {
                     orcid = metadata$codechecker[[i]]$ORCID)
   }
 
-
   description_text = paste("CODECHECK certificate for paper:",
                            metadata$paper$title)
   repo_url = gsub("[<>]", "", metadata$repository)
@@ -357,12 +352,9 @@ set_zenodo_metadata <- function(zen, record, metadata) {
 
   draft <- zen$depositRecord(draft)
   cat(paste0("Check your record online at https://zenodo.org/deposit/",
-             ##str_match(record, "10\\.5281/zenodo\\.([0-9]{7,})")[2],
              record,
              "\n"))
 }
-
-
 
 ##' Upload the CODECHECK certificate to Zenodo.
 ##'
@@ -384,6 +376,3 @@ set_zenodo_certificate <- function(zen, record, certificate) {
 
 ## We deliberately do not provide a function to publish the certificate.
 ## You should go check it yourself.
-
-
-

@@ -20,4 +20,3 @@ repository: https://github.com/codecheckers/test
 check_time: "2020-04-13 10:00:00"
 certificate: 9999-999
 report: https://not_a_doi.com/1234
-
