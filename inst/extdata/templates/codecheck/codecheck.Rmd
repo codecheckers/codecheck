@@ -37,7 +37,7 @@ if ( !dir.exists(dest_dir) ) {
 
 manifest_df = copy_manifest_files(root, metadata,
                                   dest_dir, keep_full_path = FALSE,
-                                  overwrite = FALSE,
+                                  overwrite = FALSE
                                   )
 ```
 
