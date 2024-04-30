@@ -57,39 +57,8 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE),
 
     # check certificate IDs if there is a codecheck.yml
     codecheck_yaml <- get_codecheck_yml(entry$Repository)
-    if (!is.null(codecheck_yaml)) {
-      # validate config file
-      validate_codecheck_yml(codecheck_yaml)
-
-      # check certificate ID
-      if (entry$Certificate != codecheck_yaml$certificate) {
-        stop(
-          "Certificate mismatch, register: ", entry$Certificate,
-          " vs. repo ", codecheck_yaml$certificate
-        )
-      }
-    } else {
-      warning(entry$Certificate, " does not have a codecheck.yml file")
-    }
-
-    # check issue status
-    if (!is.na(entry$Issue)) {
-      # get the status and labels from an issue
-      issue <- gh::gh("GET /repos/codecheckers/:repo/issues/:issue",
-        repo = "register",
-        issue = entry$Issue
-      )
-      issue$state
-      issue$labels
-      if (issue$state != "closed") {
-        warning(
-          entry$Certificate, " issue is still open: ",
-          "<https://github.com/codecheckers/register/issues/",
-          entry$Issue, ">"
-        )
-      }
-    }
-
+    check_certificate_id(codecheck_yaml)
+    check_issue_status(entry)
     cat("Completed checking registry entry", toString(register[i, "Certificate"]), "\n")
   }
 }
