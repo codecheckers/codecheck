@@ -11,7 +11,7 @@ load_template_file <- function(template_path){
 
 adjust_markdown_title <- function(markdown_table, register_table_name){
   if (grepl("venue", register_table_name)){
-    venue_name <- sub("^venue_", "", register_table_name)
+    venue_name <- sub("^venue", "", register_table_name)
     # Replacing all "_" with an empty space
     venue_name <- gsub("_", " ", venue_name)
     title_addition <- paste("for", venue_name, "")
@@ -52,7 +52,8 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
 
     # Writing the output
     if (grepl("venue", register_table_name)){
-      folder_venue_name <- sub("^venue_", "", register_table_name)
+      folder_venue_name <- sub("^venue", "", register_table_name)
+      folder_venue_name <- trimws(folder_venue_name) # Removing trailing space
       folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
       
       output_file_path <- paste("docs/venues/", folder_venue_name, sep = "")

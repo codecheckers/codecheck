@@ -7,7 +7,7 @@ create_list_venue_sorted_register_tables <- function(register_table) {
     for (venue in list_venues) {
         sorted_register_table <- register_table[register_table$`Type`==venue, ]
         rownames(sorted_register_table) <- NULL  # Reset row names to remove row numbers
-        list_venue_sorted_register_tables[[paste("venue_", venue, "")]] <- sorted_register_table
-    }     
+        list_venue_sorted_register_tables[[paste("venue", venue, " ")]] <- sorted_register_table
+    }    
     return(list_venue_sorted_register_tables)
 }
