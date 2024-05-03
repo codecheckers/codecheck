@@ -1,21 +1,60 @@
+load_template_file <- function(template_path){
+  if (file.exists(template_path)){
+    template_content <- readLines(template_path)
+  }
+
+  else{
+    warning("No register table template found")
+  }
+  return(template_content)
+}
+
+adjust_markdown_title <- function(markdown_table, register_table_name){
+  if (grepl("venue", register_table_name)){
+    venue_name <- sub("^venue_", "", register_table_name)
+    # Replacing all "_" with an empty space
+    venue_name <- gsub("_", " ", modified_string)
+    title_addition <- paste("for", venue_name, "")
+  }
+
+  else{
+    title_addition <- ""
+  }
+
+  markdown_table <- gsub("\\$title_addition\\$", title_addition)
+  return(markdown_table)
+}
+
 #' Function for rendering the register markdown file.
 #' 
 #' @param register_table The register table
 #' @param md_columns_widths The column widths for the markdown file
 #' @return None
 
-render_register_md <- function(register_table, md_columns_widths) {
-  capture.output(
-    cat("---\ntitle: CODECHECK Register\n---"),
-    knitr::kable(register_table, format = "markdown"),
-    file = "register.md"
-  )
-  # hack to reduce column width of 4th column
-  md_table <- readLines("register.md")
-  md_table[6] <- md_columns_widths
-  writeLines(md_table, "docs/register.md")
-  file.remove("register.md")
-  # TODO: fix table column width, e.g. via using a register.Rm
+render_register_md <- function(list_register_tables, md_columns_widths, template_path = "template_register.md") {
+  template_content <- load_template_file(template_path)
+
+  # Looping over the list of register tables and creating a md file for each
+  for (register_table_name in names(list_register_tables)) {
+    register_table <- list_register_tables[[register_table_name]]
+    markdown_table <- capture.output(kable(register_table, format = "markdown"))
+
+    markdown_table <- adjust_markdown_title(template_content)
+
+    # Fill in the content
+    filled_content <- gsub("\\$content\\$", paste(markdown_table, collapse = "\n"), template_content)
+    # Adding column width
+    filled_content[6] <- md_columns_widths
+
+    # Writing the output
+    if (grepl("venue", register_table_name)){
+      output_file_path <- paste("docs/venue/", venue_name, sep = "")
+    }
+    else {
+      output_file_path <- "docs/register.md"
+    }
+    writeLines(filled_content, output_file_path)
+  }
 }
 
 #' Function for rendering the register html file. 
