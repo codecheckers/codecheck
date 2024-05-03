@@ -4,7 +4,7 @@ load_template_file <- function(template_path){
   }
 
   else{
-    warning("No register table template found")
+    stop("No register table template found")
   }
   return(template_content)
 }
@@ -13,7 +13,7 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
   if (grepl("venue", register_table_name)){
     venue_name <- sub("^venue_", "", register_table_name)
     # Replacing all "_" with an empty space
-    venue_name <- gsub("_", " ", modified_string)
+    venue_name <- gsub("_", " ", venue_name)
     title_addition <- paste("for", venue_name, "")
   }
 
@@ -21,7 +21,7 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
     title_addition <- ""
   }
 
-  markdown_table <- gsub("\\$title_addition\\$", title_addition)
+  markdown_table <- gsub("\\$title_addition\\$", title_addition, markdown_table)
   return(markdown_table)
 }
 
@@ -31,29 +31,42 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
 #' @param md_columns_widths The column widths for the markdown file
 #' @return None
 
-render_register_md <- function(list_register_tables, md_columns_widths, template_path = "template_register.md") {
+render_register_md <- function(list_register_tables, md_columns_widths) {
+  template_path <- system.file("extdata", "template_register.md", package = "codecheck")
   template_content <- load_template_file(template_path)
 
   # Looping over the list of register tables and creating a md file for each
   for (register_table_name in names(list_register_tables)) {
     register_table <- list_register_tables[[register_table_name]]
-    markdown_table <- capture.output(kable(register_table, format = "markdown"))
-
-    markdown_table <- adjust_markdown_title(template_content)
-
+    
+    markdown_table <- template_content
+    markdown_table <- adjust_markdown_title(markdown_table, register_table_name)
+    
     # Fill in the content
-    filled_content <- gsub("\\$content\\$", paste(markdown_table, collapse = "\n"), template_content)
+    markdown_content <- capture.output(kable(register_table, format = "markdown"))
+    markdown_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), markdown_table)
+
     # Adding column width
-    filled_content[6] <- md_columns_widths
+    markdown_table <- unlist(strsplit(markdown_table, "\n", fixed = TRUE))
+    markdown_table[7] <- md_columns_widths
 
     # Writing the output
     if (grepl("venue", register_table_name)){
-      output_file_path <- paste("docs/venue/", venue_name, sep = "")
+      folder_venue_name <- sub("^venue_", "", register_table_name)
+      folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
+      
+      output_file_path <- paste("docs/venues/", folder_venue_name, sep = "")
+
+      if (!dir.exists(output_file_path)) {
+        dir.create(output_file_path, recursive = TRUE, showWarnings = TRUE)
+  }
     }
     else {
-      output_file_path <- "docs/register.md"
+      output_file_path <- "docs"
     }
-    writeLines(filled_content, output_file_path)
+
+    output_file_path <- paste(output_file_path, "/register.md", sep = "")
+    writeLines(markdown_table, output_file_path)
   }
 }
 
