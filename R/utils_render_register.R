@@ -1,24 +1,18 @@
 load_template_file <- function(template_path){
-  if (file.exists(template_path)){
-    template_content <- readLines(template_path)
-  }
-
-  else{
+  if (!file.exists(template_path)){
     stop("No register table template found")
   }
+
+  template_content <- readLines(template_path)
   return(template_content)
 }
 
 adjust_markdown_title <- function(markdown_table, register_table_name){
+  title_addition <- ""
+  
   if (grepl("venue", register_table_name)){
     venue_name <- sub("^venue", "", register_table_name)
-    # Replacing all "_" with an empty space
-    venue_name <- gsub("_", " ", venue_name)
     title_addition <- paste("for", venue_name, "")
-  }
-
-  else{
-    title_addition <- ""
   }
 
   markdown_table <- gsub("\\$title_addition\\$", title_addition, markdown_table)
@@ -39,8 +33,7 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
   for (register_table_name in names(list_register_tables)) {
     register_table <- list_register_tables[[register_table_name]]
     
-    markdown_table <- template_content
-    markdown_table <- adjust_markdown_title(markdown_table, register_table_name)
+    markdown_table <- adjust_markdown_title(template_content, register_table_name)
     
     # Fill in the content
     markdown_content <- capture.output(kable(register_table, format = "markdown"))
@@ -57,16 +50,17 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
       folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
       
       output_file_path <- paste("docs/venues/", folder_venue_name, sep = "")
-
-      if (!dir.exists(output_file_path)) {
-        dir.create(output_file_path, recursive = TRUE, showWarnings = TRUE)
-  }
     }
     else {
       output_file_path <- "docs"
     }
 
+    # Creating the directory if it does not exist
+    if (!dir.exists(output_file_path)) {
+      dir.create(output_file_path, recursive = TRUE, showWarnings = TRUE)
+    }
     output_file_path <- paste(output_file_path, "/register.md", sep = "")
+
     writeLines(markdown_table, output_file_path)
   }
 }
