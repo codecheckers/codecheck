@@ -19,12 +19,24 @@
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
+                            sort_by = c("venue"),
                             outputs = c("html", "md", "json")) {
   register_table <- preprocess_register(register)
 
-  md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
+  list_register_tables <- c()
+  list_register_tables[["original"]] <- register_table
 
-  if ("md" %in% outputs) render_register_md(register_table, md_columns_widths)
+  # Sorting the tables 
+  for (sort in sort_by) {
+    if (sort == "venue") {
+      list_venue_sorted_register_tables <- create_list_venue_sorted_register_tables(register_table)
+      list_register_tables <- c(list_register_tables, list_venue_sorted_register_tables)
+    }
+  }
+
+  # Rendering files
+  md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
+  if ("md" %in% outputs) render_register_md(list_register_tables, md_columns_widths)
   if ("html" %in% outputs) render_register_html(register_table, register, md_columns_widths)
   if ("json" %in% outputs) render_register_json(register_table, register)
 
