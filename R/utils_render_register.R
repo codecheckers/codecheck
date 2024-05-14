@@ -25,6 +25,18 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
 #' @param md_columns_widths The column widths for the markdown file
 #' @return None
 
+# Helper function to determine output paths based on the table name
+determine_output_directory <- function(register_table_name) {
+  if (grepl("venue", register_table_name)){
+    folder_venue_name <- sub("^venue", "", register_table_name)
+    folder_venue_name <- trimws(folder_venue_name) # Removing trailing space
+    folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
+    return(paste0("docs/venues/", folder_venue_name))
+  } else {
+    return(paste0("docs"))
+  }
+}
+
 render_register_md <- function(list_register_tables, md_columns_widths) {
   template_path <- system.file("extdata", "template_register.md", package = "codecheck")
   template_content <- load_template_file(template_path)
@@ -124,23 +136,11 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
     rmarkdown::render(
       input = temp_md_file,
       output_file = output_file_path,
-      output_yaml = paste0("html_document.yml")
+      output_yaml = "html_document.yml"
     )
 
     # Optionally remove the temporary markdown file
     file.remove(temp_md_file)
-  }
-}
-
-# Helper function to determine output paths based on the table name
-determine_output_directory <- function(register_table_name) {
-  if (grepl("venue", register_table_name)){
-    folder_venue_name <- sub("^venue", "", register_table_name)
-    folder_venue_name <- trimws(folder_venue_name) # Removing trailing space
-    folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
-    return(paste0("docs/venues/", folder_venue_name))
-  } else {
-    return(paste0("docs"))
   }
 }
 
