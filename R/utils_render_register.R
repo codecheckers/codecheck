@@ -44,17 +44,7 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
     markdown_table[7] <- md_columns_widths
 
     # Writing the output
-    if (grepl("venue", register_table_name)){
-      folder_venue_name <- sub("^venue", "", register_table_name)
-      folder_venue_name <- trimws(folder_venue_name) # Removing trailing space
-      folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
-      
-      output_file_path <- paste("docs/venues/", folder_venue_name, sep = "")
-    }
-    else {
-      output_file_path <- "docs"
-    }
-
+    output_file_path <- determine_output_directory(register_table_name)
     # Creating the directory if it does not exist
     if (!dir.exists(output_file_path)) {
       dir.create(output_file_path, recursive = TRUE, showWarnings = TRUE)
@@ -72,51 +62,86 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
 #' @param md_columns_widths The column widths for the markdown file
 #' @return None
 
-render_register_html <- function(register_table, register, md_columns_widths) {
-  # add icons to the Repository column for HTML output, use a copy of the register.md
-  # so the inline HTML is not in the .md output
-  register_table$Repository <- sapply(
-    X = register$Repository,
-    FUN = function(repository) {
-      spec <- parse_repository_spec(repository)
 
-      if (!any(is.na(spec))) {
-        urrl <- "#"
+render_register_html <- function(list_register_tables, md_columns_widths) {
+  template_path <- system.file("extdata", "template_register.md", package = "codecheck")
+  template_content <- load_template_file(template_path)
 
-        if (spec[["type"]] == "github") {
-          urrl <- paste0("https://github.com/", spec[["repo"]])
-          paste0("<i class='fa fa-github'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
-        } else if (spec[["type"]] == "osf") {
-          urrl <- paste0("https://osf.io/", spec[["repo"]])
-          paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
-        } else if (spec[["type"]] == "gitlab") {
-          urrl <- paste0("https://gitlab.com/", spec[["repo"]])
-          paste0("<i class='fa fa-gitlab'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
+  # Loop over each register table
+  for (register_table_name in names(list_register_tables)) {
+    register_table <- list_register_tables[[register_table_name]]
+
+    # Adjust the title in the markdown template
+    markdown_table <- adjust_markdown_title(template_content, register_table_name)
+
+    # Add icons to the Repository column for HTML output, use a copy of the register.md
+    register_table$Repository <- sapply(
+      X = register_table$Repository,
+      FUN = function(repository) {
+        spec <- parse_repository_spec(repository)
+        if (!any(is.na(spec))) {
+          urrl <- "#"
+          if (spec[["type"]] == "github") {
+            urrl <- paste0("https://github.com/", spec[["repo"]])
+            return(paste0("<i class='fa fa-github'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")"))
+          } else if (spec[["type"]] == "osf") {
+            urrl <- paste0("https://osf.io/", spec[["repo"]])
+            return(paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")"))
+          } else if (spec[["type"]] == "gitlab") {
+            urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+            return(paste0("<i class='fa fa-gitlab'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")"))
+          } else {
+            return(repository)
+          }
         } else {
-          repository
+          return(repository)
         }
-      } else {
-        repository
       }
-    }
-  )
-  capture.output(
-    cat("---\ntitle: CODECHECK Register\n---"),
-    knitr::kable(register_table, format = "markdown"),
-    file = "docs/register-icons.md"
-  )
-  md_table <- readLines("docs/register-icons.md")
-  file.remove("docs/register-icons.md")
-  md_table[6] <- md_columns_widths
-  writeLines(md_table, "docs/register-icons.md")
+    )
 
-  rmarkdown::render(
-    input = "docs/register-icons.md",
-    # next paths are relative to input file
-    output_yaml = "html_document.yml",
-    output_file = "index.html"
-  )
-  file.remove("docs/register-icons.md")
+    # Capture the HTML output in a markdown table first
+    markdown_content <- capture.output(knitr::kable(register_table, format = "markdown"))
+    markdown_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), markdown_table)
+
+    # Adjust column width
+    markdown_table <- unlist(strsplit(markdown_table, "\n", fixed = TRUE))
+    markdown_table[7] <- md_columns_widths
+
+    # Determine the output path
+    output_file_path <- determine_output_directory(register_table_name, "html")
+    output_file_path <- paste(output_file_path, "/index.html", sep = "")
+
+    # Create the directory if it does not exist
+    if (!dir.exists(dirname(output_file_path))) {
+      dir.create(dirname(output_file_path), recursive = TRUE, showWarnings = TRUE)
+    }
+
+    # Save the modified markdown to a temporary file
+    temp_md_file <- tempfile(fileext = ".md")
+    writeLines(markdown_table, temp_md_file)
+
+    # Render HTML from markdown
+    rmarkdown::render(
+      input = temp_md_file,
+      output_file = output_file_path,
+      output_yaml = paste0("html_document.yml")
+    )
+
+    # Optionally remove the temporary markdown file
+    file.remove(temp_md_file)
+  }
+}
+
+# Helper function to determine output paths based on the table name
+determine_output_directory <- function(register_table_name) {
+  if (grepl("venue", register_table_name)){
+    folder_venue_name <- sub("^venue", "", register_table_name)
+    folder_venue_name <- trimws(folder_venue_name) # Removing trailing space
+    folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
+    return(paste0("docs/venues/", folder_venue_name))
+  } else {
+    return(paste0("docs"))
+  }
 }
 
 #' Function for rendering the register json file. 
