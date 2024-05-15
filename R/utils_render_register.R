@@ -1,10 +1,10 @@
-load_template_file <- function(template_path){
+load_markdown_table_template <- function(template_path){
   if (!file.exists(template_path)){
     stop("No register table template found")
   }
 
-  template_content <- readLines(template_path)
-  return(template_content)
+  markdown_table_template <- readLines(template_path)
+  return(markdown_table_template)
 }
 
 adjust_markdown_title <- function(markdown_table, register_table_name){
@@ -19,12 +19,6 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
   return(markdown_table)
 }
 
-#' Function for rendering the register markdown file.
-#' 
-#' @param register_table The register table
-#' @param md_columns_widths The column widths for the markdown file
-#' @return None
-
 # Helper function to determine output paths based on the table name
 determine_output_directory <- function(register_table_name) {
   if (grepl("venue", register_table_name)){
@@ -37,31 +31,105 @@ determine_output_directory <- function(register_table_name) {
   }
 }
 
+#' Function for adding repository links to each report in the register table.
+#' 
+#' @param register_table The register table
+#' @return register_table
+
+add_repository_links_md <- function(register_table) {
+  register_table$Repository <- sapply(
+    X = register_table$Repository,
+    FUN = function(repository) {
+      spec <- parse_repository_spec(repository)
+      if (!any(is.na(spec))) {
+        urrl <- "#"
+
+        switch(spec["type"],
+          "github" = {
+            urrl <- paste0("https://github.com/", spec[["repo"]])
+            paste0("[", spec[["repo"]], "](", urrl, ")")
+          },
+          "osf" = {
+            urrl <- paste0("https://osf.io/", spec[["repo"]])
+            paste0("[", spec[["repo"]], "](", urrl, ")")
+          },
+          "gitlab" = {
+            urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+            paste0("[", spec[["repo"]], "](", urrl, ")")
+          },
+
+          # Type is none of the above
+          {
+            repository
+          }
+        )
+      } else {
+        repository
+      }
+    }
+  )
+  return(register_table)
+}
+
+#' Function for adding repository links to each report in the register table.
+#' 
+#' @param register_table The register table
+#' @return register_table
+
+add_repository_links_html <- function(register_table) {
+  register_table$Repository <- sapply(
+    X = register_table$Repository,
+    FUN = function(repository) {
+      spec <- parse_repository_spec(repository)
+      if (!any(is.na(spec))) {
+        urrl <- "#"
+        if (spec[["type"]] == "github") {
+          urrl <- paste0("https://github.com/", spec[["repo"]])
+          paste0("<i class='fa fa-github'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
+        } else if (spec[["type"]] == "osf") {
+          urrl <- paste0("https://osf.io/", spec[["repo"]])
+          paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
+        } else if (spec[["type"]] == "gitlab") {
+          urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+          paste0("<i class='fa fa-gitlab'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
+        } else {
+          repository
+        }
+      } else {
+        repository
+      }
+    }
+  )
+  return(register_table)
+}
 render_register_md <- function(list_register_tables, md_columns_widths) {
-  template_path <- system.file("extdata", "template_register.md", package = "codecheck")
-  template_content <- load_template_file(template_path)
+  template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
 
   # Looping over the list of register tables and creating a md file for each
   for (register_table_name in names(list_register_tables)) {
+    markdown_table <- load_markdown_table_template(template_path)
     register_table <- list_register_tables[[register_table_name]]
-    
-    markdown_table <- adjust_markdown_title(template_content, register_table_name)
+
+    register_table <- add_repository_links_md(register_table)
     
     # Fill in the content
     markdown_content <- capture.output(kable(register_table, format = "markdown"))
+    
+    markdown_table <- adjust_markdown_title(markdown_table, register_table_name)
     markdown_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), markdown_table)
 
-    # Adding column width
+    # Adjusting the column widths
     markdown_table <- unlist(strsplit(markdown_table, "\n", fixed = TRUE))
-    markdown_table[7] <- md_columns_widths
 
-    # Writing the output
-    output_file_path <- determine_output_directory(register_table_name)
-    # Creating the directory if it does not exist
-    if (!dir.exists(output_file_path)) {
-      dir.create(output_file_path, recursive = TRUE, showWarnings = TRUE)
+    alignment_line_index <- grep("^\\|:---", markdown_table)
+    markdown_table[alignment_line_index] <- md_columns_widths
+
+    # Determining the directory and saving the file
+    output_dir <- determine_output_directory(register_table_name)
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
     }
-    output_file_path <- paste(output_file_path, "/register.md", sep = "")
+    output_file_path <- paste(output_dir, "/register.md", sep = "")
 
     writeLines(markdown_table, output_file_path)
   }
@@ -76,71 +144,48 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
 
 
 render_register_html <- function(list_register_tables, md_columns_widths) {
-  template_path <- system.file("extdata", "template_register.md", package = "codecheck")
-  template_content <- load_template_file(template_path)
+  template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
 
   # Loop over each register table
   for (register_table_name in names(list_register_tables)) {
+    markdown_table <- load_markdown_table_template(template_path)
     register_table <- list_register_tables[[register_table_name]]
-
-    # Adjust the title in the markdown template
-    markdown_table <- adjust_markdown_title(template_content, register_table_name)
-
+    
     # Add icons to the Repository column for HTML output, use a copy of the register.md
-    register_table$Repository <- sapply(
-      X = register_table$Repository,
-      FUN = function(repository) {
-        spec <- parse_repository_spec(repository)
-        if (!any(is.na(spec))) {
-          urrl <- "#"
-          if (spec[["type"]] == "github") {
-            urrl <- paste0("https://github.com/", spec[["repo"]])
-            return(paste0("<i class='fa fa-github'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")"))
-          } else if (spec[["type"]] == "osf") {
-            urrl <- paste0("https://osf.io/", spec[["repo"]])
-            return(paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")"))
-          } else if (spec[["type"]] == "gitlab") {
-            urrl <- paste0("https://gitlab.com/", spec[["repo"]])
-            return(paste0("<i class='fa fa-gitlab'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")"))
-          } else {
-            return(repository)
-          }
-        } else {
-          return(repository)
-        }
-      }
-    )
+    register_table <- add_repository_links_html(register_table)
 
     # Capture the HTML output in a markdown table first
     markdown_content <- capture.output(knitr::kable(register_table, format = "markdown"))
+    
+    markdown_table <- adjust_markdown_title(markdown_table, register_table_name)
     markdown_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), markdown_table)
 
     # Adjust column width
     markdown_table <- unlist(strsplit(markdown_table, "\n", fixed = TRUE))
-    markdown_table[7] <- md_columns_widths
+    alignment_line_index <- grep("^\\|:---", markdown_table)
+    markdown_table[alignment_line_index] <- md_columns_widths
 
     # Determine the output path
-    output_file_path <- determine_output_directory(register_table_name, "html")
-    output_file_path <- paste(output_file_path, "/index.html", sep = "")
+    output_dir <- determine_output_directory(register_table_name)
 
     # Create the directory if it does not exist
-    if (!dir.exists(dirname(output_file_path))) {
-      dir.create(dirname(output_file_path), recursive = TRUE, showWarnings = TRUE)
+    if (!dir.exists(dirname(output_dir))) {
+      dir.create(dirname(output_dir), recursive = TRUE, showWarnings = TRUE)
     }
-
+ 
     # Save the modified markdown to a temporary file
+    capture.output(kable(register_table, format = "markdown"), file = "docs/test_markdown.md")
+    
     temp_md_file <- tempfile(fileext = ".md")
     writeLines(markdown_table, temp_md_file)
 
     # Render HTML from markdown
     rmarkdown::render(
       input = temp_md_file,
-      output_file = output_file_path,
+      output_file = "index.html",
+      output_dir = output_dir,
       output_yaml = "html_document.yml"
     )
-
-    # Optionally remove the temporary markdown file
-    file.remove(temp_md_file)
   }
 }
 
