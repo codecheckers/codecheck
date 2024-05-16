@@ -135,6 +135,29 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
   }
 }
 
+#' Generates a html_document.yml with the full paths to the index header, prefix 
+#' and postfix.html files. This is necessary to retrieve the correct .html files
+#' when generating the htmls from the sorted register markdown files which exist
+#' inside subdirectories
+
+generate_html_document_yml <- function() {
+  working_dir <- getwd()
+
+  yaml_content <- sprintf(
+    "html_document:
+      includes:
+        in_header: '%s/docs/index_header.html'
+        before_body: '%s/docs/index_prefix.html'
+        after_body: '%s/docs/index_postfix.html'
+      mathjax: null
+      highlight: null
+      self_contained: false
+      lib_dir: libs",
+    working_dir, working_dir, working_dir
+  )
+  writeLines(yaml_content, "docs/html_document.yml")
+}
+
 #' Function for rendering the register html file. 
 #' The html file is rendered from the markdown file.
 #' 
@@ -145,6 +168,7 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
 
 render_register_html <- function(list_register_tables, md_columns_widths) {
   template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
+  generate_html_document_yml()
 
   # Loop over each register table
   for (register_table_name in names(list_register_tables)) {
@@ -174,18 +198,19 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
     }
  
     # Save the modified markdown to a temporary file
-    capture.output(kable(register_table, format = "markdown"), file = "docs/test_markdown.md")
-    
-    temp_md_file <- tempfile(fileext = ".md")
-    writeLines(markdown_table, temp_md_file)
+    temp_file_path <- paste0(output_dir, "/temp-file.md")
+    writeLines(markdown_table, temp_file_path)
+
+    yaml_path <- normalizePath(file.path(getwd(), "docs/html_document.yml"))
 
     # Render HTML from markdown
     rmarkdown::render(
-      input = temp_md_file,
+      input = temp_file_path,
       output_file = "index.html",
       output_dir = output_dir,
-      output_yaml = "html_document.yml"
+      output_yaml = yaml_path
     )
+    file.remove(temp_file_path)
   }
 }
 
