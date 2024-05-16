@@ -12,7 +12,7 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
   
   if (grepl("venue", register_table_name)){
     venue_name <- sub("^venue", "", register_table_name)
-    title_addition <- paste("for", venue_name, "")
+    title_addition <- paste0("for", venue_name)
   }
 
   markdown_table <- gsub("\\$title_addition\\$", title_addition, markdown_table)
@@ -102,6 +102,31 @@ add_repository_links_html <- function(register_table) {
   )
   return(register_table)
 }
+
+#' Function for adding repository links to each report in the register table.
+#' 
+#' @param register_table The register table
+#' @return register_table
+
+add_repository_links_json <- function(register_table) {
+  register_table$`Repository Link` <- sapply(
+    X = register$Repository,
+    FUN = function(repository) {
+      spec <- parse_repository_spec(repository)
+      if (spec[["type"]] == "github") {
+        paste0("https://github.com/", spec[["repo"]])
+      } else if (spec[["type"]] == "osf") {
+        paste0("https://osf.io/", spec[["repo"]])
+      } else if (spec[["type"]] == "gitlab") {
+        paste0("https://gitlab.com/", spec[["repo"]])
+      } else {
+        repository
+      }
+    }
+  )
+  return(register_table)
+}
+
 render_register_md <- function(list_register_tables, md_columns_widths) {
   template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
 
@@ -129,7 +154,7 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
     if (!dir.exists(output_dir)) {
       dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
     }
-    output_file_path <- paste(output_dir, "/register.md", sep = "")
+    output_file_path <- paste0(output_dir, "/register.md")
 
     writeLines(markdown_table, output_file_path)
   }
@@ -220,80 +245,75 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
 #' @param register The register from the register.csv file
 #' @return None
 
-render_register_json <- function(register_table, register) {
-  # Get paper titles and references
-  titles <- c()
-  references <- c()
+render_register_json <- function(list_register_tables, register) {
+  for (register_table_name in names(list_register_tables)) {
+    register_table <- list_register_tables[[register_table_name]]
 
-  for (i in seq_len(nrow(register))) {
-    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+    # Get paper titles and references
+    titles <- c()
+    references <- c()
 
-    title <- NA
-    reference <- NA
-    if (!is.null(config_yml)) {
-      title <- config_yml$paper$title
-      reference <- config_yml$paper$reference
-    }
+    for (i in seq_len(nrow(register_table))) {
+      config_yml <- get_codecheck_yml(register_table[i, ]$Repo)
 
-    titles <- c(titles, title)
-    references <- c(references, reference)
-  }
-
-  register_table$Title <- stringr::str_trim(titles)
-  register_table$`Paper reference` <- stringr::str_trim(references)
-  register_table$`Repository Link` <- sapply(
-    X = register$Repository,
-    FUN = function(repository) {
-      spec <- parse_repository_spec(repository)
-      if (spec[["type"]] == "github") {
-        paste0("https://github.com/", spec[["repo"]])
-      } else if (spec[["type"]] == "osf") {
-        paste0("https://osf.io/", spec[["repo"]])
-      } else if (spec[["type"]] == "gitlab") {
-        paste0("https://gitlab.com/", spec[["repo"]])
-      } else {
-        repository
+      title <- NA
+      reference <- NA
+      if (!is.null(config_yml)) {
+        title <- config_yml$paper$title
+        reference <- config_yml$paper$reference
       }
+
+      titles <- c(titles, title)
+      references <- c(references, reference)
     }
-  )
 
-  jsonlite::write_json(
-    register_table[, c(
-      "Certificate",
-      "Repository Link",
-      "Type",
-      "Report",
-      "Title",
-      "Paper reference",
-      "Check date"
-    )],
-    path = "docs/register.json",
-    pretty = TRUE
-  )
+    register_table$Title <- stringr::str_trim(titles)
+    register_table$`Paper reference` <- stringr::str_trim(references)
+    register_table$`Repository Link` <- add_repository_links_json(register_table)
 
-  jsonlite::write_json(
-    utils::tail(register_table, 10)[, c(
-      "Certificate",
-      "Repository Link",
-      "Type",
-      "Report",
-      "Title",
-      "Paper reference",
-      "Check date"
-    )],
-    path = "docs/featured.json",
-    pretty = TRUE
-  )
+    output_dir <- determine_output_directory(register_table_name)
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
+    }
 
-  jsonlite::write_json(
-    list(
-      source = "https://codecheck.org.uk/register/register.json",
-      cert_count = nrow(register_table)
-      # TODO count conferences, preprints,
-      # journals, etc.
-    ),
-    auto_unbox = TRUE,
-    path = "docs/stats.json",
-    pretty = TRUE
-  )
+    jsonlite::write_json(
+      register_table[, c(
+        "Certificate",
+        "Repository Link",
+        "Type",
+        "Report",
+        "Title",
+        "Paper reference",
+        "Check date"
+      )],
+      path = paste0(output_dir, "/register.json"),
+      pretty = TRUE
+    )
+
+    jsonlite::write_json(
+      utils::tail(register_table, 10)[, c(
+        "Certificate",
+        "Repository Link",
+        "Type",
+        "Report",
+        "Title",
+        "Paper reference",
+        "Check date"
+      )],
+      path = paste0(output_dir, "/featured.json"),
+      pretty = TRUE
+    )
+
+    jsonlite::write_json(
+      list(
+        source = "https://codecheck.org.uk/register/register.json",
+        cert_count = nrow(register_table)
+        # TODO count conferences, preprints,
+        # journals, etc.
+      ),
+      auto_unbox = TRUE,
+      path = paste0(output_dir, "/stats.json"),
+      pretty = TRUE
+    )
+  }
 }

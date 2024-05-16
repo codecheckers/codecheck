@@ -39,7 +39,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   
   if ("md" %in% outputs) render_register_md(list_register_tables, md_columns_widths)
   if ("html" %in% outputs) render_register_html(list_register_tables, md_columns_widths)
-  if ("json" %in% outputs) render_register_json(register_table, register)
+  if ("json" %in% outputs) render_register_json(list_register_tables)
 
   return(register_table)
 }
