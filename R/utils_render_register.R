@@ -248,7 +248,7 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
 render_register_json <- function(list_register_tables, register) {
   for (register_table_name in names(list_register_tables)) {
     register_table <- list_register_tables[[register_table_name]]
-    register_table$`Repository Link` <- add_repository_links_json(register_table)
+    register_table <- add_repository_links_json(register_table)
 
     # Get paper titles and references
     titles <- c()
