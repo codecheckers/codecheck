@@ -110,7 +110,7 @@ add_repository_links_html <- function(register_table) {
 
 add_repository_links_json <- function(register_table) {
   register_table$`Repository Link` <- sapply(
-    X = register$Repository,
+    X = register_table$Repository,
     FUN = function(repository) {
       spec <- parse_repository_spec(repository)
       if (spec[["type"]] == "github") {
@@ -248,13 +248,13 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
 render_register_json <- function(list_register_tables, register) {
   for (register_table_name in names(list_register_tables)) {
     register_table <- list_register_tables[[register_table_name]]
+    register_table$`Repository Link` <- add_repository_links_json(register_table)
 
     # Get paper titles and references
     titles <- c()
     references <- c()
-
     for (i in seq_len(nrow(register_table))) {
-      config_yml <- get_codecheck_yml(register_table[i, ]$Repo)
+      config_yml <- get_codecheck_yml(register_table[i, ]$Repository)
 
       title <- NA
       reference <- NA
@@ -266,10 +266,8 @@ render_register_json <- function(list_register_tables, register) {
       titles <- c(titles, title)
       references <- c(references, reference)
     }
-
     register_table$Title <- stringr::str_trim(titles)
     register_table$`Paper reference` <- stringr::str_trim(references)
-    register_table$`Repository Link` <- add_repository_links_json(register_table)
 
     output_dir <- determine_output_directory(register_table_name)
     if (!dir.exists(output_dir)) {
