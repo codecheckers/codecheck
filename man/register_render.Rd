@@ -6,6 +6,7 @@
 \usage{
 register_render(
   register = read.csv("register.csv", as.is = TRUE),
+  sort_by = c("venue"),
   outputs = c("html", "md", "json")
 )
 }
