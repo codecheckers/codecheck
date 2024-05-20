@@ -2,8 +2,9 @@
 #' If there is a mismatch a stop is sent. Else a warning is thrown.
 #' 
 #' @param codecheck_yaml The codecheck yaml file
+#' @param entry The registry entry
 #' @return None
-check_certificate_id <- function(codecheck_yaml) {
+check_certificate_id <- function(entry, codecheck_yaml) {
   # Codecheck.yml found, proceeding to check certificate id
   if (!is.null(codecheck_yaml)) {
     # validate config file

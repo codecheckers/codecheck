@@ -70,7 +70,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE),
 
     # check certificate IDs if there is a codecheck.yml
     codecheck_yaml <- get_codecheck_yml(entry$Repository)
-    check_certificate_id(codecheck_yaml)
+    check_certificate_id(entry, codecheck_yaml)
     check_issue_status(entry)
     cat("Completed checking registry entry", toString(register[i, "Certificate"]), "\n")
   }
