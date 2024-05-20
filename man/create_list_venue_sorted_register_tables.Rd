@@ -3,7 +3,8 @@
 \name{create_list_venue_sorted_register_tables}
 \alias{create_list_venue_sorted_register_tables}
 \title{Function for creating a list of register tables that is sorted by venue. 
-The resulting list is of the form ["venue_{venue_name}": sorted_register_table]}
+Each entry in the resulting list uses a key that combines 'venue_' with the venue name, 
+and maps to a corresponding sorted register table.}
 \usage{
 create_list_venue_sorted_register_tables(register_table)
 }
@@ -15,5 +16,6 @@ A list of venue sorted register tables.
 }
 \description{
 Function for creating a list of register tables that is sorted by venue. 
-The resulting list is of the form ["venue_{venue_name}": sorted_register_table]
+Each entry in the resulting list uses a key that combines 'venue_' with the venue name, 
+and maps to a corresponding sorted register table.
 }
