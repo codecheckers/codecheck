@@ -1,3 +1,7 @@
+#' Function to load the markdown table
+#' 
+#' @param template_path The path to the markdown template
+#' @return The markdown table template
 load_markdown_table_template <- function(template_path){
   if (!file.exists(template_path)){
     stop("No register table template found")
@@ -7,6 +11,12 @@ load_markdown_table_template <- function(template_path){
   return(markdown_table_template)
 }
 
+#' Function to adjust the markdown title based on the specific register table name.
+#' 
+#' @param markdown_table The markdown template where the title needs to be adjusted
+#' @param register_table_name The name of the register table
+#'
+#' @return The modified markdown table
 adjust_markdown_title <- function(markdown_table, register_table_name){
   title_addition <- ""
   
@@ -19,8 +29,11 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
   return(markdown_table)
 }
 
-# Helper function to determine output paths based on the table name
-determine_output_directory <- function(register_table_name) {
+#' Function to determine the appropriate output file directory based on the register table name.
+#'
+#' @param register_table_name The name of the register table
+#' @return The path to the output file directory
+determine_output_file_directory <- function(register_table_name) {
   if (grepl("venue", register_table_name)){
     folder_venue_name <- sub("^venue", "", register_table_name)
     folder_venue_name <- trimws(folder_venue_name) # Removing trailing space
@@ -31,11 +44,10 @@ determine_output_directory <- function(register_table_name) {
   }
 }
 
-#' Function for adding repository links to each report in the register table.
+#' Function for adding repository links in the register table for the creation of the markdown file.
 #' 
 #' @param register_table The register table
-#' @return register_table
-
+#' @return Register table with adjusted repository links
 add_repository_links_md <- function(register_table) {
   register_table$Repository <- sapply(
     X = register_table$Repository,
@@ -71,11 +83,10 @@ add_repository_links_md <- function(register_table) {
   return(register_table)
 }
 
-#' Function for adding repository links to each report in the register table.
+#' Function for adding repository links in the register table for the creation of the html file.
 #' 
 #' @param register_table The register table
-#' @return register_table
-
+#' @return Register table with adjusted repository links
 add_repository_links_html <- function(register_table) {
   register_table$Repository <- sapply(
     X = register_table$Repository,
@@ -103,11 +114,10 @@ add_repository_links_html <- function(register_table) {
   return(register_table)
 }
 
-#' Function for adding repository links to each report in the register table.
+#' Function for adding repository links in the register table for the creation of the json file.
 #' 
 #' @param register_table The register table
-#' @return register_table
-
+#' @return Register table with adjusted repository links
 add_repository_links_json <- function(register_table) {
   register_table$`Repository Link` <- sapply(
     X = register_table$Repository,
@@ -127,6 +137,17 @@ add_repository_links_json <- function(register_table) {
   return(register_table)
 }
 
+#' Render Markdown files for register tables.
+#'
+#' @param list_register_tables A list of register tables
+#' @param md_columns_widths A string specifying the Markdown formatting for column widths.
+#'
+#' @return None
+#' @importFrom kable kable
+#' @importFrom gsub gsub
+#' @importFrom dir.exists dir.exists
+#' @importFrom dir.create dir.create
+#' @importFrom writeLines writeLines
 render_register_md <- function(list_register_tables, md_columns_widths) {
   template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
 
@@ -150,7 +171,7 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
     markdown_table[alignment_line_index] <- md_columns_widths
 
     # Determining the directory and saving the file
-    output_dir <- determine_output_directory(register_table_name)
+    output_dir <- determine_output_file_directory(register_table_name)
     if (!dir.exists(output_dir)) {
       dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
     }
@@ -160,11 +181,10 @@ render_register_md <- function(list_register_tables, md_columns_widths) {
   }
 }
 
-#' Generates a html_document.yml with the full paths to the index header, prefix 
-#' and postfix.html files. This is necessary to retrieve the correct .html files
-#' when generating the htmls from the sorted register markdown files which exist
-#' inside subdirectories
-
+#' Dynamically generates a html_document.yml with the full paths to the index header, prefix 
+#' and postfix.html files. 
+#' 
+#' @return None
 generate_html_document_yml <- function() {
   working_dir <- getwd()
 
@@ -189,8 +209,6 @@ generate_html_document_yml <- function() {
 #' @param register_table The register table
 #' @param md_columns_widths The column widths for the markdown file
 #' @return None
-
-
 render_register_html <- function(list_register_tables, md_columns_widths) {
   template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
   generate_html_document_yml()
@@ -215,7 +233,7 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
     markdown_table[alignment_line_index] <- md_columns_widths
 
     # Determine the output path
-    output_dir <- determine_output_directory(register_table_name)
+    output_dir <- determine_output_file_directory(register_table_name)
 
     # Create the directory if it does not exist
     if (!dir.exists(dirname(output_dir))) {
@@ -244,7 +262,6 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
 #' @param register_table The register table
 #' @param register The register from the register.csv file
 #' @return None
-
 render_register_json <- function(list_register_tables, register) {
   for (register_table_name in names(list_register_tables)) {
     register_table <- list_register_tables[[register_table_name]]
@@ -269,7 +286,7 @@ render_register_json <- function(list_register_tables, register) {
     register_table$Title <- stringr::str_trim(titles)
     register_table$`Paper reference` <- stringr::str_trim(references)
 
-    output_dir <- determine_output_directory(register_table_name)
+    output_dir <- determine_output_file_directory(register_table_name)
     if (!dir.exists(output_dir)) {
       dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
     }

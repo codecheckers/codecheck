@@ -1,3 +1,8 @@
+#' Function for creating a list of register tables that is sorted by venue. 
+#' The resulting list is of the form ["venue_{venue_name}": sorted_register_table]
+#' 
+#' @param register_table The register table
+#' @return A list of venue sorted register tables. 
 create_list_venue_sorted_register_tables <- function(register_table) {
     # List of venues
     list_venues <- unique(register_table$Type)

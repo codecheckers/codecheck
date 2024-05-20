@@ -3,7 +3,6 @@
 #' 
 #' @param codecheck_yaml The codecheck yaml file
 #' @return None
-
 check_certificate_id <- function(codecheck_yaml) {
   # Codecheck.yml found, proceeding to check certificate id
   if (!is.null(codecheck_yaml)) {
@@ -30,7 +29,6 @@ check_certificate_id <- function(codecheck_yaml) {
 #' 
 #' @param entry The codecheck entry
 #' @return None
-
 check_issue_status <- function(entry) {
   if (!is.na(entry$Issue)) {
     # get the status and labels from an issue
