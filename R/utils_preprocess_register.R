@@ -83,9 +83,8 @@ add_check_time <- function(register_table, register) {
   return(register_table)
 }
 
-#' Function for preprocessing the register to create and return the register_table.
-#' 
-#' @param register_table The register table
+#' Function for preprocessing the register to create and return the preprocessed register table.
+#' @param register The register
 #' @return The preprocessed register table
 preprocess_register <- function(register) {
     register_table <- register

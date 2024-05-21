@@ -2,16 +2,16 @@
 % Please edit documentation in R/utils_preprocess_register.R
 \name{preprocess_register}
 \alias{preprocess_register}
-\title{Function for preprocessing the register to create and return the register_table.}
+\title{Function for preprocessing the register to create and return the preprocessed register table.}
 \usage{
 preprocess_register(register)
 }
 \arguments{
-\item{register_table}{The register table}
+\item{register}{The register}
 }
 \value{
 The preprocessed register table
 }
 \description{
-Function for preprocessing the register to create and return the register_table.
+Function for preprocessing the register to create and return the preprocessed register table.
 }
