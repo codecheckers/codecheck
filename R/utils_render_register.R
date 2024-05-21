@@ -35,10 +35,25 @@ adjust_markdown_title <- function(markdown_table, register_table_name){
 #' @return The path to the output file directory
 determine_output_file_directory <- function(register_table_name) {
   if (grepl("venue", register_table_name)){
-    folder_venue_name <- sub("^venue", "", register_table_name)
-    folder_venue_name <- trimws(folder_venue_name) # Removing trailing space
-    folder_venue_name <- gsub(" ", "_", gsub("[()]", "", folder_venue_name))
-    return(paste0("docs/venues/", folder_venue_name))
+
+    # Removing the prefix "venue"
+    venue_name <- sub("^venue", "", register_table_name)
+    venue_name <- trimws(venue_name) # Removing trailing space
+    venue_name <- gsub(" ", "_", gsub("[()]", "", venue_name))
+
+    # Determining the subfolder name
+    list_subfolder_names <- c("community", "journal", "conference")
+    matches <- sapply(list_subfolder_names, grepl, x = register_table_name)
+
+    if (any(matches)) {
+        subfolder_name <- names(matches)[which(matches)[1]]
+        # Remove the subfolder name and an underscore from the venue name
+        venue_name <- gsub(paste0(subfolder_name, "_"), "", venue_name)
+    } else {
+        stop(paste("Register does not fall into any of the following categories:", list_subfolder_names))
+    }
+
+    return(paste0("docs/venues/", subfolder_name, "/", venue_name))
   } else {
     return(paste0("docs"))
   }
@@ -234,8 +249,6 @@ render_register_html <- function(list_register_tables, md_columns_widths) {
 
     # Determine the output path
     output_dir <- determine_output_file_directory(register_table_name)
-
-    # Create the directory if it does not exist
     if (!dir.exists(dirname(output_dir))) {
       dir.create(dirname(output_dir), recursive = TRUE, showWarnings = TRUE)
     }
