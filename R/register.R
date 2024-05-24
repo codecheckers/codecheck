@@ -19,25 +19,28 @@
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
-                            sort_by = c("venue"),
+                            filter_by = c("venue"),
                             outputs = c("html", "md", "json")) {
+  
+  list_venue_categories <- c("community", "journal", "conference")
+  template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
+  md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
+  
   register_table <- preprocess_register(register)
 
+  # Creating list of of register tables with indices being the filter types
   list_register_tables <- c()
-  list_register_tables[["original"]] <- register_table
+  list_register_tables[["none"]] <- list("original"= register_table)
 
-  # Sorting the tables 
-  for (sort in sort_by) {
-    if (sort == "venue") {
-      list_venue_sorted_register_tables <- create_list_venue_sorted_register_tables(register_table)
-      list_register_tables <- c(list_register_tables, list_venue_sorted_register_tables)
-    }
+  if (length(filter_by)!=0){
+    # Creating filtered register csvs
+    create_filtered_register_csvs(filter_by, register)
+    # Creating and adding filtered registered tables to list of tables
+    list_register_tables <- add_filtered_register_tables(list_register_tables, register_table, filter_by)
   }
 
   # Rendering files
-  md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
-  
-  if ("md" %in% outputs) render_register_md(list_register_tables, md_columns_widths)
+  if ("md" %in% outputs) render_register_md(list_register_tables)
   if ("html" %in% outputs) render_register_html(list_register_tables, md_columns_widths)
   if ("json" %in% outputs) render_register_json(list_register_tables)
 
