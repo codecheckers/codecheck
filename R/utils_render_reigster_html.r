@@ -89,21 +89,22 @@ set_html_postfix_hrefs <- function(filter, register_table_name) {
 set_href <- function(filter, register_table_name, href_type, filter_subcatetgories) {
 
   # Determine base path based on the resource type
-  result <- switch(href_type,
+  href_details <- switch(href_type,
          "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/", ext = ".csv"),
          "searchable_csv" = list(base_url ="https://github.com/codecheckers/register/blob/master/", ext = ".csv"),
-         "json" = base_url <- list(base_url = "https://codecheck.org.uk/register/", ext = ".json"),
-         "md" = base_url <- list(base_url = "https://codecheck.org.uk/register/", ext = ".md")
+         "json" = list(base_url = "https://codecheck.org.uk/register/", ext = ".json"),
+         "md" = list(base_url = "https://codecheck.org.uk/register/", ext = ".md")
         )
   
-  if (filter == "None") {
-    return(paste0(base_url, "register.", href_type))
+  if (filter == "none") {
+    return(paste0(href_details$base_url, "register", href_details$ext))
   } else if (filter == "venues") {
     venue_category <- determine_venue_category(register_table_name)
     venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", register_table_name)))
-    return(paste0(result$base_url, filter, "/", venue_category, "/", venue_name, "/register", result$ext))
+    venue_name <- gsub(" ", "_", venue_name)
+    return(paste0(href_details$base_url, filter, "/", venue_category, "/", venue_name, "/register", href_details$ext))
   } else {
-    return(paste0(result$base_url, filter, "/", register_table_name, "/register", result$ext))
+    return(paste0(href_details$base_url, filter, "/", register_table_name, "/register", href_details$ext))
   }
 }
 
@@ -123,31 +124,22 @@ render_register_html <- function(filter, register_table, register_table_name){
 
   output_dir <- get_output_dir(filter, register_table_name)
   # Capture the HTML output from a markdown file
-  # Check if .md already exists
-  if (!dir.exists(paste0(output_dir, "register.md"))){
-    md_file_path <- paste0(output_dir, "register.md")
-    temp_md_used <- FALSE
-  }
-
-  # If .md does not exist create a temp md file
-  else{
-    render_register_md(filter, register_table, register_table_name, is_temp_file=TRUE)
-    md_file_path <- paste0(output_dir, "temp.md")
-    temp_md_used <- TRUE
-  }
+  # Note that the temp md file must be created even if a md exists because the register table
+  # now has different icons under "Repository" column
+  render_register_md(filter, register_table, register_table_name, is_temp_file=TRUE)
+  temp_md_file_path <- paste0(output_dir, "temp.md")
+  
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
 
   # Render HTML from markdown
   rmarkdown::render(
-    input = md_file_path,
+    input = temp_md_file_path,
     output_file = "index.html",
     output_dir = output_dir,
     output_yaml = yaml_path
   )
 
-  if (temp_md_used){
-    file.remove(temp_file_path)
-  }
+  file.remove(temp_md_file_path)
 }
 
 render_register_htmls <- function(list_register_tables) {
