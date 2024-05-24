@@ -23,9 +23,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                             outputs = c("html", "md", "json")) {
   
   list_venue_categories <- c("community", "journal", "conference")
-  template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
+  md_template <- system.file("extdata", "templates/template_register.md", package = "codecheck")
   md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
-  
+
   register_table <- preprocess_register(register)
 
   # Creating list of of register tables with indices being the filter types
@@ -40,9 +40,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
 
   # Rendering files
-  if ("md" %in% outputs) render_register_md(list_register_tables)
-  if ("html" %in% outputs) render_register_html(list_register_tables, md_columns_widths)
-  if ("json" %in% outputs) render_register_json(list_register_tables)
+  if ("md" %in% outputs) render_register_mds(list_register_tables, md_template, md_columns_widths)
+  if ("html" %in% outputs) render_register_htmls(list_register_tables, md_template, md_columns_widths)
+  if ("json" %in% outputs) render_register_jsons(list_register_tables)
 
   return(register_table)
 }

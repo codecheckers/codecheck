@@ -109,38 +109,14 @@ set_href <- function(filter, register_table_name, href_type) {
   }
 }
 
-create_temp_md_file <- function(filter, register_table, register_table_name){
-  # Capture the HTML output in a markdown table first
-  markdown_content <- capture.output(knitr::kable(register_table, format = "markdown"))
-  
-  markdown_table <- adjust_markdown_title(markdown_table, register_table_name)
-  markdown_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), markdown_table)
-
-  # Adjust column width
-  markdown_table <- unlist(strsplit(markdown_table, "\n", fixed = TRUE))
-  alignment_line_index <- grep("^\\|:---", markdown_table)
-  markdown_table[alignment_line_index] <- md_columns_widths
-
-  # Determine the output path
-  output_dir <- get_output_dir(filter, register_table_name)
-  if (!dir.exists(dirname(output_dir))) {
-    dir.create(dirname(output_dir), recursive = TRUE, showWarnings = TRUE)
-  }
-
-  # Save the modified markdown to a temporary file
-  temp_file_path <- paste0(output_dir, "/temp.md")
-  writeLines(markdown_table, temp_file_path)
-}
-
 create_section_htmls <- function(filter, register_table_name) {
   create_index_postfix_html(filter, register_table_name)
   create_index_prefix_html(filter, register_table_name)
   create_index_header_html(filter, register_table_name)
 }
 
-render_register_html <- function(filter, register_table, register_table_name){
+render_register_html <- function(filter, register_table, register_table_name, md_table, md_columns_widths){
   generate_html_document_yml(filter, register_table_name)
-  markdown_table <- load_markdown_table_template(template_path)
   
   # Add icons to the Repository column for HTML output, use a copy of the register.md
   register_table <- add_repository_links_html(register_table)
@@ -159,7 +135,7 @@ render_register_html <- function(filter, register_table, register_table_name){
 
   # If .md does not exist create a temp md file
   else{
-    create_temp_md_file(filter, register_table, register_table_name)
+    render_register_md(filter, register_table, register_table_name, md_table, md_columns_widths, is_temp_file=TRUE)
     md_file_path <- paste0(output_dir, "temp.md")
     temp_md_used <- TRUE
   }
@@ -179,14 +155,14 @@ render_register_html <- function(filter, register_table, register_table_name){
   }
 }
 
-render_register_htmls <- function(list_register_tables, md_columns_widths) {
-  template_path <- system.file("extdata", "templates/template_register.md", package = "codecheck")
+render_register_htmls <- function(list_register_tables, md_template, md_columns_widths) {
+  md_table <- load_md_template(md_template)
 
   # Loop over each register table
   for (filter in names(list_register_tables)){
     for (register_table_name in names(list_register_tables[[filter]])) {
       register_table <- list_register_tables[[filter]][[register_table_name]]
-      render_register_html(filter, register_table, register_table_name)
+      render_register_html(filter, register_table, register_table_name, md_table, md_columns_widths)
     }
   }
 }
