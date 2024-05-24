@@ -1,6 +1,6 @@
 CONFIG <- new.env()
 CONFIG$FILTER_SUB_GROUPS <- list(
-  venues = list("community", "journal", "conference", "codecheck_nl")
+  venues = list("community", "journal", "conference", "codecheck nl")
 )
 CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
 
