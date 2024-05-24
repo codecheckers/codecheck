@@ -69,7 +69,11 @@ add_repository_links_md <- function(register_table) {
   return(register_table)
 }
 
-# Helper function to process each table and convert it to markdown format
+#' Renders register md for a single register_table
+#' 
+#' @param filter The filter
+#' @param register_table The register table
+#' @param register_table_name The register table name
 render_register_md <- function(filter, register_table, register_table_name, is_temp_file=FALSE) {
   # Fill in the content
   md_table <- load_md_template(CONFIG$MD_TEMPLATE)
@@ -102,6 +106,9 @@ render_register_md <- function(filter, register_table, register_table_name, is_t
   writeLines(md_table, output_dir)
 }
 
+#' Renders register mds for a list of register tables
+#' 
+#' @param list_register_table List of register tables
 render_register_mds <- function(list_register_tables){
   for (filter in names(list_register_tables)){
     for (register_table_name in names(list_register_tables[[filter]])){

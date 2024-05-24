@@ -21,6 +21,10 @@ add_repository_links_json <- function(register_table) {
   return(register_table)
 }
 
+#' Set "Title" and "Paper reference" columns and values to the register_table
+#' 
+#' @param register_table The register table
+#' @return Updated register table including "Title" and "Paper reference" columns
 set_paper_title_references <- function(register_table){
   titles <- c()
   references <- c()
@@ -43,6 +47,11 @@ set_paper_title_references <- function(register_table){
   return(register_table)
 }
 
+#' Renders register json for a single register_table
+#' 
+#' @param filter The filter
+#' @param register_table The register table
+#' @param register_table_name The register table name
 render_register_json <- function(filter, register_table, register_table_name) {
   register_table <- add_repository_links_json(register_table)
 
@@ -84,7 +93,7 @@ render_register_json <- function(filter, register_table, register_table_name) {
 
   jsonlite::write_json(
     list(
-      source = set_href(filter, register_table_name, "json"),
+      source = generate_href(filter, register_table_name, "json"),
       cert_count = nrow(register_table)
       # TODO count conferences, preprints,
       # journals, etc.
@@ -95,8 +104,11 @@ render_register_json <- function(filter, register_table, register_table_name) {
   )
 }
 
+#' Renders register jsons for a list of register tables
+#' 
+#' @param list_register_table List of register tables
 render_register_jsons <- function(list_register_tables){
-  # Loop over each register table
+  # Loop over each register table and render a json
   for (filter in names(list_register_tables)){
     for (register_table_name in names(list_register_tables[[filter]])) {
       register_table <- list_register_tables[[filter]][[register_table_name]]

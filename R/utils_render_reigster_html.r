@@ -32,7 +32,8 @@ add_repository_links_html <- function(register_table) {
 #' Dynamically generates a html_document.yml with the full paths to the index header, prefix 
 #' and postfix.html files. 
 #' 
-#' @return None
+#' @param filter The filter name
+#' @param register_table_name The register table name
 generate_html_document_yml <- function(filter, register_table_name) {
   dir <- paste0(getwd(), "/", get_output_dir(filter, register_table_name))
 
@@ -52,8 +53,12 @@ generate_html_document_yml <- function(filter, register_table_name) {
   writeLines(yaml_content, paste0(dir, "html_document.yml"))
 }
 
+#' Dynamically generates the index_postfix.html from a template file 
+#' 
+#' @param filter The filter name
+#' @param register_table_name The register table name
 create_index_postfix_html <- function(filter, register_table_name){
-  hrefs <- set_html_postfix_hrefs(filter, register_table_name)
+  hrefs <- generate_html_postfix_hrefs(filter, register_table_name)
 
   # Using the index_postfix_template
   postfix_template <- readLines(paste0(getwd(), "/docs/index_postfix_template.html"), warn = FALSE)
@@ -62,6 +67,10 @@ create_index_postfix_html <- function(filter, register_table_name){
   writeLines(output, paste0(get_output_dir(filter, register_table_name), "index_postfix.html"))
 }
 
+#' Dynamically generates the index_prefix.html from a template file 
+#' 
+#' @param filter The filter name
+#' @param register_table_name The register table name
 create_index_prefix_html <- function(filter, register_table_name){
   # Using the index_prefix_template
   prefix_template <- readLines(paste0(getwd(), "/docs/index_prefix_template.html"), warn = FALSE)
@@ -69,6 +78,10 @@ create_index_prefix_html <- function(filter, register_table_name){
   writeLines(prefix_template, paste0(get_output_dir(filter, register_table_name), "index_prefix.html"))
 }
 
+#' Dynamically generates the index_header.html from a template file 
+#' 
+#' @param filter The filter name
+#' @param register_table_name The register table name
 create_index_header_html <- function(filter, register_table_name){
   # Using the index_header_template
   header_template <- readLines(paste0(getwd(), "/docs/index_header_template.html"), warn = FALSE)
@@ -76,18 +89,28 @@ create_index_header_html <- function(filter, register_table_name){
   writeLines(header_template, paste0(get_output_dir(filter, register_table_name), "index_header.html"))
 }
 
-set_html_postfix_hrefs <- function(filter, register_table_name) {
+#' Generates the hrefs to set in the postfix.html file.
+#' 
+#' @param filter The filter name
+#' @param register_table_name The register table name
+generate_html_postfix_hrefs <- function(filter, register_table_name) {
   hrefs <- list(
-    csv_source_href = set_href(filter, register_table_name, "csv_source"),
-    searchable_csv_href = set_href(filter, register_table_name, "searchable_csv"),
-    json_href = set_href(filter, register_table_name, "json"),
-    md_href = set_href(filter, register_table_name, "md")
+    csv_source_href = generate_href(filter, register_table_name, "csv_source"),
+    searchable_csv_href = generate_href(filter, register_table_name, "searchable_csv"),
+    json_href = generate_href(filter, register_table_name, "json"),
+    md_href = generate_href(filter, register_table_name, "md")
   )
   return(hrefs)
 }
 
-set_href <- function(filter, register_table_name, href_type, filter_subcatetgories) {
-
+#' Generate full href for for different href types.
+#'
+#' @param filter The filter name 
+#' @param register_table_name The register table name
+#' @param href_type The href type (e.g., 'csv_source', 'searchable_csv', 'json', 'md')
+#' 
+#' @return String representing the full URL to access the specified resource
+generate_href <- function(filter, register_table_name, href_type) {
   # Determine base path based on the resource type
   href_details <- switch(href_type,
          "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/", ext = ".csv"),
@@ -108,18 +131,27 @@ set_href <- function(filter, register_table_name, href_type, filter_subcatetgori
   }
 }
 
-create_section_htmls <- function(filter, register_table_name) {
+#' Creates html files for each index section- the index postfix, prefix and the header 
+#'
+#' @param filter The filter name 
+#' @param register_table_name The register table name
+create_index_section_files <- function(filter, register_table_name) {
   create_index_postfix_html(filter, register_table_name)
   create_index_prefix_html(filter, register_table_name)
   create_index_header_html(filter, register_table_name)
 }
 
+#' Renders register html for a single register_table
+#' 
+#' @param filter The filter
+#' @param register_table The register table
+#' @param register_table_name The register table name
 render_register_html <- function(filter, register_table, register_table_name){  
   # Add icons to the Repository column for HTML output, use a copy of the register.md
   register_table <- add_repository_links_html(register_table)
 
   # Dynamically create the index header, prefix and postfix files
-  create_section_htmls(filter, register_table_name)
+  create_index_section_files(filter, register_table_name)
   generate_html_document_yml(filter, register_table_name)
 
   output_dir <- get_output_dir(filter, register_table_name)
@@ -142,6 +174,9 @@ render_register_html <- function(filter, register_table, register_table_name){
   file.remove(temp_md_file_path)
 }
 
+#' Renders register htmls for a list of register tables
+#' 
+#' @param list_register_table List of register tables
 render_register_htmls <- function(list_register_tables) {
   # Loop over each register table
   for (filter in names(list_register_tables)){

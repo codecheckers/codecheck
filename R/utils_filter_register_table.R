@@ -19,20 +19,19 @@ add_filtered_register_tables <- function(list_register_tables, register_table, f
 #' Each entry in the resulting list is the filtered register table with index corresponding to unique values in that column.
 #'
 #' @param register_table The register table
-#' @param filter_column The column to filter by
+#' @param filter The filter name
 #' @return A list of filtered register tables
 create_filtered_register_tables <- function(register_table, filter) {
     list_filtered_register_tables <- list()
     
-    column_name <- determine_column_name(filter)
-    unique_values <- unique(register_table[[column_name]])
+    filter_column_name <- determine_filter_column_name(filter)
+    unique_values <- unique(register_table[[filter_column_name]])
     # Loop over the unique values. We create a sorted table for each value
     for (value in unique_values) {
-        filtered_table <- register_table[register_table[[column_name]]==value, ]
+        filtered_table <- register_table[register_table[[filter_column_name]]==value, ]
         rownames(filtered_table) <- NULL  # Reset row names to remove row numbers
         list_filtered_register_tables[[value]] <- filtered_table
     }    
 
-    print(names(list_filtered_register_tables))
     return(list_filtered_register_tables)
 }
