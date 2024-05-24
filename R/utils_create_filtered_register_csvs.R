@@ -36,16 +36,15 @@ get_output_dir <- function(filter, value) {
   
   else if (filter=="venues"){
     venue_category <- determine_venue_category(value)
-    if (!(venue_category %in% CONFIG$FILTER_SUB_GROUPS[["venues"]])){
-      venue_category <- gsub(" ", "_", venue_category)
-      return(paste0("docs/", filter, "/", venue_category, "/"))
+    # In case the venue_category itself has no further subgroups we do not need subgroups
+    if (venue_category==tolower(value)){
+      return(paste0("docs/", filter, "/", gsub(" ", "_", venue_category), "/"))
     }
 
-    # Removing the venue category to obtain the venue name
+    # Removing the venue category to obtain the venue name and replace the brackets
     venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", value)))
     venue_name <- gsub(" ", "_", venue_name)
-    return(paste0("docs/", filter, "/", venue_category, "/", venue_name, "/"))
-  }
+    return(paste0("docs/", filter, "/", venue_category, "/", venue_name, "/"))  }
 
   else{
     return(paste0("docs/", filter, "/", gsub(" ", "_", tolower(value)), "/"))
@@ -55,11 +54,10 @@ get_output_dir <- function(filter, value) {
 determine_venue_category <- function(venue_name){
   list_venue_categories <- CONFIG$FILTER_SUB_GROUPS[["venues"]]
   for (category in list_venue_categories){
-    if (grepl(category, venue_name)) {
+    if (grepl(category, venue_name, ignore.case=TRUE)) {
       return(category)
     }
   }
-  # The venue does not belong to the listed categories. 
-  warning(paste("Register venue does not fall into any of the following venue categories:", toString(list_venue_categories), "Setting its own name as a"))
+  warning(paste("Register venue", venue_name, "does not fall into any of the following venue categories:", toString(list_venue_categories)))
   return(venue_name)
 }
