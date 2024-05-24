@@ -10,7 +10,8 @@ add_filtered_register_tables <- function(list_register_tables, register_table, f
     for (filter in filter_by){
         list_register_tables[[filter]] <- create_filtered_register_tables(register_table, filter)
     }
-    
+
+    list_1 <- unlist(list_register_tables, recursive = TRUE)
     return(list_register_tables)
 }
 
@@ -24,13 +25,14 @@ create_filtered_register_tables <- function(register_table, filter) {
     list_filtered_register_tables <- list()
     
     column_name <- determine_column_name(filter)
-    unique_values <- unique(register_table$column_name)
-
+    unique_values <- unique(register_table[[column_name]])
     # Loop over the unique values. We create a sorted table for each value
     for (value in unique_values) {
-        filtered_table <- register_table[register_table$column_name==value, ]
+        filtered_table <- register_table[register_table[[column_name]]==value, ]
         rownames(filtered_table) <- NULL  # Reset row names to remove row numbers
         list_filtered_register_tables[[value]] <- filtered_table
     }    
+
+    print(names(list_filtered_register_tables))
     return(list_filtered_register_tables)
 }

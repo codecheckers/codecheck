@@ -18,8 +18,7 @@ load_md_template <- function(template_path){
 #'
 #' @return The modified markdown table
 adjust_markdown_title <- function(md_table, register_table_name){
-
-  if (register_table_name != "Original"){
+  if (register_table_name == "original"){
     title_addition <- ""
   }
   
@@ -71,10 +70,11 @@ add_repository_links_md <- function(register_table) {
 }
 
 # Helper function to process each table and convert it to markdown format
-render_register_md <- function(filter, register_table, register_table_name, md_table, md_columns_widths, is_temp_file=FALSE) {
+render_register_md <- function(filter, register_table, register_table_name, is_temp_file=FALSE) {
   # Fill in the content
+  md_table <- load_md_template(CONFIG$MD_TEMPLATE)
+
   markdown_content <- capture.output(kable(register_table, format = "markdown"))
-  
   md_table <- adjust_markdown_title(md_table, register_table_name)
   md_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), md_table)
 
@@ -82,30 +82,31 @@ render_register_md <- function(filter, register_table, register_table_name, md_t
   md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))
   # Determining which line to add the md column widths in
   alignment_line_index <- grep("^\\|:---", md_table)
-  md_table[alignment_line_index] <- md_columns_widths
+  md_table[alignment_line_index] <- CONFIG$MD_COLUMNS_WIDTHS
 
   # Determining the directory and saving the file
   output_dir <- get_output_dir(filter, register_table_name)
+
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
   }
 
   if (is_temp_file){
-    output_file_path <- paste0(output_dir, "temp.md")
+    output_dir <- paste0(output_dir, "temp.md")
   }
 
   else{
-    output_file_path <- paste0(output_dir, "register.md")
+    output_dir <- paste0(output_dir, "register.md")
   }
 
-  writeLines(md_table, output_file_path)
+  writeLines(md_table, output_dir)
 }
 
-render_register_mds <- function(list_register_tables, md_template){
-  md_table <- load_md_template(md_template)
+render_register_mds <- function(list_register_tables){
   for (filter in names(list_register_tables)){
-    for (register_table_name in names(list_register_tables[[filter]]))
+    for (register_table_name in names(list_register_tables[[filter]])){
       register_table <- list_register_tables[[filter]][[register_table_name]]
-      render_register_md(filter, register_table, register_table_name, md_table, md_columns_widths)
+      render_register_md(filter, register_table, register_table_name)
+    }
   }
 }

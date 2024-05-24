@@ -1,3 +1,9 @@
+CONFIG <- new.env()
+CONFIG$FILTER_SUB_GROUPS <- list(
+  venues = list("community", "journal", "conference", "codecheck_nl")
+)
+CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
+
 #' Function for rendering the register into different view
 #'
 #' NOTE: You should put a GitHub API token inth the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
@@ -19,13 +25,10 @@
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
-                            filter_by = c("venue"),
+                            filter_by = c("venues"),
                             outputs = c("html", "md", "json")) {
+  CONFIG$MD_TEMPLATE <- system.file("extdata", "templates/template_register.md", package = "codecheck")
   
-  list_venue_categories <- c("community", "journal", "conference")
-  md_template <- system.file("extdata", "templates/template_register.md", package = "codecheck")
-  md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
-
   register_table <- preprocess_register(register)
 
   # Creating list of of register tables with indices being the filter types
@@ -40,8 +43,8 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
 
   # Rendering files
-  if ("md" %in% outputs) render_register_mds(list_register_tables, md_template, md_columns_widths)
-  if ("html" %in% outputs) render_register_htmls(list_register_tables, md_template, md_columns_widths)
+  if ("md" %in% outputs) render_register_mds(list_register_tables)
+  if ("html" %in% outputs) render_register_htmls(list_register_tables)
   if ("json" %in% outputs) render_register_jsons(list_register_tables)
 
   return(register_table)
