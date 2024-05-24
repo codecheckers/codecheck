@@ -160,7 +160,7 @@ render_register_html <- function(filter, register_table, register_table_name){
   # Capture the HTML output from a markdown file
   # Note that the temp md file must be created even if a md exists because the register table
   # now has different icons under "Repository" column
-  render_register_md(filter, register_table, register_table_name, is_temp_file=TRUE)
+  render_register_md(filter, register_table, register_table_name, for_html_file=TRUE)
   temp_md_file_path <- paste0(output_dir, "temp.md")
   
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))

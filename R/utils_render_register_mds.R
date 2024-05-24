@@ -74,7 +74,11 @@ add_repository_links_md <- function(register_table) {
 #' @param filter The filter
 #' @param register_table The register table
 #' @param register_table_name The register table name
-render_register_md <- function(filter, register_table, register_table_name, is_temp_file=FALSE) {
+render_register_md <- function(filter, register_table, register_table_name, for_html_file=FALSE) {
+  # If we are rendering md for html file, we do not need to add repo links
+  if (for_html_file == FALSE){
+    register_table <- add_repository_links_md(register_table)
+  }
   # Fill in the content
   md_table <- load_md_template(CONFIG$MD_TEMPLATE)
 
@@ -95,7 +99,8 @@ render_register_md <- function(filter, register_table, register_table_name, is_t
     dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
   }
 
-  if (is_temp_file){
+  # If rendering md for html file we create a temp file
+  if (for_html_file){
     output_dir <- paste0(output_dir, "temp.md")
   }
 

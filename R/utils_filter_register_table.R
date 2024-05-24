@@ -11,7 +11,6 @@ add_filtered_register_tables <- function(list_register_tables, register_table, f
         list_register_tables[[filter]] <- create_filtered_register_tables(register_table, filter)
     }
 
-    list_1 <- unlist(list_register_tables, recursive = TRUE)
     return(list_register_tables)
 }
 
