@@ -57,6 +57,8 @@ generate_html_document_yml <- function(filter, register_table_name) {
 #' 
 #' @param filter The filter name
 #' @param register_table_name The register table name
+#' 
+#' @importFrom whisker whisker.render
 create_index_postfix_html <- function(filter, register_table_name){
   hrefs <- generate_html_postfix_hrefs(filter, register_table_name)
 
