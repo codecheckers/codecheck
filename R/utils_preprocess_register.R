@@ -83,6 +83,32 @@ add_check_time <- function(register_table, register) {
   return(register_table)
 }
 
+#' Function for adding codechecker to each report in the register table.
+#' 
+#' @param register_table The register table
+#' @param register The register from the register.csv file
+#' @return The adjusted register table
+add_codechecker <- function(register_table, register) {
+  codecheckers <- c()
+
+  # Looping over the entries in the register
+  for (i in seq_len(nrow(register))) {
+    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+
+    codechecker_names <- c()
+    if (!is.null(config_yml)) {
+      for (codechecker in config_yml$codechecker) {
+        codechecker_names <- c(codechecker_names, codechecker$name)
+      }
+    }
+    codecheckers <- c(codecheckers, codechecker_names)
+  }
+  codecheckers <- parsedate::parse_date(codecheckers)
+  register_table$`Codecheckers` <- codecheckers
+
+  return(register_table)
+}
+
 #' Function for preprocessing the register to create and return the preprocessed register table.
 #' @param register The register
 #' @return The preprocessed register table
@@ -91,5 +117,6 @@ preprocess_register <- function(register) {
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
     register_table <- add_check_time(register_table, register)
+    register_table <- add_codechecker(register_table, register)
     return(register_table)
 }
