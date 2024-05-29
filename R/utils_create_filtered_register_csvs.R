@@ -12,7 +12,7 @@ create_filtered_register_csvs <- function(filter_by, register){
     if (filter == "codecheckers"){
       register <- read.csv("docs/temp_register_codechecker.csv", as.is = TRUE)
       # Once the temp_register is loaded, we can remove it
-      remove("docs/temp_register_codechecker.csv")
+      file.remove("docs/temp_register_codechecker.csv")
       unique_values <- names(CONFIG$DICT_ORCID_ID_NAME)
     }
 
@@ -27,6 +27,10 @@ create_filtered_register_csvs <- function(filter_by, register){
       if (column_name == "Codechecker"){
         mask <- sapply(register$Codechecker, function(x) value %in% fromJSON(x))
         filtered_register <- register[mask, ]
+
+        #! Edit depending on whether they want to keep the column
+        # Only keeping the column values specified in CONFIG$REGISTER_COLUMNS
+        filtered_register <- filtered_register[, names(filtered_register) %in% CONFIG$REGISTER_COLUMNS]
       }
 
       # Else we check against the row value itself
