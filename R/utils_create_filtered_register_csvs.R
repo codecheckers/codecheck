@@ -13,12 +13,9 @@ create_filtered_register_csvs <- function(filter_by, register){
       register <- read.csv("docs/temp_register_codechecker.csv", as.is = TRUE)
       # Once the temp_register is loaded, we can remove it
       file.remove("docs/temp_register_codechecker.csv")
-      unique_values <- names(CONFIG$DICT_ORCID_ID_NAME)
     }
 
-    else{
-      unique_values <- unique(register[[column_name]])
-    }
+    unique_values <- get_unique_values_from_filter(register, column_name)
 
     # Filtering the register
     for (value in unique_values) {
@@ -64,6 +61,18 @@ determine_filter_column_name <- function(filter) {
   }
 
   return(filter_column_name)
+}
+
+get_unique_values_from_filter <- function(register_table, filter_column_name){
+    # Directly retrieve from DIC_ORCID_ID_NAME
+    if (filter_column_name == "Codechecker"){
+      unique_values <- names(CONFIG$DICT_ORCID_ID_NAME)
+    } 
+
+    else{
+        unique_values <- unique(register_table[[filter_column_name]])
+    }
+    return(unique_values)
 }
 
 #' Gets the output dir depending on the filter name and the value of the filtered column
