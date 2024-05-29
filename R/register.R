@@ -3,6 +3,8 @@ CONFIG$FILTER_SUB_GROUPS <- list(
   venues = list("community", "journal", "conference", "codecheck nl")
 )
 CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
+CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "Report", "Check date")
+CONFIG$DICT_ORCID_ID_NAME <- list()
 
 #' Function for rendering the register into different view
 #'
@@ -25,18 +27,17 @@ CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
-                            filter_by = c("venues"),
+                            filter_by = c("venues", "codecheckers"),
                             outputs = c("html", "md", "json")) {
   CONFIG$MD_TEMPLATE <- system.file("extdata", "templates/template_register.md", package = "codecheck")
   
-  register_table <- preprocess_register(register)
+  register_table <- preprocess_register(register, filter_by)
 
   # Creating list of of register tables with indices being the filter types
   list_register_tables <- c()
   list_register_tables[["none"]] <- list("original"= register_table)
 
   if (length(filter_by)!=0){
-    # Creating filtered register csvs
     create_filtered_register_csvs(filter_by, register)
     # Creating and adding filtered registered tables to list of tables
     list_register_tables <- add_filtered_register_tables(list_register_tables, register_table, filter_by)
