@@ -88,7 +88,7 @@ get_output_dir <- function(filter, column_value) {
   else if (filter=="venues"){
     venue_category <- determine_venue_category(column_value)
     # In case the venue_category itself has no further subgroups we do not need subgroups
-    if (venue_category==tolower(column_value)){
+    if (is.null(venue_category)){
       return(paste0("docs/", filter, "/", gsub(" ", "_", venue_category), "/"))
     }
 
@@ -112,7 +112,7 @@ get_output_dir <- function(filter, column_value) {
 #' Determines the venue category based on the venue_name
 #'
 #' @param venue_name The venue_name obtained from the "Type" column of the register
-#' @return The venue category. If the venue does not belong to any category the venue_name is returned
+#' @return The venue category. If the venue does not belong to any category NULL is returned
 determine_venue_category <- function(venue_name){
   list_venue_categories <- CONFIG$FILTER_SUB_GROUPS[["venues"]]
   for (category in list_venue_categories){
@@ -121,5 +121,5 @@ determine_venue_category <- function(venue_name){
     }
   }
   warning(paste("Register venue", venue_name, "does not fall into any of the following venue categories:", toString(list_venue_categories)))
-  return(venue_name)
+  return(NULL)
 }

@@ -126,6 +126,12 @@ generate_href <- function(filter, register_table_name, href_type) {
   } 
   else if (filter == "venues") {
     venue_category <- determine_venue_category(register_table_name)
+    
+    # In the case where the venue_category is NULL we do not need a venue category subfolder
+    if (is.null(venue_category)){
+      return(paste0(href_details$base_url, filter, "/", register_table_name, "/register", href_details$ext))
+    }
+
     venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", register_table_name)))
     venue_name <- gsub(" ", "_", venue_name)
     return(paste0(href_details$base_url, filter, "/", venue_category, "/", venue_name, "/register", href_details$ext))
