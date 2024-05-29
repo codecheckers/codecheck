@@ -89,7 +89,7 @@ get_output_dir <- function(filter, column_value) {
     venue_category <- determine_venue_category(column_value)
     # In case the venue_category itself has no further subgroups we do not need subgroups
     if (is.null(venue_category)){
-      return(paste0("docs/", filter, "/", gsub(" ", "_", venue_category), "/"))
+      return(paste0("docs/", filter, "/", gsub(" ", "_", column_value), "/"))
     }
 
     # Removing the venue category to obtain the venue name and replace the brackets

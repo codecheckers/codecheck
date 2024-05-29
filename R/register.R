@@ -1,6 +1,9 @@
 CONFIG <- new.env()
+# Registers can be further divided into filter subgroups
+# For cases where an entry does not fall into any subgroup, it's rendered files
+# are stored in a folder with its own name
 CONFIG$FILTER_SUB_GROUPS <- list(
-  venues = list("community", "journal", "conference", "codecheck nl")
+  venues = list("community", "journal", "conference") 
 )
 CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
 CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "Report", "Check date")
