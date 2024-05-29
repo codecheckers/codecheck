@@ -123,12 +123,14 @@ generate_href <- function(filter, register_table_name, href_type) {
   
   if (filter == "none") {
     return(paste0(href_details$base_url, "register", href_details$ext))
-  } else if (filter == "venues") {
+  } 
+  else if (filter == "venues") {
     venue_category <- determine_venue_category(register_table_name)
     venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", register_table_name)))
     venue_name <- gsub(" ", "_", venue_name)
     return(paste0(href_details$base_url, filter, "/", venue_category, "/", venue_name, "/register", href_details$ext))
-  } else {
+  } 
+  else {
     return(paste0(href_details$base_url, filter, "/", register_table_name, "/register", href_details$ext))
   }
 }
