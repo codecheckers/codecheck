@@ -25,7 +25,7 @@ adjust_markdown_title <- function(filter, md_table, register_table_name){
   
   # For register table sorted by codechecker. These register tables have integers as names
   else if (filter == "codecheckers") {
-    title_addition <- paste("for codechecker", register_table_name)
+    title_addition <- paste("for codechecks by", CONFIG$DICT_ORCID_ID_NAME[register_table_name])
   }
   
   # For register table sorted by venue
