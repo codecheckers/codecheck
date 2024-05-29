@@ -17,12 +17,19 @@ load_md_template <- function(template_path){
 #' @param register_table_name The name of the register table
 #'
 #' @return The modified markdown table
-adjust_markdown_title <- function(md_table, register_table_name){
-  if (register_table_name == "original"){
+adjust_markdown_title <- function(filter, md_table, register_table_name){
+  # For original table we don't need any title addition
+  if (filter == "none"){
     title_addition <- ""
   }
   
-  else {
+  # For register table sorted by codechecker. These register tables have integers as names
+  else if (filter == "codecheckers") {
+    title_addition <- paste("for codechecker", register_table_name)
+  }
+  
+  # For register table sorted by venue
+  else if (filter == "venues"){
     title_addition <- paste("for", register_table_name)
   }
 
@@ -83,7 +90,7 @@ render_register_md <- function(filter, register_table, register_table_name, for_
   md_table <- load_md_template(CONFIG$MD_TEMPLATE)
 
   markdown_content <- capture.output(kable(register_table, format = "markdown"))
-  md_table <- adjust_markdown_title(md_table, register_table_name)
+  md_table <- adjust_markdown_title(filter, md_table, register_table_name)
   md_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), md_table)
 
   # Adjusting the column widths
