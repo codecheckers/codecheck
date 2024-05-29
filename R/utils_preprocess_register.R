@@ -89,34 +89,46 @@ add_check_time <- function(register_table, register) {
 #' @param register The register from the register.csv file
 #' @return The adjusted register table
 add_codechecker <- function(register_table, register) {
-  codecheckers <- c()
+  codecheckers <- vector("list", length = nrow(register))
 
   # Looping over the entries in the register
   for (i in seq_len(nrow(register))) {
     config_yml <- get_codecheck_yml(register[i, ]$Repo)
 
-    codechecker_names <- c()
-    if (!is.null(config_yml)) {
+    codechecker_info <- list()
+    if (!is.null(config_yml)  && !is.null(config_yml$codechecker)) {
+      # For each codechecker we enter the data in the form {name} (orcid id: {orcid_id})
       for (codechecker in config_yml$codechecker) {
-        codechecker_names <- c(codechecker_names, codechecker$name)
+        if (!((codechecker$name) %in% CONFIG$DICT_ORCID_ID_NAME)){
+          CONFIG$DICT_ORCID_ID_NAME[codechecker$name] <- codechecker$ORCID
+        }
+        #! If they want codechecker column
+        #formatted_string <- paste0(codechecker$name, " (ORCID: ", toString(codechecker$ORCID), ")")
+        codechecker_info <- c(codechecker_info, codechecker$ORCID)
       }
     }
-    codecheckers <- c(codecheckers, codechecker_names)
+    codecheckers[[i]] <- codechecker_info
   }
-  codecheckers <- parsedate::parse_date(codecheckers)
-  register_table$`Codecheckers` <- codecheckers
+  register_table$`Codechecker` <- codecheckers
+  register_table$`Codechecker` <- sapply(codecheckers, function(x) paste(x, collapse = ";\n "))
 
+  # Temporarily saving the register.csv which we need for filtering
+  csv_regsiter_table <- register_table
+  csv_regsiter_table$`Codechecker` <- toJSON(csv_regsiter_table$`Codechecker`)
+  write.csv(register_table, "docs/temp_register_with_codechecker.csv")
   return(register_table)
 }
 
 #' Function for preprocessing the register to create and return the preprocessed register table.
 #' @param register The register
 #' @return The preprocessed register table
-preprocess_register <- function(register) {
+preprocess_register <- function(register, filter_by) {
     register_table <- register
+    if ("codecheckers" %in% filter_by){
+      register_table <- add_codechecker(register_table, register)
+    }
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
     register_table <- add_check_time(register_table, register)
-    register_table <- add_codechecker(register_table, register)
     return(register_table)
 }
