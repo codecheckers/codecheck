@@ -124,6 +124,9 @@ create_temp_register_with_codechecker <- function(register_table){
 #' @return The preprocessed register table
 preprocess_register <- function(register, filter_by) {
     register_table <- register
+
+    # Creating a temp register.csv file with a codechecker column which is needed to 
+    # filter the registers by codecheckers
     if ("codecheckers" %in% filter_by){
       register_table <- add_codechecker(register_table, register)
       create_temp_register_with_codechecker(register_table)

@@ -9,6 +9,7 @@ create_filtered_register_csvs <- function(filter_by, register){
   for (filter in filter_by){
     column_name <- determine_filter_column_name(filter)
 
+    # Read the temp register.csv if filter type is codecheckers and delete the temp file
     if (filter == "codecheckers"){
       register <- read.csv("docs/temp_register_codechecker.csv", as.is = TRUE)
       # Once the temp_register is loaded, we can remove it
