@@ -205,10 +205,10 @@ render_register_htmls <- function(list_register_tables) {
 #' @param html_file_path The path to the html file that needs to be edited.
 edit_html_lib_paths <- function(html_file_path) {
 
-  path_components <- strsplit(output_dir, "/")[[1]]
-  # The count of dirs one needs to move up to reach docs/libs. "-1" is used to exclude going up "docs"
-  # folder itself
-  count_dir_up <- length(path_components) - 1
+  path_components <- strsplit(html_file_path, "/")[[1]]
+  # The count of dirs one needs to move up to reach "docs" folder. "-2" is used because both "docs"
+  # "index.html" are elements in path_components. 
+  count_dir_up <- length(path_components) - 2
   up_dirs_string <- rep("../", count_dir_up)
 
   # Relative path to the "docs/libs" folder
@@ -216,7 +216,7 @@ edit_html_lib_paths <- function(html_file_path) {
   relative_libs_dir <- paste0(path_to_base, "libs/")
 
   # Read the HTML file lines into a vector
-  html_lines <- readLines(paste0(output_dir, "index.html"))
+  html_lines <- readLines(html_file_path)
   
   # Replace lines containing "=libs/" with the appropriate relative path to "docs/libs"
   edited_lines <- gsub('="libs/', paste0('="', relative_libs_dir), html_lines)
