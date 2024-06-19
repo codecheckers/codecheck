@@ -74,6 +74,8 @@ add_repository_links_md <- function(register_table) {
 #' @param filter The filter
 #' @param register_table The register table
 #' @param register_table_name The register table name
+#' @param for_html_file Flag for whether we are rendering register md for html file.
+#' Set to FALSE by default. If TRUE, no repo links are added to the repository table.
 render_register_md <- function(filter, register_table, register_table_name, for_html_file=FALSE) {
   # If we are rendering md for html file, we do not need to add repo links
   if (for_html_file == FALSE){
