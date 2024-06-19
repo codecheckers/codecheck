@@ -115,16 +115,27 @@ generate_html_postfix_hrefs <- function(filter, register_table_name) {
 generate_href <- function(filter, register_table_name, href_type) {
   # Determine base path based on the resource type
   href_details <- switch(href_type,
-         "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/docs/", ext = ".csv"),
-         "searchable_csv" = list(base_url ="https://github.com/codecheckers/register/blob/master/docs/", ext = ".csv"),
+         "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/", ext = ".csv"),
+         "searchable_csv" = list(base_url ="https://github.com/codecheckers/register/blob/master/", ext = ".csv"),
          "json" = list(base_url = "https://codecheck.org.uk/register/", ext = ".json"),
          "md" = list(base_url = "https://codecheck.org.uk/register/", ext = ".md")
         )
   
+  base_url <- href_details$base_url
+  # For the original register
   if (filter == "none") {
-    return(paste0(href_details$base_url, "register", href_details$ext))
+    return(paste0(base_url, "register", href_details$ext))
   } 
-  else if (filter == "venues") {
+
+  # Determining if we need to include "/docs" in the href. This is needed for the correct path
+  # to the csv files in the github repo
+  include_docs_in_href <- href_type %in% c("csv_source", "searchable_csv")
+  if (include_docs_in_href){
+    base_url <- paste0(base_url, "docs/")
+  } 
+
+  # Setting href for venue filter
+  if (filter == "venues") {
     venue_category <- determine_venue_category(register_table_name)
     
     # In the case where the venue_category is NULL we do not need a venue category subfolder
@@ -134,10 +145,12 @@ generate_href <- function(filter, register_table_name, href_type) {
 
     venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", register_table_name)))
     venue_name <- gsub(" ", "_", venue_name)
-    return(paste0(href_details$base_url, filter, "/", venue_category, "/", venue_name, "/register", href_details$ext))
+    return(paste0(base_url, filter, "/", venue_category, "/", venue_name, "/register", href_details$ext))
   } 
+
+  # For all other filters
   else {
-    return(paste0(href_details$base_url, filter, "/", register_table_name, "/register", href_details$ext))
+    return(paste0(base_url, filter, "/", register_table_name, "/register", href_details$ext))
   }
 }
 
