@@ -174,6 +174,16 @@ render_register_html <- function(filter, register_table, register_table_name){
   )
 
   file.remove(temp_md_file_path)
+
+  # For all registered tables besides the original we change the html
+  # file so that the path to the libs folder refers to the libs folder "docs/libs".
+  # This is done to remove duplicates of "libs" folders.
+  if (register_table_name != "original"){
+    html_file_path <- paste0(output_dir, "index.html")
+    edit_html_lib_paths(html_file_path)
+    # Deleting the libs folder after changing the html lib path
+    unlink(paste0(output_dir, "/libs"), recursive = TRUE)
+  }
 }
 
 #' Renders register htmls for a list of register tables
@@ -187,4 +197,30 @@ render_register_htmls <- function(list_register_tables) {
       render_register_html(filter, register_table, register_table_name)
     }
   }
+}
+
+#' Loads a html file and replaces the libs path in the html file to the libs folder in "docs/libs"
+#' This is done so all html files can share one libs folder. 
+#' 
+#' @param html_file_path The path to the html file that needs to be edited.
+edit_html_lib_paths <- function(html_file_path) {
+
+  path_components <- strsplit(output_dir, "/")[[1]]
+  # The count of dirs one needs to move up to reach docs/libs. "-1" is used to exclude going up "docs"
+  # folder itself
+  count_dir_up <- length(path_components) - 1
+  up_dirs_string <- rep("../", count_dir_up)
+
+  # Relative path to the "docs/libs" folder
+  path_to_base <- paste0(up_dirs_string, collapse = "")
+  relative_libs_dir <- paste0(path_to_base, "libs/")
+
+  # Read the HTML file lines into a vector
+  html_lines <- readLines(paste0(output_dir, "index.html"))
+  
+  # Replace lines containing "=libs/" with the appropriate relative path to "docs/libs"
+  edited_lines <- gsub('="libs/', paste0('="', relative_libs_dir), html_lines)
+  
+  # Write the edited lines back to the file
+  writeLines(edited_lines, html_file_path)
 }
