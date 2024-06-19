@@ -115,8 +115,8 @@ generate_html_postfix_hrefs <- function(filter, register_table_name) {
 generate_href <- function(filter, register_table_name, href_type) {
   # Determine base path based on the resource type
   href_details <- switch(href_type,
-         "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/", ext = ".csv"),
-         "searchable_csv" = list(base_url ="https://github.com/codecheckers/register/blob/master/", ext = ".csv"),
+         "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/docs/", ext = ".csv"),
+         "searchable_csv" = list(base_url ="https://github.com/codecheckers/register/blob/master/docs/", ext = ".csv"),
          "json" = list(base_url = "https://codecheck.org.uk/register/", ext = ".json"),
          "md" = list(base_url = "https://codecheck.org.uk/register/", ext = ".md")
         )
