@@ -11,12 +11,11 @@ register_clear_cache <- function() {
   unlink(path, recursive = TRUE)
 }
 
-#' Function for adding clickable links to the repor for each entry in the register table.
+#' Function for adding clickable links to the report for each entry in the register table.
 #' 
 #' @param register_table The register table
 #' @param register The register from the register.csv file
-#' @return register_table
-
+#' @return The adjusted register table
 add_report_links <- function(register_table, register) {
 
   reports <- c()
@@ -39,8 +38,7 @@ add_report_links <- function(register_table, register) {
 #' 
 #' @param register_table The register table
 #' @param register The register from the register.csv file
-#' @return register_table
-
+#' @return The adjusted register table
 add_issue_number_links <- function(register_table, register) {
   register_table$Issue <- sapply(
     X = register$Issue,
@@ -60,53 +58,11 @@ add_issue_number_links <- function(register_table, register) {
   return(register_table)
 }
 
-#' Function for adding repository links to each report in the register table.
-#' 
-#' @param register_table The register table
-#' @param register The register from the register.csv file
-#' @return register_table
-
-add_repository_links <- function(register_table, register) {
-  register_table$Repository <- sapply(
-    X = register$Repository,
-    FUN = function(repository) {
-      spec <- parse_repository_spec(repository)
-      if (!any(is.na(spec))) {
-        urrl <- "#"
-
-        switch(spec["type"],
-          "github" = {
-            urrl <- paste0("https://github.com/", spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-          "osf" = {
-            urrl <- paste0("https://osf.io/", spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-          "gitlab" = {
-            urrl <- paste0("https://gitlab.com/", spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-
-          # Type is none of the above
-          {
-            repository
-          }
-        )
-      } else {
-        repository
-      }
-    }
-  )
-  return(register_table)
-}
-
 #' Function for adding check time to each report in the register table.
 #' 
 #' @param register_table The register table
 #' @param register The register from the register.csv file
-#' @return register_table
-
+#' @return The adjusted register table
 add_check_time <- function(register_table, register) {
   check_times <- c()
 
@@ -127,16 +83,13 @@ add_check_time <- function(register_table, register) {
   return(register_table)
 }
 
-#' Function for preprocessing the register to create and return the register_table.
-#' 
-#' @param register_table The register table
-#' @return register_table
-
+#' Function for preprocessing the register to create and return the preprocessed register table.
+#' @param register The register
+#' @return The preprocessed register table
 preprocess_register <- function(register) {
     register_table <- register
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
-    register_table <- add_repository_links(register_table, register)
     register_table <- add_check_time(register_table, register)
     return(register_table)
 }

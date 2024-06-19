@@ -1,6 +1,6 @@
 Package: codecheck
 Title: Helper Functions for CODECHECK Project
-Version: 0.1.0.9006
+Version: 0.2.0
 Authors@R: 
     c(person(given = "Stephen",
             family = "Eglen",
@@ -32,10 +32,11 @@ Imports:
     rorcid,
     osfr,
     httr,
-    zen4R
+    zen4R,
+    whisker
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.1
 VignetteBuilder: knitr
 Suggests: 
     tinytest,

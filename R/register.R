@@ -1,3 +1,9 @@
+CONFIG <- new.env()
+CONFIG$FILTER_SUB_GROUPS <- list(
+  venues = list("community", "journal", "conference", "codecheck nl")
+)
+CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
+
 #' Function for rendering the register into different view
 #'
 #' NOTE: You should put a GitHub API token inth the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
@@ -19,14 +25,27 @@
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
+                            filter_by = c("venues"),
                             outputs = c("html", "md", "json")) {
+  CONFIG$MD_TEMPLATE <- system.file("extdata", "templates/template_register.md", package = "codecheck")
+  
   register_table <- preprocess_register(register)
 
-  md_columns_widths <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
+  # Creating list of of register tables with indices being the filter types
+  list_register_tables <- c()
+  list_register_tables[["none"]] <- list("original"= register_table)
 
-  if ("md" %in% outputs) render_register_md(register_table, md_columns_widths)
-  if ("html" %in% outputs) render_register_html(register_table, register, md_columns_widths)
-  if ("json" %in% outputs) render_register_json(register_table, register)
+  if (length(filter_by)!=0){
+    # Creating filtered register csvs
+    create_filtered_register_csvs(filter_by, register)
+    # Creating and adding filtered registered tables to list of tables
+    list_register_tables <- add_filtered_register_tables(list_register_tables, register_table, filter_by)
+  }
+
+  # Rendering files
+  if ("md" %in% outputs) render_register_mds(list_register_tables)
+  if ("html" %in% outputs) render_register_htmls(list_register_tables)
+  if ("json" %in% outputs) render_register_jsons(list_register_tables)
 
   return(register_table)
 }
@@ -57,7 +76,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE),
 
     # check certificate IDs if there is a codecheck.yml
     codecheck_yaml <- get_codecheck_yml(entry$Repository)
-    check_certificate_id(codecheck_yaml)
+    check_certificate_id(entry, codecheck_yaml)
     check_issue_status(entry)
     cat("Completed checking registry entry", toString(register[i, "Certificate"]), "\n")
   }

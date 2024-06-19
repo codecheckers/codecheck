@@ -1,0 +1,82 @@
+#' Creates filtered register csv files
+#'
+#' Each csv file is saved in the appropriate output_dir.
+#'
+#' @param filter_by A vector of strings specifying the names of the columns to filter by.
+#' @param register A dataframe representing the register data to be filtered.
+create_filtered_register_csvs <- function(filter_by, register){
+
+  for (filter in filter_by){
+    column_name <- determine_filter_column_name(filter)
+    unique_values <- unique(register[[column_name]])
+
+    for (value in unique_values) {
+      filtered_register <- register[register[[column_name]]==value, ]
+      output_dir <- paste0(get_output_dir(filter, value), "register.csv")
+
+      if (!dir.exists(dirname(output_dir))) {
+        dir.create(dirname(output_dir), recursive = TRUE, showWarnings = TRUE)
+      }
+
+      write.csv(filtered_register, output_dir, row.names=FALSE)
+    }    
+  }
+}
+
+#' Determines the register table's column name to filter the data by.
+#'
+#' @param filter The filter name
+#' @return The column name to filter by
+determine_filter_column_name <- function(filter) {
+  filter_column_name <- switch(filter,
+         "venues" = "Type",
+         NULL # Default case is set to NULL
+         )
+  if (is.null(filter_column_name)) {
+    stop(paste("Filter", filter, "is not recognized."))
+  }
+
+  return(filter_column_name)
+}
+
+#' Gets the output dir depending on the filter name and the value of the filtered column
+#'
+#' @param filter The filter name
+#' @param column_value The value of the column the filter applies to
+#' @return The directory to save files to
+get_output_dir <- function(filter, column_value) {
+  if (filter=="none"){
+    return(paste0("docs/"))
+  }
+  
+  else if (filter=="venues"){
+    venue_category <- determine_venue_category(column_value)
+    # In case the venue_category itself has no further subgroups we do not need subgroups
+    if (venue_category==tolower(column_value)){
+      return(paste0("docs/", filter, "/", gsub(" ", "_", venue_category), "/"))
+    }
+
+    # Removing the venue category to obtain the venue name and replace the brackets
+    venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", column_value)))
+    venue_name <- gsub(" ", "_", venue_name)
+    return(paste0("docs/", filter, "/", venue_category, "/", venue_name, "/"))  }
+
+  else{
+    return(paste0("docs/", filter, "/", gsub(" ", "_", tolower(column_value)), "/"))
+  }
+}
+
+#' Determines the venue category based on the venue_name
+#'
+#' @param venue_name The venue_name obtained from the "Type" column of the register
+#' @return The venue category. If the venue does not belong to any category the venue_name is returned
+determine_venue_category <- function(venue_name){
+  list_venue_categories <- CONFIG$FILTER_SUB_GROUPS[["venues"]]
+  for (category in list_venue_categories){
+    if (grepl(category, venue_name, ignore.case=TRUE)) {
+      return(category)
+    }
+  }
+  warning(paste("Register venue", venue_name, "does not fall into any of the following venue categories:", toString(list_venue_categories)))
+  return(venue_name)
+}
