@@ -145,6 +145,7 @@ generate_href <- function(filter, register_table_name, href_type) {
 
     venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", register_table_name)))
     venue_name <- gsub(" ", "_", venue_name)
+
     return(paste0(base_url, filter, "/", venue_category, "/", venue_name, "/register", href_details$ext))
   } 
 
