@@ -20,8 +20,8 @@ create_filtered_register_csvs <- function(filter_by, register){
 
     # Filtering the register
     for (value in unique_values) {
-      # In case of filtering by codechecker we need to check if unique value is contained
-      # in the list which is the row value
+      # For filtering by codechecker we need to check if unique value is contained
+      # in the list which is the row value.
       if (column_name == "Codechecker"){
         mask <- sapply(register$Codechecker, function(x) value %in% fromJSON(x))
         filtered_register <- register[mask, ]
