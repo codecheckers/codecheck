@@ -10,7 +10,7 @@ determine_venue_category(venue_name)
 \item{venue_name}{The venue_name obtained from the "Type" column of the register}
 }
 \value{
-The venue category. If the venue does not belong to any category the venue_name is returned
+The venue category. If the venue does not belong to any category NULL is returned
 }
 \description{
 Determines the venue category based on the venue_name

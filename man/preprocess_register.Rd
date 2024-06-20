@@ -4,7 +4,7 @@
 \alias{preprocess_register}
 \title{Function for preprocessing the register to create and return the preprocessed register table.}
 \usage{
-preprocess_register(register)
+preprocess_register(register, filter_by)
 }
 \arguments{
 \item{register}{The register}
