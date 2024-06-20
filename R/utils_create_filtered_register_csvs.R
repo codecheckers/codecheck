@@ -9,11 +9,12 @@ create_filtered_register_csvs <- function(filter_by, register){
   for (filter in filter_by){
     column_name <- determine_filter_column_name(filter)
 
-    # Read the temp register.csv if filter type is codecheckers and delete the temp file
+    # If filtered by codecheckers we replace the register with the register with codechecker
+    # columns
     if (filter == "codecheckers"){
-      register <- read.csv("docs/temp_register_codechecker.csv", as.is = TRUE)
+      register <- read.csv(CONFIG$DIR_TEMP_REGISTER_CODECHECKER, as.is = TRUE)
       # Once the temp_register is loaded, we can remove it
-      file.remove("docs/temp_register_codechecker.csv")
+      file.remove(CONFIG$DIR_TEMP_REGISTER_CODECHECKER)
     }
 
     unique_values <- get_unique_values_from_filter(register, column_name)

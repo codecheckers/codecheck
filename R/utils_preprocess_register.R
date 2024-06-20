@@ -116,7 +116,7 @@ add_codechecker <- function(register_table, register) {
 create_temp_register_with_codechecker <- function(register_table){
   # Apply toJSON to each element in the `Codechecker` column
   register_table$Codechecker <- sapply(register_table$Codechecker, toJSON, auto_unbox = TRUE)
-  write.csv(register_table, "docs/temp_register_codechecker.csv")
+  write.csv(register_table, CONFIG$DIR_TEMP_REGISTER_CODECHECKER)
 }
 
 #' Function for preprocessing the register to create and return the preprocessed register table.
@@ -125,10 +125,11 @@ create_temp_register_with_codechecker <- function(register_table){
 preprocess_register <- function(register, filter_by) {
     register_table <- register
 
-    # Creating a temp register.csv file with a codechecker column which is needed to 
-    # filter the registers by codecheckers
     if ("codecheckers" %in% filter_by){
+      # Adding the codechecker column which is needed for filtering by codechecker later
       register_table <- add_codechecker(register_table, register)
+      # Creating a temp register.csv file with a codechecker column which is needed to 
+      # filter the registers by codecheckers
       create_temp_register_with_codechecker(register_table)
     }
     register_table <- add_report_links(register_table, register)
