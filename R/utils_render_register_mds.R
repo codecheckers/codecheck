@@ -11,22 +11,30 @@ load_md_template <- function(template_path){
   return(md_table)
 }
 
-#' Function to adjust the markdown title based on the specific register table name.
+#' Function to add the markdown title based on the specific register table name.
 #' 
-#' @param markdown_table The markdown template where the title needs to be adjusted
+#' @param markdown_table The markdown template where the title needs to be added
 #' @param register_table_name The name of the register table
 #'
 #' @return The modified markdown table
-adjust_markdown_title <- function(md_table, register_table_name){
-  if (register_table_name == "original"){
-    title_addition <- ""
+add_markdown_title <- function(filter, md_table, register_table_name){
+  if (filter == "none"){
+    title <- "CODECHECK Register"
   }
   
-  else {
-    title_addition <- paste("for", register_table_name)
+  # For codechecker filtered registers we show the name and the ORCID ID
+  else if (filter == "codecheckers") {
+    author_name <- CONFIG$DICT_ORCID_ID_NAME[register_table_name]
+    orcid_id <- register_table_name
+    title <- paste0("Codechecks by ", author_name, " (", orcid_id,")")
+  }
+  
+  # For venue filtered registers we display the venue name in the title.
+  else if (filter == "venues"){
+    title <- paste("CODECHECK Register for", register_table_name)
   }
 
-  md_table <- gsub("\\$title_addition\\$", title_addition, md_table)
+  md_table <- gsub("\\$title\\$", title, md_table)
   return(md_table)
 }
 
@@ -85,7 +93,7 @@ render_register_md <- function(filter, register_table, register_table_name, for_
   md_table <- load_md_template(CONFIG$MD_TEMPLATE)
 
   markdown_content <- capture.output(kable(register_table, format = "markdown"))
-  md_table <- adjust_markdown_title(md_table, register_table_name)
+  md_table <- add_markdown_title(filter, md_table, register_table_name)
   md_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), md_table)
 
   # Adjusting the column widths

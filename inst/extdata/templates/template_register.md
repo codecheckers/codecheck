@@ -1,5 +1,5 @@
 ---
-title: CODECHECK Register $title_addition$
+title: $title$
 ---
 
 $content$

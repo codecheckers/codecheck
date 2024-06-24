@@ -24,10 +24,26 @@ create_filtered_register_tables <- function(register_table, filter) {
     list_filtered_register_tables <- list()
     
     filter_column_name <- determine_filter_column_name(filter)
-    unique_values <- unique(register_table[[filter_column_name]])
-    # Loop over the unique values. We create a sorted table for each value
+    unique_values <- get_unique_values_from_filter(register_table, filter_column_name)
+    
+    # Loop over the unique values. We create a filtered table for each value
+    # For filter by codechecker the table indices in the list will be the orcid ID. 
     for (value in unique_values) {
-        filtered_table <- register_table[register_table[[filter_column_name]]==value, ]
+        # For filtering by codechecker we need to check if unique value is contained
+        # in the list which is the row value
+        if (filter_column_name == "Codechecker"){
+            mask <- sapply(register_table$Codechecker, function(x) value %in% x)
+            filtered_table <- register_table[mask, ]
+        }
+
+        else{
+            filtered_table <- register_table[register_table[[filter_column_name]]==value, ]
+        }
+
+        #! Edit depending on whether they want to keep the column
+        # Dropping columns not specificied in CONFIG$REGISTER_COLUMNS
+        filtered_table <- filtered_table[, names(register_table) %in% CONFIG$REGISTER_COLUMNS]
+
         rownames(filtered_table) <- NULL  # Reset row names to remove row numbers
         list_filtered_register_tables[[value]] <- filtered_table
     }    
