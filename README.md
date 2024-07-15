@@ -34,7 +34,14 @@ remotes::install_github("codecheckers/codecheck")
 
 ## Usage
 
-See the main vignette.
+For details see the main vignette.
+
+### I just want to use the R Markdown template for writing a check
+
+``` r
+# install
+codecheck::create_codecheck_files()
+```
 
 ## Development
 
@@ -50,5 +57,5 @@ build_install_test(".")
 
 ## License
 
-Copyright 2022 S. Eglen & D. Nüst. The `codecheck` package is published
+Copyright 2024 S. Eglen & D. Nüst. The `codecheck` package is published
 under the MIT license, see file `LICENSE`.
