@@ -39,7 +39,7 @@ For details see the main vignette.
 ### I just want to use the R Markdown template for writing a check
 
 ``` r
-# install
+# install package, then:
 codecheck::create_codecheck_files()
 ```
 
