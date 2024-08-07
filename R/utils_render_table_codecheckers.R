@@ -1,4 +1,7 @@
-render_table_codecheckers_json <- function(list_codechecker_reg_tables){
+#' Renders JSON file of codecheckers.
+#' 
+#' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
+render_codecheckers_json <- function(list_codechecker_reg_tables){
   output_dir <- "docs/codecheckers/"
 
   table_codecheckers_json <- render_table_codecheckers_json(list_codechecker_reg_tables)
@@ -9,10 +12,12 @@ render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   )
 }
 
-#' Renders a html containing list of codecheckers
+#' Renders codecheckers page.
 #' Each codechecker name links to the register table for that specific
-#' codechecker. 
-render_table_codecheckers_html <- function(list_codechecker_reg_tables){
+#' codechecker. The ORCID IDs link to their ORCID pages.
+#' 
+#' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
+render_codecheckers_html <- function(list_codechecker_reg_tables){
 
   output_dir <- "docs/codecheckers/"
   table_codecheckers <- render_table_codecheckers_html(list_codechecker_reg_tables)
@@ -52,6 +57,9 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
   unlink(paste0(output_dir, "/libs"), recursive = TRUE)
 }
 
+#' Renders codecheckers table in JSON format.
+#' 
+#' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
 render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   list_orcid_ids <- names(list_codechecker_reg_tables)
   # Check.names arg is set to FALSE so that column "ORCID ID" has the space
@@ -79,11 +87,11 @@ render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   return(table_codecheckers)
 }
 
-#' Creates a table with the names of codecheckers
-#' Contains 2 columns - codechecker names and their ORCID ID's.
-#' The codechecker names link to the codecheck webpage with register table for all
-#' their codechecks.
-#' The ORCID ID's lead to their orcid webpage
+#' Renders codecheckers table in HTML format.
+#' Each codechecker name links to the register table for that specific
+#' codechecker. The ORCID IDs link to their ORCID pages.
+#' 
+#' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
 render_table_codecheckers_html <- function(list_codechecker_reg_tables){
 
   list_orcid_ids <- names(list_codechecker_reg_tables)
