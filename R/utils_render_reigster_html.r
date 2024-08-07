@@ -98,7 +98,7 @@ create_index_header_html <- function(output_dir){
   writeLines(header_template, paste0(output_dir, "index_header.html"))
 }
 
-#' Generates the hrefs to set in the postfix.html file.
+#' Generates the hrefs to set in the postfix.html file for the rendering of register tables.
 #' 
 #' @param filter The filter name
 #' @param register_table_name The register table name

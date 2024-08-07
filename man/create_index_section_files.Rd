@@ -2,15 +2,17 @@
 % Please edit documentation in R/utils_render_reigster_html.r
 \name{create_index_section_files}
 \alias{create_index_section_files}
-\title{Creates html files for each index section- the index postfix, prefix and the header}
+\title{Creates index postfix, prefix and the header}
 \usage{
-create_index_section_files(filter, register_table_name)
+create_index_section_files(output_dir, filter, register_table_name = NULL)
 }
 \arguments{
+\item{output_dir}{The output directory of the section files}
+
 \item{filter}{The filter name}
 
 \item{register_table_name}{The register table name}
 }
 \description{
-Creates html files for each index section- the index postfix, prefix and the header
+Creates index postfix, prefix and the header
 }
