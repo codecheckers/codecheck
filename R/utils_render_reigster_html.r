@@ -214,13 +214,14 @@ render_register_html <- function(filter, register_table, register_table_name){
 render_register_htmls <- function(list_register_tables) {
   # Loop over each register table
   for (filter in names(list_register_tables)){
+    list_filtered_reg_tables <- list_register_tables[[filter]]
+
     if (filter=="codecheckers"){
-      list_codechecker_reg_tables <- list_register_tables[[filter]]
-      render_html_list_codecheckers(list_codechecker_reg_tables)
+      render_html_list_codecheckers(list_filtered_reg_tables)
     }
 
-    for (register_table_name in names(list_register_tables[[filter]])) {
-      register_table <- list_register_tables[[filter]][[register_table_name]]
+    for (register_table_name in names(list_filtered_reg_tables)) {
+      register_table <- list_filtered_reg_tables[[register_table_name]]
       render_register_html(filter, register_table, register_table_name)
     }
   }
