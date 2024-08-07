@@ -17,6 +17,8 @@ render_html_list_codecheckers <- function(list_codechecker_reg_tables){
   writeLines(md_table, temp_md_path)
 
   # Creating the correct html yaml and index files
+  create_index_section_files(output_dir, "codecheckers")
+  generate_html_document_yml(output_dir)
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
 
   # Render HTML from markdown
