@@ -1,7 +1,6 @@
 render_list_codecheckers_json <- function(list_codechecker_reg_tables){
   output_dir <- "docs/codecheckers/"
 
-  # Creating the index.json file
   table_codecheckers_json <- render_table_codecheckers_json(list_codechecker_reg_tables)
   jsonlite::write_json(
     table_codecheckers_json,
@@ -55,20 +54,20 @@ render_list_codecheckers_html <- function(list_codechecker_reg_tables){
 
 render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   list_orcid_ids <- names(list_codechecker_reg_tables)
-  table_codecheckers <- data.frame(`ORCID ID`= list_orcid_ids, stringsAsFactors = FALSE)
-
+  # Check.names arg is set to FALSE so that column "ORCID ID" has the space
+  table_codecheckers <- data.frame(`ORCID ID`= list_orcid_ids, stringsAsFactors = FALSE, check.names = FALSE)
+  
   # Column- codechecker names
   table_codecheckers$`Codechecker name` <- sapply(
-    X = table_codecheckers$ORCID_ID,
+    X = table_codecheckers$`ORCID ID`,
     FUN = function(orcid_id) {
-      codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[orcid_id]
-      paste0(codechecker_name)
+      paste0(CONFIG$DICT_ORCID_ID_NAME[orcid_id])
     }
   )
 
   # Column- No. of codechecks
   table_codecheckers$`No. of codechecks` <- sapply(
-    X = table_codecheckers$ORCID_ID,
+    X = table_codecheckers$`ORCID ID`,
     FUN = function(orcid_id) {
       paste0(nrow(list_codechecker_reg_tables[[orcid_id]]))
     }
@@ -90,7 +89,7 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
   list_orcid_ids <- names(list_codechecker_reg_tables)
   table_codecheckers <- data.frame(ORCID_ID = list_orcid_ids, stringsAsFactors = FALSE)
 
-  # Creating column with all the codechecker names
+  # Column- codechecker names
   # Each codechecker name will be a hyperlink to the register table
   # with all their codechecks
   table_codecheckers$`Codechecker name` <- sapply(
@@ -102,7 +101,7 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
     }
   )
 
-  # Adding the ORCID ID's with links to the respective orcid pages
+  # Column- ORCID ID link
   table_codecheckers$ORCID_ID_Link <- sapply(
     X = table_codecheckers$ORCID_ID,
     FUN = function(orcid_id) {
@@ -110,7 +109,7 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
     }
   )
 
-  # Number of codechecks done by each codechecker
+  # Column- No. of codechecks
   table_codecheckers$`No. of codechecks` <- sapply(
     X = table_codecheckers$ORCID_ID,
     FUN = function(orcid_id) {
