@@ -57,11 +57,11 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   if ("md" %in% outputs) render_register_mds(list_register_tables)
   if ("html" %in% outputs) {
     render_register_htmls(list_register_tables)
-    render_list_codecheckers_html(list_codechecker_reg_tables)
+    render_table_codecheckers_html(list_codechecker_reg_tables)
   }
   if ("json" %in% outputs) {
     render_register_jsons(list_register_tables)
-    render_list_codecheckers_json(list_codechecker_reg_tables)
+    render_table_codecheckers_json(list_codechecker_reg_tables)
   }
 
   return(register_table)

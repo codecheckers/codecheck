@@ -1,4 +1,4 @@
-render_list_codecheckers_json <- function(list_codechecker_reg_tables){
+render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   output_dir <- "docs/codecheckers/"
 
   table_codecheckers_json <- render_table_codecheckers_json(list_codechecker_reg_tables)
@@ -12,7 +12,7 @@ render_list_codecheckers_json <- function(list_codechecker_reg_tables){
 #' Renders a html containing list of codecheckers
 #' Each codechecker name links to the register table for that specific
 #' codechecker. 
-render_list_codecheckers_html <- function(list_codechecker_reg_tables){
+render_table_codecheckers_html <- function(list_codechecker_reg_tables){
 
   output_dir <- "docs/codecheckers/"
   table_codecheckers <- render_table_codecheckers_html(list_codechecker_reg_tables)
