@@ -1,10 +1,22 @@
+render_list_codecheckers_json <- function(list_codechecker_reg_tables){
+  output_dir <- "docs/codecheckers/"
+
+  # Creating the index.json file
+  table_codecheckers_json <- render_table_codecheckers_json(list_codechecker_reg_tables)
+  jsonlite::write_json(
+    table_codecheckers_json,
+    path = paste0(output_dir, "index.json"),
+    pretty = TRUE
+  )
+}
+
 #' Renders a html containing list of codecheckers
 #' Each codechecker name links to the register table for that specific
 #' codechecker. 
-render_html_list_codecheckers <- function(list_codechecker_reg_tables){
+render_list_codecheckers_html <- function(list_codechecker_reg_tables){
 
-  table_codecheckers <- create_table_codecheckers(list_codechecker_reg_tables)
   output_dir <- "docs/codecheckers/"
+  table_codecheckers <- render_table_codecheckers_html(list_codechecker_reg_tables)
 
   # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$MD_TEMPLATE)
@@ -21,7 +33,7 @@ render_html_list_codecheckers <- function(list_codechecker_reg_tables){
   generate_html_document_yml(output_dir)
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
 
-  # Render HTML from markdown
+  # Render index.html from markdown
   rmarkdown::render(
     input = temp_md_path,
     output_file = "index.html",
@@ -41,12 +53,39 @@ render_html_list_codecheckers <- function(list_codechecker_reg_tables){
   unlink(paste0(output_dir, "/libs"), recursive = TRUE)
 }
 
+render_table_codecheckers_json <- function(list_codechecker_reg_tables){
+  list_orcid_ids <- names(list_codechecker_reg_tables)
+  table_codecheckers <- data.frame(`ORCID ID`= list_orcid_ids, stringsAsFactors = FALSE)
+
+  # Column- codechecker names
+  table_codecheckers$`Codechecker name` <- sapply(
+    X = table_codecheckers$ORCID_ID,
+    FUN = function(orcid_id) {
+      codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[orcid_id]
+      paste0(codechecker_name)
+    }
+  )
+
+  # Column- No. of codechecks
+  table_codecheckers$`No. of codechecks` <- sapply(
+    X = table_codecheckers$ORCID_ID,
+    FUN = function(orcid_id) {
+      paste0(nrow(list_codechecker_reg_tables[[orcid_id]]))
+    }
+  )
+
+  # Arranging the column names
+  table_codecheckers <- table_codecheckers[, c("Codechecker name", "ORCID ID", "No. of codechecks")]
+
+  return(table_codecheckers)
+}
+
 #' Creates a table with the names of codecheckers
 #' Contains 2 columns - codechecker names and their ORCID ID's.
 #' The codechecker names link to the codecheck webpage with register table for all
 #' their codechecks.
 #' The ORCID ID's lead to their orcid webpage
-create_table_codecheckers <- function(list_codechecker_reg_tables){
+render_table_codecheckers_html <- function(list_codechecker_reg_tables){
 
   list_orcid_ids <- names(list_codechecker_reg_tables)
   table_codecheckers <- data.frame(ORCID_ID = list_orcid_ids, stringsAsFactors = FALSE)

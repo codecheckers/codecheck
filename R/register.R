@@ -51,10 +51,18 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
     list_register_tables <- add_filtered_register_tables(list_register_tables, register_table, filter_by)
   }
 
+  list_codechecker_reg_tables <- list_register_tables[["codecheckers"]]
+
   # Rendering files
   if ("md" %in% outputs) render_register_mds(list_register_tables)
-  if ("html" %in% outputs) render_register_htmls(list_register_tables)
-  if ("json" %in% outputs) render_register_jsons(list_register_tables)
+  if ("html" %in% outputs) {
+    render_register_htmls(list_register_tables)
+    render_list_codecheckers_html(list_codechecker_reg_tables)
+  }
+  if ("json" %in% outputs) {
+    render_register_jsons(list_register_tables)
+    render_list_codecheckers_json(list_codechecker_reg_tables)
+  }
 
   return(register_table)
 }
