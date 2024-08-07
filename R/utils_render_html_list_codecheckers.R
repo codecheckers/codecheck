@@ -6,8 +6,9 @@ render_html_list_codecheckers <- function(list_orcid_ids){
   table_codecheckers <- create_table_codecheckers(list_orcid_ids)
   output_dir <- "docs/codecheckers/"
 
-  title <- "List of codecheckers"
+  # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$MD_TEMPLATE)
+  title <- "List of codecheckers"
   md_table <- gsub("\\$title\\$", title, md_table)
   md_table <- gsub("\\$content\\$", paste(table_codecheckers, collapse = "\n"), md_table)
 
@@ -15,8 +16,11 @@ render_html_list_codecheckers <- function(list_orcid_ids){
   temp_md_path <- paste0(output_dir, "temp.md")
   writeLines(md_table, temp_md_path)
 
+  # Creating the correct html yaml and index files
+  yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
+
   # Render HTML from markdown
-  rmarkdown::render(
+  quarto::quarto_render(
     input = temp_md_file_path,
     output_file = "index.html",
     output_dir = output_dir,
@@ -25,6 +29,13 @@ render_html_list_codecheckers <- function(list_orcid_ids){
 
   # Deleting the temp file
   file.remove(temp_md_path)
+
+  # Changing the html file so that the path to the libs folder refers to 
+  # the libs folder "docs/libs".
+  # This is done to remove duplicates of "libs" folders.
+  edit_html_lib_paths(html_file_path)
+  # Deleting the libs folder after changing the html lib path
+  unlink(paste0(output_dir, "/libs"), recursive = TRUE)
 }
 
 #' Creates a table with the names of codecheckers
