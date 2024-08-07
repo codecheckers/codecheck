@@ -215,8 +215,8 @@ render_register_htmls <- function(list_register_tables) {
   # Loop over each register table
   for (filter in names(list_register_tables)){
     if (filter=="codecheckers"){
-      list_orcid_ids <- names(list_register_tables[[filter]])
-      render_html_list_codecheckers(list_orcid_ids)
+      list_codechecker_reg_tables <- list_register_tables[[filter]]
+      render_html_list_codecheckers(list_codechecker_reg_tables)
     }
 
     for (register_table_name in names(list_register_tables[[filter]])) {

@@ -1,14 +1,14 @@
 #' Renders a html containing list of codecheckers
 #' Each codechecker name links to the register table for that specific
 #' codechecker. 
-render_html_list_codecheckers <- function(list_orcid_ids){
+render_html_list_codecheckers <- function(list_codechecker_reg_tables){
 
-  table_codecheckers <- create_table_codecheckers(list_orcid_ids)
+  table_codecheckers <- create_table_codecheckers(list_codechecker_reg_tables)
   output_dir <- "docs/codecheckers/"
 
   # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$MD_TEMPLATE)
-  title <- "List of codecheckers"
+  title <- "CODECHECK List of codecheckers"
   md_table <- gsub("\\$title\\$", title, md_table)
   md_table <- gsub("\\$content\\$", paste(table_codecheckers, collapse = "\n"), md_table)
 
@@ -20,8 +20,8 @@ render_html_list_codecheckers <- function(list_orcid_ids){
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
 
   # Render HTML from markdown
-  quarto::quarto_render(
-    input = temp_md_file_path,
+  rmarkdown::render(
+    input = temp_md_path,
     output_file = "index.html",
     output_dir = output_dir,
     output_yaml = yaml_path
@@ -33,6 +33,7 @@ render_html_list_codecheckers <- function(list_orcid_ids){
   # Changing the html file so that the path to the libs folder refers to 
   # the libs folder "docs/libs".
   # This is done to remove duplicates of "libs" folders.
+  html_file_path <- paste0(output_dir, "index.html")
   edit_html_lib_paths(html_file_path)
   # Deleting the libs folder after changing the html lib path
   unlink(paste0(output_dir, "/libs"), recursive = TRUE)
@@ -43,22 +44,15 @@ render_html_list_codecheckers <- function(list_orcid_ids){
 #' The codechecker names link to the codecheck webpage with register table for all
 #' their codechecks.
 #' The ORCID ID's lead to their orcid webpage
-create_table_codecheckers <- function(list_orcid_ids){
+create_table_codecheckers <- function(list_codechecker_reg_tables){
 
+  list_orcid_ids <- names(list_codechecker_reg_tables)
   table_codecheckers <- data.frame(ORCID_ID = list_orcid_ids, stringsAsFactors = FALSE)
-
-  # Adding the ORCID ID's with links to the respective orcid pages
-  table_codecheckers$ORCID_ID <- sapply(
-    X = table_codecheckers$ORCID_ID,
-    FUN = function(orcid_id) {
-      paste0("[", orcid_id, "](https://orcid.org/", orcid_id, ")")
-    }
-  )
 
   # Creating column with all the codechecker names
   # Each codechecker name will be a hyperlink to the register table
   # with all their codechecks
-  table_codecheckers$Codechecker  <- sapply(
+  table_codecheckers$`Codechecker name` <- sapply(
     X = table_codecheckers$ORCID_ID,
     FUN = function(orcid_id) {
       codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[orcid_id]
@@ -67,5 +61,26 @@ create_table_codecheckers <- function(list_orcid_ids){
     }
   )
 
+  # Adding the ORCID ID's with links to the respective orcid pages
+  table_codecheckers$ORCID_ID_Link <- sapply(
+    X = table_codecheckers$ORCID_ID,
+    FUN = function(orcid_id) {
+      paste0("[", orcid_id, "](https://orcid.org/", orcid_id, ")")
+    }
+  )
+
+  # Number of codechecks done by each codechecker
+  table_codecheckers$`No. of codechecks` <- sapply(
+    X = table_codecheckers$ORCID_ID,
+    FUN = function(orcid_id) {
+      paste0(nrow(list_codechecker_reg_tables[[orcid_id]]))
+    }
+  )
+
+  # Drop the original ORCID_ID column and rename ORCID_ID_Link to ORCID_ID
+  table_codecheckers <- table_codecheckers[, c("Codechecker name", "ORCID_ID_Link", "No. of codechecks")]
+  names(table_codecheckers)[names(table_codecheckers) == "ORCID_ID_Link"] <- "ORCID ID"
+
+  table_codecheckers <- kable(table_codecheckers)
   return(table_codecheckers)
 }
