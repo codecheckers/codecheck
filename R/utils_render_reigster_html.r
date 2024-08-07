@@ -64,14 +64,18 @@ create_index_postfix_html <- function(output_dir, filter, register_table_name = 
   if (!is.null(register_table_name)){
     postfix_template <- readLines(paste0(getwd(), "/docs/templates/reg_tables/index_postfix_template.html"), warn = FALSE)
     # Render the template with the correct hrefs
-    hrefs <- generate_html_postfix_hrefs(filter, register_table_name)
-    output <- whisker.render(postfix_template, hrefs)
+    hrefs <- generate_html_postfix_hrefs_reg(filter, register_table_name)
   }
 
+  # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
   else{
-    output <- readLines(paste0(getwd(), "/docs/templates/codecheckers_venues_list/index_postfix_template.html"), warn = FALSE)
+    postfix_template <- readLines(paste0(getwd(), "/docs/templates/codecheckers_venues_list/index_postfix_template.html"), warn = FALSE)
+    hrefs <- list(
+      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
+    )
   }
-  
+
+  output <- whisker.render(postfix_template, hrefs)
   writeLines(output, paste0(output_dir, "index_postfix.html"))
 }
 
@@ -98,7 +102,7 @@ create_index_header_html <- function(output_dir){
 #' 
 #' @param filter The filter name
 #' @param register_table_name The register table name
-generate_html_postfix_hrefs <- function(filter, register_table_name) {
+generate_html_postfix_hrefs_reg <- function(filter, register_table_name) {
   hrefs <- list(
     csv_source_href = generate_href(filter, register_table_name, "csv_source"),
     searchable_csv_href = generate_href(filter, register_table_name, "searchable_csv"),
@@ -219,10 +223,6 @@ render_register_htmls <- function(list_register_tables) {
   # Loop over each register table
   for (filter in names(list_register_tables)){
     list_filtered_reg_tables <- list_register_tables[[filter]]
-
-    if (filter=="codecheckers"){
-      render_html_list_codecheckers(list_filtered_reg_tables)
-    }
 
     for (register_table_name in names(list_filtered_reg_tables)) {
       register_table <- list_filtered_reg_tables[[register_table_name]]
