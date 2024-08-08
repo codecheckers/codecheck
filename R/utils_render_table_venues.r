@@ -130,7 +130,7 @@ render_table_venues_html <- function(list_venue_reg_tables){
         return(NA)  # Handle cases where venue_name is not in CONFIG$DICT_VENUE_NAMES
       }
       paste0("[", CONFIG$DICT_VENUE_NAMES[[venue_name]], "](https://codecheck.org.uk/register/venues/",
-            venue_type, "/", determine_venue_name(venue_name, venue_type), "/)")
+            stringr::str_to_lower(venue_type), "/", determine_venue_name(venue_name, venue_type), "/)")
     },
     venue_name = table_venues$`Venue name`,
     venue_type = table_venues$`Venue type`
