@@ -138,6 +138,6 @@ render_table_venues_html <- function(list_venue_reg_tables){
 
   table_venues <- table_venues[, c("Venue type", "Venue name", "No. of codechecks")]
 
-  table_venues <- kable(table_venues)
+  table_venues <- kable(table_venues, align = "lll")
   return(table_venues)
 }
