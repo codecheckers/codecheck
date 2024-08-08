@@ -9,6 +9,18 @@ CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------
 CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "Report", "Check date")
 CONFIG$DICT_ORCID_ID_NAME <- list()
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
+CONFIG$DICT_VENUE_NAMES <- list(
+  "journal (GigaScience)" = "Journal GigaScience",
+  "journal (J Geogr Syst)" = "Journal of Geographical Systems",
+  "journal (J Archaeol Sci)" = "Journal of Archaeological Science",
+  "journal (GigaByte)" = "GigaByte",
+  "conference (AGILEGIS)" = "Conference AGILEGIS",
+  "community (codecheck)" = "Codecheck",
+  "community (codecheck NL)" = "Codecheck NL",
+  "community (in press)" = "In press",
+  "community (preprint)" = "Preprint"
+)
+
 
 #' Function for rendering the register into different view
 #'
@@ -52,16 +64,18 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
 
   list_codechecker_reg_tables <- list_register_tables[["codecheckers"]]
+  list_venue_reg_tables <- list_register_tables[["venues"]]
 
   # Rendering files
   if ("md" %in% outputs) render_register_mds(list_register_tables)
   if ("html" %in% outputs) {
     render_register_htmls(list_register_tables)
     render_codecheckers_html(list_codechecker_reg_tables)
+    render_venues_html(list_venue_reg_tables)
   }
   if ("json" %in% outputs) {
     render_register_jsons(list_register_tables)
-    render_codecheckers_json(list_codechecker_reg_tables)
+    render_venues_json(list_venue_reg_tables)
   }
 
   return(register_table)
