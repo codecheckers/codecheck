@@ -41,7 +41,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
 
   # Rendering files
-  if ("md" %in% outputs) render_register_mds(list_register_tables)
+  # if ("md" %in% outputs) render_register_mds(list_register_tables)
   if ("html" %in% outputs) {
     render_register_htmls(list_register_tables)
 
