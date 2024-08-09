@@ -1,6 +1,4 @@
-#' Renders codecheckers page.
-#' Each codechecker name links to the register table for that specific
-#' codechecker. The ORCID IDs link to their ORCID pages.
+#' Renders non-register pages such as codecheckers or venues page.
 #' 
 #' @param list_reg_tables The list of register tables to link to in this html page
 render_non_register_htmls <- function(list_reg_tables, page_type){
