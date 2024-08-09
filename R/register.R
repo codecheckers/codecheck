@@ -53,8 +53,18 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 
   # Rendering files
   if ("md" %in% outputs) render_register_mds(list_register_tables)
-  if ("html" %in% outputs) render_register_htmls(list_register_tables)
-  if ("json" %in% outputs) render_register_jsons(list_register_tables)
+  if ("html" %in% outputs) {
+    render_register_htmls(list_register_tables)
+    for (filter in filter_by){
+      render_non_register_htmls(list_register_tables[[filter]], page_type = filter)
+    }
+  }
+  if ("json" %in% outputs) {
+    render_register_jsons(list_register_tables)
+    for (filter in filter_by){
+      render_non_register_jsons(list_register_tables[[filter]], page_type = filter)
+    }
+  }
 
   return(register_table)
 }
