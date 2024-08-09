@@ -33,8 +33,9 @@ CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                             filter_by = c("venues", "codecheckers"),
                             outputs = c("html", "md", "json")) {
-  CONFIG$MD_TEMPLATE <- system.file("extdata", "templates/template_register.md", package = "codecheck")
-  
+  CONFIG$MD_REG_TEMPLATE <- system.file("extdata", "templates/template_register.md", package = "codecheck")
+  CONFIG$MD_NON_REG_TEMPLATE <- system.file("extdata", "templates/template_non_register.md", package = "codecheck")
+
   register_table <- preprocess_register(register, filter_by)
 
   # Creating list of of register tables with indices being the filter types
@@ -52,15 +53,15 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
 
   # Rendering files
-  if ("md" %in% outputs) render_register_mds(list_register_tables)
+  # if ("md" %in% outputs) render_register_mds(list_register_tables)
   if ("html" %in% outputs) {
-    render_register_htmls(list_register_tables)
+    # render_register_htmls(list_register_tables)
     for (filter in filter_by){
       render_non_register_htmls(list_register_tables[[filter]], page_type = filter)
     }
   }
   if ("json" %in% outputs) {
-    render_register_jsons(list_register_tables)
+    # render_register_jsons(list_register_tables)
     for (filter in filter_by){
       render_non_register_jsons(list_register_tables[[filter]], page_type = filter)
     }

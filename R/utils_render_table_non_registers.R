@@ -4,17 +4,27 @@
 #' 
 #' @param list_reg_tables The list of register tables to link to in this html page
 render_non_register_htmls <- function(list_reg_tables, page_type){
-
   output_dir <- paste0("docs/", page_type, "/")
 
-  if (page_type == "codeheckers"){
+  if (page_type == "codecheckers"){
     table <- render_table_codecheckers_html(list_reg_tables)
+    # Counting number of codecheckers based of number of codechecker reg tables
+    # The table is a kable table and hence we cannot count rows
+    no_codecheckers <- length(list_reg_tables)
+    # The table of codecheckers contains text and hyperlinks hence total number of codechecks is obtained
+    # from the list of reg tables
+    no_codechecks <- sum(sapply(list_reg_tables, nrow))
+    subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", no_codechecks, "codechecks")
   }
 
+  else{
+    return()
+  }
   # Creating and adjusting the markdown table
-  md_table <- load_md_template(CONFIG$MD_TEMPLATE)
+  md_table <- load_md_template(CONFIG$MD_NON_REG_TEMPLATE)
   title <- paste0("CODECHECK List of ", page_type)
   md_table <- gsub("\\$title\\$", title, md_table)
+  md_table <- gsub("\\$subtitle\\$", subtext, md_table)
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)
 
   # Saving the table to a temp md file
@@ -54,6 +64,10 @@ render_non_register_jsons <- function(list_reg_tables, page_type){
 
   if (page_type == "codeheckers"){
     table <- render_table_codecheckers_json(list_reg_tables)
+  }
+
+  else{
+    return()
   }
   jsonlite::write_json(
     table,
