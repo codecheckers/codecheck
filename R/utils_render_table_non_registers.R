@@ -3,7 +3,7 @@
 #' codechecker. The ORCID IDs link to their ORCID pages.
 #' 
 #' @param list_reg_tables The list of register tables to link to in this html page
-render_codecheckers_venues_html <- function(list_reg_tables, page_type){
+render_non_register_htmls <- function(list_reg_tables, page_type){
 
   output_dir <- paste0("docs/", page_type, "/")
 
@@ -44,4 +44,20 @@ render_codecheckers_venues_html <- function(list_reg_tables, page_type){
   edit_html_lib_paths(html_file_path)
   # Deleting the libs folder after changing the html lib path
   unlink(paste0(output_dir, "/libs"), recursive = TRUE)
+}
+
+#' Renders JSON file of non register tables such as list of venues, list of codecheckers
+#' 
+#' @param list_reg_tables The list of register tables needed for the information.
+render_non_register_jsons <- function(list_reg_tables, page_type){
+  output_dir <- paste0("docs/", page_type, "/")
+
+  if (page_type == "codeheckers"){
+    table <- render_table_codecheckers_json(list_reg_tables)
+  }
+  jsonlite::write_json(
+    table,
+    path = paste0(output_dir, "index.json"),
+    pretty = TRUE
+  )
 }
