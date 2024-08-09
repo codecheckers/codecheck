@@ -1,62 +1,3 @@
-#' Renders JSON file of codecheckers.
-#' 
-#' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
-render_codecheckers_json <- function(list_codechecker_reg_tables){
-  output_dir <- "docs/codecheckers/"
-
-  table_codecheckers_json <- render_table_codecheckers_json(list_codechecker_reg_tables)
-  jsonlite::write_json(
-    table_codecheckers_json,
-    path = paste0(output_dir, "index.json"),
-    pretty = TRUE
-  )
-}
-
-#' Renders codecheckers page.
-#' Each codechecker name links to the register table for that specific
-#' codechecker. The ORCID IDs link to their ORCID pages.
-#' 
-#' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
-render_codecheckers_html <- function(list_codechecker_reg_tables){
-
-  output_dir <- "docs/codecheckers/"
-  table_codecheckers <- render_table_codecheckers_html(list_codechecker_reg_tables)
-
-  # Creating and adjusting the markdown table
-  md_table <- load_md_template(CONFIG$MD_TEMPLATE)
-  title <- "CODECHECK List of codecheckers"
-  md_table <- gsub("\\$title\\$", title, md_table)
-  md_table <- gsub("\\$content\\$", paste(table_codecheckers, collapse = "\n"), md_table)
-
-  # Saving the table to a temp md file
-  temp_md_path <- paste0(output_dir, "temp.md")
-  writeLines(md_table, temp_md_path)
-
-  # Creating the correct html yaml and index files
-  create_index_section_files(output_dir, "codecheckers")
-  generate_html_document_yml(output_dir)
-  yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
-
-  # Render index.html from markdown
-  rmarkdown::render(
-    input = temp_md_path,
-    output_file = "index.html",
-    output_dir = output_dir,
-    output_yaml = yaml_path
-  )
-
-  # Deleting the temp file
-  file.remove(temp_md_path)
-
-  # Changing the html file so that the path to the libs folder refers to 
-  # the libs folder "docs/libs".
-  # This is done to remove duplicates of "libs" folders.
-  html_file_path <- paste0(output_dir, "index.html")
-  edit_html_lib_paths(html_file_path)
-  # Deleting the libs folder after changing the html lib path
-  unlink(paste0(output_dir, "/libs"), recursive = TRUE)
-}
-
 #' Renders codecheckers table in JSON format.
 #' 
 #' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
@@ -132,3 +73,4 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
   table_codecheckers <- kable(table_codecheckers)
   return(table_codecheckers)
 }
+
