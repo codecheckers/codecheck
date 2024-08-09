@@ -56,13 +56,13 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   if ("html" %in% outputs) {
     render_register_htmls(list_register_tables)
     for (filter in filter_by){
-      render_codecheckers_venues_html(list_register_tables[[filter]], filter)
+      render_non_register_htmls(list_register_tables[[filter]], page_type = filter)
     }
   }
   if ("json" %in% outputs) {
     render_register_jsons(list_register_tables)
     for (filter in filter_by){
-      render_codecheckers_venues_json(list_register_tables[[filter]], filter)
+      render_non_register_jsons(list_register_tables[[filter]], page_type = filter)
     }
   }
 
