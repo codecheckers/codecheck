@@ -4,20 +4,21 @@
 render_non_register_htmls <- function(list_reg_tables, page_type){
   output_dir <- paste0("docs/", page_type, "/")
 
+  no_codechecks <- sum(sapply(list_reg_tables, nrow))
   if (page_type == "codecheckers"){
     table <- render_table_codecheckers_html(list_reg_tables)
     table <- kable(table)
     # Counting number of codecheckers based of number of codechecker reg tables
     # The table is a kable table and hence we cannot count rows
     no_codecheckers <- length(list_reg_tables)
-    # The table of codecheckers contains text and hyperlinks hence total number of codechecks is obtained
-    # from the list of reg tables
-    no_codechecks <- sum(sapply(list_reg_tables, nrow))
     subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", no_codechecks, "codechecks")
   }
 
-  else{
-    return()
+  else if (page_type == "venues"){
+    table <- render_table_venues_html(list_reg_tables)
+
+    no_venues <- length(list_reg_tables)
+    subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, "venues")
   }
   # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$TEMPLATE_DIR[["non_reg"]][["md_template"]])
@@ -65,8 +66,8 @@ render_non_register_jsons <- function(list_reg_tables, page_type){
     table <- render_table_codecheckers_json(list_reg_tables)
   }
 
-  else{
-    return()
+  else if (page_type == "venues") {
+    table <- render_table_venues_json(list_reg_tables)
   }
   jsonlite::write_json(
     table,
