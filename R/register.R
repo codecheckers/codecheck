@@ -10,11 +10,11 @@ CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "R
 CONFIG$DICT_ORCID_ID_NAME <- list()
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 CONFIG$DICT_VENUE_NAMES <- list(
-  "journal (GigaScience)" = "Journal GigaScience",
+  "journal (GigaScience)" = "GigaScience",
   "journal (J Geogr Syst)" = "Journal of Geographical Systems",
   "journal (J Archaeol Sci)" = "Journal of Archaeological Science",
   "journal (GigaByte)" = "GigaByte",
-  "conference (AGILEGIS)" = "Conference AGILEGIS",
+  "conference (AGILEGIS)" = "AGILEGIS",
   "community (codecheck)" = "Codecheck",
   "community (codecheck NL)" = "Codecheck NL",
   "community (in press)" = "In press",
