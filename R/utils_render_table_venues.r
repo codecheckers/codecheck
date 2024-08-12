@@ -55,13 +55,16 @@ render_table_venues_html <- function(list_venue_reg_tables){
   )
 
   # Column- No. of codechecks
-  table_venues$`No. of codechecks` <- sapply(
-    X = table_venues$`Venue name`,
-    FUN = function(venue_name) {
+  table_venues$`No. of codechecks` <- mapply(
+    FUN = function(venue_name, venue_type) {
       no_codechecks <- nrow(list_venue_reg_tables[[venue_name]])
-      paste0(nrow(list_venue_reg_tables[[venue_name]])," [(see all checks)](https://codecheck.org.uk/register/venues/",
-      venue_name, "/)")
-    }
+      formatted_venue_type <- stringr::str_to_lower(venue_type)
+      formatted_venue_name <-  determine_venue_name(venue_name, venue_type)
+      paste0(no_codechecks," [(see all checks)](https://codecheck.org.uk/register/venues/",
+      formatted_venue_type, "/", formatted_venue_name, "/)")
+    },
+    venue_name = table_venues$`Venue name`,
+    venue_type = table_venues$`Venue type`
   )
 
   # Column- venue names
@@ -72,8 +75,10 @@ render_table_venues_html <- function(list_venue_reg_tables){
       if (is.null(CONFIG$DICT_VENUE_NAMES[[venue_name]])) {
         return(NA)  # Handle cases where venue_name is not in CONFIG$DICT_VENUE_NAMES
       }
+      formatted_venue_type <- stringr::str_to_lower(venue_type)
+      formatted_venue_name <-  determine_venue_name(venue_name, venue_type)
       paste0("[", CONFIG$DICT_VENUE_NAMES[[venue_name]], "](https://codecheck.org.uk/register/venues/",
-            stringr::str_to_lower(venue_type), "/", determine_venue_name(venue_name, venue_type), "/)")
+            formatted_venue_type, "/", formatted_venue_name, "/)")
     },
     venue_name = table_venues$`Venue name`,
     venue_type = table_venues$`Venue type`
