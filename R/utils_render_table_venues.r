@@ -89,3 +89,11 @@ render_table_venues_html <- function(list_venue_reg_tables){
   table_venues <- kable(table_venues, align = "lll")
   return(table_venues)
 }
+
+# render_table_venues_types_html <- function(list_venue_reg_tables){
+#   # Take in the table from render_table_venues and then filter 
+#   for ((venue_subcat) in CONFIG$VENUE_FILTER_SUBCATEGORIES){
+#     table_venue_subcategory <- table_venues[grepl(venue_subcat, table_venues$`Venue type`, ignore.case = TRUE), ]
+#     subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, venue_subcat)
+#   }
+# }

@@ -11,6 +11,7 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
     # The table is a kable table and hence we cannot count rows
     no_codecheckers <- length(list_reg_tables)
     subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", no_codechecks, "codechecks")
+    generate_html(table, page_type, output_dir, subtext)
   }
 
   else if (page_type == "venues"){
@@ -18,7 +19,22 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
 
     no_venues <- length(list_reg_tables)
     subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, "venues")
+    generate_html(table, page_type, output_dir, subtext)
+
+    # Generating page for each venue subcategory
+    for (venue_subcat in CONFIG$VENUE_SUBCATEGORIES){
+
+      table_venue_subcategory <- table[grepl(venue_subcat, table$`Venue type`, ignore.case = TRUE), ]
+      no_codechecks <- nrow(table_venue_subcategory)
+      
+      subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, venue_subcat)
+      output_dir <- paste0("docs/", page_type, "/", venue_subcat, "/")
+      generate_html(table_venue_subcategory, page_type, output_dir, subtext)
+    }
   }
+}
+
+generate_html <- function(table, page_type, output_dir, subtext){
   # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$MD_NON_REG_TEMPLATE)
   title <- paste0("CODECHECK List of ", page_type)
