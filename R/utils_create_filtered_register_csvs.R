@@ -115,7 +115,7 @@ get_output_dir <- function(filter, column_value) {
 #' @param venue_name The venue_name obtained from the "Type" column of the register
 #' @return The venue category. If the venue does not belong to any category NULL is returned
 determine_venue_category <- function(venue_name){
-  list_venue_categories <- CONFIG$VENUE_SUBCATEGORIES[["venues"]]
+  list_venue_categories <- CONFIG$FILTER_SUBCATEGORIES[["venues"]]
   for (category in list_venue_categories){
     if (grepl(category, venue_name, ignore.case=TRUE)) {
       return(category)

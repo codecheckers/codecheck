@@ -73,7 +73,6 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
   table_codecheckers <- table_codecheckers[, c("Codechecker name", "ORCID_ID_Link", "No. of codechecks")]
   names(table_codecheckers)[names(table_codecheckers) == "ORCID_ID_Link"] <- "ORCID ID"
 
-  table_codecheckers <- kable(table_codecheckers)
   return(table_codecheckers)
 }
 

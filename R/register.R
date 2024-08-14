@@ -2,7 +2,7 @@ CONFIG <- new.env()
 # Registers can be further divided into filter subgroups
 # For cases where an entry does not fall into any subgroup, it's rendered files
 # are stored in a folder with its own name
-CONFIG$VENUE_SUBCATEGORIES <- list(
+CONFIG$FILTER_SUBCATEGORIES <- list(
   venues = list("community", "journal", "conference") 
 )
 CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
@@ -77,7 +77,6 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
     for (filter in filter_by){
       render_non_register_jsons(list_register_tables[[filter]], page_type = filter)
     }
-
   }
 
   return(register_table)

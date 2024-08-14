@@ -3,41 +3,65 @@
 #' @param list_reg_tables The list of register tables to link to in this html page
 render_non_register_htmls <- function(list_reg_tables, page_type){
   output_dir <- paste0("docs/", page_type, "/")
+  title_word <- page_type
 
   no_codechecks <- sum(sapply(list_reg_tables, nrow))
   if (page_type == "codecheckers"){
     table <- render_table_codecheckers_html(list_reg_tables)
-    # Counting number of codecheckers based of number of codechecker reg tables
-    # The table is a kable table and hence we cannot count rows
-    no_codecheckers <- length(list_reg_tables)
+    no_codecheckers <- nrow(table)
     subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", no_codechecks, "codechecks")
-    generate_html(table, page_type, output_dir, subtext)
+    generate_html(table, page_type, output_dir, title_word, subtext)
   }
 
   else if (page_type == "venues"){
     table <- render_table_venues_html(list_reg_tables)
+    list_no_checks_venue_subcat <- list_no_codechecks_venue_subcat(list_reg_tables)
 
-    no_venues <- length(list_reg_tables)
+    no_venues <- nrow(table)
     subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, "venues")
-    generate_html(table, page_type, output_dir, subtext)
+    generate_html(table, page_type, output_dir, title_word, subtext)
 
     # Generating page for each venue subcategory
-    for (venue_subcat in CONFIG$VENUE_SUBCATEGORIES){
-
+    for (venue_subcat in CONFIG$FILTER_SUBCATEGORIES[[page_type]]){
       table_venue_subcategory <- table[grepl(venue_subcat, table$`Venue type`, ignore.case = TRUE), ]
-      no_codechecks <- nrow(table_venue_subcategory)
-      
-      subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, venue_subcat)
+      # Removing the column showing the row numbers
+      rownames(table_venue_subcategory) <- NULL
+
+      no_codechecks <- list_no_checks_venue_subcat[[venue_subcat]]
+      no_venues_subcat <- length(unique(table_venue_subcategory$`Venue name`))
+
+      # Leaving the venue name as singular in the subtext
+      if (no_venues_subcat <= 1){
+        venue_name_subtext <- venue_subcat
+        codecheck_word <- "codecheck"
+      }
+
+      # Making the venue name in the subtext plural
+      else{
+        if (venue_subcat == "community"){
+          venue_name_subtext <- "communities"
+        }
+
+        else{
+          venue_name_subtext <- paste0(venue_subcat, "s")
+        }
+        codecheck_word <- "codechecks"
+      }
+      title_word <- venue_subcat
+      subtext <- paste("In total,", no_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext)
       output_dir <- paste0("docs/", page_type, "/", venue_subcat, "/")
-      generate_html(table_venue_subcategory, page_type, output_dir, subtext)
+      generate_html(table_venue_subcategory, page_type, output_dir, title_word, subtext)
     }
   }
 }
 
-generate_html <- function(table, page_type, output_dir, subtext){
+generate_html <- function(table, page_type, output_dir, title, subtext){
+
+  table <- kable(table, align = "lll")
+
   # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$MD_NON_REG_TEMPLATE)
-  title <- paste0("CODECHECK List of ", page_type)
+  title <- paste0("CODECHECK List of ", title)
   md_table <- gsub("\\$title\\$", title, md_table)
   md_table <- gsub("\\$subtitle\\$", subtext, md_table)
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)

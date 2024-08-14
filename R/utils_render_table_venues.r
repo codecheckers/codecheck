@@ -86,7 +86,6 @@ render_table_venues_html <- function(list_venue_reg_tables){
 
   table_venues <- table_venues[, c("Venue type", "Venue name", "No. of codechecks")]
 
-  table_venues <- kable(table_venues, align = "lll")
   return(table_venues)
 }
 
@@ -97,3 +96,19 @@ render_table_venues_html <- function(list_venue_reg_tables){
 #     subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, venue_subcat)
 #   }
 # }
+
+list_no_codechecks_venue_subcat <- function(list_venue_reg_tables){
+  list_no_codechecks_venue_subcat <- list()
+
+  for (venue_subcat in CONFIG$FILTER_SUBCATEGORIES[["venues"]]){
+    # Selecting all the tables of the same subcat
+    tables_same_subcat <- list_venue_reg_tables[sapply(names(list_venue_reg_tables), function(name) {
+      grepl(venue_subcat, name, ignore.case = TRUE)
+    })]
+    
+    no_codechecks <- sum(sapply(tables_same_subcat, nrow))
+    list_no_codechecks_venue_subcat[[venue_subcat]] <- no_codechecks
+  }
+
+  return(list_no_codechecks_venue_subcat)
+}
