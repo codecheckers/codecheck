@@ -59,7 +59,10 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
     X = table_venues$`Venue name`,
     FUN = function(venue_name){
       venue_type <- determine_venue_category(venue_name)
-      stringr::str_to_title(venue_type)
+      formatted_venue_type <- stringr::str_to_lower(venue_type)
+      # The venue type links to the all codechecks for that type
+      paste0("[", stringr::str_to_title(venue_type), "](https://codecheck.org.uk/register/venues/",
+      formatted_venue_type, "/)")
     }
   )
 
@@ -113,9 +116,8 @@ render_table_venues_subcat_html <- function(venues_table){
     rownames(table_venue_subcategory) <- NULL
 
     # Replace the column "Venue name" with "{venue_subcat} name"
-    # Capitalizing the first letter of the subcat name
-    venue_subcat_capitalized <- paste0(toupper(substring(venue_subcat, 1, 1)), substring(venue_subcat, 2))
-    formatted_subcat <- paste0(venue_subcat_capitalized, " name")
+    # Capitalizing the first letter of the subcat name using str_to_title
+    formatted_subcat <- paste(stringr::str_to_title(venue_subcat), "name")
     colnames(table_venue_subcategory)[colnames(table_venue_subcategory) == "Venue name"] <- formatted_subcat
     list_tables[[venue_subcat]] <- table_venue_subcategory
   }
