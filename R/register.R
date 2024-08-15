@@ -20,6 +20,8 @@ CONFIG$DICT_VENUE_NAMES <- list(
   "community (in press)" = "In press",
   "community (preprint)" = "Preprint"
 )
+CONFIG$NON_REG_INDEX_POSTFIX_TEMP_DIR <- "/docs/templates/codecheckers_venues_list/index_postfix_template.html"
+CONFIG$REG_INDEX_POSTFIX_TEMP_DIR <- "/docs/templates/reg_tables/index_postfix_template.html"
 
 
 #' Function for rendering the register into different view
