@@ -1,11 +1,18 @@
 render_non_register_tables_html <- function(list_reg_tables, page_type){
-  if (page_type == "codecheckers") {
-    # Wrapping the single table in a list
-    list_tables <- list("codecheckers" = render_table_codecheckers_html(list_reg_tables))
-  } else if (page_type == "venues") {
-    list_tables <- render_tables_venues_html(list_reg_tables)
+
+  output <- switch(page_type,
+    "codecheckers" = render_table_codecheckers_html(list_reg_tables)
+    "venues" = render_tables_venues_html(list_reg_tables)
+    stop("Unsupported non-register table page type")
+  )
+
+  # Ensuring output is a list, wrapping it if necessary
+  # This is needed when the render function returns a single table which is the
+  # case when there are not subcategory tables
+  if (!is.list(output)){
+    output <- list(page_type = output)
   }
-  return(list_tables)  
+  return(output)  
 }
 
 #' Renders non-register pages such as codecheckers or venues page.
