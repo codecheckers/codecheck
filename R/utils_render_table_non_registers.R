@@ -1,4 +1,4 @@
-render_non_register_tables <- function(list_reg_tables, page_type){
+render_non_register_tables_html <- function(list_reg_tables, page_type){
   if (page_type == "codecheckers") {
     # Wrapping the single table in a list
     list_tables <- list("codecheckers" = render_table_codecheckers_html(list_reg_tables))
@@ -12,28 +12,26 @@ render_non_register_tables <- function(list_reg_tables, page_type){
 #' 
 #' @param list_reg_tables The list of register tables to link to in this html page
 render_non_register_htmls <- function(list_reg_tables, page_type){
-  list_tables <- render_non_register_tables(list_reg_tables, page_type)
+  list_tables <- render_non_register_tables_html(list_reg_tables, page_type)
   
   for (table_name in names(list_tables)){
     table <- list_tables[[table_name]]
 
     # Case where we are dealing with venue subcategories
     if (page_type == "venues" & table_name != "all_venues"){
-      subcategory <- table_name
       output_dir <- paste0("docs/", page_type, "/", table_name, "/")
     }
 
     else{
-      subcategory <- NULL
       output_dir <- paste0("docs/", page_type, "/")
     }
 
-    html_header <- generate_html_header(table, page_type, subcategory)
-    generate_html(table, page_type, html_header, output_dir)
+    html_header <- generate_html_header(table, page_type, table_name)
+    generate_html(table, table_name, page_type, html_header, output_dir)
   }
 }
 
-generate_html <- function(table, page_type, html_header, output_dir){
+generate_html <- function(table, table_subcategory, page_type, html_header, output_dir){
 
   table <- kable(table)
 
@@ -48,7 +46,8 @@ generate_html <- function(table, page_type, html_header, output_dir){
   writeLines(md_table, temp_md_path)
 
   # Creating the correct html yaml and index files
-  create_index_section_files(output_dir, page_type)
+  print(table_subcategory)
+  create_index_section_files(output_dir, page_type, table_subcategory, is_reg_table = FALSE)
   generate_html_document_yml(output_dir)
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
 
@@ -76,29 +75,38 @@ generate_html <- function(table, page_type, html_header, output_dir){
 #' 
 #' @param list_reg_tables The list of register tables needed for the information.
 render_non_register_jsons <- function(list_reg_tables, page_type){
-  output_dir <- paste0("docs/", page_type, "/")
-
-  if (page_type == "codeheckers"){
-    table <- render_table_codecheckers_json(list_reg_tables)
+  if (page_type == "codecheckers"){
+    list_tables <- list("codecheckers" = render_table_codecheckers_json(list_reg_tables))
   }
 
   else if (page_type == "venues") {
-    table <- render_table_venues_json(list_reg_tables)
+    list_tables <- render_tables_venues_json(list_reg_tables)
   }
-  jsonlite::write_json(
-    table,
-    path = paste0(output_dir, "index.json"),
-    pretty = TRUE
-  )
+
+  for (table_name in names(list_tables)){
+    table <- list_tables[[table_name]]
+    output_dir <- paste0("docs/", page_type, "/")
+
+    # Case where we are dealing with venue subcategories
+    if (page_type == "venues" & table_name != "all_venues"){
+      output_dir <- paste0("docs/", page_type, "/", table_name, "/")
+    }
+
+    jsonlite::write_json(
+      table,
+      path = paste0(output_dir, "index.json"),
+      pretty = TRUE
+    )
+  }
 }
 
-generate_html_title_non_registers <- function(page_type, subcategory = NULL){
+generate_html_title_non_registers <- function(page_type, table_name){
   title_base <- "CODECHECK List of"
 
   # Adjusting title for venues subcategory
-  if (page_type == "venues" & !is.null(subcategory)){
+  if (page_type == "venues" & table_name != "all_venues"){
     # Replacing the word with plural
-    plural_subcategory <- switch (subcategory,
+    plural_subcategory <- switch (table_name,
       "conference" = "conferences",
       "journal" = "journals",
       "community" = "communities"
@@ -114,7 +122,7 @@ generate_html_title_non_registers <- function(page_type, subcategory = NULL){
   return(title)
 }
 
-generate_html_subtext_non_register <- function(table, page_type, subcategory = NULL){
+generate_html_subtext_non_register <- function(table, page_type, table_name){
 
   # Extracting the no. of codechecks from the string in the column "No. of codechecks"
   # The line "sub" replaces everything starting from the first space
@@ -129,37 +137,37 @@ generate_html_subtext_non_register <- function(table, page_type, subcategory = N
     subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", total_codechecks, codecheck_word)
   }
 
-  # For the general venues list
-  else if (page_type == "venues" & is.null(subcategory)){
-    if (is.null(subcategory)){
+  else if (page_type == "venues"){
+    # For the general venues list
+    if (table_name == "all_venues"){
       no_venues <- nrow(table)
       subtext <- paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues, "venues")
     }
+
+    else{
+      no_venues_subcat <- nrow(table)
+      venue_name_subtext <- table_name
+    
+      if (no_venues_subcat > 1){
+        venue_name_subtext <- switch (table_name,
+          "conference" = "conferences",
+          "journal" = "journals",
+          "community" = "communities"
+        )
+      }
+      subtext <- paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext)
+    }
   }
 
-  # For pages of venue subcategory
-  else if (page_type == "venues" & !is.null(subcategory)) {
-    no_venues_subcat <- nrow(table)
-    venue_name_subtext <- subcategory
-  
-    if (no_venues_subcat > 1){
-      venue_name_subtext <- switch (subcategory,
-        "conference" = "conferences",
-        "journal" = "journals",
-        "community" = "communities"
-      )
-    }
-    subtext <- paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext)
-  }
 
   return(subtext)
 }
 
-generate_html_header <- function(table, page_type, subcategory=NULL){
+generate_html_header <- function(table, page_type, table_name){
 
   html_header <- list(
-    "title" = generate_html_title_non_registers(page_type, subcategory),
-    "subtext" = generate_html_subtext_non_register(table, page_type, subcategory)
+    "title" = generate_html_title_non_registers(page_type, table_name),
+    "subtext" = generate_html_subtext_non_register(table, page_type, table_name)
   )
 
   return(html_header)

@@ -1,7 +1,16 @@
+render_tables_venues_json <- function(list_venue_reg_tables){
+  all_venues_table <- render_table_all_venues_json(list_venue_reg_tables)
+  list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
+  
+  list_tables <- list("all_venues" = all_venues_table)
+  list_tables <- c(list_tables, list_venues_subcat_tables)
+  return(list_tables)
+}
+
 #' Renders venues table in JSON format.
 #' 
 #' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
-render_table_venues_json <- function(list_venue_reg_tables){
+render_table_all_venues_json <- function(list_venue_reg_tables){
   list_venue_names <- names(list_venue_reg_tables)
   # Check.names arg is set to FALSE so that column "Venue name" has the space
   table_venues <- data.frame(`Venue name`= list_venue_names, stringsAsFactors = FALSE, check.names = FALSE)
@@ -36,10 +45,10 @@ render_table_venues_json <- function(list_venue_reg_tables){
 
 render_tables_venues_html <- function(list_venue_reg_tables){
   all_venues_table <- render_table_all_venues_html(list_venue_reg_tables)
-  venues_subcat_table <- render_table_venues_subcat_html(all_venues_table)
+  list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
   
   list_tables <- list("all_venues" = all_venues_table)
-  list_tables <- c(list_tables, venues_subcat_table)
+  list_tables <- c(list_tables, list_venues_subcat_tables)
   return(list_tables)
 }
 
@@ -101,7 +110,10 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
   return(table_venues)
 }
 
-render_table_venues_subcat_html <- function(venues_table){
+# This function can be used for both the html and json table since it works on the
+# table for all venues. If the all_venues table is of html format then this creates
+# a html table and if it is of json format, this creates a json table. 
+render_table_venues_subcat <- function(venues_table){
   list_tables <- c()
 
   for (venue_subcat in CONFIG$FILTER_SUBCATEGORIES[["venues"]]){

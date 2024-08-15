@@ -59,20 +59,17 @@ generate_html_document_yml <- function(output_dir) {
 #' @param register_table_name The register table name. If this is NULL we are generating list of venues/ codecheckers
 #' 
 #' @importFrom whisker whisker.render
-create_index_postfix_html <- function(output_dir, filter, register_table_name = NULL){
+create_index_postfix_html <- function(output_dir, filter, register_table_name, is_reg_table){
   # When we have a reg table name, we adjusting the hrefs of the postfix
-  if (!is.null(register_table_name)){
-    postfix_template <- readLines(paste0(getwd(), "/docs/templates/reg_tables/index_postfix_template.html"), warn = FALSE)
-    # Render the template with the correct hrefs
+  if (is_reg_table){
+    postfix_template <- readLines(paste0(getwd(), CONFIG$REG_INDEX_POSTFIX_TEMP_DIR), warn = FALSE)
     hrefs <- generate_html_postfix_hrefs_reg(filter, register_table_name)
   }
 
   # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
   else{
-    postfix_template <- readLines(paste0(getwd(), "/docs/templates/codecheckers_venues_list/index_postfix_template.html"), warn = FALSE)
-    hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
-    )
+    postfix_template <- readLines(paste0(getwd(), CONFIG$NON_REG_INDEX_POSTFIX_TEMP_DIR), warn = FALSE)
+    hrefs <- generate_html_postfix_hrefs_non_reg(filter, register_table_name)
   }
 
   output <- whisker.render(postfix_template, hrefs)
@@ -109,6 +106,22 @@ generate_html_postfix_hrefs_reg <- function(filter, register_table_name) {
     json_href = generate_href(filter, register_table_name, "json"),
     md_href = generate_href(filter, register_table_name, "md")
   )
+  return(hrefs)
+}
+
+generate_html_postfix_hrefs_non_reg <- function(filter, register_table_name){  
+  if (!(register_table_name %in% list("all_venues", "codecheckers"))){
+    hrefs <- list(
+      json_href = paste0("https://codecheck.org.uk/register/", filter, "/", register_table_name,"/index.json")
+    )
+  }
+
+  else{
+    hrefs <- list(
+      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
+    )
+  }
+
   return(hrefs)
 }
 
@@ -167,8 +180,8 @@ generate_href <- function(filter, register_table_name, href_type) {
 #' @param output_dir The output directory of the section files
 #' @param filter The filter name 
 #' @param register_table_name The register table name
-create_index_section_files <- function(output_dir, filter, register_table_name = NULL) {
-  create_index_postfix_html(output_dir, filter, register_table_name)
+create_index_section_files <- function(output_dir, filter, register_table_name, is_reg_table) {
+  create_index_postfix_html(output_dir, filter, register_table_name, is_reg_table)
   create_index_prefix_html(output_dir)
   create_index_header_html(output_dir)
 }
@@ -184,7 +197,7 @@ render_register_html <- function(filter, register_table, register_table_name){
   register_table <- add_repository_links_html(register_table)
 
   # Dynamically create the index header, prefix and postfix files
-  create_index_section_files(output_dir, filter, register_table_name)
+  create_index_section_files(output_dir, filter, register_table_name, is_reg_table = TRUE)
   generate_html_document_yml(output_dir)
 
   # Capture the HTML output from a markdown file
