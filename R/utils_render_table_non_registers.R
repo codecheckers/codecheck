@@ -1,69 +1,46 @@
+render_non_register_tables <- function(list_reg_tables, page_type){
+  if (page_type == "codecheckers") {
+    # Wrapping the single table in a list
+    list_tables <- list("codecheckers" = render_table_codecheckers_html(list_reg_tables))
+  } else if (page_type == "venues") {
+    list_tables <- render_tables_venues_html(list_reg_tables)
+  }
+  return(list_tables)  
+}
+
 #' Renders non-register pages such as codecheckers or venues page.
 #' 
 #' @param list_reg_tables The list of register tables to link to in this html page
 render_non_register_htmls <- function(list_reg_tables, page_type){
-  output_dir <- paste0("docs/", page_type, "/")
-  title_word <- page_type
+  list_tables <- render_non_register_tables(list_reg_tables, page_type)
+  
+  for (table_name in names(list_tables)){
+    table <- list_tables[[table_name]]
 
-  no_codechecks <- sum(sapply(list_reg_tables, nrow))
-  if (page_type == "codecheckers"){
-    table <- render_table_codecheckers_html(list_reg_tables)
-    no_codecheckers <- nrow(table)
-    subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", no_codechecks, "codechecks")
-    generate_html(table, page_type, output_dir, title_word, subtext)
-  }
-
-  else if (page_type == "venues"){
-    table <- render_table_venues_html(list_reg_tables)
-    list_no_checks_venue_subcat <- list_no_codechecks_venue_subcat(list_reg_tables)
-
-    no_venues <- nrow(table)
-    subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, "venues")
-    generate_html(table, page_type, output_dir, title_word, subtext)
-
-    # Generating page for each venue subcategory
-    for (venue_subcat in CONFIG$FILTER_SUBCATEGORIES[[page_type]]){
-      table_venue_subcategory <- table[grepl(venue_subcat, table$`Venue type`, ignore.case = TRUE), ]
-      # Removing the column showing the row numbers
-      rownames(table_venue_subcategory) <- NULL
-
-      no_codechecks <- list_no_checks_venue_subcat[[venue_subcat]]
-      no_venues_subcat <- length(unique(table_venue_subcategory$`Venue name`))
-
-      # Leaving the venue name as singular in the subtext
-      if (no_venues_subcat <= 1){
-        venue_name_subtext <- venue_subcat
-        codecheck_word <- "codecheck"
-      }
-
-      # Making the venue name in the subtext plural
-      else{
-        if (venue_subcat == "community"){
-          venue_name_subtext <- "communities"
-        }
-
-        else{
-          venue_name_subtext <- paste0(venue_subcat, "s")
-        }
-        codecheck_word <- "codechecks"
-      }
-      title_word <- venue_subcat
-      subtext <- paste("In total,", no_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext)
-      output_dir <- paste0("docs/", page_type, "/", venue_subcat, "/")
-      generate_html(table_venue_subcategory, page_type, output_dir, title_word, subtext)
+    # Case where we are dealing with venue subcategories
+    if (page_type == "venues" & table_name != "all_venues"){
+      subcategory <- table_name
+      output_dir <- paste0("docs/", page_type, "/", table_name, "/")
     }
+
+    else{
+      subcategory <- NULL
+      output_dir <- paste0("docs/", page_type, "/")
+    }
+
+    html_header <- generate_html_header(table, page_type, subcategory)
+    generate_html(table, page_type, html_header, output_dir)
   }
 }
 
-generate_html <- function(table, page_type, output_dir, title, subtext){
+generate_html <- function(table, page_type, html_header, output_dir){
 
-  table <- kable(table, align = "lll")
+  table <- kable(table)
 
   # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$MD_NON_REG_TEMPLATE)
-  title <- paste0("CODECHECK List of ", title)
-  md_table <- gsub("\\$title\\$", title, md_table)
-  md_table <- gsub("\\$subtitle\\$", subtext, md_table)
+  md_table <- gsub("\\$title\\$", html_header[["title"]], md_table)
+  md_table <- gsub("\\$subtitle\\$", html_header[["subtext"]], md_table)
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)
 
   # Saving the table to a temp md file
@@ -113,4 +90,77 @@ render_non_register_jsons <- function(list_reg_tables, page_type){
     path = paste0(output_dir, "index.json"),
     pretty = TRUE
   )
+}
+
+generate_html_title_non_registers <- function(page_type, subcategory = NULL){
+  title_base <- "CODECHECK List of"
+
+  # Adjusting title for venues subcategory
+  if (page_type == "venues" & !is.null(subcategory)){
+    # Replacing the word with plural
+    plural_subcategory <- switch (subcategory,
+      "conference" = "conferences",
+      "journal" = "journals",
+      "community" = "communities"
+    )
+    title <- paste(title_base, plural_subcategory)
+  }
+
+  else{
+    # The base title is "CODECHECK List of venues/ codecheckers"
+    title <- paste(title_base, page_type)
+  }
+
+  return(title)
+}
+
+generate_html_subtext_non_register <- function(table, page_type, subcategory = NULL){
+
+  # Extracting the no. of codechecks from the string in the column "No. of codechecks"
+  # The line "sub" replaces everything starting from the first space
+  list_no_codechecks <- as.numeric(sub(" .*", "", table$`No. of codechecks`))
+  total_codechecks <- sum(list_no_codechecks)
+
+  # Setting the codecheck word
+  codecheck_word <- if (total_codechecks == 1) "codecheck" else "codechecks"
+
+  if (page_type == "codecheckers"){
+    no_codecheckers <- nrow(table)
+    subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", total_codechecks, codecheck_word)
+  }
+
+  # For the general venues list
+  else if (page_type == "venues" & is.null(subcategory)){
+    if (is.null(subcategory)){
+      no_venues <- nrow(table)
+      subtext <- paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues, "venues")
+    }
+  }
+
+  # For pages of venue subcategory
+  else if (page_type == "venues" & !is.null(subcategory)) {
+    no_venues_subcat <- nrow(table)
+    venue_name_subtext <- subcategory
+  
+    if (no_venues_subcat > 1){
+      venue_name_subtext <- switch (subcategory,
+        "conference" = "conferences",
+        "journal" = "journals",
+        "community" = "communities"
+      )
+    }
+    subtext <- paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext)
+  }
+
+  return(subtext)
+}
+
+generate_html_header <- function(table, page_type, subcategory=NULL){
+
+  html_header <- list(
+    "title" = generate_html_title_non_registers(page_type, subcategory),
+    "subtext" = generate_html_subtext_non_register(table, page_type, subcategory)
+  )
+
+  return(html_header)
 }

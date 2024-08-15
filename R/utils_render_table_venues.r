@@ -34,12 +34,21 @@ render_table_venues_json <- function(list_venue_reg_tables){
   return(table_venues)
 }
 
+render_tables_venues_html <- function(list_venue_reg_tables){
+  all_venues_table <- render_table_all_venues_html(list_venue_reg_tables)
+  venues_subcat_table <- render_table_venues_subcat_html(all_venues_table)
+  
+  list_tables <- list("all_venues" = all_venues_table)
+  list_tables <- c(list_tables, venues_subcat_table)
+  return(list_tables)
+}
+
 #' Renders venues table in HTML format.
 #' Each venue name links to the register table for that specific
 #' venue. The ORCID IDs link to their ORCID pages.
 #' 
 #' @param list_venue_reg_tables The list of venue register tables. The indices are the ORCID IDs.
-render_table_venues_html <- function(list_venue_reg_tables){
+render_table_all_venues_html <- function(list_venue_reg_tables){
 
   list_venue_names <- names(list_venue_reg_tables)
   # Check.names arg is set to FALSE so that column "Venue name" has the space
@@ -89,13 +98,30 @@ render_table_venues_html <- function(list_venue_reg_tables){
   return(table_venues)
 }
 
-# render_table_venues_types_html <- function(list_venue_reg_tables){
-#   # Take in the table from render_table_venues and then filter 
-#   for ((venue_subcat) in CONFIG$VENUE_FILTER_SUBCATEGORIES){
-#     table_venue_subcategory <- table_venues[grepl(venue_subcat, table_venues$`Venue type`, ignore.case = TRUE), ]
-#     subtext <- paste("In total,", no_codechecks, "codechecks were completed for", no_venues, venue_subcat)
-#   }
-# }
+render_table_venues_subcat_html <- function(venues_table){
+  list_tables <- c()
+
+  for (venue_subcat in CONFIG$FILTER_SUBCATEGORIES[["venues"]]){
+
+    # Filtering and keeping the rows of venue_type == venue_subcat
+    table_venue_subcategory <- venues_table[grepl(venue_subcat, venues_table$`Venue type`, ignore.case = TRUE), ]
+
+    # Setting the column "Venue type" to NULL as it is redundant
+    table_venue_subcategory[["Venue type"]] <- NULL
+
+    # Removing the column showing the row numbers
+    rownames(table_venue_subcategory) <- NULL
+
+    # Replace the column "Venue name" with "{venue_subcat} name"
+    # Capitalizing the first letter of the subcat name
+    venue_subcat_capitalized <- paste0(toupper(substring(venue_subcat, 1, 1)), substring(venue_subcat, 2))
+    formatted_subcat <- paste0(venue_subcat_capitalized, " name")
+    colnames(table_venue_subcategory)[colnames(table_venue_subcategory) == "Venue name"] <- formatted_subcat
+    list_tables[[venue_subcat]] <- table_venue_subcategory
+  }
+
+  return(list_tables)
+}
 
 list_no_codechecks_venue_subcat <- function(list_venue_reg_tables){
   list_no_codechecks_venue_subcat <- list()
