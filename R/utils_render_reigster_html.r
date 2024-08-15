@@ -110,15 +110,20 @@ generate_html_postfix_hrefs_reg <- function(filter, register_table_name) {
 }
 
 generate_html_postfix_hrefs_non_reg <- function(filter, register_table_name){  
-  if (!(register_table_name %in% list("all_venues", "codecheckers"))){
+  
+  # For register tables that arent of subcategories of a filter type, the
+  # json url link is register/filter/index.json
+  if (register_table_name %in% list("all_venues", "codecheckers")){
     hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/", register_table_name,"/index.json")
+      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
     )
   }
 
+  # For pages of the filter subcategories, the json url is of form
+  # filter/register_table_name/index.json where register_table_name is the subcategory name
   else{
     hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
+      json_href = paste0("https://codecheck.org.uk/register/", filter, "/", register_table_name,"/index.json")
     )
   }
 
