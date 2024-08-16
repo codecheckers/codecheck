@@ -6,6 +6,7 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
 
   if (page_type == "codecheckers"){
     table <- render_table_codecheckers_html(list_reg_tables)
+    table <- kable(table)
     # Counting number of codecheckers based of number of codechecker reg tables
     # The table is a kable table and hence we cannot count rows
     no_codecheckers <- length(list_reg_tables)

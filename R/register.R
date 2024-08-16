@@ -11,8 +11,8 @@ CONFIG$DICT_ORCID_ID_NAME <- list()
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 
 CONFIG$CODECHECKER_TABLE_COL_NAMES <- list(
-  "codechecker": "Codechecker name",
-  "orcid":  "ORCID ID",
+  "codechecker" = "Codechecker name",
+  "orcid" = "ORCID ID",
   "no_codechecks" = "No. of codechecks"
 )
 

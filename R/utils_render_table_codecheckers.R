@@ -3,7 +3,7 @@
 #' @param list_codechecker_reg_tables The list of codechecker register tables. The indices are the ORCID IDs.
 render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   list_orcid_ids <- names(list_codechecker_reg_tables)
-  table_codecheckers <- data.frame(stringsAsFactors = FALSE, check.names = FALSE)
+  table_codecheckers <- data.frame(matrix(ncol=0, nrow = length(list_orcid_ids)), stringsAsFactors = FALSE)
   
   col_names <- CONFIG$CODECHECKER_TABLE_COL_NAMES
 
@@ -36,7 +36,9 @@ render_table_codecheckers_json <- function(list_codechecker_reg_tables){
 render_table_codecheckers_html <- function(list_codechecker_reg_tables){
 
   list_orcid_ids <- names(list_codechecker_reg_tables)
-  table_codecheckers <- data.frame(stringsAsFactors = FALSE)
+
+  # Initializing a table with rows = no. orcid ids + 1 row (for the headers)
+  table_codecheckers <- data.frame(matrix(ncol=0, nrow = length(list_orcid_ids)), stringsAsFactors = FALSE)
 
   col_names <- CONFIG$CODECHECKER_TABLE_COL_NAMES
 
