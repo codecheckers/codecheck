@@ -4,10 +4,12 @@
 \alias{create_index_prefix_html}
 \title{Dynamically generates the index_prefix.html from a template file}
 \usage{
-create_index_prefix_html(output_dir)
+create_index_prefix_html(filter, register_table_name)
 }
 \arguments{
-\item{output_dir}{The output directory}
+\item{filter}{The filter name}
+
+\item{register_table_name}{The register table name}
 }
 \description{
 Dynamically generates the index_prefix.html from a template file
