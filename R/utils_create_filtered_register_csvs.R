@@ -95,7 +95,8 @@ get_output_dir <- function(filter, column_value) {
     }
 
     # Removing the venue category to obtain the venue name and replace the brackets
-    venue_name <- determine_venue_name(column_value, venue_category)
+    venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", column_value)))
+    venue_name <- gsub(" ", "_", venue_name)
     return(paste0("docs/", filter, "/", venue_category, "/", venue_name, "/"))  }
 
   else if (filter=="codecheckers"){
@@ -123,14 +124,4 @@ determine_venue_category <- function(venue_name){
   }
   warning(paste("Register venue", venue_name, "does not fall into any of the following venue categories:", toString(list_venue_categories)))
   return(NULL)
-}
-
-determine_venue_name <- function(unfiltered_venue_name, venue_category){
-  if (is.null(venue_category)){
-    return(NULL)
-  }
-
-  venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", unfiltered_venue_name, ignore.case = TRUE)))
-  venue_name <- gsub(" ", "_", venue_name)
-  return(venue_name)
 }
