@@ -10,6 +10,13 @@ CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "R
 CONFIG$DICT_ORCID_ID_NAME <- list()
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 
+CONFIG$CODECHECKER_TABLE_COL_NAMES <- list(
+  "codechecker": "Codechecker name",
+  "orcid":  "ORCID ID",
+  "no_codechecks" = "No. of codechecks"
+)
+
+
 #' Function for rendering the register into different view
 #'
 #' NOTE: You should put a GitHub API token inth the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
@@ -53,15 +60,15 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   }
 
   # Rendering files
-  # if ("md" %in% outputs) render_register_mds(list_register_tables)
+  if ("md" %in% outputs) render_register_mds(list_register_tables)
   if ("html" %in% outputs) {
-    # render_register_htmls(list_register_tables)
+    render_register_htmls(list_register_tables)
+
     for (filter in filter_by){
       render_non_register_htmls(list_register_tables[[filter]], page_type = filter)
     }
   }
   if ("json" %in% outputs) {
-    # render_register_jsons(list_register_tables)
     for (filter in filter_by){
       render_non_register_jsons(list_register_tables[[filter]], page_type = filter)
     }
