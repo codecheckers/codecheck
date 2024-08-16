@@ -1,20 +1,7 @@
-CONFIG <- new.env()
-# Registers can be further divided into filter subgroups
-# For cases where an entry does not fall into any subgroup, it's rendered files
-# are stored in a folder with its own name
-CONFIG$FILTER_SUB_GROUPS <- list(
-  venues = list("community", "journal", "conference") 
-)
-CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
-CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "Report", "Check date")
-CONFIG$DICT_ORCID_ID_NAME <- list()
-CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
+# Source the config file to load the CONFIG environment
+source("config.R")
 
-CONFIG$CODECHECKER_TABLE_COL_NAMES <- list(
-  "codechecker" = "Codechecker name",
-  "orcid" = "ORCID ID",
-  "no_codechecks" = "No. of codechecks"
-)
+
 
 
 #' Function for rendering the register into different view
