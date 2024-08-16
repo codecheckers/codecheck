@@ -1,8 +1,8 @@
 render_non_register_tables_html <- function(list_reg_tables, page_type){
 
   output <- switch(page_type,
-    "codecheckers" = render_table_codecheckers_html(list_reg_tables)
-    "venues" = render_tables_venues_html(list_reg_tables)
+    "codecheckers" = render_table_codecheckers_html(list_reg_tables),
+    "venues" = render_tables_venues_html(list_reg_tables),
     stop("Unsupported non-register table page type")
   )
 
