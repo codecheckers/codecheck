@@ -90,7 +90,7 @@ render_register_md <- function(filter, register_table, register_table_name, for_
     register_table <- add_repository_links_md(register_table)
   }
   # Fill in the content
-  md_table <- load_md_template(CONFIG$MD_REG_TEMPLATE)
+  md_table <- load_md_template(CONFIG$MD_TEMPLATE)
 
   markdown_content <- capture.output(kable(register_table, format = "markdown"))
   md_table <- add_markdown_title(filter, md_table, register_table_name)

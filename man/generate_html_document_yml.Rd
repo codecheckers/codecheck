@@ -5,10 +5,12 @@
 \title{Dynamically generates a html_document.yml with the full paths to the index header, prefix 
 and postfix.html files.}
 \usage{
-generate_html_document_yml(output_dir)
+generate_html_document_yml(filter, register_table_name)
 }
 \arguments{
-\item{output_dir}{The output directory where the html_document needs to be saved.}
+\item{filter}{The filter name}
+
+\item{register_table_name}{The register table name}
 }
 \description{
 Dynamically generates a html_document.yml with the full paths to the index header, prefix 
