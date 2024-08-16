@@ -60,16 +60,17 @@ generate_html_document_yml <- function(output_dir) {
 #' 
 #' @importFrom whisker whisker.render
 create_index_postfix_html <- function(output_dir, filter, register_table_name = NULL){
-  # When we have a reg table name, we adjusting the hrefs of the postfix
+
+  # When we have register table names, we are handling the case of reg tables
   if (!is.null(register_table_name)){
-    postfix_template <- readLines(paste0(getwd(), "/docs/templates/reg_tables/index_postfix_template.html"), warn = FALSE)
+    postfix_template <- readLines(paste0(getwd(), CONFIG$DIR_INDEX_TEMPLATE[["reg"]][["postfix"]]), warn = FALSE)
     # Render the template with the correct hrefs
     hrefs <- generate_html_postfix_hrefs_reg(filter, register_table_name)
   }
 
   # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
   else{
-    postfix_template <- readLines(paste0(getwd(), "/docs/templates/codecheckers_venues_list/index_postfix_template.html"), warn = FALSE)
+    postfix_template <- readLines(paste0(getwd(), CONFIG$DIR_INDEX_TEMPLATE[["non_reg"]][["postfix"]], warn = FALSE))
     hrefs <- list(
       json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
     )

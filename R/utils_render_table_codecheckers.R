@@ -5,7 +5,7 @@ render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   list_orcid_ids <- names(list_codechecker_reg_tables)
   table_codecheckers <- data.frame(matrix(ncol=0, nrow = length(list_orcid_ids)), stringsAsFactors = FALSE)
   
-  col_names <- CONFIG$CODECHECKER_TABLE_COL_NAMES
+  col_names <- CONFIG$CODECHECKER_TABLE_COL_NAMES[["codechecker_table"]]
 
   # Column- codechecker names
   table_codecheckers[[col_names[["codechecker"]]]] <- sapply(
@@ -40,7 +40,7 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
   # Initializing a table with rows = no. orcid ids + 1 row (for the headers)
   table_codecheckers <- data.frame(matrix(ncol=0, nrow = length(list_orcid_ids)), stringsAsFactors = FALSE)
 
-  col_names <- CONFIG$CODECHECKER_TABLE_COL_NAMES
+  col_names <- CONFIG$CODECHECKER_TABLE_COL_NAMES[["codechecker_table"]]
 
   # Column- codechecker names
   # Each codechecker name will be a hyperlink to the register table
