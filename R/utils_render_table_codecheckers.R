@@ -11,7 +11,7 @@ render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   table_codecheckers[[col_names[["codechecker"]]]] <- sapply(
     X = list_orcid_ids,
     FUN = function(orcid_id) {
-      paste0(CONFIG$DICT_ORCID_ID_NAME[orcid_id])
+      paste0(CONFIG$DICT_ORCID_ID_NAME[[orcid_id]])
     }
   )
 
@@ -45,17 +45,16 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
   # Column- codechecker names
   # Each codechecker name will be a hyperlink to the register table
   # with all their codechecks
-  table_codecheckers[[col_names[["codechecker"]]]] <- sapply(
+  table_codecheckers[col_names[["codechecker"]]] <- sapply(
     X = list_orcid_ids,
     FUN = function(orcid_id) {
-      codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[orcid_id]
+      codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid_id]]
       paste0("[", codechecker_name, "](https://codecheck.org.uk/register/codecheckers/",
       orcid_id, "/)")
     }
   )
-
   # Column- ORCID ID 
-  table_codecheckers[[col_names[["orcid"]]]] <- sapply(
+  table_codecheckers[col_names[["orcid"]]] <- sapply(
     X = list_orcid_ids,
     FUN = function(orcid_id) {
       paste0("[", orcid_id, "](https://orcid.org/", orcid_id, ")")
@@ -64,7 +63,7 @@ render_table_codecheckers_html <- function(list_codechecker_reg_tables){
   # Column- No. of codechecks
   # Shown as "no_codechecks (sell all checks)" where "see all checks" links to the checks by 
   # the codechecker
-  table_codecheckers[[col_names[["no_codechecks"]]]] <- sapply(
+  table_codecheckers[col_names[["no_codechecks"]]] <- sapply(
     X = list_orcid_ids,
     FUN = function(orcid_id) {
       no_codechecks <- nrow(list_codechecker_reg_tables[[orcid_id]])
