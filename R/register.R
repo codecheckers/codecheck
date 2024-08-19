@@ -1,15 +1,3 @@
-CONFIG <- new.env()
-# Registers can be further divided into filter subgroups
-# For cases where an entry does not fall into any subgroup, it's rendered files
-# are stored in a folder with its own name
-CONFIG$FILTER_SUB_GROUPS <- list(
-  venues = list("community", "journal", "conference") 
-)
-CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
-CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "Report", "Check date")
-CONFIG$DICT_ORCID_ID_NAME <- list()
-CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
-
 #' Function for rendering the register into different view
 #'
 #' NOTE: You should put a GitHub API token inth the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
@@ -33,8 +21,9 @@ CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                             filter_by = c("venues", "codecheckers"),
                             outputs = c("html", "md", "json")) {
-  CONFIG$MD_TEMPLATE <- system.file("extdata", "templates/template_register.md", package = "codecheck")
-  
+  # Loading config.R file
+  source(system.file("extdata", "config.R", package = "codecheck"))
+
   register_table <- preprocess_register(register, filter_by)
 
   # Creating list of of register tables with indices being the filter types
@@ -53,8 +42,20 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 
   # Rendering files
   if ("md" %in% outputs) render_register_mds(list_register_tables)
-  if ("html" %in% outputs) render_register_htmls(list_register_tables)
-  if ("json" %in% outputs) render_register_jsons(list_register_tables)
+  if ("html" %in% outputs) {
+    render_register_htmls(list_register_tables)
+
+    for (filter in filter_by){
+      render_non_register_htmls(list_register_tables[[filter]], page_type = filter)
+    }
+  }
+  if ("json" %in% outputs) {
+    render_register_jsons(list_register_tables)
+    
+    for (filter in filter_by){
+      render_non_register_jsons(list_register_tables[[filter]], page_type = filter)
+    }
+  }
 
   return(register_table)
 }
