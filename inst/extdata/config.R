@@ -24,7 +24,7 @@ CONFIG$FILTER_SUBCATEGORIES <- list(
 CONFIG$DICT_ORCID_ID_NAME <- list()
 
 # DIRECTORIES
-CONFIG$DIR_INDEX_TEMPLATE<- list(
+CONFIG$TEMPLATE_DIR<- list(
   "non_reg" = list(
     "postfix" = system.file("extdata", "templates/non_reg_tables/index_postfix_template.html", package = "codecheck"),
     "header" = system.file("extdata", "templates/general/index_header_template.html", package = "codecheck"),

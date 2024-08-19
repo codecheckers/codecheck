@@ -20,7 +20,7 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
     return()
   }
   # Creating and adjusting the markdown table
-  md_table <- load_md_template(CONFIG$DIR_INDEX_TEMPLATE[["non_reg"]][["md_template"]])
+  md_table <- load_md_template(CONFIG$TEMPLATE_DIR[["non_reg"]][["md_template"]])
   title <- paste0("CODECHECK List of ", page_type)
   md_table <- gsub("\\$title\\$", title, md_table)
   md_table <- gsub("\\$subtitle\\$", subtext, md_table)

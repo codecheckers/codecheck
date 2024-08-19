@@ -63,14 +63,14 @@ create_index_postfix_html <- function(output_dir, filter, register_table_name = 
 
   # When we have register table names, we are handling the case of reg tables
   if (!is.null(register_table_name)){
-    postfix_template <- readLines(CONFIG$DIR_INDEX_TEMPLATE[["reg"]][["postfix"]], warn = FALSE)
+    postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["postfix"]], warn = FALSE)
     # Render the template with the correct hrefs
     hrefs <- generate_html_postfix_hrefs_reg(filter, register_table_name)
   }
 
   # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
   else{
-    postfix_template <- readLines(CONFIG$DIR_INDEX_TEMPLATE[["non_reg"]][["postfix"]], warn = FALSE)
+    postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["non_reg"]][["postfix"]], warn = FALSE)
     hrefs <- list(
       json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
     )
@@ -85,7 +85,7 @@ create_index_postfix_html <- function(output_dir, filter, register_table_name = 
 #' @param output_dir The output directory
 create_index_prefix_html <- function(output_dir){
   # Using the index_prefix_template
-  prefix_template <- readLines(CONFIG$DIR_INDEX_TEMPLATE[["reg"]][["postfix"]], warn = FALSE)
+  prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["prefix"]], warn = FALSE)
   writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
 }
 
@@ -94,7 +94,7 @@ create_index_prefix_html <- function(output_dir){
 #' @param output_dir The output directory
 create_index_header_html <- function(output_dir){
   # Using the index_header_template
-  header_template <- readLines(CONFIG$DIR_INDEX_TEMPLATE[["reg"]][["header"]], warn = FALSE)
+  header_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["header"]], warn = FALSE)
 
   writeLines(header_template, paste0(output_dir, "index_header.html"))
 }
