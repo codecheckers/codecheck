@@ -1,3 +1,7 @@
+#' Renders table for all venues and venue subcategories in JSON format.
+#' 
+#' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
+#' @return Returns list of the json tables with the names of the list being the table names.
 render_tables_venues_json <- function(list_venue_reg_tables){
   all_venues_table <- render_table_all_venues_json(list_venue_reg_tables)
   list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
@@ -8,9 +12,10 @@ render_tables_venues_json <- function(list_venue_reg_tables){
 }
 
 
-#' Renders venues table in JSON format.
+#' Renders table for all venues in JSON format.
 #' 
 #' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
+#' @return Returns a JSON table for the all venues 
 render_table_all_venues_json <- function(list_venue_reg_tables){
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
   list_venue_names <- names(list_venue_reg_tables)
@@ -57,6 +62,10 @@ render_table_all_venues_json <- function(list_venue_reg_tables){
   return(table_venues)
 }
 
+#' Renders table for all venues and venue subcategories for HTML.
+#' 
+#' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
+#' @return Returns list of the html tables with the names of the list being the table names.
 render_tables_venues_html <- function(list_venue_reg_tables){
   all_venues_table <- render_table_all_venues_html(list_venue_reg_tables)
   list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
@@ -66,11 +75,12 @@ render_tables_venues_html <- function(list_venue_reg_tables){
   return(list_tables)
 }
 
-#' Renders venues table in HTML format.
+#' Renders table for all venues in HTML format.
 #' Each venue name links to the register table for that specific
 #' venue. The ORCID IDs link to their ORCID pages.
 #' 
 #' @param list_venue_reg_tables The list of venue register tables. The indices are the ORCID IDs.
+#' @return Returns the html table of all the venues.
 render_table_all_venues_html <- function(list_venue_reg_tables){
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
 
@@ -130,9 +140,14 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
   return(table_venues)
 }
 
-# This function can be used for both the html and json table since it works on the
-# table for all venues. If the all_venues table is of html format then this creates
-# a html table and if it is of json format, this creates a json table. 
+#' Renders table for venue subcategories
+#' This function can be used for both the html and json table since it works on the
+#' table for all venues. If the all_venues table is of html format then this creates
+#' a html table and if it is of json format, this creates a json table. 
+#' 
+#' @param venues_table The table of all venues
+#' @return Returns a list of the html tables of venue subcategories. 
+#' The names in the list are the names of the subcategories
 render_table_venues_subcat <- function(venues_table){
   CONFIG$NO_CODECHECKS_VENUE_SUBCAT <- c()
   list_tables <- c()

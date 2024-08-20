@@ -1,3 +1,8 @@
+#' Renders non-register tables such as list of venues, codecheckers
+#' 
+#' @param list_reg_tables The list of register tables
+#' @param page_type The HTML page type that needs to rendered.
+#' @return A list of register tables. The entries in the list are the names of the table
 render_non_register_tables_html <- function(list_reg_tables, page_type){
 
   output <- switch(page_type,
@@ -15,9 +20,10 @@ render_non_register_tables_html <- function(list_reg_tables, page_type){
   return(output)  
 }
 
-#' Renders non-register pages such as codecheckers or venues page.
+#' Renders non-register html pages such as codecheckers or venues page.
 #' 
 #' @param list_reg_tables The list of register tables to link to in this html page
+#' @param page_type The HTML page type that needs to rendered.
 render_non_register_htmls <- function(list_reg_tables, page_type){
   list_tables <- render_non_register_tables_html(list_reg_tables, page_type)
 
@@ -33,27 +39,34 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
       output_dir <- paste0("docs/", page_type, "/")
     }
 
-    html_header <- generate_html_header(table, page_type, table_name)
-    generate_non_reg_html(table, table_name, page_type, html_header, output_dir)
+    html_data <- generate_html_data(table, page_type, table_name)
+    generate_non_reg_html(table, table_name, page_type, html_data, output_dir)
   }
 }
 
-generate_non_reg_html <- function(table, table_subcategory, page_type, html_header, output_dir){
+#' Generates non register html page.
+#' 
+#' @param table The table to showcase in the html
+#' @param table_name The name of the table
+#' @param page_type The HTML page type that needs to rendered.
+#' @param html_data A list containing the title, subtext, extra text of the html page
+#' @param output_dir The directory where the html needs to be saved
+generate_non_reg_html <- function(table, table_name, page_type, html_data, output_dir){
   table <- kable(table)
 
   # Creating and adjusting the markdown table
   md_table <- load_md_template(CONFIG$TEMPLATE_DIR[["non_reg"]][["md_template"]])
-  md_table <- gsub("\\$title\\$", html_header[["title"]], md_table)
-  md_table <- gsub("\\$subtitle\\$", html_header[["subtext"]], md_table)
+  md_table <- gsub("\\$title\\$", html_data[["title"]], md_table)
+  md_table <- gsub("\\$subtitle\\$", html_data[["subtext"]], md_table)
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)
-  md_table <- gsub("\\$extra_text\\$", html_header[["extra_text"]], md_table)
+  md_table <- gsub("\\$extra_text\\$", html_data[["extra_text"]], md_table)
 
   # Saving the table to a temp md file
   temp_md_path <- paste0(output_dir, "temp.md")
   writeLines(md_table, temp_md_path)
 
   # Creating the correct html yaml and index files
-  create_index_section_files(output_dir, page_type, table_subcategory, is_reg_table = FALSE)
+  create_index_section_files(output_dir, page_type, table_name, is_reg_table = FALSE)
   generate_html_document_yml(output_dir)
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
 
@@ -80,6 +93,7 @@ generate_non_reg_html <- function(table, table_subcategory, page_type, html_head
 #' Renders JSON file of non register tables such as list of venues, list of codecheckers
 #' 
 #' @param list_reg_tables The list of register tables needed for the information.
+#' @param page_type The HTML page type that needs to rendered.
 render_non_register_jsons <- function(list_reg_tables, page_type){
   if (page_type == "codecheckers"){
     list_tables <- list("codecheckers" = render_table_codecheckers_json(list_reg_tables))
@@ -106,6 +120,11 @@ render_non_register_jsons <- function(list_reg_tables, page_type){
   }
 }
 
+#' Generates the titles of the HTML pages for non registers
+#' 
+#' @param page_type The HTML page type that needs to rendered
+#' @param table_name The name of the table
+#' @return The title to put on the html page
 generate_html_title_non_registers <- function(page_type, table_name){
   title_base <- "CODECHECK List of"
 
@@ -128,6 +147,13 @@ generate_html_title_non_registers <- function(page_type, table_name){
   return(title)
 }
 
+#' Generates the extra text of the HTML pages for non registers.
+#' This extra text is to be placed under the table.
+#' There is only extra text for the codecheckers HTML page to explain
+#' the reason for discrepancy between total_codechecks != SUM(no.of codechecks)
+#' 
+#' @param page_type The HTML page type that needs to rendered
+#' @return The extra text to place under the table
 generate_html_extra_text_non_register <- function(page_type){
   extra_text <- ""
 
@@ -141,7 +167,13 @@ generate_html_extra_text_non_register <- function(page_type){
   return(extra_text)
 }
 
-
+#' Generates the subtext of the HTML pages for non registers with a summary of
+#' the number of codechecks and number of codechecks/ venues etc.
+#' 
+#' @param table The table to showcase in the html
+#' @param page_type The HTML page type that needs to rendered
+#' @param table_name The name of the table
+#' @return The subtext to put under the html title
 generate_html_subtext_non_register <- function(table, page_type, table_name){
 
   # Setting the codecheck word to be plural or singular
@@ -183,22 +215,34 @@ generate_html_subtext_non_register <- function(table, page_type, table_name){
   return(subtext)
 }
 
-generate_html_header <- function(table, page_type, table_name){
+#' Generates a list of data for the html. The list contains the html
+#' title, subtext and extra text.
+#' 
+#' @param table The table to showcase in the html
+#' @param page_type The HTML page type that needs to rendered
+#' @param table_name The name of the table
+#' @return A list of the html data such as title, subtext etc
+generate_html_data <- function(table, page_type, table_name){
 
-  html_header <- list(
+  html_data <- list(
     "title" = generate_html_title_non_registers(page_type, table_name),
     "subtext" = generate_html_subtext_non_register(table, page_type, table_name),
     "extra_text" = generate_html_extra_text_non_register(page_type)
   )
 
-  return(html_header)
+  return(html_data)
 }
 
-generate_html_postfix_hrefs_non_reg <- function(filter, register_table_name){  
+#' Generates postfix hrefs for the venues/ codecheckers list pages
+#' 
+#' @param filter The filter being used such as "venues" or "codecheckers"
+#' @param table_name The name of the table
+#' @return A list of the hrefs.
+generate_html_postfix_hrefs_non_reg <- function(filter, table_name){  
   
   # For register tables that arent of subcategories of a filter type, the
   # json url link is register/filter/index.json
-  if (register_table_name %in% list("all_venues", "codecheckers")){
+  if (table_name %in% list("all_venues", "codecheckers")){
     hrefs <- list(
       json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
     )
@@ -208,7 +252,7 @@ generate_html_postfix_hrefs_non_reg <- function(filter, register_table_name){
   # filter/register_table_name/index.json where register_table_name is the subcategory name
   else{
     hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/", register_table_name,"/index.json")
+      json_href = paste0("https://codecheck.org.uk/register/", filter, "/", table_name,"/index.json")
     )
   }
 

@@ -2,13 +2,15 @@
 % Please edit documentation in R/utils_render_table_non_registers.R
 \name{render_non_register_htmls}
 \alias{render_non_register_htmls}
-\title{Renders non-register pages such as codecheckers or venues page.}
+\title{Renders non-register html pages such as codecheckers or venues page.}
 \usage{
 render_non_register_htmls(list_reg_tables, page_type)
 }
 \arguments{
 \item{list_reg_tables}{The list of register tables to link to in this html page}
+
+\item{page_type}{The HTML page type that needs to rendered.}
 }
 \description{
-Renders non-register pages such as codecheckers or venues page.
+Renders non-register html pages such as codecheckers or venues page.
 }
