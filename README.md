@@ -34,14 +34,7 @@ remotes::install_github("codecheckers/codecheck")
 
 ## Usage
 
-For details see the main vignette.
-
-### I just want to use the R Markdown template for writing a check
-
-``` r
-# install package, then:
-codecheck::create_codecheck_files()
-```
+See the main vignette.
 
 ## Development
 
