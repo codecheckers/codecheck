@@ -50,5 +50,5 @@ build_install_test(".")
 
 ## License
 
-Copyright 2022 S. Eglen & D. Nüst. The `codecheck` package is published
+Copyright 2024 S. Eglen & D. Nüst. The `codecheck` package is published
 under the MIT license, see file `LICENSE`.
