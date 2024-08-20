@@ -1,7 +1,17 @@
+render_tables_venues_json <- function(list_venue_reg_tables){
+  all_venues_table <- render_table_all_venues_json(list_venue_reg_tables)
+  list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
+  
+  list_tables <- list("all_venues" = all_venues_table)
+  list_tables <- c(list_tables, list_venues_subcat_tables)
+  return(list_tables)
+}
+
+
 #' Renders venues table in JSON format.
 #' 
 #' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
-render_table_venues_json <- function(list_venue_reg_tables){
+render_table_all_venues_json <- function(list_venue_reg_tables){
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
   list_venue_names <- names(list_venue_reg_tables)
   
@@ -47,12 +57,21 @@ render_table_venues_json <- function(list_venue_reg_tables){
   return(table_venues)
 }
 
+render_tables_venues_html <- function(list_venue_reg_tables){
+  all_venues_table <- render_table_all_venues_html(list_venue_reg_tables)
+  list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
+  
+  list_tables <- list("all_venues" = all_venues_table)
+  list_tables <- c(list_tables, list_venues_subcat_tables)
+  return(list_tables)
+}
+
 #' Renders venues table in HTML format.
 #' Each venue name links to the register table for that specific
 #' venue. The ORCID IDs link to their ORCID pages.
 #' 
 #' @param list_venue_reg_tables The list of venue register tables. The indices are the ORCID IDs.
-render_table_venues_html <- function(list_venue_reg_tables){
+render_table_all_venues_html <- function(list_venue_reg_tables){
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
 
   list_venue_names <- names(list_venue_reg_tables)
@@ -109,4 +128,44 @@ render_table_venues_html <- function(list_venue_reg_tables){
   table_venues <- table_venues[, desired_order_cols]
 
   return(table_venues)
+}
+
+# This function can be used for both the html and json table since it works on the
+# table for all venues. If the all_venues table is of html format then this creates
+# a html table and if it is of json format, this creates a json table. 
+render_table_venues_subcat <- function(venues_table){
+  CONFIG$NO_CODECHECKS_VENUE_SUBCAT <- c()
+  list_tables <- c()
+
+  # The venues subcat table will be made from the venues_table.
+  # Hence we set the column "venue type" to be NULL as it is redundant for the venues subcategory table
+  col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
+
+  # The "venue name" column is later replaced with "{venue_subcat} name"
+  venues_table_venue_name_col <- col_names[["venue_name"]]
+  old_venue_name_col <- venues_table_venue_name_col
+
+  for (venue_subcat in CONFIG$FILTER_SUBCATEGORIES[["venues"]]){
+    # Filtering and keeping the rows of venue_type == venue_subcat
+    table_venue_subcategory <- venues_table[grepl(venue_subcat, venues_table$`Venue type`, ignore.case = TRUE), ]
+    # Removing the column showing the row numbers and removing the column "Venue type"
+    rownames(table_venue_subcategory) <- NULL
+    table_venue_subcategory[col_names[["venue_type"]]] <- NULL
+
+    # Replace the column "Venue name" with "{venue_subcat} name" e.g "Journal/Conference name"
+    # Capitalizing the first letter of the subcat name using str_to_title
+    new_venue_name_col <- paste(stringr::str_to_title(venue_subcat), "name")
+    colnames(table_venue_subcategory)[colnames(table_venue_subcategory) == old_venue_name_col] <- new_venue_name_col
+    
+    # Extract the numeric part from the "no.of codechecks" column and convert to integers
+    list_no_codechecks <- as.numeric(sub(" .*", "", table_venue_subcategory[[col_names[["no_codechecks"]]]]))
+    no_codechecks_venue_subcat <- sum(list_no_codechecks)
+
+    # Noting down the number of codechecks for each venue subcategory. This is to be used in the subtext of the
+    # html pages
+    CONFIG$NO_CODECHECKS_VENUE_SUBCAT[[venue_subcat]] <- no_codechecks_venue_subcat
+
+    list_tables[[venue_subcat]] <- table_venue_subcategory
+  }
+  return(list_tables)
 }
