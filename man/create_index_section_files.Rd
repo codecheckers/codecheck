@@ -4,7 +4,12 @@
 \alias{create_index_section_files}
 \title{Creates index postfix, prefix and the header}
 \usage{
-create_index_section_files(output_dir, filter, register_table_name = NULL)
+create_index_section_files(
+  output_dir,
+  filter,
+  register_table_name,
+  is_reg_table
+)
 }
 \arguments{
 \item{output_dir}{The output directory of the section files}

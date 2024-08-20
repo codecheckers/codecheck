@@ -8,6 +8,8 @@ render_non_register_jsons(list_reg_tables, page_type)
 }
 \arguments{
 \item{list_reg_tables}{The list of register tables needed for the information.}
+
+\item{page_type}{The HTML page type that needs to rendered.}
 }
 \description{
 Renders JSON file of non register tables such as list of venues, list of codecheckers
