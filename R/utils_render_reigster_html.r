@@ -71,9 +71,7 @@ create_index_postfix_html <- function(output_dir, filter, register_table_name, i
   # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
   else{
     postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["non_reg"]][["postfix"]], warn = FALSE)
-    hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
-    )
+    hrefs <- generate_html_postfix_hrefs_non_reg(filter, register_table_name)
   }
 
   output <- whisker.render(postfix_template, hrefs)
