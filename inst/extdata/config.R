@@ -18,11 +18,6 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
     "venue_type" = "Venue type", 
     "venue_name" = "Venue name",
     "no_codechecks" = "No. of codechecks"
-  ),
-
-  "venues_subcat_table" = list(
-    "venue_name" = "Venue name",
-    "no_codechecks" = "No. of codechecks"
   )
 )
 
