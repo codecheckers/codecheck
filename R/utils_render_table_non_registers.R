@@ -70,7 +70,7 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
 render_non_register_jsons <- function(list_reg_tables, page_type){
   output_dir <- paste0("docs/", page_type, "/")
 
-  if (page_type == "codeheckers"){
+  if (page_type == "codecheckers"){
     table <- render_table_codecheckers_json(list_reg_tables)
   }
 
