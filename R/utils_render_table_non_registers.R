@@ -3,10 +3,10 @@
 #' @param list_reg_tables The list of register tables to link to in this html page
 render_non_register_htmls <- function(list_reg_tables, page_type){
   output_dir <- paste0("docs/", page_type, "/")
+  extra_text <- ""
 
   if (page_type == "codecheckers"){
     table <- render_table_codecheckers_html(list_reg_tables)
-    table <- kable(table)
     # Counting number of codecheckers based of number of codechecker reg tables
     # The table is a kable table and hence we cannot count rows
     no_codecheckers <- length(list_reg_tables)
@@ -19,10 +19,15 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
     This is because some codechecks involved more than one codechecker.</i>"
   }
 
-  else{
-    return()
+  else if (page_type == "venues") {
+    table <- render_table_venues_html(list_reg_tables)
+
+    no_venues <- length(list_reg_tables)
+    subtext <- paste("In total,", CONFIG$NO_CODECHECKS, "codechecks were completed for", no_venues, "venues")
   }
+
   # Creating and adjusting the markdown table
+  table <- kable(table)
   md_table <- load_md_template(CONFIG$TEMPLATE_DIR[["non_reg"]][["md_template"]])
   title <- paste0("CODECHECK List of ", page_type)
   md_table <- gsub("\\$title\\$", title, md_table)
@@ -65,13 +70,14 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
 render_non_register_jsons <- function(list_reg_tables, page_type){
   output_dir <- paste0("docs/", page_type, "/")
 
-  if (page_type == "codeheckers"){
+  if (page_type == "codecheckers"){
     table <- render_table_codecheckers_json(list_reg_tables)
   }
 
-  else{
-    return()
+  else if (page_type == "venues"){
+    table <- render_table_venues_json(list_reg_tables)
   }
+
   jsonlite::write_json(
     table,
     path = paste0(output_dir, "index.json"),
