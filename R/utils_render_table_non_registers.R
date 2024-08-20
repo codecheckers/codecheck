@@ -10,10 +10,13 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
     # Counting number of codecheckers based of number of codechecker reg tables
     # The table is a kable table and hence we cannot count rows
     no_codecheckers <- length(list_reg_tables)
-    # The table of codecheckers contains text and hyperlinks hence total number of codechecks is obtained
-    # from the list of reg tables
-    no_codechecks <- sum(sapply(list_reg_tables, nrow))
-    subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", no_codechecks, "codechecks")
+    # Using number of codechecks from CONFIG instead of "no. of codechecks" column to avoid double count
+    subtext <- paste("In total,", no_codecheckers, "codecheckers contributed", CONFIG$NO_CODECHECKS, "codechecks*")
+    
+    # Extra text to explain why total_codechecks != SUM(no.of codechecks)
+    extra_text <- "<i>\\*Note that the total codechecks is less than the collective sum of 
+    individual codecheckers' no. of codechecks. 
+    This is because some codechecks involved more than one codechecker.</i>"
   }
 
   else{
@@ -25,6 +28,7 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
   md_table <- gsub("\\$title\\$", title, md_table)
   md_table <- gsub("\\$subtitle\\$", subtext, md_table)
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)
+  md_table <- gsub("\\$extra_text\\$", extra_text, md_table)
 
   # Saving the table to a temp md file
   temp_md_path <- paste0(output_dir, "temp.md")

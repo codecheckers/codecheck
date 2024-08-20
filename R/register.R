@@ -25,6 +25,10 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   source(system.file("extdata", "config.R", package = "codecheck"))
 
   register_table <- preprocess_register(register, filter_by)
+  
+  # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
+  # done by multiple authors.
+  CONFIG$NO_CODECHECKS <- nrow(register_table)
 
   # Creating list of of register tables with indices being the filter types
   list_register_tables <- c()
