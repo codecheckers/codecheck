@@ -6,6 +6,7 @@ CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "R
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 
 # NON-REGISTER_TABLE
+# Note that the order of the names in the list will be the order of table columns in html and json
 CONFIG$NON_REG_TABLE_COL_NAMES <- list(
   "codechecker_table" = list(
     "codechecker" = "Codechecker name",
