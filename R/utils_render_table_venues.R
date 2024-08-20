@@ -99,38 +99,39 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
     X = list_venue_names,
     FUN = function(venue_name){
       venue_type <- determine_venue_category(venue_name)
-      stringr::str_to_title(venue_type)
+      link_venue_subcat <- paste0("https://codecheck.org.uk/register/venues/", venue_type, "/")
+      paste0("[", stringr::str_to_title(venue_type), "](", link_venue_subcat,")")
     }
   )
 
   # Column- No. of codechecks
-  table_venues[[col_names[["no_codechecks"]]]] <- mapply(
-    FUN = function(venue_name, venue_type) {
+  table_venues[[col_names[["no_codechecks"]]]] <- sapply(
+    table_venues[[col_names[["venue_name"]]]],
+    FUN = function(venue_name) {
+      venue_type <- determine_venue_category(venue_name)
       no_codechecks <- nrow(list_venue_reg_tables[[venue_name]])
-      formatted_venue_type <- stringr::str_to_lower(venue_type)
-      formatted_venue_name <-  determine_venue_name(venue_name, venue_type)
+      venue_name <-  determine_venue_name(venue_name, venue_type)
       paste0(no_codechecks," [(see all checks)](https://codecheck.org.uk/register/venues/",
-      formatted_venue_type, "/", formatted_venue_name, "/)")
-    },
-    venue_name = table_venues[[col_names[["venue_name"]]]],
-    venue_type = table_venues[[col_names[["venue_type"]]]]
+      venue_type, "/", venue_name, "/)")
+    }
   )
 
   # Column- venue names
   # Each venue name will be a hyperlink to the register table
   # with all their codechecks
-  table_venues[[col_names[["venue_name"]]]] <- mapply(
-    FUN = function(venue_name, venue_type){
-      if (is.null(CONFIG$DICT_VENUE_NAMES[[venue_name]])) {
+  table_venues[[col_names[["venue_name"]]]] <- sapply(
+    table_venues[[col_names[["venue_name"]]]],
+    FUN = function(venue_name){
+      display_venue_name <- CONFIG$DICT_VENUE_NAMES[[venue_name]]
+
+      if (is.null(display_venue_name)) {
         return(venue_name)  # Handle cases where venue_name is not in CONFIG$DICT_VENUE_NAMES
       }
-      formatted_venue_type <- stringr::str_to_lower(venue_type)
-      formatted_venue_name <-  determine_venue_name(venue_name, venue_type)
-      paste0("[", CONFIG$DICT_VENUE_NAMES[[venue_name]], "](https://codecheck.org.uk/register/venues/",
-            formatted_venue_type, "/", formatted_venue_name, "/)")
-    },
-    venue_name = table_venues[[col_names[["venue_name"]]]],
-    venue_type = table_venues[[col_names[["venue_type"]]]]
+      venue_type <- determine_venue_category(venue_name)
+      venue_name <-  determine_venue_name(venue_name, venue_type)
+      paste0("[", display_venue_name, "](https://codecheck.org.uk/register/venues/",
+            venue_type, "/", venue_name, "/)")
+    }
   )
 
   # Reordering the table
