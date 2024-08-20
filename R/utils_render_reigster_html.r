@@ -59,17 +59,21 @@ generate_html_document_yml <- function(output_dir) {
 #' @param register_table_name The register table name. If this is NULL we are generating list of venues/ codecheckers
 #' 
 #' @importFrom whisker whisker.render
-create_index_postfix_html <- function(output_dir, filter, register_table_name, is_reg_table){
-  # When we have a reg table name, we adjusting the hrefs of the postfix
-  if (is_reg_table){
-    postfix_template <- readLines(paste0(getwd(), CONFIG$REG_INDEX_POSTFIX_TEMP_DIR), warn = FALSE)
+create_index_postfix_html <- function(output_dir, filter, register_table_name = NULL){
+
+  # When we have register table names, we are handling the case of reg tables
+  if (!is.null(register_table_name)){
+    postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["postfix"]], warn = FALSE)
+    # Render the template with the correct hrefs
     hrefs <- generate_html_postfix_hrefs_reg(filter, register_table_name)
   }
 
   # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
   else{
-    postfix_template <- readLines(paste0(getwd(), CONFIG$NON_REG_INDEX_POSTFIX_TEMP_DIR), warn = FALSE)
-    hrefs <- generate_html_postfix_hrefs_non_reg(filter, register_table_name)
+    postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["non_reg"]][["postfix"]], warn = FALSE)
+    hrefs <- list(
+      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
+    )
   }
 
   output <- whisker.render(postfix_template, hrefs)
@@ -81,7 +85,7 @@ create_index_postfix_html <- function(output_dir, filter, register_table_name, i
 #' @param output_dir The output directory
 create_index_prefix_html <- function(output_dir){
   # Using the index_prefix_template
-  prefix_template <- readLines(paste0(getwd(), "/docs/templates/general/index_prefix_template.html"), warn = FALSE)
+  prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["prefix"]], warn = FALSE)
   writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
 }
 
@@ -90,7 +94,7 @@ create_index_prefix_html <- function(output_dir){
 #' @param output_dir The output directory
 create_index_header_html <- function(output_dir){
   # Using the index_header_template
-  header_template <- readLines(paste0(getwd(), "/docs/templates/general/index_header_template.html"), warn = FALSE)
+  header_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["header"]], warn = FALSE)
 
   writeLines(header_template, paste0(output_dir, "index_header.html"))
 }
@@ -106,27 +110,6 @@ generate_html_postfix_hrefs_reg <- function(filter, register_table_name) {
     json_href = generate_href(filter, register_table_name, "json"),
     md_href = generate_href(filter, register_table_name, "md")
   )
-  return(hrefs)
-}
-
-generate_html_postfix_hrefs_non_reg <- function(filter, register_table_name){  
-  
-  # For register tables that arent of subcategories of a filter type, the
-  # json url link is register/filter/index.json
-  if (register_table_name %in% list("all_venues", "codecheckers")){
-    hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
-    )
-  }
-
-  # For pages of the filter subcategories, the json url is of form
-  # filter/register_table_name/index.json where register_table_name is the subcategory name
-  else{
-    hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/", register_table_name,"/index.json")
-    )
-  }
-
   return(hrefs)
 }
 
@@ -185,8 +168,8 @@ generate_href <- function(filter, register_table_name, href_type) {
 #' @param output_dir The output directory of the section files
 #' @param filter The filter name 
 #' @param register_table_name The register table name
-create_index_section_files <- function(output_dir, filter, register_table_name, is_reg_table) {
-  create_index_postfix_html(output_dir, filter, register_table_name, is_reg_table)
+create_index_section_files <- function(output_dir, filter, register_table_name = NULL) {
+  create_index_postfix_html(output_dir, filter, register_table_name)
   create_index_prefix_html(output_dir)
   create_index_header_html(output_dir)
 }
@@ -202,7 +185,7 @@ render_register_html <- function(filter, register_table, register_table_name){
   register_table <- add_repository_links_html(register_table)
 
   # Dynamically create the index header, prefix and postfix files
-  create_index_section_files(output_dir, filter, register_table_name, is_reg_table = TRUE)
+  create_index_section_files(output_dir, filter, register_table_name)
   generate_html_document_yml(output_dir)
 
   # Capture the HTML output from a markdown file
