@@ -15,7 +15,7 @@ render_non_register_htmls <- function(list_reg_tables, page_type){
     
     # Extra text to explain why total_codechecks != SUM(no.of codechecks)
     extra_text <- "<i>\\*Note that the total codechecks is less than the collective sum of 
-    individual codecheckers' no. of codechecks. 
+    individual codecheckers' number of codechecks. 
     This is because some codechecks involved more than one codechecker.</i>"
   }
 
