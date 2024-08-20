@@ -49,3 +49,16 @@ CONFIG$TEMPLATE_DIR<- list(
     "md_template" = system.file("extdata", "templates/reg_tables/template.md", package = "codecheck")
   )
 )
+
+# DICT OF VENUE NAMES
+CONFIG$DICT_VENUE_NAMES <- list(
+  "journal (GigaScience)" = "GigaScience",
+  "journal (J Geogr Syst)" = "Journal of Geographical Systems",
+  "journal (J Archaeol Sci)" = "Journal of Archaeological Science",
+  "journal (GigaByte)" = "GigaByte",
+  "conference (AGILEGIS)" = "AGILEGIS",
+  "community (codecheck)" = "Codecheck",
+  "community (codecheck NL)" = "Codecheck NL",
+  "community (in press)" = "In press",
+  "community (preprint)" = "Preprint"
+)
