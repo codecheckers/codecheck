@@ -1,8 +1,8 @@
 CONFIG <- new.env()
 
 # REGISTER TABLE
-CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:---|:--------------------------|:----------|"
-CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Issue", "Report", "Check date")
+CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:------------------|:---|:--------------------------|:----------|"
+CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 
 # NON-REGISTER_TABLE
