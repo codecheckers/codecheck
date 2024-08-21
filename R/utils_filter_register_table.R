@@ -16,6 +16,17 @@ create_filtered_register_tables <- function(register_table, filter_by) {
     return(list_filtered_register_tables)
 }
 
+#' Create filtered venue register tables
+#'
+#' Filters a register based on unique venue names and creates a register table for each venue name.
+#' Each filtered table is stored in a nested list structure where the top-level keys are the 
+#' venue types and the second-level keys are the venue names.
+#'
+#' @param register_table The original unfiltered register table.
+#'
+#' @return A nested list where each top-level key corresponds to a venue type and each second-level key corresponds 
+#'         to a specific venue. The value at each key is a DataFrame containing the filtered data for that venue.
+#'
 create_venues_filtered_register_tables <- function(register_table){
     list_venue_filtered_tables <- list()
     unique_col_values <- unique(register_table[["Venue"]])
@@ -34,6 +45,17 @@ create_venues_filtered_register_tables <- function(register_table){
     return(list_venue_filtered_tables)
 }
 
+#' Create filtered codechecker register table
+#'
+#' Filters a register based on ORCID ID and creates a register table for each ORCID ID
+#' Each filtered table is stored in a list structure where the keys are the 
+#' ORCID 
+#' 
+#' @param register_table The original unfiltered register table.
+#'
+#' @return A list where each key corresponds to a codechecker (identified by ORCID ID) and the value is 
+#'         a DataFrame containing the filtered data for that codechecker.
+#'
 create_codecheckers_filtered_register_tables <- function(register_table){
     list_codechecker_filtered_tables <- list()
 

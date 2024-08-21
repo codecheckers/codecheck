@@ -5,7 +5,7 @@
 \title{Function for creating a list of register tables that is filtered based on the filter type.
 Each entry in the resulting list is the filtered register table with index corresponding to unique values in that column.}
 \usage{
-create_filtered_register_tables(register_table, filter)
+create_filtered_register_tables(register_table, filter_by)
 }
 \arguments{
 \item{register_table}{The register table}
