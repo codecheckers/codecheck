@@ -40,8 +40,10 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 
   if (length(filter_by)!=0){
     create_filtered_register_csvs(filter_by, register)
-    # Creating and adding filtered registered tables to list of tables
-    list_register_tables <- create_filtered_register_tables(register_table, filter_by)
+    # Creating filtered registered tables
+    filtered_register_tables <- create_filtered_register_tables(register_table, filter_by)
+    # Merge the new filtered tables with the existing list of tables
+    list_register_tables <- c(list_register_tables, filtered_register_tables)
   }
 
   # Rendering files
