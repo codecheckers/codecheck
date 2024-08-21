@@ -53,7 +53,7 @@ create_codechecker_filtered_reg_csv <- function(){
 #' @param register A DataFrame representing the complete register data to be filtered.
 create_venue_filtered_reg_csv <- function(register){
 
-  filter_col_names <- list("Type", "Venue")
+  filter_col_names <- CONFIG$FILTER_COLUMN_NAMES[["venues"]]
 
   for (col_name in filter_col_names){
     unique_col_values <- unique(register[[col_name]])

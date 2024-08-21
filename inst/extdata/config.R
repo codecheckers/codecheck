@@ -4,6 +4,11 @@ CONFIG <- new.env()
 CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:------------------|:---|:--------------------------|:----------|"
 CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
+CONFIG$FILTER_COLUMN_NAMES <- list(
+  "venues" = list("Type", "Venue"),
+  "codecheckers" = "Codechecker"
+)
+
 
 # NON-REGISTER_TABLE
 # Note that the order of the names in the list will be the order of table columns in html and json
