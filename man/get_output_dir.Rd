@@ -4,7 +4,7 @@
 \alias{get_output_dir}
 \title{Gets the output dir depending on the filter name and the value of the filtered column}
 \usage{
-get_output_dir(filter, column_value)
+get_output_dir(filter, col_value, col_subcategory = NULL)
 }
 \arguments{
 \item{filter}{The filter name}
