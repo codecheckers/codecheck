@@ -4,7 +4,12 @@
 \alias{render_register_json}
 \title{Renders register json for a single register_table}
 \usage{
-render_register_json(filter, register_table, register_table_name)
+render_register_json(
+  filter,
+  register_table,
+  register_table_name,
+  filter_subcategory = NULL
+)
 }
 \arguments{
 \item{filter}{The filter}
@@ -12,6 +17,9 @@ render_register_json(filter, register_table, register_table_name)
 \item{register_table}{The register table}
 
 \item{register_table_name}{The register table name}
+
+\item{filter_subcategory}{An optional string representing a subcategory within the filter 
+(e.g., venue type). Default is NULL.}
 }
 \description{
 Renders register json for a single register_table

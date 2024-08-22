@@ -69,6 +69,7 @@ add_repository_links_md <- function(register_table) {
 #' @param filter The filter
 #' @param register_table The register table
 #' @param register_table_name The register table name
+#' @param filter_subcategory The name of the filter subcategory. Only needed in case of venues which has subcategories. Defaults to NULL
 #' @param for_html_file Flag for whether we are rendering register md for html file.
 #' Set to FALSE by default. If TRUE, no repo links are added to the repository table.
 render_register_md <- function(filter, register_table, register_table_name, filter_subcategory = NULL, for_html_file=FALSE) {

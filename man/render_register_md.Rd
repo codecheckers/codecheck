@@ -19,6 +19,8 @@ render_register_md(
 
 \item{register_table_name}{The register table name}
 
+\item{filter_subcategory}{The name of the filter subcategory. Only needed in case of venues which has subcategories. Defaults to NULL}
+
 \item{for_html_file}{Flag for whether we are rendering register md for html file.
 Set to FALSE by default. If TRUE, no repo links are added to the repository table.}
 }

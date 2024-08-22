@@ -52,13 +52,15 @@ set_paper_title_references <- function(register_table){
 #' @param filter The filter
 #' @param register_table The register table
 #' @param register_table_name The register table name
+#' @param filter_subcategory An optional string representing a subcategory within the filter 
+#'        (e.g., venue type). Default is NULL.
 render_register_json <- function(filter, register_table, register_table_name, filter_subcategory = NULL) {
   register_table <- add_repository_links_json(register_table)
 
   # Set paper titles and references
   register_table <- set_paper_title_references(register_table)
 
-  output_dir <- get_output_dir(filter, register_table_name, filter_subcategory = )
+  output_dir <- get_output_dir(filter, register_table_name, filter_subcategory)
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
   }

@@ -57,7 +57,8 @@ generate_html_document_yml <- function(output_dir) {
 #' @param output_dir The output directory
 #' @param filter The filter name
 #' @param register_table_name The register table name. If this is NULL we are generating list of venues/ codecheckers
-#' 
+#' @param filter_subcategory An optional string representing a subcategory within the filter 
+#'        (e.g., venue type). Default is NULL.
 #' @importFrom whisker whisker.render
 create_index_postfix_html <- function(output_dir, filter, register_table_name, is_reg_table, filter_subcategory){
 
@@ -101,6 +102,9 @@ create_index_header_html <- function(output_dir){
 #' 
 #' @param filter The filter name
 #' @param register_table_name The register table name
+#' @param filter_subcategory An optional string representing a subcategory within the filter 
+#'        (e.g., venue type). Default is NULL.
+#' @return A list with the hrefs
 generate_html_postfix_hrefs_reg <- function(filter, register_table_name, filter_subcategory = NULL) {
   hrefs <- list(
     csv_source_href = generate_href(filter, register_table_name, "csv_source", filter_subcategory),
@@ -116,7 +120,8 @@ generate_html_postfix_hrefs_reg <- function(filter, register_table_name, filter_
 #' @param filter The filter name 
 #' @param register_table_name The register table name
 #' @param href_type The href type (e.g., 'csv_source', 'searchable_csv', 'json', 'md')
-#' 
+#' @param filter_subcategory An optional string representing a subcategory within the filter 
+#'        (e.g., venue type). Default is NULL.
 #' @return String representing the full URL to access the specified resource
 generate_href <- function(filter, register_table_name, href_type, filter_subcategory = NULL) {
   # Determine base path based on the resource type
@@ -157,6 +162,7 @@ generate_href <- function(filter, register_table_name, href_type, filter_subcate
 #' @param output_dir The output directory of the section files
 #' @param filter The filter name 
 #' @param register_table_name The register table name
+#' @param filter_subcategory The name of the filter subcategory. Only needed in case of venues which has subcategories. Defaults to NULL
 create_index_section_files <- function(output_dir, filter, register_table_name, is_reg_table, filter_subcategory = NULL) {
   create_index_postfix_html(output_dir, filter, register_table_name, is_reg_table, filter_subcategory)
   create_index_prefix_html(output_dir)
@@ -168,6 +174,8 @@ create_index_section_files <- function(output_dir, filter, register_table_name, 
 #' @param filter The filter
 #' @param register_table The register table
 #' @param register_table_name The register table name
+#' @param filter_subcategory An optional string representing a subcategory within the filter 
+#'        (e.g., venue type). Default is NULL. 
 render_register_html <- function(filter, register_table, register_table_name, filter_subcategory=NULL){  
   
   output_dir <- get_output_dir(filter, register_table_name, filter_subcategory)
