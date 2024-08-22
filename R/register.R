@@ -38,7 +38,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   og_register_table <- register_table[, names(register_table) %in% CONFIG$REGISTER_COLUMNS]
   list_register_tables[["none"]] <- list("original"= og_register_table)
 
-  if (length(filter_by)!=0){
+  if (length(filter_by) != 0){
     create_filtered_register_csvs(filter_by, register)
     # Creating filtered registered tables
     filtered_register_tables <- create_filtered_register_tables(register_table, filter_by)
