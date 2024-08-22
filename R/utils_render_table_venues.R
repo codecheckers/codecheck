@@ -141,6 +141,9 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
       venue_name <- list_venue_names[[i]]
       venue_type <- list_venue_types[[i]]
       no_codechecks <- nrow(list_venue_reg_tables[[venue_type]][[venue_name]])
+
+      # Replacing the " " with "_" for the hyperlinks
+      venue_name <- gsub(" ", "_",venue_name)
       hyperlink <- paste0("https://codecheck.org.uk/register/venues/", venue_type, "/", venue_name, "/")
       paste0(no_codechecks, " [(see all checks)](", hyperlink, ")")
     }
@@ -160,6 +163,8 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
         return(venue_name)  # Handle cases where venue_name is not in CONFIG$DICT_VENUE_NAMES
       }
       
+      # Replacing the " " with "_" for the hyperlinks
+      venue_name <- gsub(" ", "_",venue_name)
       hyperlink <- paste0("https://codecheck.org.uk/register/venues/",venue_type, "/", venue_name, "/")
       paste0("[", display_venue_name, "](", hyperlink,")")
     }
