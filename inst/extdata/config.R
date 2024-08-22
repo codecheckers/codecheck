@@ -57,9 +57,9 @@ CONFIG$DICT_VENUE_NAMES <- list(
   "J Geogr Syst" = "Journal of Geographical Systems",
   "J Archaeol Sci" = "Journal of Archaeological Science",
   "GigaByte" = "GigaByte",
-  "AGILEGIS" = "AGILEGIS",
-  "codecheck" = "Codecheck",
-  "codecheck NL" = "Codecheck NL",
+  "AGILEGIS" = "AGILE Conference on Geographic Information Science",
+  "codecheck" = "CODECHECK",
+  "codecheck NL" = "CODECHECK NL",
   "in press" = "In press",
   "preprint" = "Preprint"
 )
