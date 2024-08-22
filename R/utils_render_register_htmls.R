@@ -59,13 +59,13 @@ generate_html_document_yml <- function(output_dir) {
 #' @param register_table_name The register table name. If this is NULL we are generating list of venues/ codecheckers
 #' 
 #' @importFrom whisker whisker.render
-create_index_postfix_html <- function(output_dir, filter, register_table_name, is_reg_table){
+create_index_postfix_html <- function(output_dir, filter, register_table_name, is_reg_table, filter_subcategory){
 
   # When we have register table names, we are handling the case of reg tables
   if (is_reg_table){
     postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["postfix"]], warn = FALSE)
     # Render the template with the correct hrefs
-    hrefs <- generate_html_postfix_hrefs_reg(filter, register_table_name)
+    hrefs <- generate_html_postfix_hrefs_reg(filter, register_table_name, filter_subcategory)
   }
 
   # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
@@ -101,12 +101,12 @@ create_index_header_html <- function(output_dir){
 #' 
 #' @param filter The filter name
 #' @param register_table_name The register table name
-generate_html_postfix_hrefs_reg <- function(filter, register_table_name) {
+generate_html_postfix_hrefs_reg <- function(filter, register_table_name, filter_subcategory = NULL) {
   hrefs <- list(
-    csv_source_href = generate_href(filter, register_table_name, "csv_source"),
-    searchable_csv_href = generate_href(filter, register_table_name, "searchable_csv"),
-    json_href = generate_href(filter, register_table_name, "json"),
-    md_href = generate_href(filter, register_table_name, "md")
+    csv_source_href = generate_href(filter, register_table_name, "csv_source", filter_subcategory),
+    searchable_csv_href = generate_href(filter, register_table_name, "searchable_csv", filter_subcategory),
+    json_href = generate_href(filter, register_table_name, "json", filter_subcategory),
+    md_href = generate_href(filter, register_table_name, "md", filter_subcategory)
   )
   return(hrefs)
 }
@@ -118,7 +118,7 @@ generate_html_postfix_hrefs_reg <- function(filter, register_table_name) {
 #' @param href_type The href type (e.g., 'csv_source', 'searchable_csv', 'json', 'md')
 #' 
 #' @return String representing the full URL to access the specified resource
-generate_href <- function(filter, register_table_name, href_type) {
+generate_href <- function(filter, register_table_name, href_type, filter_subcategory = NULL) {
   # Determine base path based on the resource type
   href_details <- switch(href_type,
          "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/", ext = ".csv"),
@@ -133,8 +133,8 @@ generate_href <- function(filter, register_table_name, href_type) {
     return(paste0(base_url, "register", href_details$ext))
   } 
 
-  # Determining if we need to include "/docs" in the href. This is needed for the correct path
-  # to the csv files in the github repo
+  # Determining if we need to include "/docs" in the href for csvs.
+  # This is needed for the case where we have filters
   include_docs_in_href <- href_type %in% c("csv_source", "searchable_csv")
   if (include_docs_in_href){
     base_url <- paste0(base_url, "docs/")
@@ -142,17 +142,8 @@ generate_href <- function(filter, register_table_name, href_type) {
 
   # Setting href for venue filter
   if (filter == "venues") {
-    venue_category <- determine_venue_category(register_table_name)
-    
-    # In the case where the venue_category is NULL we do not need a venue category subfolder
-    if (is.null(venue_category)){
-      return(paste0(href_details$base_url, filter, "/", gsub(" ", "_", register_table_name), "/register", href_details$ext))
-    }
-
-    venue_name <- trimws(gsub("[()]", "", gsub(venue_category, "", register_table_name)))
-    venue_name <- gsub(" ", "_", venue_name)
-
-    return(paste0(base_url, filter, "/", venue_category, "/", venue_name, "/register", href_details$ext))
+    venue_name <- gsub(" ", "_", register_table_name)
+    return(paste0(base_url, filter, "/", filter_subcategory, "/", venue_name, "/register", href_details$ext))
   } 
 
   # For all other filters
@@ -166,8 +157,8 @@ generate_href <- function(filter, register_table_name, href_type) {
 #' @param output_dir The output directory of the section files
 #' @param filter The filter name 
 #' @param register_table_name The register table name
-create_index_section_files <- function(output_dir, filter, register_table_name, is_reg_table) {
-  create_index_postfix_html(output_dir, filter, register_table_name, is_reg_table)
+create_index_section_files <- function(output_dir, filter, register_table_name, is_reg_table, filter_subcategory = NULL) {
+  create_index_postfix_html(output_dir, filter, register_table_name, is_reg_table, filter_subcategory)
   create_index_prefix_html(output_dir)
   create_index_header_html(output_dir)
 }
@@ -177,19 +168,18 @@ create_index_section_files <- function(output_dir, filter, register_table_name, 
 #' @param filter The filter
 #' @param register_table The register table
 #' @param register_table_name The register table name
-render_register_html <- function(filter, register_table, register_table_name){  
+render_register_html <- function(filter, register_table, register_table_name, filter_subcategory=NULL){  
   
-  output_dir <- get_output_dir(filter, register_table_name)
-  register_table <- add_repository_links_html(register_table)
+  output_dir <- get_output_dir(filter, register_table_name, filter_subcategory)
 
   # Dynamically create the index header, prefix and postfix files
-  create_index_section_files(output_dir, filter, register_table_name, is_reg_table = TRUE)
+  create_index_section_files(output_dir, filter, register_table_name, is_reg_table = TRUE, filter_subcategory)
   generate_html_document_yml(output_dir)
 
   # Capture the HTML output from a markdown file
   # Note that the temp md file must be created even if a md exists because the register table
   # now has different icons under "Repository" column
-  render_register_md(filter, register_table, register_table_name, for_html_file=TRUE)
+  render_register_md(filter, register_table, register_table_name, filter_subcategory, for_html_file=TRUE)
   temp_md_file_path <- paste0(output_dir, "temp.md")
   
   yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
@@ -219,13 +209,22 @@ render_register_html <- function(filter, register_table, register_table_name){
 #' 
 #' @param list_register_table List of register tables
 render_register_htmls <- function(list_register_tables) {
-  # Loop over each register table
   for (filter in names(list_register_tables)){
-    list_filtered_reg_tables <- list_register_tables[[filter]]
+    # For the case of venues we have a nested list
+    if (filter == "venues"){
+      for (venue_subcat in names(list_register_tables[[filter]])){
+        for (venue_name in names(list_register_tables[[filter]][[venue_subcat]])){
+          register_table <- list_register_tables[[filter]][[venue_subcat]][[venue_name]]
+          render_register_html(filter, register_table, venue_name, venue_subcat)
+        }
+      }
+    }
 
-    for (register_table_name in names(list_filtered_reg_tables)) {
-      register_table <- list_filtered_reg_tables[[register_table_name]]
-      render_register_html(filter, register_table, register_table_name)
+    else{
+      for (register_table_name in names(list_register_tables[[filter]])){
+        register_table <- list_register_tables[[filter]][[register_table_name]]
+        render_register_html(filter, register_table, register_table_name)
+      }
     }
   }
 }
