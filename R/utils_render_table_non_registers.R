@@ -55,7 +55,7 @@ generate_non_reg_html <- function(table, table_name, page_type, html_data, outpu
   table <- kable(table)
 
   # Creating and adjusting the markdown table
-  md_table <- load_md_template(CONFIG$TEMPLATE_DIR[["non_reg"]][["md_template"]])
+  md_table <- readLines(CONFIG$TEMPLATE_DIR[["non_reg"]][["md_template"]])
   md_table <- gsub("\\$title\\$", html_data[["title"]], md_table)
   md_table <- gsub("\\$subtitle\\$", html_data[["subtext"]], md_table)
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)

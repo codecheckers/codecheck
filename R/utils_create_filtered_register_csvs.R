@@ -8,8 +8,8 @@
 #' @param col_value A string representing the specific value within the filtered column.
 #' @param col_subcategory An optional string representing a subcategory within the filter (e.g., venue type). 
 #' This is needed for the case where the output dir should be of the form col_subcategory/col_value. Default is NULL.
-save_filtered_csv <- function(filtered_register, filter, col_value, col_subcategory = NULL){
-  output_dir <- paste0(get_output_dir(filter, col_value, col_subcategory), "register.csv")
+save_filtered_csv <- function(filtered_register, filter, table_name, filter_subcategory = NULL){
+  output_dir <- paste0(get_output_dir(filter, table_name, filter_subcategory), "register.csv")
 
   # Create the output directory if it doesnt exist
   if (!dir.exists(dirname(output_dir))) {
@@ -33,14 +33,14 @@ create_codechecker_filtered_reg_csv <- function(){
   # Using the ORCID IDs to filter the register by
   unique_col_values <- names(CONFIG$DICT_ORCID_ID_NAME)
 
-  for (col_value in unique_col_values){
-    mask <- sapply(register$Codechecker, function(x) col_value %in% fromJSON(x))
+  for (table_name in unique_col_values){
+    mask <- sapply(register$Codechecker, function(x) table_name %in% fromJSON(x))
     filtered_register <- register[mask, ]
 
     # Only keeping specific columns listed in CONFIG$REGISTER_COLUMNS
     filtered_register <- filtered_register[, names(filtered_register) %in% CONFIG$REGISTER_COLUMNS]
 
-    save_filtered_csv(filtered_register, filter="codecheckers", col_value)
+    save_filtered_csv(filtered_register, filter="codecheckers", table_name)
   }
 }
 
@@ -59,21 +59,21 @@ create_venue_filtered_reg_csv <- function(register){
     unique_col_values <- unique(register[[col_name]])
 
     # Filtering the register
-    for (col_value in unique_col_values) {
-      filtered_register <- register[register[[col_name]]==col_value, ]
+    for (table_name in unique_col_values) {
+      filtered_register <- register[register[[col_name]]==table_name, ]
       filtered_register <- filtered_register[, names(filtered_register) %in% CONFIG$REGISTER_COLUMNS]
 
       # When creating the filtered csv for venue name, we determine the venue type
       if (col_name == "Venue"){
-        col_subcategory <- filtered_register[["Type"]][1]
+        filter_subcategory <- filtered_register[["Type"]][1]
       }
 
       # Saving the filtered csv
       switch(col_name,
         # For the case of venue names we pass col_subcategory (the venue type). 
         # This is needed for the output dir
-        "Venue" = save_filtered_csv(filtered_register, filter="venues", col_value, col_subcategory),
-        "Type" = save_filtered_csv(filtered_register, filter="venues", col_value)
+        "Venue" = save_filtered_csv(filtered_register, filter="venues", table_name, filter_subcategory),
+        "Type" = save_filtered_csv(filtered_register, filter="venues", table_name)
       )
     }
   }
@@ -100,30 +100,21 @@ create_filtered_register_csvs <- function(filter_by, register){
 #' @param filter The filter name
 #' @param column_value The value of the column the filter applies to
 #' @return The directory to save files to
-get_output_dir <- function(filter, col_value, col_subcategory = NULL) {
+get_output_dir <- function(filter, table_name, filter_subcategory = NULL) {
   base_dir <- "docs/"
   
   if (filter=="none"){
     return(base_dir)
   }
   
-  else if (filter=="venues"){
-    # Output dir for each venue name is venue_tpe/venue_name
-    if (!is.null(col_subcategory)){
-      # Replace white space with "_" in the venue name
-      venue_name <- gsub(" ", "_", tolower(col_value))
-      return(paste0(base_dir, filter, "/", col_subcategory, "/", venue_name, "/"))  
-    }
-
-    # Case where we have venue types
-    return(paste0(base_dir, filter, "/", gsub(" ", "_", col_value), "/"))
-  }
-
-  else if (filter=="codecheckers"){
-    return(paste0(base_dir, filter, "/", gsub(" ", "_", col_value), "/"))
+  # Case where we have specific venue name (filter_subcategory is not NULL)
+  else if (filter=="venues" && !is.null(filter_subcategory)){
+    # Replace white space with "_" in the venue name
+    venue_name <- gsub(" ", "_", tolower(table_name))
+    return(paste0(base_dir, filter, "/", filter_subcategory, "/", venue_name, "/"))  
   }
 
   else{
-    return(paste0(base_dir, filter, "/", gsub(" ", "_", tolower(col_value)), "/"))
+    return(paste0(base_dir, filter, "/", gsub(" ", "_", table_name), "/"))
   }
 }
