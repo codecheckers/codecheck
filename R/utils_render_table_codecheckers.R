@@ -21,7 +21,7 @@ render_table_codecheckers_json <- function(list_codechecker_reg_tables){
   table_codecheckers[[col_names[["no_codechecks"]]]] <- sapply(
     X = list_orcid_ids,
     FUN = function(orcid_id) {
-      paste0(nrow(list_codechecker_reg_tables[[orcid_id]]))
+      nrow(list_codechecker_reg_tables[[orcid_id]])
     }
   )
 
