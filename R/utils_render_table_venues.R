@@ -18,8 +18,20 @@ render_tables_venues_json <- function(list_venue_reg_tables){
 #' @return Returns a JSON table for the all venues 
 render_table_all_venues_json <- function(list_venue_reg_tables){
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
-  list_venue_names <- names(list_venue_reg_tables)
-  
+
+  # Since list_venue_reg_tables is of the form list("subcat_1" = list(venue_1), "subcat_2" = list(venue_2))
+  # we need to unpack the list to obtain the venue names
+  list_venue_types <- list()
+  list_venue_names <- list()
+
+  # Unpack the list to obtain the venue names and their corresponding types
+  for (venue_type in names(list_venue_reg_tables)) {
+    for (venue_name in names(list_venue_reg_tables[[venue_type]])) {
+      list_venue_types <- c(list_venue_types, venue_type)
+      list_venue_names <- c(list_venue_names, venue_name)
+    }
+  }
+
   # Create initial data frame
   table_venues <- data.frame(
     matrix(ncol=0, nrow = length(list_venue_names)),
@@ -31,27 +43,33 @@ render_table_all_venues_json <- function(list_venue_reg_tables){
 
   # Column- No. of codechecks
   table_venues[[col_names[["no_codechecks"]]]] <- sapply(
-    X = list_venue_names,
-    FUN = function(venue_name) {
-      paste0(nrow(list_venue_reg_tables[[venue_name]]))
+    seq_along(list_venue_names),
+    FUN = function(i) {
+      venue_name <- list_venue_names[[i]]
+      venue_type <- list_venue_types[[i]]
+      no_codechecks <- nrow(list_venue_reg_tables[[venue_type]][[venue_name]])
+      no_codechecks
     }
   )
 
   # Column- Venue type
   table_venues[[col_names[["venue_type"]]]] <- sapply(
-    X = table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name){
-      venue_type <- determine_venue_category(venue_name)
+    seq_along(list_venue_names),
+    FUN = function(i){
+      venue_type <- list_venue_types[[i]]
       stringr::str_to_title(venue_type)
     }
   )
 
   # Column- venue names
   # Using the full names of the venues
-  table_venues[[col_names[["venue_name"]]]] <- sapply(
-    X = table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name){
-      CONFIG$DICT_VENUE_NAMES[[venue_name]]
+ table_venues[[col_names[["venue_name"]]]] <- sapply(
+    seq_along(list_venue_names),
+    FUN = function(i){
+      venue_name <- list_venue_names[[i]]
+      venue_type <- list_venue_types[[i]]
+      display_venue_name <- CONFIG$DICT_VENUE_NAMES[[venue_name]]
+      display_venue_name
     }
   )
 
@@ -84,7 +102,19 @@ render_tables_venues_html <- function(list_venue_reg_tables){
 render_table_all_venues_html <- function(list_venue_reg_tables){
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
 
-  list_venue_names <- names(list_venue_reg_tables)
+  # Since list_venue_reg_tables is of the form list("subcat_1" = list(venue_1), "subcat_2" = list(venue_2))
+  # we need to unpack the list to obtain the venue names
+  list_venue_types <- list()
+  list_venue_names <- list()
+
+  # Unpack the list to obtain the venue names and their corresponding types
+  for (venue_type in names(list_venue_reg_tables)) {
+    for (venue_name in names(list_venue_reg_tables[[venue_type]])) {
+      list_venue_types <- c(list_venue_types, venue_type)
+      list_venue_names <- c(list_venue_names, venue_name)
+    }
+  }
+
   # Create initial data frame
   table_venues <- data.frame(
     matrix(ncol=0, nrow = length(list_venue_names)),
@@ -96,23 +126,23 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
 
   # Column- Venue type
   table_venues[[col_names[["venue_type"]]]] <- sapply(
-    X = list_venue_names,
-    FUN = function(venue_name){
-      venue_type <- determine_venue_category(venue_name)
-      link_venue_subcat <- paste0("https://codecheck.org.uk/register/venues/", venue_type, "/")
-      paste0("[", stringr::str_to_title(venue_type), "](", link_venue_subcat,")")
+    seq_along(list_venue_names),
+    FUN = function(i){
+      venue_type <- list_venue_types[[i]]
+      hyperlink <- paste0("https://codecheck.org.uk/register/venues/", venue_type, "/")
+      paste0("[", stringr::str_to_title(venue_type), "](", hyperlink,")")
     }
   )
 
   # Column- No. of codechecks
   table_venues[[col_names[["no_codechecks"]]]] <- sapply(
-    table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name) {
-      venue_type <- determine_venue_category(venue_name)
-      no_codechecks <- nrow(list_venue_reg_tables[[venue_name]])
-      venue_name <-  determine_venue_name(venue_name, venue_type)
-      paste0(no_codechecks," [(see all checks)](https://codecheck.org.uk/register/venues/",
-      venue_type, "/", venue_name, "/)")
+    seq_along(list_venue_names),
+    FUN = function(i) {
+      venue_name <- list_venue_names[[i]]
+      venue_type <- list_venue_types[[i]]
+      no_codechecks <- nrow(list_venue_reg_tables[[venue_type]][[venue_name]])
+      hyperlink <- paste0("https://codecheck.org.uk/register/venues/", venue_type, "/", venue_name, "/")
+      paste0(no_codechecks, " [(see all checks)](", hyperlink, ")")
     }
   )
 
@@ -120,17 +150,18 @@ render_table_all_venues_html <- function(list_venue_reg_tables){
   # Each venue name will be a hyperlink to the register table
   # with all their codechecks
   table_venues[[col_names[["venue_name"]]]] <- sapply(
-    table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name){
+    seq_along(list_venue_names),
+    FUN = function(i){
+      venue_name <- list_venue_names[[i]]
+      venue_type <- list_venue_types[[i]]
       display_venue_name <- CONFIG$DICT_VENUE_NAMES[[venue_name]]
-
+      
       if (is.null(display_venue_name)) {
         return(venue_name)  # Handle cases where venue_name is not in CONFIG$DICT_VENUE_NAMES
       }
-      venue_type <- determine_venue_category(venue_name)
-      venue_name <-  determine_venue_name(venue_name, venue_type)
-      paste0("[", display_venue_name, "](https://codecheck.org.uk/register/venues/",
-            venue_type, "/", venue_name, "/)")
+      
+      hyperlink <- paste0("https://codecheck.org.uk/register/venues/",venue_type, "/", venue_name, "/")
+      paste0("[", display_venue_name, "](", hyperlink,")")
     }
   )
 

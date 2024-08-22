@@ -53,15 +53,15 @@ CONFIG$TEMPLATE_DIR<- list(
 
 # DICT OF VENUE NAMES
 CONFIG$DICT_VENUE_NAMES <- list(
-  "journal (GigaScience)" = "GigaScience",
-  "journal (J Geogr Syst)" = "Journal of Geographical Systems",
-  "journal (J Archaeol Sci)" = "Journal of Archaeological Science",
-  "journal (GigaByte)" = "GigaByte",
-  "conference (AGILEGIS)" = "AGILEGIS",
-  "community (codecheck)" = "Codecheck",
-  "community (codecheck NL)" = "Codecheck NL",
-  "community (in press)" = "In press",
-  "community (preprint)" = "Preprint"
+  "GigaScience" = "GigaScience",
+  "J Geogr Syst" = "Journal of Geographical Systems",
+  "J Archaeol Sci" = "Journal of Archaeological Science",
+  "GigaByte" = "GigaByte",
+  "AGILEGIS" = "AGILEGIS",
+  "codecheck" = "Codecheck",
+  "codecheck NL" = "Codecheck NL",
+  "in press" = "In press",
+  "preprint" = "Preprint"
 )
 
 # JSON FILE INFORMATION
