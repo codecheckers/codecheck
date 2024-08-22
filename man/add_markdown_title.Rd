@@ -4,7 +4,7 @@
 \alias{add_markdown_title}
 \title{Function to add the markdown title based on the specific register table name.}
 \usage{
-add_markdown_title(filter, md_table, register_table_name)
+add_markdown_title(filter, md_table, register_table_name, filter_subcat = NULL)
 }
 \arguments{
 \item{register_table_name}{The name of the register table}

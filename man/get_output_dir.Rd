@@ -2,18 +2,21 @@
 % Please edit documentation in R/utils_create_filtered_register_csvs.R
 \name{get_output_dir}
 \alias{get_output_dir}
-\title{Gets the output dir depending on the filter name and the value of the filtered column}
+\title{Get Output Directory Path}
 \usage{
-get_output_dir(filter, col_value, col_subcategory = NULL)
+get_output_dir(filter, table_name, filter_subcategory = NULL)
 }
 \arguments{
-\item{filter}{The filter name}
+\item{filter}{The filter name (e.g., "venues", "codecheckers").}
 
-\item{column_value}{The value of the column the filter applies to}
+\item{table_name}{The name of the table or item being filtered.}
+
+\item{filter_subcategory}{Optional subcategory for more specific filtering (e.g., venue type). Default is NULL.}
 }
 \value{
-The directory to save files to
+A string representing the directory path for saving files.
 }
 \description{
-Gets the output dir depending on the filter name and the value of the filtered column
+Determines the directory path for saving files based on the filter, table name, 
+and an optional subcategory.
 }

@@ -2,21 +2,25 @@
 % Please edit documentation in R/utils_create_filtered_register_csvs.R
 \name{save_filtered_csv}
 \alias{save_filtered_csv}
-\title{Save a filtered DdataFrame to a CSV File}
+\title{Save Filtered DataFrame to CSV}
 \usage{
-save_filtered_csv(filtered_register, filter, col_value, col_subcategory = NULL)
+save_filtered_csv(
+  filtered_register,
+  filter,
+  table_name,
+  filter_subcategory = NULL
+)
 }
 \arguments{
-\item{filtered_register}{The filtered register DataFrame to be saved.}
+\item{filtered_register}{DataFrame to be saved.}
 
-\item{filter}{A string specifying the type of filter applied (e.g., "codecheckers", "venues").}
+\item{filter}{Type of filter applied (e.g., "codecheckers", "venues").}
 
-\item{col_value}{A string representing the specific value within the filtered column.}
+\item{table_name}{Name of the table or filtered item.}
 
-\item{col_subcategory}{An optional string representing a subcategory within the filter (e.g., venue type). 
-This is needed for the case where the output dir should be of the form col_subcategory/col_value. Default is NULL.}
+\item{filter_subcategory}{Optional subcategory for the output directory structure (e.g., venue type). Default is NULL.}
 }
 \description{
-The output directory is determined based on the filter type, column value, and 
-an optional subcategory. If the directory does not exist, it is created.
+Saves a filtered DataFrame to a CSV file in an output directory determined by the filter type, 
+table name, and an optional subcategory. Creates the directory if it doesn't exist.
 }

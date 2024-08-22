@@ -106,6 +106,19 @@ render_register_mds <- function(list_register_tables){
   }
 }
 
+#' Save markdown table to a file
+#'
+#' The output directory is determined based on the filter type, register table name, and an optional subcategory. 
+#' The file is saved as either a temporary file (`temp.md`) or as `register.md` depending on 
+#' whether it is being rendered for an HTML file.
+#'
+#' @param md_table The markdown table to be saved.
+#' @param filter The filter applied (e.g., "venues", "codecheckers").
+#' @param register_table_name The name of the register table.
+#' @param filter_subcategory An optional string representing a subcategory within the filter 
+#'        (e.g., venue type). Default is NULL.
+#' @param for_html_file A logical flag indicating whether the markdown is being rendered for an HTML file. 
+#'        If TRUE, the file is saved as `temp.md`. Default is FALSE.
 save_md_table <- function(md_table, filter, register_table_name, filter_subcategory, for_html_file){
   output_dir <- get_output_dir(filter, register_table_name, filter_subcategory)
 
@@ -125,6 +138,16 @@ save_md_table <- function(md_table, filter, register_table_name, filter_subcateg
   writeLines(md_table, output_dir)
 }
 
+#' Creates a markdown table from a register template
+#' Adds title to the markdown and adjusts the column widths of the table 
+#' before returning it.
+#'
+#' @param register_table DataFrame of the register data.
+#' @param register_table_name Name of the register table.
+#' @param filter Type of filter (e.g., "venues", "codecheckers").
+#' @param filter_subcat Optional subcategory within the filter. Default is NULL.
+#'
+#' @return The markdown table
 create_md_table <- function(register_table, register_table_name, filter, filter_subcat=NULL){
   # Fill in the content
   md_table <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["md_template"]])

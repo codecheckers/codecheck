@@ -8,6 +8,7 @@ render_register_md(
   filter,
   register_table,
   register_table_name,
+  filter_subcategory = NULL,
   for_html_file = FALSE
 )
 }

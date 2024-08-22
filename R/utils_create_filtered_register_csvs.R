@@ -1,13 +1,12 @@
-#' Save a filtered DdataFrame to a CSV File
-#' 
-#' The output directory is determined based on the filter type, column value, and 
-#' an optional subcategory. If the directory does not exist, it is created.
+#' Save Filtered DataFrame to CSV
 #'
-#' @param filtered_register The filtered register DataFrame to be saved.
-#' @param filter A string specifying the type of filter applied (e.g., "codecheckers", "venues").
-#' @param col_value A string representing the specific value within the filtered column.
-#' @param col_subcategory An optional string representing a subcategory within the filter (e.g., venue type). 
-#' This is needed for the case where the output dir should be of the form col_subcategory/col_value. Default is NULL.
+#' Saves a filtered DataFrame to a CSV file in an output directory determined by the filter type, 
+#' table name, and an optional subcategory. Creates the directory if it doesn't exist.
+#'
+#' @param filtered_register DataFrame to be saved.
+#' @param filter Type of filter applied (e.g., "codecheckers", "venues").
+#' @param table_name Name of the table or filtered item.
+#' @param filter_subcategory Optional subcategory for the output directory structure (e.g., venue type). Default is NULL.
 save_filtered_csv <- function(filtered_register, filter, table_name, filter_subcategory = NULL){
   output_dir <- paste0(get_output_dir(filter, table_name, filter_subcategory), "register.csv")
 
@@ -95,11 +94,16 @@ create_filtered_register_csvs <- function(filter_by, register){
   }
 }
 
-#' Gets the output dir depending on the filter name and the value of the filtered column
+#' Get Output Directory Path
 #'
-#' @param filter The filter name
-#' @param column_value The value of the column the filter applies to
-#' @return The directory to save files to
+#' Determines the directory path for saving files based on the filter, table name, 
+#' and an optional subcategory.
+#'
+#' @param filter The filter name (e.g., "venues", "codecheckers").
+#' @param table_name The name of the table or item being filtered.
+#' @param filter_subcategory Optional subcategory for more specific filtering (e.g., venue type). Default is NULL.
+#'
+#' @return A string representing the directory path for saving files.
 get_output_dir <- function(filter, table_name, filter_subcategory = NULL) {
   base_dir <- "docs/"
   
