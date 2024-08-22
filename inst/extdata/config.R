@@ -63,3 +63,16 @@ CONFIG$DICT_VENUE_NAMES <- list(
   "community (in press)" = "In press",
   "community (preprint)" = "Preprint"
 )
+
+# JSON FILE INFORMATION
+# List specifying the columns to keep for JSON files
+CONFIG$JSON_COLUMNS <- c(
+  "Certificate",
+  "Repository Link",
+  "Type",
+  "Venue",
+  "Report",
+  "Title",
+  "Paper reference",
+  "Check date"
+)

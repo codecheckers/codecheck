@@ -52,48 +52,32 @@ set_paper_title_references <- function(register_table){
 #' @param filter The filter
 #' @param register_table The register table
 #' @param register_table_name The register table name
-render_register_json <- function(filter, register_table, register_table_name) {
+render_register_json <- function(filter, register_table, register_table_name, filter_subcategory = NULL) {
   register_table <- add_repository_links_json(register_table)
 
   # Set paper titles and references
   register_table <- set_paper_title_references(register_table)
 
-  output_dir <- get_output_dir(filter, register_table_name)
+  output_dir <- get_output_dir(filter, register_table_name, filter_subcategory = )
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
   }
 
   jsonlite::write_json(
-    register_table[, c(
-      "Certificate",
-      "Repository Link",
-      "Type",
-      "Report",
-      "Title",
-      "Paper reference",
-      "Check date"
-    )],
+    register_table[, CONFIG$JSON_COLUMNS],
     path = paste0(output_dir, "register.json"),
     pretty = TRUE
   )
 
   jsonlite::write_json(
-    utils::tail(register_table, 10)[, c(
-      "Certificate",
-      "Repository Link",
-      "Type",
-      "Report",
-      "Title",
-      "Paper reference",
-      "Check date"
-    )],
+    utils::tail(register_table, 10)[, CONFIG$JSON_COLUMNS],
     path = paste0(output_dir, "featured.json"),
     pretty = TRUE
   )
 
   jsonlite::write_json(
     list(
-      source = generate_href(filter, register_table_name, "json"),
+      source = generate_href(filter, register_table_name, "json", filter_subcategory),
       cert_count = nrow(register_table)
       # TODO count conferences, preprints,
       # journals, etc.
@@ -108,12 +92,22 @@ render_register_json <- function(filter, register_table, register_table_name) {
 #' 
 #' @param list_register_table List of register tables
 render_register_jsons <- function(list_register_tables){
-  # Loop over each register table and render a json
   for (filter in names(list_register_tables)){
-    for (register_table_name in names(list_register_tables[[filter]])) {
-      register_table <- list_register_tables[[filter]][[register_table_name]]
-      render_register_json(filter, register_table, register_table_name)
+    # For the case of venues we have a nested list
+    if (filter == "venues"){
+      for (venue_subcat in names(list_register_tables[[filter]])){
+        for (venue_name in names(list_register_tables[[filter]][[venue_subcat]])){
+          register_table <- list_register_tables[[filter]][[venue_subcat]][[venue_name]]
+          render_register_json(filter, register_table, venue_name, venue_subcat)
+        }
+      }
+    }
+
+    else{
+      for (register_table_name in names(list_register_tables[[filter]])){
+        register_table <- list_register_tables[[filter]][[register_table_name]]
+        render_register_json(filter, register_table, register_table_name)
+      }
     }
   }
 }
-
