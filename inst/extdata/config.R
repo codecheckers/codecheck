@@ -1,14 +1,40 @@
 CONFIG <- new.env()
 
 # REGISTER TABLE
-CONFIG$MD_COLUMNS_WIDTHS <- "|:-------|:--------------------------------|:------------------|:------------------|:---|:--------------------------|:----------|"
+CONFIG$MD_COLUMNS_WIDTHS <- list(
+  original = "|:-------|:--------------------------------|:------------------|:------------------|:---|:--------------------------|:----------|",
+  venues = "|:-------|:--------------------------------|:---|:--------------------------|:----------|"
+)
+
 CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 CONFIG$FILTER_COLUMN_NAMES <- list(
-  "venues" = list("Type", "Venue"),
+  "venues" = "Venue",
   "codecheckers" = "Codechecker"
 )
 
+CONFIG$MD_TITLES <- list(
+  "none" = "CODECHECK Register",
+
+  "codecheckers" = function(table_details){
+    orcid_id <- table_details[["name"]]
+    auth_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid_id]]
+    paste0("Codechecks by ", auth_name, " (", orcid_id, ")")
+  },
+
+  "venues" = function(table_details) {
+    venue_type <- table_details[["subcat"]]
+    venue_name <- table_details[["name"]]
+    paste0("CODECHECK Register for ", venue_type, " (", venue_name, ")")
+  }
+)
+
+CONFIG$HREF_DETAILS <- list(
+  "csv_source" = list(base_url = "https://raw.githubusercontent.com/codecheckers/register/master/", ext = ".csv"),
+  "searchable_csv" = list(base_url ="https://github.com/codecheckers/register/blob/master/", ext = ".csv"),
+  "json" = list(base_url = "https://codecheck.org.uk/register/", ext = ".json"),
+  "md" = list(base_url = "https://codecheck.org.uk/register/", ext = ".md")
+)
 
 # NON-REGISTER_TABLE
 # Note that the order of the names in the list will be the order of table columns in html and json
@@ -30,6 +56,12 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
 # Each filter can be further divided into each of these subgroups
 CONFIG$FILTER_SUBCATEGORIES <- list(
   venues = list("community", "journal", "conference") 
+)
+
+# For each filter with subcategories we have a reference to the column
+# in the register table that refers to the subcat name
+CONFIG$FILTER_SUBCAT_COLUMNS <- list(
+  venues = "Type"
 )
 
 # OTHERS
