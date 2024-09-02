@@ -16,8 +16,13 @@ Authors@R:
            family = "Momin",
            role = c("aut"),
            email = "angelina.momin53@gmail.com",
-           comment = c(ORCID = "0000-0002-6875-1551"))
-           )
+           comment = c(ORCID = "0000-0002-6875-1551")),
+    person(given = "Sam",
+           family = "Langton",
+           role = c("aut"),
+           email = "s.h.langton@amsterdamumc.nl",
+           comment = c(ORCID = "0000-0002-1322-1553"))
+       )
 Description: This contains helper functions for CODECHECKERS (<https://codecheck.org.uk>).
 License: MIT + file LICENSE
 Depends: R (>= 4.0.0), gh, R.cache, parsedate
