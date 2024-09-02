@@ -131,7 +131,7 @@ create_md_table <- function(register_table, table_details, filter){
   md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))
   # Determining which line to add the md column widths in
   alignment_line_index <- grep("^\\|:---", md_table)
-  md_table[alignment_line_index] <- CONFIG$MD_COLUMNS_WIDTHS
+  md_table[alignment_line_index] <- CONFIG$MD_COLUMNS_WIDTHS[[filter]]
 
   return(md_table)
 }
