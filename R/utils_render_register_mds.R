@@ -1,24 +1,22 @@
 #' Function to add the markdown title based on the specific register table name.
 #' 
-#' @param markdown_table The markdown template where the title needs to be added
-#' @param register_table_name The name of the register table
+#' @param table_details List containing details such as the table name, subcat name.
+#' @param md_table The markdown table where the title needs to be added
+#' @param filter The filter
 #'
 #' @return The modified markdown table
-add_markdown_title <- function(filter, md_table, register_table_name, filter_subcat=NULL){
-  if (filter == "none"){
-    title <- "CODECHECK Register"
-  }
+add_markdown_title <- function(table_details, md_table, filter){
+  # The filter is in the CONFIG$MD_TITLES
+  if (filter %in% names(CONFIG$MD_TITLES)) {
+    # Loading the title function (if present) and passing the argument
+    title_fn <- CONFIG$MD_TITLES[[filter]]
+    title <- title_fn(table_details)
+  } 
   
-  # For codechecker filtered registers we show the name and the ORCID ID
-  else if (filter == "codecheckers") {
-    author_name <- CONFIG$DICT_ORCID_ID_NAME[register_table_name]
-    orcid_id <- register_table_name
-    title <- paste0("Codechecks by ", author_name, " (", orcid_id,")")
-  }
-  
-  # For venue filtered registers we display the venue name in the title.
-  else if (filter == "venues"){
-    title <- paste0("CODECHECK Register for ", filter_subcat, " (", register_table_name, ")")
+  # No titles provided in the CONFIG file for the filter type
+  # Stopping the process
+  else {
+    stop("Invalid filter provided.")
   }
 
   md_table <- gsub("\\$title\\$", title, md_table)
@@ -66,15 +64,14 @@ add_repository_links_md <- function(register_table) {
 
 #' Renders register md for a single register_table
 #' 
-#' @param filter The filter
 #' @param register_table The register table
-#' @param register_table_name The register table name
-#' @param filter_subcategory The name of the filter subcategory. Only needed in case of venues which has subcategories. Defaults to NULL
+#' @param table_details List containing details such as the table name, subcat name.
+#' @param filter The filter
 #' @param for_html_file Flag for whether we are rendering register md for html file.
 #' Set to FALSE by default. If TRUE, no repo links are added to the repository table.
-render_register_md <- function(filter, register_table, register_table_name, filter_subcategory = NULL, for_html_file=FALSE) {
+render_register_md <- function(register_table, table_details, filter, for_html_file=FALSE) {
   
-  # Add appropriate repo links based on whether we are rendering the md for html or not
+  # If rendering md for html file, we add repo links of the appropriate format
   register_table <- if (for_html_file) {
     add_repository_links_html(register_table)
   } else {
@@ -82,50 +79,21 @@ render_register_md <- function(filter, register_table, register_table_name, filt
   }
 
   # Fill in the content
-  md_table <- create_md_table(register_table, register_table_name, filter, filter_subcategory)
-  save_md_table(md_table, filter, register_table_name, filter_subcategory, for_html_file)
-}
-
-#' Renders register mds for a list of register tables
-#' 
-#' @param list_register_table List of register tables
-render_register_mds <- function(list_register_tables){
-  for (filter in names(list_register_tables)){
-    # For the case of venues we have a nested list
-    if (filter == "venues"){
-      for (venue_subcat in names(list_register_tables[[filter]])){
-        for (venue_name in names(list_register_tables[[filter]][[venue_subcat]])){
-          register_table <- list_register_tables[[filter]][[venue_subcat]][[venue_name]]
-          render_register_md(filter, register_table, venue_name, venue_subcat)
-        }
-      }
-    }
-
-    else{
-      for (register_table_name in names(list_register_tables[[filter]])){
-        register_table <- list_register_tables[[filter]][[register_table_name]]
-        render_register_md(filter, register_table, register_table_name)
-      }
-    }
-  }
+  md_table <- create_md_table(register_table, table_details, filter)
+  output_dir <- get_output_dir(table_details, filter)
+  save_md_table(output_dir, md_table, for_html_file)
 }
 
 #' Save markdown table to a file
 #'
-#' The output directory is determined based on the filter type, register table name, and an optional subcategory. 
 #' The file is saved as either a temporary file (`temp.md`) or as `register.md` depending on 
 #' whether it is being rendered for an HTML file.
 #'
+#' @param output_dir The output_dir
 #' @param md_table The markdown table to be saved.
-#' @param filter The filter applied (e.g., "venues", "codecheckers").
-#' @param register_table_name The name of the register table.
-#' @param filter_subcategory An optional string representing a subcategory within the filter 
-#'        (e.g., venue type). Default is NULL.
 #' @param for_html_file A logical flag indicating whether the markdown is being rendered for an HTML file. 
 #'        If TRUE, the file is saved as `temp.md`. Default is FALSE.
-save_md_table <- function(md_table, filter, register_table_name, filter_subcategory, for_html_file){
-  output_dir <- get_output_dir(filter, register_table_name, filter_subcategory)
-
+save_md_table <- function(output_dir, md_table, for_html_file){
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
   }
@@ -147,18 +115,17 @@ save_md_table <- function(md_table, filter, register_table_name, filter_subcateg
 #' before returning it.
 #'
 #' @param register_table DataFrame of the register data.
-#' @param register_table_name Name of the register table.
+#' @param table_details List containing details such as the table name, subcat name.
 #' @param filter Type of filter (e.g., "venues", "codecheckers").
-#' @param filter_subcat Optional subcategory within the filter. Default is NULL.
 #'
 #' @return The markdown table
-create_md_table <- function(register_table, register_table_name, filter, filter_subcat=NULL){
-  # Fill in the content
+create_md_table <- function(register_table, table_details, filter){
+  # Loading the template and filling in the content
   md_table <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["md_template"]])
 
-  markdown_content <- capture.output(kable(register_table, format = "markdown"))
-  md_table <- add_markdown_title(filter, md_table, register_table_name, filter_subcat)
-  md_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), md_table)
+  md_content <- capture.output(kable(register_table, format = "markdown"))
+  md_table <- add_markdown_title(table_details, md_table, filter)
+  md_table <- gsub("\\$content\\$", paste(md_content, collapse = "\n"), md_table)
 
   # Adjusting the column widths
   md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))
