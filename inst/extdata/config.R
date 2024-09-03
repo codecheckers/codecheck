@@ -17,7 +17,9 @@ CONFIG$FILTER_COLUMN_NAMES <- list(
 )
 
 CONFIG$MD_TITLES <- list(
-  "none" = "CODECHECK Register",
+  "none" = function(table_details){
+    "CODECHECK Register"
+  },
 
   "codecheckers" = function(table_details){
     orcid_id <- table_details[["name"]]

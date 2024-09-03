@@ -185,7 +185,7 @@ render_register_html <- function(register_table, table_details, filter){
   # For all registered tables besides the original we change the html
   # file so that the path to the libs folder refers to the libs folder "docs/libs".
   # This is done to remove duplicates of "libs" folders.
-  if (filter != "None"){
+  if (filter != "none"){
     html_file_path <- paste0(output_dir, "index.html")
     edit_html_lib_paths(html_file_path)
     # Deleting the libs folder after changing the html lib path
