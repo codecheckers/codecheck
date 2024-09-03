@@ -1,25 +1,29 @@
 
-generate_table_details <- function(nested_register_tables, i, filter){
+generate_reg_table_details <- function(nested_register_tables, i, filter){
   table_details <- list()
   filter_col_name <- CONFIG$FILTER_COLUMN_NAMES[[filter]]
 
   nested_table <- nested_register_tables[["data"]][[i]]
 
+  # The is_reg_table boolean is needed for generating correct index section files
+  table_details[["is_reg_table"]] <- TRUE
   table_details[["name"]] <- nested_register_tables[[filter_col_name]][[i]]
   table_details[["slug_name"]] <- tolower(gsub(" ", "_", table_details[["name"]]))
-  table_details[["outpur_dir"]] <- get_output_dir(table_details, filter)
 
   if (filter %in% names(CONFIG$FILTER_SUBCAT_COLUMNS)){
     subcat_col <- CONFIG$FILTER_SUBCAT_COLUMNS[[filter]]
     table_details[["subcat"]] <- nested_table[[subcat_col]][1]
   }
 
+  # Generating the output dir once here instead of multiple times
+  table_details[["output_dir"]] <- generate_output_dir(table_details, filter)
+
   return(table_details)
 }
 
 render_register <- function(register_table, table_details, filter, output_type){
   switch(output_type,
-    "md" = render_register_md(`register_table, table_details, filter),
+    "md" = render_register_md(register_table, table_details, filter),
     "html" = render_register_html(register_table, table_details, filter),
     "json" = render_register_json(register_table, table_details, filter)
   )
@@ -34,7 +38,7 @@ render_register <- function(register_table, table_details, filter, output_type){
 #' @param filter The filter name (e.g., "venues", "codecheckers").
 #'
 #' @return A string representing the directory path for saving files.
-get_output_dir <- function(table_details, filter) {
+generate_output_dir <- function(table_details, filter) {
   base_dir <- "docs/"
   table_name <- table_details[["slug_name"]]
   
@@ -43,7 +47,7 @@ get_output_dir <- function(table_details, filter) {
   }
 
   # The table belongs to a subcat so we need a nested folder
-  if ("subcat" %in% names(table_details)){
+  else if ("subcat" %in% names(table_details)){
     output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/", table_name, "/")
   }
 
