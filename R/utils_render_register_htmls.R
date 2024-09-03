@@ -163,7 +163,7 @@ render_register_html <- function(register_table, table_details, filter){
   # The HTML output is captured from a md file
   render_register_md(register_table, table_details, filter, for_html_file = TRUE)
 
-  output_dir <- get_output_dir(table_details, filter) 
+  output_dir <- table_details[["output_dir"]]
   temp_md_file_path <- paste0(output_dir, "temp.md")
 
   # Creating the index section files and yml document
