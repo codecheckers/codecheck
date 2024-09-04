@@ -1,10 +1,8 @@
 create_register_files_original <- function(register_table, outputs){
   filter <- "none"
   for (output_type in outputs){
-    table_details <- list(
-      output_dir = generate_output_dir(filter),
-      is_reg_table = TRUE
-    )
+    table_details <- list(is_reg_table = TRUE)
+    table_details[["output_dir"]] <- generate_output_dir(filter, table_details)
     register_table <- filter_and_drop_register_columns(register_table, filter)
     render_register(register_table, table_details, filter, output_type)
   }
