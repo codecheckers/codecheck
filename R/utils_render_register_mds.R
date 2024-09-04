@@ -77,7 +77,7 @@ render_register_md <- function(register_table, table_details, filter, for_html_f
   } else {
     add_repository_links_md(register_table)
   }
-
+  
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)
   output_dir <- table_details[["output_dir"]]
@@ -102,7 +102,6 @@ save_md_table <- function(output_dir, md_table, for_html_file){
   else{
     output_dir <- paste0(output_dir, "register.md")
   }
-
   writeLines(md_table, output_dir)
 }
 
@@ -127,7 +126,15 @@ create_md_table <- function(register_table, table_details, filter){
   md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))
   # Determining which line to add the md column widths in
   alignment_line_index <- grep("^\\|:---", md_table)
-  md_table[alignment_line_index] <- CONFIG$MD_TABLE_COLUMN_WIDTHS[[filter]]
 
+  # Selecting filter specific column widths
+  if (filter %in% names(CONFIG$MD_TABLE_COLUMN_WIDTHS)){
+    md_table[alignment_line_index] <- CONFIG$MD_TABLE_COLUMN_WIDTHS[[filter]]
+  }
+
+  # For some filters we can use the "general" column widths
+  else{
+    md_table[alignment_line_index] <- CONFIG$MD_TABLE_COLUMN_WIDTHS[["general"]]
+  }
   return(md_table)
 }

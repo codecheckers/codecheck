@@ -1,3 +1,15 @@
+create_register_files_original <- function(register_table, outputs){
+  filter <- "none"
+  for (output_type in outputs){
+    table_details <- list(
+      output_dir = generate_output_dir(filter),
+      is_reg_table = TRUE
+    )
+    register_table <- filter_and_drop_register_columns(register_table, filter)
+    render_register(register_table, table_details, filter, output_type)
+  }
+}
+
 #' Create Register Files
 #'
 #' This function processes the register table based on different filter types and output formats.
@@ -12,14 +24,8 @@
 create_register_files <- function(register_table, filter_by, outputs){
 
   # Creating the original register file
-  for (output_type in outputs){
-    table_details <- list(
-      output_dir = generate_output_dir(filter = "none"),
-      is_reg_table = TRUE
-    )
-    render_register(register_table, table_details, filter="none", output_type)
-  }
-
+  create_register_files_original(register_table, outputs)
+  
   # Generating filtered register table files
   # For each filter type we created the nested register tables first
   for (filter in filter_by){
@@ -27,6 +33,14 @@ create_register_files <- function(register_table, filter_by, outputs){
     # Checking if the filter is of a known type
     if (!(filter %in% names(CONFIG$FILTER_COLUMN_NAMES))){
       stop(paste("Unknown filter type:", filter))
+    }
+
+    # For filter by codecheckers we need to unnest the column "codechecker"
+    # As a result of unnesting, a row of data with multiple codecheckers will now
+    # be split into multiple rows, one for each codechecker
+    if (filter == "codecheckers"){
+      register_table <- register_table %>% tidyr::unnest(Codechecker)
+      register_table$Codechecker <- unlist(register_table$Codechecker)
     }
 
     # Group the register_table by the filter column and nest the resulting groups
@@ -42,33 +56,45 @@ create_register_files <- function(register_table, filter_by, outputs){
 
     # Looping over each of the output types
     for (output_type in outputs){
-
       for (i in seq_along(filtered_register_list)) {
         # Retrieving the register and its key
-        register_key <- register_keys[i, ]
-        register_table <- filtered_register_list[[i]]
+        register_key <- register_keys[[filter_col_name]][i]
+        filtered_table <- filtered_register_list[[i]]
 
-        table_details <- generate_table_details(register_key, register_table, filter)
+        table_details <- generate_table_details(register_key, filtered_table, filter)
 
         # Dropping columns that are redundant
-        register_table <- drop_register_columns(register_table, filter)
-        render_register(register_table, table_details, filter, output_type)
+        filtered_table <- filter_and_drop_register_columns(filtered_table, filter)
+        render_register(filtered_table, table_details, filter, output_type)
       }
     }
   }
 }
 
-drop_register_columns <- function(register_table, filter){
-  columns_to_drop <- CONFIG$FILTER_COLUMN_NAMES_TO_DROP[[filter]]
+filter_and_drop_register_columns <- function(register_table, filter) {
+  
+  # Step 1: Columns that we want to keep
+  columns_to_keep <- CONFIG$REGISTER_COLUMNS
+  
+  # Initialize final columns to columns_to_keep in case no filter is applied
+  final_columns <- intersect(columns_to_keep, names(register_table))
+  
+  # Step 2: Check if the filter exists in CONFIG and drop columns if necessary
+  if (filter %in% names(CONFIG$FILTER_COLUMN_NAMES_TO_DROP)) {
+    columns_to_drop <- CONFIG$FILTER_COLUMN_NAMES_TO_DROP[[filter]]
+    
+    # Ensure we only keep valid columns that aren't in columns_to_drop
+    final_columns <- setdiff(final_columns, columns_to_drop)
+  }
+  final_columns <- as.character(final_columns) 
 
-  if (!is.list(columns_to_drop)){columns_to_drop <- list(columns_to_drop)}
-  register_table <- register_table[ , -which(names(register_table) %in% columns_to_drop)]
+  # Step 3: Subset the register table to keep only the final columns
+  register_table <- register_table[, final_columns, drop = FALSE]
   return(register_table)
 }
 
 generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE){
   table_details <- list()
-
   # This information is needed when creating the html index section files
   table_details[["is_reg_table"]] <- is_reg_table
 

@@ -95,7 +95,7 @@ add_codechecker <- function(register_table, register) {
   for (i in seq_len(nrow(register))) {
     config_yml <- get_codecheck_yml(register[i, ]$Repo)
 
-    codechecker_info <- list()
+    codechecker_info <- c()
     if (!is.null(config_yml)  && !is.null(config_yml$codechecker)) {
       # For each codechecker we enter the data in the form {name} (orcid id: {orcid_id})
       for (codechecker in config_yml$codechecker) {
