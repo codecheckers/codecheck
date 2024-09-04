@@ -114,8 +114,9 @@ add_codechecker <- function(register_table, register) {
 }
 
 create_temp_register_with_codechecker <- function(register_table){
-  # Apply toJSON to each element in the `Codechecker` column
-  register_table$Codechecker <- sapply(register_table$Codechecker, toJSON, auto_unbox = TRUE)
+  # Flatten the Codechecker column (convert list elements to comma-separated strings)
+  # This is done since jsons cannot handle list columns directly
+  register_table$Codechecker <- sapply(register_table$Codechecker, function(x) paste(x, collapse = ","))
   write.csv(register_table, CONFIG$DIR_TEMP_REGISTER_CODECHECKER)
 }
 
