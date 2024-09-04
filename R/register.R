@@ -21,49 +21,21 @@
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                             filter_by = c("venues", "codecheckers"),
                             outputs = c("html", "md", "json")) {
+  # Loading the dplyr package otherwise we cant use "%>%"
+  library(dplyr)
+
   # Loading config.R file
   source(system.file("extdata", "config.R", package = "codecheck"))
 
   register_table <- preprocess_register(register, filter_by)
-  
   # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
   # done by multiple authors.
   CONFIG$NO_CODECHECKS <- nrow(register_table)
 
-  # Creating list of of register tables with indices being the filter types
-  list_register_tables <- c()
-  
-  # Adding the original register table. We drop the columns that are not in CONFIG$REGISTER_COLUMNS as
-  # some of them may have added in the preprocessing for the sake of filtering
-  og_register_table <- register_table[, names(register_table) %in% CONFIG$REGISTER_COLUMNS]
-  list_register_tables[["none"]] <- list("original"= og_register_table)
-
-  if (length(filter_by) != 0){
-    create_filtered_register_csvs(filter_by, register)
-    # Creating filtered registered tables
-    filtered_register_tables <- create_filtered_register_tables(register_table, filter_by)
-    # Merge the new filtered tables with the existing list of tables
-    list_register_tables <- c(list_register_tables, filtered_register_tables)
-  }
-
-  # Rendering files
-  if ("md" %in% outputs) render_register_mds(list_register_tables)
-  if ("html" %in% outputs) {
-    render_register_htmls(list_register_tables)
-
-    for (filter in filter_by){
-      render_non_register_htmls(list_register_tables[[filter]], page_type = filter)
-    }
-  }
-  if ("json" %in% outputs) {
-    render_register_jsons(list_register_tables)
-    
-    for (filter in filter_by){
-      render_non_register_jsons(list_register_tables[[filter]], page_type = filter)
-    }
-  }
-
-  return(register_table)
+  create_filtered_reg_csvs(register, filter_by)
+  create_register_files(register_table, filter_by, outputs)
+  create_non_register_files(register_table, filter_by)
+  stop()
 }
 
 #' Function for checking all entries in the register
