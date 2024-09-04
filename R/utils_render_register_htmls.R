@@ -69,7 +69,7 @@ create_index_postfix_html <- function(output_dir, filter, table_details){
   # Generating the postfix for non-register table pages (e.g. list of venues and codecheckers)
   else{
     postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["non_reg"]][["postfix"]], warn = FALSE)
-    hrefs <- generate_html_postfix_hrefs_non_reg(filter, register_table_name)
+    hrefs <- generate_html_postfix_hrefs_non_reg(filter, table_details)
   }
 
   output <- whisker.render(postfix_template, hrefs)
@@ -153,15 +153,23 @@ create_index_section_files <- function(output_dir, filter, table_details) {
   create_index_header_html(output_dir)
 }
 
-#' Renders register html for a single register_table
+#' Renders html for a single table
 #' 
-#' @param register_table The register table
+#' This function can be used to render both register and non-register tables
+#' @param table The table to render to HTML
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
-render_register_html <- function(register_table, table_details, filter){
+render_html <- function(table, table_details, filter){
 
-  # The HTML output is captured from a md file
-  render_register_md(register_table, table_details, filter, for_html_file = TRUE)
+  # Creating md file from which HTML file is made
+  if (table_details[["is_reg_table"]]){
+    render_register_md(table, table_details, filter, for_html_file = TRUE)
+  }
+
+  else{
+    render_non_register_md(table, table_details, filter)
+    print("created non register md")
+  }
 
   output_dir <- table_details[["output_dir"]]
   temp_md_file_path <- paste0(output_dir, "temp.md")

@@ -117,7 +117,7 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
 render_register <- function(register_table, table_details, filter, output_type){
   switch(output_type,
     "md" = render_register_md(register_table, table_details, filter),
-    "html" = render_register_html(register_table, table_details, filter),
+    "html" = render_html(register_table, table_details, filter),
     "json" = render_register_json(register_table, table_details, filter)
   )
 }
@@ -134,23 +134,37 @@ render_register <- function(register_table, table_details, filter, output_type){
 generate_output_dir <- function(filter, table_details = list()) {
   base_dir <- "docs/"
 
-  # We have the original register table
-  if (filter=="none"){
-    output_dir <- base_dir
-  }
-
-  # We have filtered register tables
-  else{
-    table_name <- table_details[["slug_name"]]
-
-    # The table belongs to a subcat so we need a nested folder
-    if ("subcat" %in% names(table_details)){
-      output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/", table_name, "/")
+  # We have register tables
+  if (table_details[["is_reg_table"]]){
+    # We have the original register table
+    if (filter=="none"){
+      output_dir <- base_dir
     }
 
-    # The table does not belong to a subcat
+    # We have filtered register tables
     else{
-      output_dir <- paste0(base_dir, filter, "/", table_name, "/")
+      table_name <- table_details[["slug_name"]]
+
+      # The table belongs to a subcat so we need a nested folder
+      if ("subcat" %in% names(table_details)){
+        output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/", table_name, "/")
+      }
+
+      # The table does not belong to a subcat
+      else{
+        output_dir <- paste0(base_dir, filter, "/", table_name, "/")
+      }
+    }
+  }
+
+  # We have non register tables
+  else{
+    if ("subcat" %in% names(table_details)){
+      output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/")
+    }
+
+    else{
+      output_dir <- paste0(base_dir, filter, "/")
     }
   }
 
