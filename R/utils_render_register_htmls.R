@@ -168,7 +168,6 @@ render_html <- function(table, table_details, filter){
 
   else{
     render_non_register_md(table, table_details, filter)
-    print("created non register md")
   }
 
   output_dir <- table_details[["output_dir"]]
