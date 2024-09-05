@@ -22,6 +22,9 @@ Description: This contains helper functions for CODECHECKERS (<https://codecheck
 License: MIT + file LICENSE
 Depends: R (>= 4.0.0), gh, R.cache, parsedate
 Imports: 
+    dplyr,
+    tidyr,
+    magrittr,
     yaml,
     xtable,
     stringr,
