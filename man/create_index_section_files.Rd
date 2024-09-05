@@ -4,22 +4,14 @@
 \alias{create_index_section_files}
 \title{Creates index postfix, prefix and the header}
 \usage{
-create_index_section_files(
-  output_dir,
-  filter,
-  register_table_name,
-  is_reg_table,
-  filter_subcategory = NULL
-)
+create_index_section_files(output_dir, filter, table_details)
 }
 \arguments{
 \item{output_dir}{The output directory of the section files}
 
 \item{filter}{The filter name}
 
-\item{register_table_name}{The register table name}
-
-\item{filter_subcategory}{The name of the filter subcategory. Only needed in case of venues which has subcategories. Defaults to NULL}
+\item{table_details}{List containing details such as the table name, subcat name.}
 }
 \description{
 Creates index postfix, prefix and the header

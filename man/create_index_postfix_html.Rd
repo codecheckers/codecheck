@@ -4,23 +4,14 @@
 \alias{create_index_postfix_html}
 \title{Dynamically generates the index_postfix.html from a template file}
 \usage{
-create_index_postfix_html(
-  output_dir,
-  filter,
-  register_table_name,
-  is_reg_table,
-  filter_subcategory
-)
+create_index_postfix_html(output_dir, filter, table_details)
 }
 \arguments{
 \item{output_dir}{The output directory}
 
 \item{filter}{The filter name}
 
-\item{register_table_name}{The register table name. If this is NULL we are generating list of venues/ codecheckers}
-
-\item{filter_subcategory}{An optional string representing a subcategory within the filter 
-(e.g., venue type). Default is NULL.}
+\item{table_details}{List containing details such as the table name, subcat name.}
 }
 \description{
 Dynamically generates the index_postfix.html from a template file

@@ -4,12 +4,10 @@
 \alias{generate_html_postfix_hrefs_non_reg}
 \title{Generates postfix hrefs for the venues/ codecheckers list pages}
 \usage{
-generate_html_postfix_hrefs_non_reg(filter, table_name)
+generate_html_postfix_hrefs_non_reg(filter, table_details)
 }
 \arguments{
 \item{filter}{The filter being used such as "venues" or "codecheckers"}
-
-\item{table_name}{The name of the table}
 }
 \value{
 A list of the hrefs.

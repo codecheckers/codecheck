@@ -113,6 +113,13 @@ add_codechecker <- function(register_table, register) {
   return(register_table)
 }
 
+#' Creates a temporary CSV register with a "Codechecker" column.
+#' 
+#' The function flattens the "Codechecker" column and saves the resulting table 
+#' as a temporary CSV file. This tempeorary CSV is needed to filter the registers b
+#' by codecheckers.
+#' 
+#' @param register_table The register table with a "Codechecker" column.
 create_temp_register_with_codechecker <- function(register_table){
   # Flatten the Codechecker column (convert list elements to comma-separated strings)
   # This is done since jsons cannot handle list columns directly

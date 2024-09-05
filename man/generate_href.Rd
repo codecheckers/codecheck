@@ -4,22 +4,14 @@
 \alias{generate_href}
 \title{Generate full href for for different href types.}
 \usage{
-generate_href(
-  filter,
-  register_table_name,
-  href_type,
-  filter_subcategory = NULL
-)
+generate_href(filter, table_details, href_type)
 }
 \arguments{
 \item{filter}{The filter name}
 
-\item{register_table_name}{The register table name}
+\item{table_details}{A list containing details needed for the hrefs}
 
 \item{href_type}{The href type (e.g., 'csv_source', 'searchable_csv', 'json', 'md')}
-
-\item{filter_subcategory}{An optional string representing a subcategory within the filter 
-(e.g., venue type). Default is NULL.}
 }
 \value{
 String representing the full URL to access the specified resource

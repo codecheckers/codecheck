@@ -2,18 +2,19 @@
 % Please edit documentation in R/utils_render_table_non_registers.R
 \name{generate_html_title_non_registers}
 \alias{generate_html_title_non_registers}
-\title{Generates the titles of the HTML pages for non registers}
+\title{Generate HTML Title for Non-Register Pages}
 \usage{
-generate_html_title_non_registers(page_type, table_name)
+generate_html_title_non_registers(filter, subcat)
 }
 \arguments{
-\item{page_type}{The HTML page type that needs to rendered}
+\item{filter}{A string specifying the filter applied (e.g., "venues", "codecheckers").}
 
-\item{table_name}{The name of the table}
+\item{subcat}{An optional string for the subcategory (if applicable).}
 }
 \value{
-The title to put on the html page
+A string containing the generated HTML title.
 }
 \description{
-Generates the titles of the HTML pages for non registers
+Generates the title for the HTML page based on the filter and subcategory.
+The title is used for rendering the non-register HTML files such as venues or codecheckers pages.
 }

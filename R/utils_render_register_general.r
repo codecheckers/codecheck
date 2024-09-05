@@ -1,4 +1,11 @@
-create_register_files_original <- function(register_table, outputs){
+#' Generates original register files in various output formats.
+#' 
+#' @param register_table The register table.
+#' @param outputs List of the output types (e.g., "csv", "json").
+#' 
+#' The function iterates through the provided output types, generates an output directory,
+#' filters and adjusts the register table, and renders the original register files based on the specified formats.
+create_original_register_files <- function(register_table, outputs){
   filter <- "none"
   for (output_type in outputs){
     table_details <- list(is_reg_table = TRUE)
@@ -22,7 +29,7 @@ create_register_files_original <- function(register_table, outputs){
 create_register_files <- function(register_table, filter_by, outputs){
 
   # Creating the original register file
-  create_register_files_original(register_table, outputs)
+  create_original_register_files(register_table, outputs)
   
   # Generating filtered register table files
   # For each filter type we created the nested register tables first
@@ -69,6 +76,16 @@ create_register_files <- function(register_table, filter_by, outputs){
   }
 }
 
+#' Filter and Drop Columns from Register Table
+#'
+#' This function filters and drops columns from the register table based on the 
+#' specified filter type. Removes any columns that are flagged for dropping 
+#' based on the filter and CONFIG$FILTER_COLUMN_NAMES_TO_DROP
+#'
+#' @param register_table The register table
+#' @param filter A string specifying the filter to apply (e.g., "venues", "codecheckers").
+#'
+#' @return The filtered register table with only the necessary columns retained.
 filter_and_drop_register_columns <- function(register_table, filter) {
   
   # Step 1: Columns that we want to keep
@@ -91,6 +108,18 @@ filter_and_drop_register_columns <- function(register_table, filter) {
   return(register_table)
 }
 
+#' Generate Table Details
+#'
+#' This function generates metadata and details for a specific table, including 
+#' the table name, slugified name, subcategory (if applicable), and the output directory. 
+#' It is used when rendering tables in different formats.
+#'
+#' @param table_key The key (name) of the table being processed.
+#' @param table The data frame containing the table data.
+#' @param filter A string specifying the filter applied to the table data.
+#' @param is_reg_table A boolean indicating whether the table is a register table (default is TRUE).
+#'
+#' @return A list of table details including name, slugified name, subcategory (if applicable), and output directory.
 generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE){
   table_details <- list()
   # This information is needed when creating the html index section files
@@ -112,6 +141,17 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
   return(table_details)
 }
 
+#' Render Register in Specified Output Format
+#'
+#' This function renders the register table into different output formats based on the specified type.
+#' It supports rendering the table as Markdown, HTML, or JSON.
+#'
+#' @param register_table The register table that needs to be rendered into different files.
+#' @param table_details A list of details related to the table (e.g., output directory, metadata).
+#' @param filter A string specifying the filter applied to the register data.
+#' @param output_type A string specifying the desired output format ("md" for Markdown, "html" for HTML, "json" for JSON).
+#'
+#' @return None. The function generates a file in the specified format.
 render_register <- function(register_table, table_details, filter, output_type){
   switch(output_type,
     "md" = render_register_md(register_table, table_details, filter),

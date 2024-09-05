@@ -4,29 +4,17 @@
 \alias{save_md_table}
 \title{Save markdown table to a file}
 \usage{
-save_md_table(
-  md_table,
-  filter,
-  register_table_name,
-  filter_subcategory,
-  for_html_file
-)
+save_md_table(output_dir, md_table, for_html_file)
 }
 \arguments{
+\item{output_dir}{The output_dir}
+
 \item{md_table}{The markdown table to be saved.}
-
-\item{filter}{The filter applied (e.g., "venues", "codecheckers").}
-
-\item{register_table_name}{The name of the register table.}
-
-\item{filter_subcategory}{An optional string representing a subcategory within the filter 
-(e.g., venue type). Default is NULL.}
 
 \item{for_html_file}{A logical flag indicating whether the markdown is being rendered for an HTML file. 
 If TRUE, the file is saved as `temp.md`. Default is FALSE.}
 }
 \description{
-The output directory is determined based on the filter type, register table name, and an optional subcategory. 
 The file is saved as either a temporary file (`temp.md`) or as `register.md` depending on 
 whether it is being rendered for an HTML file.
 }

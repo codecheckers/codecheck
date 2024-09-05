@@ -6,21 +6,14 @@
 Adds title to the markdown and adjusts the column widths of the table 
 before returning it.}
 \usage{
-create_md_table(
-  register_table,
-  register_table_name,
-  filter,
-  filter_subcat = NULL
-)
+create_md_table(register_table, table_details, filter)
 }
 \arguments{
 \item{register_table}{DataFrame of the register data.}
 
-\item{register_table_name}{Name of the register table.}
+\item{table_details}{List containing details such as the table name, subcat name.}
 
 \item{filter}{Type of filter (e.g., "venues", "codecheckers").}
-
-\item{filter_subcat}{Optional subcategory within the filter. Default is NULL.}
 }
 \value{
 The markdown table

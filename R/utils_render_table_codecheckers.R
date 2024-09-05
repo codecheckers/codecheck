@@ -1,3 +1,11 @@
+#' Create Codecheckers Table
+#'
+#' Processes the register table to create a new table of distinct codecheckers. 
+#' The resulting table has codechecker name, codechecker ID and no. of codechecks column
+#'
+#' @param register_table The register table
+#'
+#' @return A list with a single element, the codechecker table
 create_all_codecheckers_table <- function(register_table){
   # Unlisting the table to split codechecks with multiple codecheckers
   # into multiple separate rows
@@ -31,6 +39,14 @@ create_all_codecheckers_table <- function(register_table){
   return(list(codecheckers = new_table)) 
 }
 
+#' Add Hyperlinks to Codecheckers Table
+#'
+#' Adds hyperlinks to the codecheckers table by modifying the codechecker names, 
+#' number of codechecks, and ORCID IDs into clickable links.
+#'
+#' @param table The codecheckers table
+#'
+#' @return The data frame with added hyperlinks in the specified columns.
 add_all_codecheckers_hyperlink <- function(table){
   # Extracting column names from CONFIG
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["codecheckers"]]

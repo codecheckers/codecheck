@@ -1,3 +1,10 @@
+#' Create Non-Register Files
+#'
+#' Processes the register table to create non-register files such as venues and codecheckers.
+#' It applies filters to split the data into separate tables and generates corresponding HTML and JSON files.
+#'
+#' @param register_table The original register data.
+#' @param filter_by A list specifying the filters to apply (e.g., "venues", "codecheckers").
 create_non_register_files <- function(register_table, filter_by){
   for (filter in filter_by){
     list_tables <- create_tables_non_register(register_table, filter)
@@ -31,14 +38,34 @@ create_non_register_files <- function(register_table, filter_by){
   }
 }
 
+#' Create Non-Register Tables
+#'
+#' Generates tables based on the filter type provided, such as venues or codecheckers.
+#' It creates tables for further processing and rendering into different formats.
+#'
+#' @param register_table The original register data.
+#' @param filter A string specifying the filter to apply (e.g., "venues", "codecheckers").
+#'
+#' @return A list of tables generated based on the specified filter. The keys are the table
+#' names and the values are the tables themselves.
 create_tables_non_register <- function(register_table, filter){
-  table <- switch(filter,
+  list_tables <- switch(filter,
     "venues" = create_venues_tables(register_table),
     "codecheckers" = create_all_codecheckers_table(register_table)
   )
-  return(table)
+  return(list_tables)
 }
 
+#' Generate Table Details for Non-Register Files
+#'
+#' Generates metadata for non-register tables, including subcategory, title, subtext, 
+#' extra text, and output directory. It is used to prepare the table for rendering.
+#'
+#' @param table The data frame containing the filtered table.
+#' @param filter A string specifying the filter applied to the table.
+#' @param subcat An optional string for the subcategory (if applicable).
+#'
+#' @return A list containing metadata such as title, subtext, and output directory for the table.
 generate_table_details_non_reg <- function(table, filter, subcat = NULL){
   table_details <- list()
   table_details[["subcat"]] <- subcat
@@ -74,6 +101,14 @@ generate_html_postfix_hrefs_non_reg <- function(filter, table_details){
   return(hrefs)
 }
 
+#' Render Non-Register Markdown Table
+#'
+#' Renders the table in Markdown format, including adding hyperlinks to the relevant 
+#' columns. It adjusts column widths and saves the output as a Markdown file.
+#'
+#' @param table The data frame containing the filtered table.
+#' @param table_details A list of metadata about the table (e.g., title, subtext, extra text).
+#' @param filter A string specifying the filter applied (e.g., "venues", "codecheckers").
 render_non_register_md <- function(table, table_details, filter){
   # Add hyperlinks
   table <- switch(filter,
@@ -110,6 +145,15 @@ render_non_register_md <- function(table, table_details, filter){
   writeLines(md_table, temp_md_path)
 }
 
+#' Generate HTML Title for Non-Register Pages
+#'
+#' Generates the title for the HTML page based on the filter and subcategory.
+#' The title is used for rendering the non-register HTML files such as venues or codecheckers pages.
+#'
+#' @param filter A string specifying the filter applied (e.g., "venues", "codecheckers").
+#' @param subcat An optional string for the subcategory (if applicable).
+#'
+#' @return A string containing the generated HTML title.
 generate_html_title_non_registers <- function(filter, subcat){
   if (filter %in% names(CONFIG$NON_REG_TITLE_FNS)){
     title_fn <- CONFIG$NON_REG_TITLE_FNS[[filter]]

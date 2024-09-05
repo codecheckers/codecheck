@@ -1,3 +1,11 @@
+#' Create Venues Tables
+#'
+#' Generates tables for all venues and venues categorized by type. 
+#' It creates a general venues table and specific venue type tables.
+#'
+#' @param register_table The original register data.
+#'
+#' @return A list of tables including the general venues table and venue type-specific tables.
 create_venues_tables <- function(register_table){
   list_tables <- list()
   list_tables[["venues"]] <- create_all_venues_table(register_table)
@@ -8,6 +16,15 @@ create_venues_tables <- function(register_table){
   return(c(list_tables, list_venue_type_tables))
 }
 
+#' Add Hyperlinks to Venues Table
+#'
+#' Adds hyperlinks to the venue names, venue types, and the number of codechecks 
+#' in the venues table. If a subcategory is provided, it generates links based on venue types.
+#'
+#' @param table The data frame containing the venues data.
+#' @param subcat An optional string specifying the subcategory (venue type) for the venues.
+#'
+#' @return The data frame with hyperlinks added to the appropriate columns.
 add_venues_hyperlink <- function(table, subcat){
   if (is.null(subcat)){
     return(add_all_venues_hyperlink(table))
@@ -16,6 +33,14 @@ add_venues_hyperlink <- function(table, subcat){
   return(add_venue_type_hyperlink(table, venue_type = subcat))
 }
 
+#' Create All Venues Table
+#'
+#' This function generates a table with all unique venues and their corresponding types.
+#' It also adds columns for the number of codechecks and a slug for the venue name.
+#'
+#' @param register_table The data frame containing the original register data.
+#'
+#' @return A data frame with venues, their types, the number of codechecks, and a slug name.
 create_all_venues_table <- function(register_table){
   # Only keeping the Type and Venue column and unique combinations of the two
   new_table <- register_table %>%
@@ -46,6 +71,14 @@ create_all_venues_table <- function(register_table){
   return(new_table)
 }
 
+#' Add Hyperlinks to All Venues Table
+#'
+#' Adds hyperlinks to the venue names, venue types, and the number of codechecks 
+#' in the all venues table. The links point to the venue's page and the venue type's page.
+#'
+#' @param table The data frame containing data on all venues.
+#'
+#' @return The data frame with hyperlinks added to the appropriate columns.
 add_all_venues_hyperlink <- function(table){
   # Extracting column names from CONFIG
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
@@ -86,6 +119,14 @@ add_all_venues_hyperlink <- function(table){
   return(table)
 }
 
+#' Create Venue Type-Specific Tables
+#'
+#' Generates tables for each venue type by filtering the register data. 
+#' It adds columns for the venue slug and the number of codechecks for each venue type.
+#'
+#' @param register_table The data frame containing the original register data.
+#'
+#' @return A list of tables, one for each venue type.
 create_venue_type_tables <- function(register_table){
   list_venue_type_tables <- list()
 
@@ -127,6 +168,15 @@ create_venue_type_tables <- function(register_table){
   return(list_venue_type_tables)
 }
 
+#' Add Hyperlinks to Venue Type-Specific Table
+#'
+#' Adds hyperlinks to the venue names and the number of codechecks 
+#' in the venue type-specific table. The links point to the venue's page for each venue type.
+#'
+#' @param table The data frame containing the venue type-specific data.
+#' @param venue_type A string specifying the venue type.
+#'
+#' @return The data frame with hyperlinks added to the appropriate columns.
 add_venue_type_hyperlink <- function(table, venue_type) {
   table_col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
   

@@ -7,10 +7,10 @@ This extra text is to be placed under the table.
 There is only extra text for the codecheckers HTML page to explain
 the reason for discrepancy between total_codechecks != SUM(no.of codechecks)}
 \usage{
-generate_html_extra_text_non_register(page_type)
+generate_html_extra_text_non_register(filter)
 }
 \arguments{
-\item{page_type}{The HTML page type that needs to rendered}
+\item{filter}{The filter}
 }
 \value{
 The extra text to place under the table

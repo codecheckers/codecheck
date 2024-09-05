@@ -4,19 +4,12 @@
 \alias{generate_html_postfix_hrefs_reg}
 \title{Generates the hrefs to set in the postfix.html file for the rendering of register tables.}
 \usage{
-generate_html_postfix_hrefs_reg(
-  filter,
-  register_table_name,
-  filter_subcategory = NULL
-)
+generate_html_postfix_hrefs_reg(filter, table_details)
 }
 \arguments{
 \item{filter}{The filter name}
 
-\item{register_table_name}{The register table name}
-
-\item{filter_subcategory}{An optional string representing a subcategory within the filter 
-(e.g., venue type). Default is NULL.}
+\item{table_details}{List containing details such as the table name, subcat name.}
 }
 \value{
 A list with the hrefs

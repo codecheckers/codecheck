@@ -71,7 +71,7 @@ CONFIG$NON_REG_TITLE_FNS <- list(
     }
 
     else{
-      # Making the noun a plural for the title
+      # Pluralizing the venue subcat
       plural_subcat <- switch (subcat,
         "conference" = "conferences",
         "journal" = "journals",
