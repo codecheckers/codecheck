@@ -1,39 +1,52 @@
 create_non_register_files <- function(register_table, filter_by){
   for (filter in filter_by){
-    table <- create_table_non_register(register_table, filter)
-    table_details <- generate_table_details_non_reg(table, filter)
-    render_html(table, table_details, filter)
+    list_tables <- create_tables_non_register(register_table, filter)
 
-    # Removing the unneccessary columns before saving to json file
-    col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[[filter]]
-    table <- table[, unname(col_names)]
+    for (table_name in names(list_tables)){
+      table <- list_tables[[table_name]]
 
-    # Saving the json file
-    jsonlite::write_json(
-      table,
-      path = paste0(table_details[["output_dir"]], "index.json"),
-      pretty = TRUE
-    )
+      # Table does not belong to a subcategory. Setting subcat to NULL
+      if (table_name %in% list("venues", "codecheckers")){
+        subcat <- NULL
+      }
+
+      # Table belongs to a subcategory
+      else{subcat <- table_name}
+      table_details <- generate_table_details_non_reg(table, filter, subcat)
+
+      render_html(table, table_details, filter)
+      
+      # Removing the unneccessary columns before creating html and json
+      if (filter == "venues"){
+        table <- table %>% select(-`venue_slug`)
+      }
+
+      # Saving the json file
+      jsonlite::write_json(
+        table,
+        path = paste0(table_details[["output_dir"]], "index.json"),
+        pretty = TRUE
+      )
+    }
   }
 }
 
-create_table_non_register <- function(register_table, filter){
+create_tables_non_register <- function(register_table, filter){
   table <- switch(filter,
-    "venues" = create_all_venues_table(register_table),
+    "venues" = create_venues_tables(register_table),
     "codecheckers" = create_all_codecheckers_table(register_table)
   )
   return(table)
 }
 
 generate_table_details_non_reg <- function(table, filter, subcat = NULL){
-  table_details <- list(
-    "title" = generate_html_title_non_registers(filter),
-    "subtext" = generate_html_subtext_non_register(table, filter, subcat),
-    "extra_text" = generate_html_extra_text_non_register(filter)
-  )
+  table_details <- list()
+  table_details[["subcat"]] <- subcat
+  table_details[["title"]] <- generate_html_title_non_registers(filter, subcat)
+  table_details[["subtext"]] <- generate_html_subtext_non_register(table, filter, subcat)
+  table_details[["extra_text"]] <- generate_html_extra_text_non_register(filter)
   table_details[["is_reg_table"]] <- FALSE
   table_details[["output_dir"]] <- generate_output_dir(filter, table_details)
-  print(table_details)
   return(table_details)
 }
 
@@ -64,7 +77,7 @@ generate_html_postfix_hrefs_non_reg <- function(filter, table_details){
 render_non_register_md <- function(table, table_details, filter){
   # Add hyperlinks
   table <- switch(filter,
-    "venues" = add_all_venues_hyperlink(table),
+    "venues" = add_venues_hyperlink(table, table_details[["subcat"]]),
     "codecheckers" = add_all_codecheckers_hyperlink(table)
   )
 
@@ -81,11 +94,13 @@ render_non_register_md <- function(table, table_details, filter){
   writeLines(md_table, temp_md_path)
 }
 
-generate_html_title_non_registers <- function(filter){
-  title_base <- CONFIG$NON_REG_TITLE_BASE
-
-  title <- paste(title_base, filter)
-  return(title)
+generate_html_title_non_registers <- function(filter, subcat){
+  if (filter %in% names(CONFIG$NON_REG_TITLE_FNS)){
+    title_fn <- CONFIG$NON_REG_TITLE_FNS[[filter]]
+    title <- title_fn(subcat)
+    return(title)
+  }
+  return(paste(CONFIG$NON_REG_TITLE_BASE, filter))
 }
 
 #' Generates the extra text of the HTML pages for non registers.

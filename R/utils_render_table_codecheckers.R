@@ -27,7 +27,8 @@ create_all_codecheckers_table <- function(register_table){
   # Rearrange columns to the order in the col_names_dict
   new_table <- new_table[, unname(col_names_dict)]
 
-  return(new_table) 
+  # Returning as a list for consistency with create_table_venues
+  return(list(codecheckers = new_table)) 
 }
 
 add_all_codecheckers_hyperlink <- function(table){
