@@ -4,15 +4,32 @@ CONFIG <- new.env()
 
 # Specifying the register table column widths
 # The names in the list are the filter type
+# For filters other than venues we use the general column widths
 CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
-  none = "|:-------|:--------------------------------|:------------------|:------------------|:---|:--------------------------|:----------|",
-  venues = "|:-------|:--------------------------------|:---|:--------------------------|:----------|"
+  reg = list(
+    general = "|:-------|:--------------------------------|:------------------|:------------------|:---|:--------------------------|:----------|",
+    venues = "|:-------|:--------------------------------|:---|:--------------------------|:----------|"
+  ),
+
+  non_reg = list(
+    venues = "|:-----------|:---------------------|:----------|",
+    venues_subcat = "|:---------------------|:----------|",
+    codecheckers = "|:-----------|:---------------------|:----------|"
+  )
 )
 
 CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 CONFIG$FILTER_COLUMN_NAMES <- list(
   "venues" = "Venue",
+  "codecheckers" = "Codechecker"
+)
+
+CONFIG$NO_CODECHECKS_VENUE_TYPE <- list()
+
+# Column names to drop for each reg table
+CONFIG$FILTER_COLUMN_NAMES_TO_DROP <- list(
+  "venues" = list("Venue", "Type"),
   "codecheckers" = "Codechecker"
 )
 
@@ -42,17 +59,79 @@ CONFIG$HREF_DETAILS <- list(
 )
 
 # NON-REGISTER_TABLE
+CONFIG$NON_REG_TITLE_BASE <- "CODECHECK List of"
+CONFIG$NON_REG_TITLE_FNS <- list(
+  codecheckers = function(subcat=NULL){
+    return("CODECHECK List of codecheckers")
+  },
+
+  venues = function(subcat){
+    if (is.null(subcat)){
+      return("CODECHECK List of venues")
+    }
+
+    else{
+      # Making the noun a plural for the title
+      plural_subcat <- switch (subcat,
+        "conference" = "conferences",
+        "journal" = "journals",
+        "community" = "communities"
+      )
+      return(paste("CODECHECK List of", plural_subcat))
+    }
+  }
+)
+
+CONFIG$NON_REG_EXTRA_TEXT <- list(
+  codecheckers = "<i>\\*Note that the total codechecks is less than 
+    the collectisve sum of individual codecheckers' number of codechecks. 
+    This is because some codechecks involved more than one codechecker.</i>"
+)
+
+CONFIG$NON_REG_SUBTEXT <- list(
+  codecheckers = function(table, subcat=NULL){
+    no_codecheckers <- nrow(table)
+    return(paste("In total,", no_codecheckers, "codecheckers contributed", CONFIG$NO_CODECHECKS, "codechecks"))
+  },
+
+  venues = function(table, subcat = NULL){
+    # Case there are no subcategories
+    if (is.null(subcat)){
+      no_venues <- nrow(table)
+      return(paste("In total,", CONFIG$NO_CODECHECKS, "codechecks were completed for", no_venues, "venues"))
+    }
+    
+    # Case we have subcategories
+    else{
+      no_venues_subcat <- nrow(table)
+      total_codechecks <- CONFIG$NO_CODECHECKS_VENUE_TYPE[[subcat]]
+      codecheck_word <- if (total_codechecks == 1) "codecheck" else "codechecks"
+      venue_name_subtext <- subcat
+
+      # Making the venue_name_subtext plural if necessary
+      if (no_venues_subcat > 1){
+        venue_name_subtext <- switch (subcat,
+          "conference" = "conferences",
+          "journal" = "journals",
+          "community" = "communities"
+        )
+      }
+      return(paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext))
+    }
+  }
+)
+
 # Note that the order of the names in the list will be the order of table columns in html and json
 CONFIG$NON_REG_TABLE_COL_NAMES <- list(
-  "codechecker_table" = list(
-    "codechecker" = "Codechecker name",
-    "orcid" = "ORCID ID",
+  "codecheckers" = c(
+    "codechecker_name" = "Codechecker name",
+    "Codechecker" = "ORCID ID",
     "no_codechecks" = "No. of codechecks"
   ),
 
-  "venues_table" = list(
-    "venue_type" = "Venue type", 
-    "venue_name" = "Venue name",
+  "venues" = c(
+    "Type" = "Venue type", 
+    "Venue" = "Venue name",
     "no_codechecks" = "No. of codechecks"
   )
 )
