@@ -89,6 +89,22 @@ render_non_register_md <- function(table, table_details, filter){
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)
   md_table <- gsub("\\$extra_text\\$", table_details[["extra_text"]], md_table)
 
+  # Adjusting the column widths
+  md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))
+  # Determining which line to add the md column widths in
+  alignment_line_index <- grep("^\\|:---", md_table)
+
+  # Selecting filter specific column widths
+  if (filter %in% names(CONFIG$MD_TABLE_COLUMN_WIDTHS[["non_reg"]])){
+    if (filter == "venues" && !is.null(table_details[["subcat"]])){
+      md_table[alignment_line_index] <- CONFIG$MD_TABLE_COLUMN_WIDTHS[["non_reg"]][["venues_subcat"]]
+    }
+
+    else{
+      md_table[alignment_line_index] <- CONFIG$MD_TABLE_COLUMN_WIDTHS[["non_reg"]][[filter]]
+    }
+  }
+
   # Saving the table to a temp md file
   temp_md_path <- paste0(table_details[["output_dir"]], "temp.md")
   writeLines(md_table, temp_md_path)
