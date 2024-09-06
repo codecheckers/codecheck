@@ -173,7 +173,7 @@ generate_html_title_non_registers <- function(filter, subcat){
 generate_html_extra_text_non_register <- function(filter){
   extra_text <- ""
 
-  if (filter %in% CONFIG$NON_REG_EXTRA_TEXT){
+  if (filter %in% names(CONFIG$NON_REG_EXTRA_TEXT)){
     extra_text <- CONFIG$NON_REG_EXTRA_TEXT[[filter]]
   }
 

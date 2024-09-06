@@ -97,8 +97,8 @@ CONFIG$NON_REG_TITLE_FNS <- list(
 )
 
 CONFIG$NON_REG_EXTRA_TEXT <- list(
-  codecheckers = "<i>\\*Note that the total codechecks is less than 
-    the collectisve sum of individual codecheckers' number of codechecks. 
+  codecheckers = "<i>\\*Note that the total number of codechecks is less than 
+    the collective sum of individual codecheckers' number of codechecks. 
     This is because some codechecks involved more than one codechecker.</i>"
 )
 
