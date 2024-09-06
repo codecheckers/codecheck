@@ -58,6 +58,20 @@ CONFIG$HREF_DETAILS <- list(
   "md" = list(base_url = "https://codecheck.org.uk/register/", ext = ".md")
 )
 
+# List of hyperlinks
+CONFIG$HYPERLINKS <- list(
+  venues = "https://codecheck.org.uk/register/venues/",
+  register = "https://codecheck.org.uk/register/",
+  codecheckers = "https://codecheck.org.uk/register/codecheckers",
+  orcid = "https://orcid.org/",
+  osf = "https://osf.io/",
+  gitlab = "https://gitlab.com/",
+  github = "https://github.com/",
+  doi = "https://doi.org/",
+  codecheck_issue = "https://github.com/codecheckers/register/issues/",
+  zenodo_deposit = "https://zenodo.org/deposit/"
+)
+
 # NON-REGISTER_TABLE
 CONFIG$NON_REG_TITLE_BASE <- "CODECHECK List of"
 CONFIG$NON_REG_TITLE_FNS <- list(

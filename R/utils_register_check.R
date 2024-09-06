@@ -39,8 +39,8 @@ check_issue_status <- function(entry) {
     )
     if (issue$state != "closed") {
       warning(
-        entry$Certificate, " issue is still open: ",
-        "<https://github.com/codecheckers/register/issues/",
+        entry$Certificate, " issue is still open: <",
+        CONFIG$HYPERLINKS[["codecheck_issue"]],
         entry$Issue, ">"
       )
     }

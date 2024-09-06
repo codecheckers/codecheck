@@ -87,14 +87,14 @@ generate_html_postfix_hrefs_non_reg <- function(filter, table_details){
   if ("subcat" %in% names(table_details)){
     subcat <- table_details[["subcat"]]
     hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/", subcat,"/index.json")
+      json_href = paste0(CONFIG$HYPERLINKS[["register"]], filter, "/", subcat,"/index.json")
     )
   }
 
   # Case with subcat
   else{
     hrefs <- list(
-      json_href = paste0("https://codecheck.org.uk/register/", filter, "/index.json")
+      json_href = paste0(CONFIG$HYPERLINKS[["register"]], filter, "/index.json")
     )
   }
 

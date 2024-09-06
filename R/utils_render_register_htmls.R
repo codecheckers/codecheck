@@ -7,16 +7,17 @@ add_repository_links_html <- function(register_table) {
     X = register_table$Repository,
     FUN = function(repository) {
       spec <- parse_repository_spec(repository)
+      # ! Needs refactoring
       if (!any(is.na(spec))) {
         urrl <- "#"
         if (spec[["type"]] == "github") {
-          urrl <- paste0("https://github.com/", spec[["repo"]])
+          urrl <- paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
           paste0("<i class='fa fa-github'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
         } else if (spec[["type"]] == "osf") {
-          urrl <- paste0("https://osf.io/", spec[["repo"]])
+          urrl <- paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
           paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
         } else if (spec[["type"]] == "gitlab") {
-          urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+          urrl <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
           paste0("<i class='fa fa-gitlab'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
         } else {
           repository

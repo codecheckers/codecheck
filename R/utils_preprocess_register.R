@@ -47,7 +47,8 @@ add_issue_number_links <- function(register_table, register) {
         paste0(
           "[",
           issue_id,
-          "](https://github.com/codecheckers/register/issues/",
+          "](",
+          CONFIG$HYPERLINKS[["codecheck_issue"]],
           issue_id, ")"
         )
       } else {

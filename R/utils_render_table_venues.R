@@ -93,7 +93,7 @@ add_all_venues_hyperlink <- function(table){
       # Generate venue name hyperlink
       !!col_names[["Venue"]] := paste0(
         "[", !!sym(col_names[["Venue"]]), "](",
-        "https://codecheck.org.uk/register/venues/", 
+        CONFIG$HYPERLINKS[["venues"]], 
         !!sym(col_names[["Type"]]), "/",
         venue_slug, "/)"
       ),
@@ -101,7 +101,8 @@ add_all_venues_hyperlink <- function(table){
       # Generate no. of codechecks hyperlink
       !!col_names[["no_codechecks"]] := paste0(
         !!sym(col_names[["no_codechecks"]]), 
-        " [(see all checks)](https://codecheck.org.uk/register/venues/", 
+        " [(see all checks)](",
+        CONFIG$HYPERLINKS[["venues"]], 
         !!sym(col_names[["Type"]]), "/",
         venue_slug, "/)"
       ),
@@ -109,7 +110,7 @@ add_all_venues_hyperlink <- function(table){
       # Generate venue type hyperlink
       !!col_names[["Type"]] := paste0(
         "[", stringr::str_to_title(!!sym(col_names[["Type"]])), 
-        "](https://codecheck.org.uk/register/venues/", 
+        "](", CONFIG$HYPERLINKS[["venues"]], 
         !!sym(col_names[["Type"]]), "/)"
       )
     )
@@ -193,7 +194,7 @@ add_venue_type_hyperlink <- function(table, venue_type) {
     mutate(
       !!sym(venue_col_name) := paste0(
         "[", !!sym(venue_col_name), "](",
-        "https://codecheck.org.uk/register/venues/",
+        CONFIG$HYPERLINKS[["venues"]],
         venue_type, "/",
         venue_slug, "/)"
       ),
@@ -201,7 +202,8 @@ add_venue_type_hyperlink <- function(table, venue_type) {
       # Generate no. of codechecks hyperlink
       !!sym(table_col_names[["no_codechecks"]]) := paste0(
         !!sym(table_col_names[["no_codechecks"]]),
-        " [(see all checks)](https://codecheck.org.uk/register/venues/",
+        " [(see all checks)](",
+        CONFIG$HYPERLINKS[["venues"]],
         venue_type, "/",
         venue_slug, "/)"
       )

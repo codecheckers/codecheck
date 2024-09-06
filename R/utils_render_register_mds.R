@@ -34,18 +34,18 @@ add_repository_links_md <- function(register_table) {
       spec <- parse_repository_spec(repository)
       if (!any(is.na(spec))) {
         urrl <- "#"
-
+        # ! Needs refactoring
         switch(spec["type"],
           "github" = {
-            urrl <- paste0("https://github.com/", spec[["repo"]])
+            urrl <- paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
             paste0("[", spec[["repo"]], "](", urrl, ")")
           },
           "osf" = {
-            urrl <- paste0("https://osf.io/", spec[["repo"]])
+            urrl <- paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
             paste0("[", spec[["repo"]], "](", urrl, ")")
           },
           "gitlab" = {
-            urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+            urrl <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
             paste0("[", spec[["repo"]], "](", urrl, ")")
           },
 

@@ -61,7 +61,7 @@ add_all_codecheckers_hyperlink <- function(table){
       # Generate codechecker table hyperlink
       !!col_names[["codechecker_name"]] := paste0(
         "[", !!sym(col_names[["codechecker_name"]]), 
-        "](https://codecheck.org.uk/register/codecheckers/",
+        "](", CONFIG$HYPERLINKS[["codecheckers"]],
         !!sym(col_names[["Codechecker"]]), "/)"
       ),
 
@@ -69,13 +69,14 @@ add_all_codecheckers_hyperlink <- function(table){
       # Generate no. of codechecks hyperlink
       !!col_names[["no_codechecks"]] := paste0(
         !!sym(col_names[["no_codechecks"]]), 
-        " [(see all checks)](https://codecheck.org.uk/register/codecheckers/", 
+        " [(see all checks)](", CONFIG$HYPERLINKS[["codecheckers"]], 
         !!sym(col_names[["Codechecker"]]), "/)"
       ),
 
       # Generate ORCID ID hyperlink
       !!col_names[["Codechecker"]] := paste0(
-        "[", !!sym(col_names[["Codechecker"]]), "](https://orcid.org/", 
+        "[", !!sym(col_names[["Codechecker"]]), "](",
+        CONFIG$HYPERLINKS[["orcid"]], 
         !!sym(col_names[["Codechecker"]]), ")"
       )
     )

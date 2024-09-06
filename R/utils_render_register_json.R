@@ -6,13 +6,14 @@ add_repository_links_json <- function(register_table) {
   register_table$`Repository Link` <- sapply(
     X = register_table$Repository,
     FUN = function(repository) {
+      # ! Needs refactoring
       spec <- parse_repository_spec(repository)
       if (spec[["type"]] == "github") {
-        paste0("https://github.com/", spec[["repo"]])
+        paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
       } else if (spec[["type"]] == "osf") {
-        paste0("https://osf.io/", spec[["repo"]])
+        paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
       } else if (spec[["type"]] == "gitlab") {
-        paste0("https://gitlab.com/", spec[["repo"]])
+        paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
       } else {
         repository
       }
