@@ -17,13 +17,6 @@ create_all_codecheckers_table <- function(register_table){
     select(Codechecker) %>% 
     distinct()
 
-  # Temporary debugging
-  print("Register table Codechecker column:")
-  print(head(new_table$Codechecker))
-
-  print("CONFIG$DICT_ORCID_ID_NAME:")
-  print(CONFIG$DICT_ORCID_ID_NAME)
-
   # Adding the codechecker name column
   new_table <- new_table %>%
     mutate(`codechecker_name` = recode(Codechecker, !!!CONFIG$DICT_ORCID_ID_NAME))
