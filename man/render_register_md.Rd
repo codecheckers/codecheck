@@ -5,18 +5,18 @@
 \title{Renders register md for a single register_table}
 \usage{
 render_register_md(
-  filter,
   register_table,
-  register_table_name,
+  table_details,
+  filter,
   for_html_file = FALSE
 )
 }
 \arguments{
-\item{filter}{The filter}
-
 \item{register_table}{The register table}
 
-\item{register_table_name}{The register table name}
+\item{table_details}{List containing details such as the table name, subcat name.}
+
+\item{filter}{The filter}
 
 \item{for_html_file}{Flag for whether we are rendering register md for html file.
 Set to FALSE by default. If TRUE, no repo links are added to the repository table.}

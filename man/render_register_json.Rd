@@ -4,14 +4,14 @@
 \alias{render_register_json}
 \title{Renders register json for a single register_table}
 \usage{
-render_register_json(filter, register_table, register_table_name)
+render_register_json(register_table, table_details, filter)
 }
 \arguments{
-\item{filter}{The filter}
-
 \item{register_table}{The register table}
 
-\item{register_table_name}{The register table name}
+\item{table_details}{List containing details such as the table name, subcat name.}
+
+\item{filter}{The filter}
 }
 \description{
 Renders register json for a single register_table

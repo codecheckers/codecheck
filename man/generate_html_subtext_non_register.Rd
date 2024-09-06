@@ -5,7 +5,7 @@
 \title{Generates the subtext of the HTML pages for non registers with a summary of
 the number of codechecks and number of codechecks/ venues etc.}
 \usage{
-generate_html_subtext_non_register(table, page_type, table_name)
+generate_html_subtext_non_register(table, filter, subcat = NULL)
 }
 \arguments{
 \item{table}{The table to showcase in the html}

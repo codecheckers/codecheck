@@ -1,187 +1,215 @@
-#' Renders table for all venues and venue subcategories in JSON format.
-#' 
-#' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
-#' @return Returns list of the json tables with the names of the list being the table names.
-render_tables_venues_json <- function(list_venue_reg_tables){
-  all_venues_table <- render_table_all_venues_json(list_venue_reg_tables)
-  list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
-  
-  list_tables <- list("all_venues" = all_venues_table)
-  list_tables <- c(list_tables, list_venues_subcat_tables)
-  return(list_tables)
+#' Create Venues Tables
+#'
+#' Generates tables for all venues and venues categorized by type. 
+#' It creates a general venues table and specific venue type tables.
+#'
+#' @param register_table The original register data.
+#'
+#' @return A list of tables including the general venues table and venue type-specific tables.
+create_venues_tables <- function(register_table){
+  list_tables <- list()
+  list_tables[["venues"]] <- create_all_venues_table(register_table)
+
+  list_venue_type_tables <- create_venue_type_tables(register_table)
+
+  # Returning the concatenated list of tables
+  return(c(list_tables, list_venue_type_tables))
 }
 
-
-#' Renders table for all venues in JSON format.
-#' 
-#' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
-#' @return Returns a JSON table for the all venues 
-render_table_all_venues_json <- function(list_venue_reg_tables){
-  col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
-  list_venue_names <- names(list_venue_reg_tables)
-  
-  # Create initial data frame
-  table_venues <- data.frame(
-    matrix(ncol=0, nrow = length(list_venue_names)),
-    stringsAsFactors = FALSE, 
-    check.names = FALSE
-  )
-
-  table_venues[[col_names[["venue_name"]]]] <- list_venue_names
-
-  # Column- No. of codechecks
-  table_venues[[col_names[["no_codechecks"]]]] <- sapply(
-    X = list_venue_names,
-    FUN = function(venue_name) {
-      paste0(nrow(list_venue_reg_tables[[venue_name]]))
-    }
-  )
-
-  # Column- Venue type
-  table_venues[[col_names[["venue_type"]]]] <- sapply(
-    X = table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name){
-      venue_type <- determine_venue_category(venue_name)
-      stringr::str_to_title(venue_type)
-    }
-  )
-
-  # Column- venue names
-  # Using the full names of the venues
-  table_venues[[col_names[["venue_name"]]]] <- sapply(
-    X = table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name){
-      CONFIG$DICT_VENUE_NAMES[[venue_name]]
-    }
-  )
-
-  # Reordering the table
-  desired_order_cols <- unlist(col_names)
-  table_venues <- table_venues[, desired_order_cols]
-
-  return(table_venues)
-}
-
-#' Renders table for all venues and venue subcategories for HTML.
-#' 
-#' @param list_venue_reg_tables The list of venue register tables. The indices are the venue names.
-#' @return Returns list of the html tables with the names of the list being the table names.
-render_tables_venues_html <- function(list_venue_reg_tables){
-  all_venues_table <- render_table_all_venues_html(list_venue_reg_tables)
-  list_venues_subcat_tables <- render_table_venues_subcat(all_venues_table)
-  
-  list_tables <- list("all_venues" = all_venues_table)
-  list_tables <- c(list_tables, list_venues_subcat_tables)
-  return(list_tables)
-}
-
-#' Renders table for all venues in HTML format.
-#' Each venue name links to the register table for that specific
-#' venue. The ORCID IDs link to their ORCID pages.
-#' 
-#' @param list_venue_reg_tables The list of venue register tables. The indices are the ORCID IDs.
-#' @return Returns the html table of all the venues.
-render_table_all_venues_html <- function(list_venue_reg_tables){
-  col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
-
-  list_venue_names <- names(list_venue_reg_tables)
-  # Create initial data frame
-  table_venues <- data.frame(
-    matrix(ncol=0, nrow = length(list_venue_names)),
-    stringsAsFactors = FALSE, 
-    check.names = FALSE
-  )
-
-  table_venues[[col_names[["venue_name"]]]] <- list_venue_names
-
-  # Column- Venue type
-  table_venues[[col_names[["venue_type"]]]] <- sapply(
-    X = list_venue_names,
-    FUN = function(venue_name){
-      venue_type <- determine_venue_category(venue_name)
-      link_venue_subcat <- paste0("https://codecheck.org.uk/register/venues/", venue_type, "/")
-      paste0("[", stringr::str_to_title(venue_type), "](", link_venue_subcat,")")
-    }
-  )
-
-  # Column- No. of codechecks
-  table_venues[[col_names[["no_codechecks"]]]] <- sapply(
-    table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name) {
-      venue_type <- determine_venue_category(venue_name)
-      no_codechecks <- nrow(list_venue_reg_tables[[venue_name]])
-      venue_name <-  determine_venue_name(venue_name, venue_type)
-      paste0(no_codechecks," [(see all checks)](https://codecheck.org.uk/register/venues/",
-      venue_type, "/", venue_name, "/)")
-    }
-  )
-
-  # Column- venue names
-  # Each venue name will be a hyperlink to the register table
-  # with all their codechecks
-  table_venues[[col_names[["venue_name"]]]] <- sapply(
-    table_venues[[col_names[["venue_name"]]]],
-    FUN = function(venue_name){
-      display_venue_name <- CONFIG$DICT_VENUE_NAMES[[venue_name]]
-
-      if (is.null(display_venue_name)) {
-        return(venue_name)  # Handle cases where venue_name is not in CONFIG$DICT_VENUE_NAMES
-      }
-      venue_type <- determine_venue_category(venue_name)
-      venue_name <-  determine_venue_name(venue_name, venue_type)
-      paste0("[", display_venue_name, "](https://codecheck.org.uk/register/venues/",
-            venue_type, "/", venue_name, "/)")
-    }
-  )
-
-  # Reordering the table
-  desired_order_cols <- unlist(col_names)
-  table_venues <- table_venues[, desired_order_cols]
-
-  return(table_venues)
-}
-
-#' Renders table for venue subcategories
-#' This function can be used for both the html and json table since it works on the
-#' table for all venues. If the all_venues table is of html format then this creates
-#' a html table and if it is of json format, this creates a json table. 
-#' 
-#' @param venues_table The table of all venues
-#' @return Returns a list of the html tables of venue subcategories. 
-#' The names in the list are the names of the subcategories
-render_table_venues_subcat <- function(venues_table){
-  CONFIG$NO_CODECHECKS_VENUE_SUBCAT <- c()
-  list_tables <- c()
-
-  # The venues subcat table will be made from the venues_table.
-  # Hence we set the column "venue type" to be NULL as it is redundant for the venues subcategory table
-  col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues_table"]]
-
-  # The "venue name" column is later replaced with "{venue_subcat} name"
-  venues_table_venue_name_col <- col_names[["venue_name"]]
-  old_venue_name_col <- venues_table_venue_name_col
-
-  for (venue_subcat in CONFIG$FILTER_SUBCATEGORIES[["venues"]]){
-    # Filtering and keeping the rows of venue_type == venue_subcat
-    table_venue_subcategory <- venues_table[grepl(venue_subcat, venues_table$`Venue type`, ignore.case = TRUE), ]
-    # Removing the column showing the row numbers and removing the column "Venue type"
-    rownames(table_venue_subcategory) <- NULL
-    table_venue_subcategory[col_names[["venue_type"]]] <- NULL
-
-    # Replace the column "Venue name" with "{venue_subcat} name" e.g "Journal/Conference name"
-    # Capitalizing the first letter of the subcat name using str_to_title
-    new_venue_name_col <- paste(stringr::str_to_title(venue_subcat), "name")
-    colnames(table_venue_subcategory)[colnames(table_venue_subcategory) == old_venue_name_col] <- new_venue_name_col
-    
-    # Extract the numeric part from the "no.of codechecks" column and convert to integers
-    list_no_codechecks <- as.numeric(sub(" .*", "", table_venue_subcategory[[col_names[["no_codechecks"]]]]))
-    no_codechecks_venue_subcat <- sum(list_no_codechecks)
-
-    # Noting down the number of codechecks for each venue subcategory. This is to be used in the subtext of the
-    # html pages
-    CONFIG$NO_CODECHECKS_VENUE_SUBCAT[[venue_subcat]] <- no_codechecks_venue_subcat
-
-    list_tables[[venue_subcat]] <- table_venue_subcategory
+#' Add Hyperlinks to Venues Table
+#'
+#' Adds hyperlinks to the venue names, venue types, and the number of codechecks 
+#' in the venues table. If a subcategory is provided, it generates links based on venue types.
+#'
+#' @param table The data frame containing the venues data.
+#' @param subcat An optional string specifying the subcategory (venue type) for the venues.
+#'
+#' @return The data frame with hyperlinks added to the appropriate columns.
+add_venues_hyperlink <- function(table, subcat){
+  if (is.null(subcat)){
+    return(add_all_venues_hyperlink(table))
   }
-  return(list_tables)
+
+  return(add_venue_type_hyperlink(table, venue_type = subcat))
+}
+
+#' Create All Venues Table
+#'
+#' This function generates a table with all unique venues and their corresponding types.
+#' It also adds columns for the number of codechecks and a slug for the venue name.
+#'
+#' @param register_table The data frame containing the original register data.
+#'
+#' @return A data frame with venues, their types, the number of codechecks, and a slug name.
+create_all_venues_table <- function(register_table){
+  # Only keeping the Type and Venue column and unique combinations of the two
+  new_table <- register_table %>%
+    dplyr::select(Type, Venue) %>%
+    distinct()
+
+  # Adding no. of codechecks column
+  new_table <- new_table %>%
+    group_by(Venue) %>%
+    mutate(no_codechecks = sum(register_table$Venue == Venue))
+
+  # Adding slug name column. This is needed for the hyperlinks 
+  new_table <- new_table %>%
+    group_by(Venue) %>%
+    mutate(`venue_slug` = gsub(" ", "_", stringr::str_to_lower(Venue)))
+  
+  # Updating each venue name with the names in CONFIG$DICT_VENUE_NAMES
+  # Recode maps each Venue values to the corresponding Venue value in the dict
+  new_table <- new_table %>%
+    mutate(Venue = recode(Venue, !!!CONFIG$DICT_VENUE_NAMES))
+
+  # Rename the column using the key-value pairs from the CONFIG list
+  col_names_dict <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
+  for (key in names(col_names_dict)) {
+    colnames(new_table)[colnames(new_table) == key] <- col_names_dict[[key]]
+  }
+
+  return(new_table)
+}
+
+#' Add Hyperlinks to All Venues Table
+#'
+#' Adds hyperlinks to the venue names, venue types, and the number of codechecks 
+#' in the all venues table. The links point to the venue's page and the venue type's page.
+#'
+#' @param table The data frame containing data on all venues.
+#'
+#' @return The data frame with hyperlinks added to the appropriate columns.
+add_all_venues_hyperlink <- function(table){
+  # Extracting column names from CONFIG
+  col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
+
+  # !!sym is used to refer to column names defined in the CONFIG$NON_REG_TABLE_COL_NAMES 
+  # dynamically
+  table <- table %>%
+
+    # NOTE: The order of these mutation must be kept in this order because of
+    # dependencies on the links on the column values
+    mutate(
+      # Generate venue name hyperlink
+      !!col_names[["Venue"]] := paste0(
+        "[", !!sym(col_names[["Venue"]]), "](",
+        CONFIG$HYPERLINKS[["venues"]], 
+        !!sym(col_names[["Type"]]), "/",
+        venue_slug, "/)"
+      ),
+
+      # Generate no. of codechecks hyperlink
+      !!col_names[["no_codechecks"]] := paste0(
+        !!sym(col_names[["no_codechecks"]]), 
+        " [(see all checks)](",
+        CONFIG$HYPERLINKS[["venues"]], 
+        !!sym(col_names[["Type"]]), "/",
+        venue_slug, "/)"
+      ),
+
+      # Generate venue type hyperlink
+      !!col_names[["Type"]] := paste0(
+        "[", stringr::str_to_title(!!sym(col_names[["Type"]])), 
+        "](", CONFIG$HYPERLINKS[["venues"]], 
+        !!sym(col_names[["Type"]]), "/)"
+      )
+    )
+
+  # Removing the venue slug column
+  table <- table %>% select(-`venue_slug`)
+  return(table)
+}
+
+#' Create Venue Type-Specific Tables
+#'
+#' Generates tables for each venue type by filtering the register data. 
+#' It adds columns for the venue slug and the number of codechecks for each venue type.
+#'
+#' @param register_table The data frame containing the original register data.
+#'
+#' @return A list of tables, one for each venue type.
+create_venue_type_tables <- function(register_table){
+  list_venue_type_tables <- list()
+
+  # Retrieving the unique types
+  venue_types <- unique(register_table[["Type"]])
+
+  for (venue_type in venue_types){
+    # For each venue type we filter all venues of that type
+    # We use distinct so there is one row for each venue name
+    filtered_table <- register_table %>% 
+      filter(Type == venue_type) %>% 
+      select(Venue) %>%
+      distinct()
+
+    # Adding the column venue_slug which is used to generate the hyperlinks
+    filtered_table <- filtered_table %>%
+      mutate(`venue_slug` = gsub(" ", "_", stringr::str_to_lower(Venue)))
+
+    # Adding no. of codechecks column
+    CONFIG$NO_CODECHECKS_VENUE_TYPE[[venue_type]] <- sum(register_table$Type == venue_type)
+
+    filtered_table <- filtered_table %>%
+      group_by(Venue) %>%
+      mutate(`No. of codechecks` = sum(register_table$Venue == Venue))
+
+    # Updating each venue name with the names in CONFIG$DICT_VENUE_NAMES
+    # Recode maps each Venue values to the corresponding Venue value in the dict
+    filtered_table <- filtered_table %>%
+      mutate(Venue = recode(Venue, !!!CONFIG$DICT_VENUE_NAMES))
+
+    # Renaming the "Venue" column to "{Type} name"
+    venue_type_col_name <- paste(stringr::str_to_title(venue_type), "name")
+    filtered_table <- filtered_table %>%
+      rename(!!sym(venue_type_col_name) := Venue)   
+
+    list_venue_type_tables[[venue_type]] <- filtered_table
+  }
+
+  return(list_venue_type_tables)
+}
+
+#' Add Hyperlinks to Venue Type-Specific Table
+#'
+#' Adds hyperlinks to the venue names and the number of codechecks 
+#' in the venue type-specific table. The links point to the venue's page for each venue type.
+#'
+#' @param table The data frame containing the venue type-specific data.
+#' @param venue_type A string specifying the venue type.
+#'
+#' @return The data frame with hyperlinks added to the appropriate columns.
+add_venue_type_hyperlink <- function(table, venue_type) {
+  table_col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
+  
+  venue_col_name <- paste(stringr::str_to_title(venue_type), "name")
+
+  # Ensure slug_name exists (if not, generate it from the Venue column)
+  if (!"venue_slug" %in% colnames(table)) {
+    table <- table %>%
+      mutate(venue_slug = gsub(" ", "_", tolower(Venue)))
+  }
+
+  # Add hyperlinks to "{Type} name" and "No. of codechecks" column
+  table <- table %>%
+    mutate(
+      !!sym(venue_col_name) := paste0(
+        "[", !!sym(venue_col_name), "](",
+        CONFIG$HYPERLINKS[["venues"]],
+        venue_type, "/",
+        venue_slug, "/)"
+      ),
+
+      # Generate no. of codechecks hyperlink
+      !!sym(table_col_names[["no_codechecks"]]) := paste0(
+        !!sym(table_col_names[["no_codechecks"]]),
+        " [(see all checks)](",
+        CONFIG$HYPERLINKS[["venues"]],
+        venue_type, "/",
+        venue_slug, "/)"
+      )
+    )
+
+  # Removing the venue slug column
+  table <- table %>% select(-`venue_slug`)
+  return(table)
 }

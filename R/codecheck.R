@@ -286,7 +286,7 @@ create_zenodo_record <- function(zen) {
   this_doi = myrec$metadata$prereserve_doi$doi
   cat("The following URL is your Zenodo DOI.\n")
   cat("Please add this to codecheck.yml in report: field\n")
-  print(paste0("https://doi.org/", this_doi))
+  print(paste0(CONFIG$HYPERLINKS[["doi"]], this_doi))
   cat("Remember to reload the yaml file after editing it.\n")
   get_zenodo_record(this_doi)
 }
@@ -351,7 +351,8 @@ set_zenodo_metadata <- function(zen, record, metadata) {
   draft$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$paper$reference)
 
   draft <- zen$depositRecord(draft)
-  cat(paste0("Check your record online at https://zenodo.org/deposit/",
+  cat(paste0("Check your record online at", 
+            CONFIG$HYPERLINKS[["zenodo_deposit"]],
              record,
              "\n"))
 }

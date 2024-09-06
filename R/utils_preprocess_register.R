@@ -47,7 +47,8 @@ add_issue_number_links <- function(register_table, register) {
         paste0(
           "[",
           issue_id,
-          "](https://github.com/codecheckers/register/issues/",
+          "](",
+          CONFIG$HYPERLINKS[["codecheck_issue"]],
           issue_id, ")"
         )
       } else {
@@ -95,7 +96,7 @@ add_codechecker <- function(register_table, register) {
   for (i in seq_len(nrow(register))) {
     config_yml <- get_codecheck_yml(register[i, ]$Repo)
 
-    codechecker_info <- list()
+    codechecker_info <- c()
     if (!is.null(config_yml)  && !is.null(config_yml$codechecker)) {
       # For each codechecker we enter the data in the form {name} (orcid id: {orcid_id})
       for (codechecker in config_yml$codechecker) {
@@ -113,9 +114,17 @@ add_codechecker <- function(register_table, register) {
   return(register_table)
 }
 
+#' Creates a temporary CSV register with a "Codechecker" column.
+#' 
+#' The function flattens the "Codechecker" column and saves the resulting table 
+#' as a temporary CSV file. This tempeorary CSV is needed to filter the registers b
+#' by codecheckers.
+#' 
+#' @param register_table The register table with a "Codechecker" column.
 create_temp_register_with_codechecker <- function(register_table){
-  # Apply toJSON to each element in the `Codechecker` column
-  register_table$Codechecker <- sapply(register_table$Codechecker, toJSON, auto_unbox = TRUE)
+  # Flatten the Codechecker column (convert list elements to comma-separated strings)
+  # This is done since jsons cannot handle list columns directly
+  register_table$Codechecker <- sapply(register_table$Codechecker, function(x) paste(x, collapse = ","))
   write.csv(register_table, CONFIG$DIR_TEMP_REGISTER_CODECHECKER)
 }
 

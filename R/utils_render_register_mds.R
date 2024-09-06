@@ -1,37 +1,22 @@
-#' Function to load the markdown table
-#' 
-#' @param template_path The path to the markdown template
-#' @return The markdown table template
-load_md_template <- function(template_path){
-  if (!file.exists(template_path)){
-    stop("No register table template found")
-  }
-
-  md_table <- readLines(template_path)
-  return(md_table)
-}
-
 #' Function to add the markdown title based on the specific register table name.
 #' 
-#' @param markdown_table The markdown template where the title needs to be added
-#' @param register_table_name The name of the register table
+#' @param table_details List containing details such as the table name, subcat name.
+#' @param md_table The markdown table where the title needs to be added
+#' @param filter The filter
 #'
 #' @return The modified markdown table
-add_markdown_title <- function(filter, md_table, register_table_name){
-  if (filter == "none"){
-    title <- "CODECHECK Register"
-  }
+add_markdown_title <- function(table_details, md_table, filter){
+  # The filter is in the CONFIG$MD_TITLES
+  if (filter %in% names(CONFIG$MD_TITLES)) {
+    # Loading the title function (if present) and passing the argument
+    title_fn <- CONFIG$MD_TITLES[[filter]]
+    title <- title_fn(table_details)
+  } 
   
-  # For codechecker filtered registers we show the name and the ORCID ID
-  else if (filter == "codecheckers") {
-    author_name <- CONFIG$DICT_ORCID_ID_NAME[register_table_name]
-    orcid_id <- register_table_name
-    title <- paste0("Codechecks by ", author_name, " (", orcid_id,")")
-  }
-  
-  # For venue filtered registers we display the venue name in the title.
-  else if (filter == "venues"){
-    title <- paste("CODECHECK Register for", register_table_name)
+  # No titles provided in the CONFIG file for the filter type
+  # Stopping the process
+  else {
+    stop("Invalid filter provided.")
   }
 
   md_table <- gsub("\\$title\\$", title, md_table)
@@ -49,18 +34,18 @@ add_repository_links_md <- function(register_table) {
       spec <- parse_repository_spec(repository)
       if (!any(is.na(spec))) {
         urrl <- "#"
-
+        # ! Needs refactoring
         switch(spec["type"],
           "github" = {
-            urrl <- paste0("https://github.com/", spec[["repo"]])
+            urrl <- paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
             paste0("[", spec[["repo"]], "](", urrl, ")")
           },
           "osf" = {
-            urrl <- paste0("https://osf.io/", spec[["repo"]])
+            urrl <- paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
             paste0("[", spec[["repo"]], "](", urrl, ")")
           },
           "gitlab" = {
-            urrl <- paste0("https://gitlab.com/", spec[["repo"]])
+            urrl <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
             paste0("[", spec[["repo"]], "](", urrl, ")")
           },
 
@@ -79,36 +64,36 @@ add_repository_links_md <- function(register_table) {
 
 #' Renders register md for a single register_table
 #' 
-#' @param filter The filter
 #' @param register_table The register table
-#' @param register_table_name The register table name
+#' @param table_details List containing details such as the table name, subcat name.
+#' @param filter The filter
 #' @param for_html_file Flag for whether we are rendering register md for html file.
 #' Set to FALSE by default. If TRUE, no repo links are added to the repository table.
-render_register_md <- function(filter, register_table, register_table_name, for_html_file=FALSE) {
-  # If we are rendering md for html file, we do not need to add repo links
-  if (for_html_file == FALSE){
-    register_table <- add_repository_links_md(register_table)
+render_register_md <- function(register_table, table_details, filter, for_html_file=FALSE) {
+  
+  # If rendering md for html file, we add repo links of the appropriate format
+  register_table <- if (for_html_file) {
+    add_repository_links_html(register_table)
+  } else {
+    add_repository_links_md(register_table)
   }
+  
   # Fill in the content
-  md_table <- load_md_template(CONFIG$TEMPLATE_DIR[["reg"]][["md_template"]])
+  md_table <- create_md_table(register_table, table_details, filter)
+  output_dir <- table_details[["output_dir"]]
+  save_md_table(output_dir, md_table, for_html_file)
+}
 
-  markdown_content <- capture.output(kable(register_table, format = "markdown"))
-  md_table <- add_markdown_title(filter, md_table, register_table_name)
-  md_table <- gsub("\\$content\\$", paste(markdown_content, collapse = "\n"), md_table)
-
-  # Adjusting the column widths
-  md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))
-  # Determining which line to add the md column widths in
-  alignment_line_index <- grep("^\\|:---", md_table)
-  md_table[alignment_line_index] <- CONFIG$MD_COLUMNS_WIDTHS
-
-  # Determining the directory and saving the file
-  output_dir <- get_output_dir(filter, register_table_name)
-
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
-  }
-
+#' Save markdown table to a file
+#'
+#' The file is saved as either a temporary file (`temp.md`) or as `register.md` depending on 
+#' whether it is being rendered for an HTML file.
+#'
+#' @param output_dir The output_dir
+#' @param md_table The markdown table to be saved.
+#' @param for_html_file A logical flag indicating whether the markdown is being rendered for an HTML file. 
+#'        If TRUE, the file is saved as `temp.md`. Default is FALSE.
+save_md_table <- function(output_dir, md_table, for_html_file){
   # If rendering md for html file we create a temp file
   if (for_html_file){
     output_dir <- paste0(output_dir, "temp.md")
@@ -117,18 +102,38 @@ render_register_md <- function(filter, register_table, register_table_name, for_
   else{
     output_dir <- paste0(output_dir, "register.md")
   }
-
   writeLines(md_table, output_dir)
 }
 
-#' Renders register mds for a list of register tables
-#' 
-#' @param list_register_table List of register tables
-render_register_mds <- function(list_register_tables){
-  for (filter in names(list_register_tables)){
-    for (register_table_name in names(list_register_tables[[filter]])){
-      register_table <- list_register_tables[[filter]][[register_table_name]]
-      render_register_md(filter, register_table, register_table_name)
-    }
+#' Creates a markdown table from a register template
+#' Adds title to the markdown and adjusts the column widths of the table 
+#' before returning it.
+#'
+#' @param register_table DataFrame of the register data.
+#' @param table_details List containing details such as the table name, subcat name.
+#' @param filter Type of filter (e.g., "venues", "codecheckers").
+#'
+#' @return The markdown table
+create_md_table <- function(register_table, table_details, filter){
+  # Loading the template and filling in the content
+  md_table <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["md_template"]])
+
+  md_content <- capture.output(kable(register_table, format = "markdown"))
+  md_table <- add_markdown_title(table_details, md_table, filter)
+  md_table <- gsub("\\$content\\$", paste(md_content, collapse = "\n"), md_table)
+
+  # Adjusting the column widths
+  md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))
+  # Determining which line to add the md column widths in
+  alignment_line_index <- grep("^\\|:---", md_table)
+  # Selecting filter specific column widths
+  if (filter %in% names(CONFIG$MD_TABLE_COLUMN_WIDTHS[["reg"]])){
+    md_table[alignment_line_index] <- CONFIG$MD_TABLE_COLUMN_WIDTHS[["reg"]][[filter]]
   }
+
+  # For some filters we can use the "general" column widths
+  else{
+    md_table[alignment_line_index] <- CONFIG$MD_TABLE_COLUMN_WIDTHS[["reg"]][["general"]]
+  }
+  return(md_table)
 }
