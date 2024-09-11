@@ -18,7 +18,13 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
   )
 )
 
-CONFIG$REGISTER_COLUMNS <- list("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
+# These are the columns to keep in the register table
+CONFIG$REGISTER_COLUMNS <- list(
+  other = c("Certificate", "Paper Title", "Type", "Venue", "Issue", "Report", "Check date"),
+  csv = c("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date"),
+  json = c("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
+)
+
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 CONFIG$FILTER_COLUMN_NAMES <- list(
   "venues" = "Venue",
