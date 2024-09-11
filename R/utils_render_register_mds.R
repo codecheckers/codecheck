@@ -72,21 +72,9 @@ render_register_md <- function(register_table, table_details, filter) {
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)
   output_dir <- table_details[["output_dir"]]
-  save_md_table(output_dir, md_table, for_html_file)
-}
 
-#' Save markdown table to a file
-#'
-#' The file is saved as either a temporary file (`temp.md`) or as `register.md` depending on 
-#' whether it is being rendered for an HTML file.
-#'
-#' @param output_dir The output_dir
-#' @param md_table The markdown table to be saved.
-#' @param for_html_file A logical flag indicating whether the markdown is being rendered for an HTML file. 
-#'        If TRUE, the file is saved as `temp.md`. Default is FALSE.
-save_md_table <- function(output_dir, md_table, for_html_file){
-  # If rendering md for html file we create a temp file
-  if (for_html_file){
+  # Saving the md file
+  if ("for_html_file" %in% names(table_details)){
     output_dir <- paste0(output_dir, "temp.md")
   }
 

@@ -132,6 +132,7 @@ render_html <- function(table, table_details, filter){
 
   # Creating md file from which HTML file is made
   if (table_details[["is_reg_table"]]){
+    table_details[["for_html_file"]] <- TRUE
     render_register_md(table, table_details, filter)
   }
 
