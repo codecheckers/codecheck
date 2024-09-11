@@ -67,16 +67,7 @@ add_repository_links_md <- function(register_table) {
 #' @param register_table The register table
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
-#' @param for_html_file Flag for whether we are rendering register md for html file.
-#' Set to FALSE by default. If TRUE, no repo links are added to the repository table.
-render_register_md <- function(register_table, table_details, filter, for_html_file=FALSE) {
-  
-  # If rendering md for html file, we add repo links of the appropriate format
-  register_table <- if (for_html_file) {
-    add_repository_links_html(register_table)
-  } else {
-    add_repository_links_md(register_table)
-  }
+render_register_md <- function(register_table, table_details, filter) {
   
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)

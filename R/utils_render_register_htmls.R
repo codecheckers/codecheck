@@ -1,35 +1,3 @@
-#' Function for adding repository links in the register table for the creation of the html file.
-#' 
-#' @param register_table The register table
-#' @return Register table with adjusted repository links
-add_repository_links_html <- function(register_table) {
-  register_table$Repository <- sapply(
-    X = register_table$Repository,
-    FUN = function(repository) {
-      spec <- parse_repository_spec(repository)
-      # ! Needs refactoring
-      if (!any(is.na(spec))) {
-        urrl <- "#"
-        if (spec[["type"]] == "github") {
-          urrl <- paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
-          paste0("<i class='fa fa-github'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
-        } else if (spec[["type"]] == "osf") {
-          urrl <- paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
-          paste0("<i class='ai ai-osf'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
-        } else if (spec[["type"]] == "gitlab") {
-          urrl <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
-          paste0("<i class='fa fa-gitlab'></i>&nbsp;[", spec[["repo"]], "](", urrl, ")")
-        } else {
-          repository
-        }
-      } else {
-        repository
-      }
-    }
-  )
-  return(register_table)
-}
-
 #' Dynamically generates a html_document.yml with the full paths to the index header, prefix 
 #' and postfix.html files. 
 #' 
@@ -164,7 +132,7 @@ render_html <- function(table, table_details, filter){
 
   # Creating md file from which HTML file is made
   if (table_details[["is_reg_table"]]){
-    render_register_md(table, table_details, filter, for_html_file = TRUE)
+    render_register_md(table, table_details, filter)
   }
 
   else{
