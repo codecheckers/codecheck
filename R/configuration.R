@@ -193,7 +193,7 @@ validate_codecheck_yml <- function(configuration) {
   # Check if the paper_link contains a valid URL. We only check that it starts with https?://
   url_regex <- "^https?://"
   if (!grepl(url_regex, codecheck_yml$paper$reference)) {
-    stop("Validation failed: The codecheck.yml does not contain a valid URL.")
+    warning("The paper reference in the codecheck.yml is not a valid URL")
   } 
   
   # if ORCID are used, they must be without URL prefix and valid form, actual checking requires login, see #11
