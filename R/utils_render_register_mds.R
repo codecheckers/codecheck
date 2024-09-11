@@ -23,45 +23,6 @@ add_markdown_title <- function(table_details, md_table, filter){
   return(md_table)
 }
 
-#' Function for adding repository links in the register table for the creation of the markdown file.
-#' 
-#' @param register_table The register table
-#' @return Register table with adjusted repository links
-add_repository_links_md <- function(register_table) {
-  register_table$Repository <- sapply(
-    X = register_table$Repository,
-    FUN = function(repository) {
-      spec <- parse_repository_spec(repository)
-      if (!any(is.na(spec))) {
-        urrl <- "#"
-        # ! Needs refactoring
-        switch(spec["type"],
-          "github" = {
-            urrl <- paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-          "osf" = {
-            urrl <- paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-          "gitlab" = {
-            urrl <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-
-          # Type is none of the above
-          {
-            repository
-          }
-        )
-      } else {
-        repository
-      }
-    }
-  )
-  return(register_table)
-}
-
 #' Renders register md for a single register_table
 #' 
 #' @param register_table The register table
