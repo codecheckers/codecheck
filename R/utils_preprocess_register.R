@@ -30,23 +30,24 @@ add_paper_links <- function(register_table, register){
     paper_title <- gsub("\n", " ", paper_title)
     paper_link <- gsub("\n$", "", paper_link)
 
-    # Checking if there is a valid url for the paper. If not we just add the title
+    # Checking if there is a valid url for the paper. If not we just add the title as it is
     url_regex <- "^https?://"
     if (!grepl(url_regex, paper_link)){
       warning("The codecheck_yml's paper reference is not a valid url.")
       list_hyperlinks <- c(list_hyperlinks, paper_title)
-      next
     }
 
-    # Creating the hyperlink
-    paper_hyperlink <- paste0(
-      "[",
-      paper_title,
-      "](",
-      paper_link,
-      ")"
-    )
-    list_hyperlinks <- c(list_hyperlinks, paper_hyperlink)
+    # If we have a valid url we add hyperlink
+    else{
+      paper_hyperlink <- paste0(
+        "[",
+        paper_title,
+        "](",
+        paper_link,
+        ")"
+      )
+      list_hyperlinks <- c(list_hyperlinks, paper_hyperlink)
+    }
   }
   # Creating a new "Paper Title" column and moving it next to the "Repository" column
   register_table <- register_table %>% 
