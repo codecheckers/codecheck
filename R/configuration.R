@@ -78,9 +78,6 @@ get_codecheck_yml_osf <- function(x) {
 #' @importFrom httr GET content
 #' @importFrom yaml yaml.load
 get_codecheck_yml_gitlab <- function(x) {
-  # Loading config.R file which is needed for the hyperlink
-  source(system.file("extdata", "config.R", package = "codecheck"))
-
   link <- paste0(CONFIG$HYPERLINKS[["gitlab"]], x, "/-/raw/main/codecheck.yml?inline=false")
   response <- httr::GET(link)
   
