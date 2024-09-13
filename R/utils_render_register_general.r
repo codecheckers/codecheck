@@ -146,12 +146,11 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
 #' @param register_table The register table that needs to be rendered into different files.
 #' @param table_details A list of details related to the table (e.g., output directory, metadata).
 #' @param filter A string specifying the filter applied to the register data.
-#' @param output_type Defaults to "other". A string specifying the desired output format "json" for JSON, 
-#'        "csv" for CSVs and "other" for all other output types.
+#' @param output_type A string specifying the desired output format "json" for JSON, 
+#'        "csv" for CSVs, "md" for MD and "html" for HTMLs.
 #'
 #' @return None. The function generates a file in the specified format.
-render_register <- function(register_table, table_details, filter, output_type="other"){
-
+render_register <- function(register_table, table_details, filter, output_type){
   register_table <- filter_and_drop_register_columns(register_table, filter, output_type)
   
   switch(output_type,
