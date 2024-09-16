@@ -72,6 +72,13 @@ CONFIG$HYPERLINKS <- list(
   zenodo_deposit = "https://zenodo.org/deposit/"
 )
 
+# Plural of venue subcategories 
+CONFIG$VENUE_SUBCAT_PLURAL <- list(
+  conference = "conferences",
+  journal = "journals",
+  community = "communities"
+)
+
 # NON-REGISTER_TABLE
 CONFIG$NON_REG_TITLE_BASE <- "CODECHECK List of"
 CONFIG$NON_REG_TITLE_FNS <- list(
@@ -124,11 +131,7 @@ CONFIG$NON_REG_SUBTEXT <- list(
 
       # Making the venue_name_subtext plural if necessary
       if (no_venues_subcat > 1){
-        venue_name_subtext <- switch (subcat,
-          "conference" = "conferences",
-          "journal" = "journals",
-          "community" = "communities"
-        )
+        venue_name_subtext <- CONFIG$VENUE_SUBCAT_PLURAL[[subcat]]
       }
       return(paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext))
     }
