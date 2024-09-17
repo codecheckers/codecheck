@@ -18,6 +18,9 @@ create_cert_pages <- function(register, force_download = FALSE){
     if (!pdf_exists || force_download) {
       download_cert_pdf(report_link, cert_id)
       convert_cert_pdf_to_jpeg(cert_id)
+
+      # Delaying reqwuests to adhere to request limits
+      Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
 
     # Retrieve the abstract

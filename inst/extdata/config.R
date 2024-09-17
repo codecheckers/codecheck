@@ -165,6 +165,9 @@ CONFIG$FILTER_SUBCAT_COLUMNS <- list(
 # OTHERS
 CONFIG$DICT_ORCID_ID_NAME <- list()
 
+# Delaying requests by 1 second to adhere to the rate limit of 60 requests/ minute for Zenodo
+CONFIG$CERT_REQUEST_DELAY <- 1
+
 # CERT LINKS
 CONFIG$CERT_LINKS <- list(
   osf = "https://api.osf.io/v2/",
