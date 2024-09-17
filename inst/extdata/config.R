@@ -165,7 +165,18 @@ CONFIG$FILTER_SUBCAT_COLUMNS <- list(
 # OTHERS
 CONFIG$DICT_ORCID_ID_NAME <- list()
 
+# CERT LINKS
+CONFIG$CERT_LINKS <- list(
+  osf = "https://api.osf.io/v2/",
+  zenodo = "https://zenodo.org/api/records/"
+)
+
 # DIRECTORIES
+CONFIG$CERTS_DIR <- list(
+  cert_page = "docs/template_cert_page.html",
+  cert_pdf = "docs/certs"
+)
+
 CONFIG$TEMPLATE_DIR<- list(
   "non_reg" = list(
     "postfix" = system.file("extdata", "templates/non_reg_tables/index_postfix_template.html", package = "codecheck"),
