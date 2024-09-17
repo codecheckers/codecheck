@@ -2,7 +2,7 @@
 create_cert_pages <- function(register, force_download = FALSE){
 
   # Read template
-  html_template <- readLines(CONFIG$CERTS_DIR[[cert_page]])
+  html_template <- readLines(CONFIG$CERTS_DIR[[cert_page_template]])
 
   # Loop over each cert in the register table
   for (i in 1:nrow(register)){

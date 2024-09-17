@@ -40,7 +40,7 @@ get_osf_cert_link <- function(report_link, cert_id){
   node_id <- basename(report_link)
 
   # Prepare the API endpoint to access files for a specific node and make the request
-  files_url <- paste0(CONFIG$CERT_LINKS[["osf"]], "nodes/", node_id, "/files/osfstorage/")
+  files_url <- paste0(CONFIG$CERT_LINKS[["osf_api"]], "nodes/", node_id, "/files/osfstorage/")
   response <- GET(files_url)
 
   # Check if the request was successful
@@ -69,7 +69,7 @@ get_osf_cert_link <- function(report_link, cert_id){
 get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   # Set the base URL for the Zenodo API
   record_id <- gsub("zenodo.", "", basename(report_link))
-  record_url <- paste0(CONFIG$CERT_LINKS[["zenodo"]], record_id, "/files")
+  record_url <- paste0(CONFIG$CERT_LINKS[["zenodo_api"]], record_id, "/files")
   
   # Make the API request
   response <- GET(record_url, add_headers(Authorization = paste("Bearer", api_key)))
@@ -98,16 +98,17 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   }
 }
 
-get_abstract <- function(register_repo, url_prefix = "https://doi.org/") {
+get_abstract <- function(register_repo) {
   config_yml <- get_codecheck_yml(register[i, ]$Repo)
+
+  # Retrieving the paper DOI
   paper_link <- config_yml$paper$reference
-  doi <- gsub(url_prefix, "", paper_link)
+  doi <- sub(CONFIG$CERTS_URL_PREFIX, "", paper_link)
 
   # Construct the URL to access the CrossRef API
-  url <- paste0("https://api.crossref.org/works/", doi)
-  
   # Make the HTTP GET request
-  response <- GET(url)
+  api_url <- paste0(CONFIG$CERT_LINKS[["crossref_api"]], doi)
+  response <- GET(api_url)
   
   # Check if the request was successful
   if (status_code(response) == 200) {
@@ -117,9 +118,11 @@ get_abstract <- function(register_repo, url_prefix = "https://doi.org/") {
     if (!is.null(data$message$abstract)) {
       return(data$message$abstract)
     } 
-    return(paste("No abstract available for DOI", doi))
+    warning(paste("No abstract available for DOI", doi))
+    return(NULL)
   } 
   else {
-    return(paste("Failed to retrieve data for DOI", doi))
+    warning(paste("Failed to retrieve data for DOI", doi))
+    return(NULL)
   }
 }
