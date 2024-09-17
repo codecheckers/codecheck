@@ -170,13 +170,16 @@ CONFIG$CERT_REQUEST_DELAY <- 1
 
 # CERT LINKS
 CONFIG$CERT_LINKS <- list(
-  osf = "https://api.osf.io/v2/",
-  zenodo = "https://zenodo.org/api/records/"
+  osf_api = "https://api.osf.io/v2/",
+  zenodo_api = "https://zenodo.org/api/records/",
+  crossref_api = "https://api.crossref.org/works/"
 )
+
+CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"
 
 # DIRECTORIES
 CONFIG$CERTS_DIR <- list(
-  cert_page = "docs/template_cert_page.html",
+  cert_page_template = system.file("extdata", "templates/cert/template_cert_page.html", package = "codecheck"),
   cert_pdf = "docs/certs"
 )
 
