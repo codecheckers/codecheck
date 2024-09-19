@@ -118,9 +118,13 @@ get_abstract <- function(register_repo) {
     if (!is.null(data$message$abstract)) {
       return(data$message$abstract)
     } 
+
+    # No abstract was found, returning NULL
     warning(paste("No abstract available for DOI", doi))
     return(NULL)
   } 
+
+  # Could not retrieve data for DOI
   else {
     warning(paste("Failed to retrieve data for DOI", doi))
     return(NULL)
