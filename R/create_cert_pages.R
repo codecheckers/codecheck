@@ -1,5 +1,5 @@
 
-create_cert_pages <- function(register, force_download = FALSE){
+render_cert_htmls <- function(register, force_download = FALSE){
 
   # Read template
   html_template <- readLines(CONFIG$CERTS_DIR[[cert_page_template]])
@@ -11,7 +11,7 @@ create_cert_pages <- function(register, force_download = FALSE){
     cert_id <- register[i, ]$Certificate
 
     # Define paths for the certificate PDF and JPEG
-    pdf_path <- file.path(CONFIG$CERTS_DIR[["cert_pdf"]], paste0(cert_id, ".pdf"))
+    pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], paste0(cert_id, ".pdf"))
     pdf_exists <- file.exists(pdf_path)
     
     # Download the PDF if it doesn't exist or if force_download is TRUE
@@ -23,16 +23,8 @@ create_cert_pages <- function(register, force_download = FALSE){
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
 
-    # Retrieve the abstract
-    abstract <- get_abstract(register[i, ]$Repo)
-
-    # Add the image tag into the placeholder
-    img_tag <- sprintf('<img src="%s" alt="Description">', image_path)
-    html_file_path <- paste0(cert_pdf_dir, "index.html")
-    html_file <- gsub("<!--placeholder-for-images-->", img_tag, html_template)
-
-    # Write the updated HTML to a file
-    writeLines(html_file, html_file_path)
+    create_cert_md(cert_id)
+    render_cert_html(cert_id)
   }
 }
 
@@ -51,4 +43,69 @@ convert_cert_pdf_to_jpeg <- function(cert_id){
   
   # Read and convert PDF to PNG images
   pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = 300)
+}
+
+
+# Creates a markdown file of the certificate which is then rendered
+# to html
+create_cert_md <- function(cert_id){
+
+  # Loading the template
+  md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template"]])
+
+  # Replacing the title
+  title <- paste(CONFIG$MD_TITLES[["certs"]], cert_id)
+  md_content <- gsub("\\$title\\$", title, md_content)
+
+  # Replacing the list of images for the slider
+  # Identifying the number of cert pages 
+  no_cert_pages <- length(list.files(path = output_dir, pattern = "^cert_.*\\.jpg$", full.names = TRUE))
+  # Creating a list of images to slide through based on number of cert pages
+  list_images <- paste0('"cert_', 1:no_cert_pages, '.jpg"', collapse = ", ")
+
+  # Adding the abstract
+  abstract <- get_abstract(register[i, ]$Repo)
+  md_content <- gsub("\\$abstract\\$", abstract, md_content)
+
+  # Saving the md file
+  temp_dir <- paste0(CONFIG$CERTS_DIR[["cert"]], cert_id, "temp.md")
+  writeLines(md_table, temp_dir)
+}
+
+render_cert_html <- function(cert_id){
+  create_cert_md(cert_id)
+
+  output_dir <- paste0(CONFIG$CERTS_DIR[["cert"]], cert_id)
+  temp_md_path <- paste0(output_dir, "temp.md")
+
+  # Creating html document yml
+  generate_html_document_yml(output_dir)
+  yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
+
+  # Render HTML from markdown
+  rmarkdown::render(
+    input = temp_md_path,
+    output_file = "index.html",
+    output_dir = output_dir,
+    output_yaml = yaml_path
+  )
+
+  # Removing the temporary md file
+  file.remove(temp_md_path)
+
+  # Adjusting the path to the libs folder in the html itself
+  # so that the path to the libs folder refers to the libs folder "docs/libs".
+  # This is done to remove duplicates of "libs" folders.
+  html_file_path <- paste0(output_dir, "index.html")
+  edit_html_lib_paths(html_file_path)
+  
+  # Deleting the libs folder after changing the html lib path
+  unlink(paste0(output_dir, "/libs"), recursive = TRUE)
+}
+
+create_cert_page_section_files <- function(output_dir){
+
+  # Create prefix 
+  prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["prefix"]], warn = FALSE)
+  writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
 }

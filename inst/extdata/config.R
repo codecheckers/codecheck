@@ -48,7 +48,9 @@ CONFIG$MD_TITLES <- list(
     venue_type <- table_details[["subcat"]]
     venue_name <- table_details[["name"]]
     paste0("CODECHECK Register for ", venue_type, " (", venue_name, ")")
-  }
+  },
+
+  "certs" = "CODECHECK Certificate"
 )
 
 CONFIG$HREF_DETAILS <- list(
@@ -180,7 +182,7 @@ CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"
 # DIRECTORIES
 CONFIG$CERTS_DIR <- list(
   cert_page_template = system.file("extdata", "templates/cert/template_cert_page.html", package = "codecheck"),
-  cert_pdf = "docs/certs"
+  cert = "docs/certs/"
 )
 
 CONFIG$TEMPLATE_DIR<- list(
@@ -195,6 +197,12 @@ CONFIG$TEMPLATE_DIR<- list(
     "header" = system.file("extdata", "templates/general/index_header_template.html", package = "codecheck"),
     "prefix" = system.file("extdata", "templates/general/index_prefix_template.html", package = "codecheck"),
     "md_template" = system.file("extdata", "templates/reg_tables/template.md", package = "codecheck")
+  ),
+  "cert" = list(
+    "postfix" = system.file("extdata", "templates/cert/index_postfix_template.html", package = "codecheck"),
+    "header" = system.file("extdata", "templates/general/index_header_template.html", package = "codecheck"),
+    "prefix" = system.file("extdata", "templates/general/index_prefix_template.html", package = "codecheck"),
+    md_template = system.file("extdata", "templates/cert/template.md", package = "codecheck") 
   )
 )
 
