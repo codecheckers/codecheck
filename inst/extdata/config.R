@@ -178,6 +178,7 @@ CONFIG$CERT_LINKS <- list(
 )
 
 CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"
+CONFIG$CERT_DPI <- 500 
 
 # DIRECTORIES
 CONFIG$CERTS_DIR <- list(
