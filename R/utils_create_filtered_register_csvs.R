@@ -43,7 +43,7 @@ create_filtered_reg_csvs <- function(register, filter_by){
       register_key <- register_keys[[filter_col_name]][i]
       filtered_register <- filtered_register_list[[i]]
       table_details <- generate_table_details(register_key, filtered_register, filter)
-      filtered_register <- filter_and_drop_register_columns(filtered_register, filter)
+      filtered_register <- filter_and_drop_register_columns(filtered_register, filter, file_type = "csv")
       output_dir <- paste0(table_details[["output_dir"]], "register.csv")
       write.csv(filtered_register, output_dir, row.names=FALSE)
     }

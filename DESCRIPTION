@@ -1,6 +1,6 @@
 Package: codecheck
 Title: Helper Functions for CODECHECK Project
-Version: 0.8.0
+Version: 0.9.0
 Authors@R: 
     c(person(given = "Stephen",
             family = "Eglen",
