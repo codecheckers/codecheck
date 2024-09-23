@@ -182,7 +182,7 @@ generate_output_dir <- function(filter, table_details = list()) {
     # We have filtered register tables
     else{
       table_name <- table_details[["slug_name"]]
-
+      
       # The table belongs to a subcat so we need a nested folder
       if ("subcat" %in% names(table_details)){
         plural_subcat <- CONFIG$VENUE_SUBCAT_PLURAL[[table_details[["subcat"]]]]
@@ -199,7 +199,8 @@ generate_output_dir <- function(filter, table_details = list()) {
   # We have non register tables
   else{
     if ("subcat" %in% names(table_details)){
-      output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/")
+      plural_subcat <- CONFIG$VENUE_SUBCAT_PLURAL[[table_details[["subcat"]]]]
+      output_dir <- paste0(base_dir, filter, "/", plural_subcat, "/")
     }
 
     else{
