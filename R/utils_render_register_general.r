@@ -185,7 +185,8 @@ generate_output_dir <- function(filter, table_details = list()) {
 
       # The table belongs to a subcat so we need a nested folder
       if ("subcat" %in% names(table_details)){
-        output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/", table_name, "/")
+        plural_subcat <- CONFIG$VENUE_SUBCAT_PLURAL[[table_details[["subcat"]]]]
+        output_dir <- paste0(base_dir, filter, "/", plural_subcat, "/", table_name, "/")
       }
 
       # The table does not belong to a subcat
