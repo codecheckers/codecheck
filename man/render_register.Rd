@@ -13,7 +13,8 @@ render_register(register_table, table_details, filter, output_type)
 
 \item{filter}{A string specifying the filter applied to the register data.}
 
-\item{output_type}{A string specifying the desired output format ("md" for Markdown, "html" for HTML, "json" for JSON).}
+\item{output_type}{A string specifying the desired output format "json" for JSON, 
+"csv" for CSVs, "md" for MD and "html" for HTMLs.}
 }
 \value{
 None. The function generates a file in the specified format.
