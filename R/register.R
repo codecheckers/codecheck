@@ -59,6 +59,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 register_check <- function(register = read.csv("register.csv", as.is = TRUE),
                            from = 1,
                            to = nrow(register)) {
+  # Loading config.R file
+  source(system.file("extdata", "config.R", package = "codecheck"))
+
   for (i in seq(from = from, to = to)) {
     cat("Checking", toString(register[i, ]), "\n")
     entry <- register[i, ]

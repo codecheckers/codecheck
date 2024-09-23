@@ -23,79 +23,19 @@ add_markdown_title <- function(table_details, md_table, filter){
   return(md_table)
 }
 
-#' Function for adding repository links in the register table for the creation of the markdown file.
-#' 
-#' @param register_table The register table
-#' @return Register table with adjusted repository links
-add_repository_links_md <- function(register_table) {
-  register_table$Repository <- sapply(
-    X = register_table$Repository,
-    FUN = function(repository) {
-      spec <- parse_repository_spec(repository)
-      if (!any(is.na(spec))) {
-        urrl <- "#"
-        # ! Needs refactoring
-        switch(spec["type"],
-          "github" = {
-            urrl <- paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-          "osf" = {
-            urrl <- paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-          "gitlab" = {
-            urrl <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
-            paste0("[", spec[["repo"]], "](", urrl, ")")
-          },
-
-          # Type is none of the above
-          {
-            repository
-          }
-        )
-      } else {
-        repository
-      }
-    }
-  )
-  return(register_table)
-}
-
 #' Renders register md for a single register_table
 #' 
 #' @param register_table The register table
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
-#' @param for_html_file Flag for whether we are rendering register md for html file.
-#' Set to FALSE by default. If TRUE, no repo links are added to the repository table.
-render_register_md <- function(register_table, table_details, filter, for_html_file=FALSE) {
-  
-  # If rendering md for html file, we add repo links of the appropriate format
-  register_table <- if (for_html_file) {
-    add_repository_links_html(register_table)
-  } else {
-    add_repository_links_md(register_table)
-  }
+render_register_md <- function(register_table, table_details, filter) {
   
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)
   output_dir <- table_details[["output_dir"]]
-  save_md_table(output_dir, md_table, for_html_file)
-}
 
-#' Save markdown table to a file
-#'
-#' The file is saved as either a temporary file (`temp.md`) or as `register.md` depending on 
-#' whether it is being rendered for an HTML file.
-#'
-#' @param output_dir The output_dir
-#' @param md_table The markdown table to be saved.
-#' @param for_html_file A logical flag indicating whether the markdown is being rendered for an HTML file. 
-#'        If TRUE, the file is saved as `temp.md`. Default is FALSE.
-save_md_table <- function(output_dir, md_table, for_html_file){
-  # If rendering md for html file we create a temp file
-  if (for_html_file){
+  # Saving the md file
+  if ("for_html_file" %in% names(table_details)){
     output_dir <- paste0(output_dir, "temp.md")
   }
 
