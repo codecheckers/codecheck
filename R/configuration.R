@@ -78,7 +78,7 @@ get_codecheck_yml_osf <- function(x) {
 #' @importFrom httr GET content
 #' @importFrom yaml yaml.load
 get_codecheck_yml_gitlab <- function(x) {
-  link <- paste0(CONFIG$HYPERLINKS[["gitlab"]], x, "/-/raw/main/codecheck.yml?inline=false")
+  link <- paste0("https://gitlab.com/", x, "/-/raw/main/codecheck.yml?inline=false")
   response <- httr::GET(link)
   
   if (response$status == 200) {
