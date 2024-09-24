@@ -5,14 +5,14 @@ render_cert_htmls <- function(register_table, register, force_download = FALSE){
   html_template <- readLines(CONFIG$CERTS_DIR[["cert_page_template"]])
 
   # Loop over each cert in the register table
-  for (i in 1:1){
-  # for (i in 1:nrow(register)){
+  # for (i in 1:1){
+  for (i in 1:nrow(register)){
     # Retrieving report link and cert id
     report_link <- register_table[i, ]$Report
     cert_id <- register_table[i, ]$Certificate
 
     # Define paths for the certificate PDF and JPEG
-    pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id,"cert.pdf")
+    pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf")
     pdf_exists <- file.exists(pdf_path)
     
     # Download the PDF if it doesn't exist or if force_download is TRUE
@@ -31,7 +31,6 @@ render_cert_htmls <- function(register_table, register, force_download = FALSE){
 
     create_cert_md(cert_id, register[i, ]$Repo)
     render_cert_html(cert_id)
-    stop()
   }
 }
 
@@ -74,9 +73,12 @@ create_cert_md <- function(cert_id, repo_link){
   paper_authors <- paste(lapply(config_yml$paper$authors, function(author) {
     if (!is.null(author$ORCID) && author$ORCID != "") {
       # If ORCID exists, create a hyperlink
-      paste0("[", author$name, "](https://orcid.org/", author$ORCID, ")")
-    } else {
-      # If ORCID is missing, just return the name
+      paste0("[", author$name, "](", 
+      CONFIG$HYPERLINKS["orcid"], author$ORCID, ")")
+    } 
+    
+    # If ORCID is missing, just return the name
+    else {
       author$name
     }
   }), collapse = ", ")
@@ -84,8 +86,9 @@ create_cert_md <- function(cert_id, repo_link){
 
   # Adding the Codechecker name, Date of codecheck, and Codecheck repo
   codechecker_names <- paste(lapply(config_yml$codechecker, function(checker) {
-    paste0("[", checker$name, "](https://orcid.org/", checker$ORCID, ")")
-  }), collapse = ", ")
+    paste0("[", checker$name, "](", 
+    CONFIG$HYPERLINKS["orcid"], checker$ORCID, ")")
+    }), collapse = ", ")
   md_content <- gsub("\\$codechecker_name\\$", codechecker_names, md_content)
   
   md_content <- gsub("\\$codecheck_date\\$", config_yml$check_time, md_content)
@@ -117,9 +120,10 @@ render_cert_html <- function(cert_id){
 
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")
+  
   # Creating html document yml
-  create_cert_page_section_files(output_dir)
-  generate_html_document_yml(output_dir)
+  create_cert_page_section_files(paste0(output_dir, "/"))
+  generate_html_document_yml(paste0(output_dir, "/"))
 
   yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml", fsep="")))
   # Render HTML from markdown
