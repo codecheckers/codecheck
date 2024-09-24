@@ -193,7 +193,7 @@ CONFIG$CERT_DPI <- 500
 # DIRECTORIES
 CONFIG$CERTS_DIR <- list(
   cert_page_template = system.file("extdata", "templates/cert/template_cert_page.html", package = "codecheck"),
-  cert = "docs/certs/"
+  cert = "docs/certs"
 )
 
 CONFIG$TEMPLATE_DIR<- list(

@@ -2,6 +2,18 @@
 title: $title$
 ---
 
+<style>
+  h1 {
+    margin-bottom: 10px; 
+  }
+</style>
+
+**Paper title**: $paper_title$  
+**Paper authors**: $paper_authors$  
+**Codechecker name**: $codechecker_name$  
+**Date of codecheck**: $codecheck_date$  
+**Codecheck repo**: $codecheck_repo$
+
 <div style="display: flex; align-items: flex-start; gap: 20px;">
 
   <!-- Image Slider Section -->

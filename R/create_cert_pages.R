@@ -11,23 +11,19 @@ render_cert_htmls <- function(register_table, register, force_download = FALSE){
     report_link <- register_table[i, ]$Report
     cert_id <- register_table[i, ]$Certificate
 
-    # if (!(cert_id == "2021-001")){
-    #   next
-    # }
-
     # Define paths for the certificate PDF and JPEG
-    pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], paste0(cert_id, ".pdf"))
+    pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id,"cert.pdf")
     pdf_exists <- file.exists(pdf_path)
     
     # Download the PDF if it doesn't exist or if force_download is TRUE
     if (!pdf_exists || force_download) {
-      # download_cert_status <- download_cert_pdf(report_link, cert_id)
+      download_cert_status <- download_cert_pdf(report_link, cert_id)
 
-      # # Failed in downloading cert
-      # if (download_cert_status == 0){
-      #   next
-      # }
-      # convert_cert_pdf_to_jpeg(cert_id)
+      # Failed in downloading cert
+      if (download_cert_status == 0){
+        next
+      }
+      convert_cert_pdf_to_jpeg(cert_id)
 
       # Delaying reqwuests to adhere to request limits
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
@@ -41,7 +37,7 @@ render_cert_htmls <- function(register_table, register, force_download = FALSE){
 convert_cert_pdf_to_jpeg <- function(cert_id){
 
   # Checking if the certs dir exist
-  cert_dir <- paste0(CONFIG$CERTS_DIR[["cert"]], cert_id, "/") 
+  cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id) 
 
   # Get the number of pages in the PDF
   cert_pdf_path <- paste0(cert_dir, "cert.pdf")
@@ -66,8 +62,38 @@ create_cert_md <- function(cert_id, repo_link){
   title <- paste(CONFIG$MD_TITLES[["certs"]], cert_id)
   md_content <- gsub("\\$title\\$", title, md_content)
 
+  # Adding other details from the codecheck.yml
+  config_yml <- get_codecheck_yml(repo_link)
+
+  # Formatting the paper title as hyperlink
+  paper_title_hyperlink <- paste0("[", config_yml$paper$title, "]", "(", config_yml$paper$reference, ")")
+  md_content <- gsub("\\$paper_title\\$", paper_title_hyperlink, md_content)
+
+  # Formatting the authors list
+  paper_authors <- paste(lapply(config_yml$paper$authors, function(author) {
+    if (!is.null(author$ORCID) && author$ORCID != "") {
+      # If ORCID exists, create a hyperlink
+      paste0("[", author$name, "](https://orcid.org/", author$ORCID, ")")
+    } else {
+      # If ORCID is missing, just return the name
+      author$name
+    }
+  }), collapse = ", ")
+  md_content <- gsub("\\$paper_authors\\$", paper_authors, md_content)
+
+  # Adding the Codechecker name, Date of codecheck, and Codecheck repo
+  codechecker_names <- paste(lapply(config_yml$codechecker, function(checker) {
+    paste0("[", checker$name, "](https://orcid.org/", checker$ORCID, ")")
+  }), collapse = ", ")
+  md_content <- gsub("\\$codechecker_name\\$", codechecker_names, md_content)
+  
+  md_content <- gsub("\\$codecheck_date\\$", config_yml$check_time, md_content)
+
+  # Adjusting the repo link
+  md_content <- gsub("\\$codecheck_repo\\$", repo_link, md_content)
+
   # Identifying the number of cert pages 
-  cert_dir <- paste0(CONFIG$CERTS_DIR[["cert"]], cert_id, "/")
+  cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   no_cert_pages <- length(list.files(path = cert_dir, pattern = "^cert_.*\\.png$", full.names = TRUE))
 
   # Creating a list of images to slide through based on number of cert pages
@@ -82,21 +108,19 @@ create_cert_md <- function(cert_id, repo_link){
   md_content <- gsub("\\$abstract\\$", abstract, md_content)
 
   # Saving the md file
-  md_file_path <- paste0(cert_dir, "temp.md")
+  md_file_path <- file.path(cert_dir, "temp.md")
   writeLines(md_content, md_file_path)
 }
 
 render_cert_html <- function(cert_id){
 
-  output_dir <- paste0(CONFIG$CERTS_DIR[["cert"]], cert_id, "/")
-  temp_md_path <- paste0(output_dir, "temp.md")
-
+  output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
+  temp_md_path <- file.path(output_dir, "temp.md")
   # Creating html document yml
   create_cert_page_section_files(output_dir)
   generate_html_document_yml(output_dir)
 
-  yaml_path <- normalizePath(file.path(getwd(), paste0(output_dir, "html_document.yml")))
-  
+  yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml", fsep="")))
   # Render HTML from markdown
   rmarkdown::render(
     input = temp_md_path,
@@ -111,11 +135,11 @@ render_cert_html <- function(cert_id){
   # Adjusting the path to the libs folder in the html itself
   # so that the path to the libs folder refers to the libs folder "docs/libs".
   # This is done to remove duplicates of "libs" folders.
-  html_file_path <- paste0(output_dir, "index.html")
+  html_file_path <- file.path(output_dir, "index.html")
   edit_html_lib_paths(html_file_path)
   
   # Deleting the libs folder after changing the html lib path
-  unlink(paste0(output_dir, "/libs"), recursive = TRUE)
+  unlink(file.path(output_dir, "libs"), recursive = TRUE)
 }
 
 create_cert_page_section_files <- function(output_dir){
