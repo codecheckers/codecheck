@@ -9,9 +9,7 @@ paper:
     - name: Roland J. Baddeley
     - name: Leslie S. Smith
       ORCID: 0000-0002-3716-8013
-  reference: >
-    Network (1992) 3:61-70
-    http://pdfs.semanticscholar.org/7dcf/a42cfe3b59becb441844b72558b361693608.pdf
+  reference: http://pdfs.semanticscholar.org/7dcf/a42cfe3b59becb441844b72558b361693608.pdf
 
 manifest:
   - file: Figure2.png

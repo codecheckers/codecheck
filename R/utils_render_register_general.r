@@ -10,7 +10,6 @@ create_original_register_files <- function(register_table, outputs){
   for (output_type in outputs){
     table_details <- list(is_reg_table = TRUE)
     table_details[["output_dir"]] <- generate_output_dir(filter, table_details)
-    register_table <- filter_and_drop_register_columns(register_table, filter)
     render_register(register_table, table_details, filter, output_type)
   }
 }
@@ -30,7 +29,6 @@ create_register_files <- function(register_table, filter_by, outputs){
 
   # Creating the original register file
   create_original_register_files(register_table, outputs)
-  
   # Generating filtered register table files
   # For each filter type we created the nested register tables first
   for (filter in filter_by){
@@ -58,7 +56,6 @@ create_register_files <- function(register_table, filter_by, outputs){
 
     # Get the group names (keys) based on the filter names
     register_keys <- grouped_registers %>% group_keys()
-
     # Looping over each of the output types
     for (output_type in outputs){
       for (i in seq_along(filtered_register_list)) {
@@ -68,8 +65,6 @@ create_register_files <- function(register_table, filter_by, outputs){
 
         table_details <- generate_table_details(register_key, filtered_table, filter)
 
-        # Dropping columns that are redundant
-        filtered_table <- filter_and_drop_register_columns(filtered_table, filter)
         render_register(filtered_table, table_details, filter, output_type)
       }
     }
@@ -84,12 +79,14 @@ create_register_files <- function(register_table, filter_by, outputs){
 #'
 #' @param register_table The register table
 #' @param filter A string specifying the filter to apply (e.g., "venues", "codecheckers").
+#' @param file_type The type of file we need to render the register for. 
+#'        The columns to keep depend on the file type
 #'
 #' @return The filtered register table with only the necessary columns retained.
-filter_and_drop_register_columns <- function(register_table, filter) {
+filter_and_drop_register_columns <- function(register_table, filter, file_type) {
   
   # Step 1: Columns that we want to keep
-  columns_to_keep <- CONFIG$REGISTER_COLUMNS
+  columns_to_keep <- CONFIG$REGISTER_COLUMNS[[file_type]]
   
   # Initialize final columns to columns_to_keep in case no filter is applied
   final_columns <- intersect(columns_to_keep, names(register_table))
@@ -149,10 +146,13 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
 #' @param register_table The register table that needs to be rendered into different files.
 #' @param table_details A list of details related to the table (e.g., output directory, metadata).
 #' @param filter A string specifying the filter applied to the register data.
-#' @param output_type A string specifying the desired output format ("md" for Markdown, "html" for HTML, "json" for JSON).
+#' @param output_type A string specifying the desired output format "json" for JSON, 
+#'        "csv" for CSVs, "md" for MD and "html" for HTMLs.
 #'
 #' @return None. The function generates a file in the specified format.
 render_register <- function(register_table, table_details, filter, output_type){
+  register_table <- filter_and_drop_register_columns(register_table, filter, output_type)
+  
   switch(output_type,
     "md" = render_register_md(register_table, table_details, filter),
     "html" = render_html(register_table, table_details, filter),
@@ -182,10 +182,11 @@ generate_output_dir <- function(filter, table_details = list()) {
     # We have filtered register tables
     else{
       table_name <- table_details[["slug_name"]]
-
+      
       # The table belongs to a subcat so we need a nested folder
       if ("subcat" %in% names(table_details)){
-        output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/", table_name, "/")
+        plural_subcat <- CONFIG$VENUE_SUBCAT_PLURAL[[table_details[["subcat"]]]]
+        output_dir <- paste0(base_dir, filter, "/", plural_subcat, "/", table_name, "/")
       }
 
       # The table does not belong to a subcat
@@ -198,7 +199,8 @@ generate_output_dir <- function(filter, table_details = list()) {
   # We have non register tables
   else{
     if ("subcat" %in% names(table_details)){
-      output_dir <- paste0(base_dir, filter, "/", table_details[["subcat"]], "/")
+      plural_subcat <- CONFIG$VENUE_SUBCAT_PLURAL[[table_details[["subcat"]]]]
+      output_dir <- paste0(base_dir, filter, "/", plural_subcat, "/")
     }
 
     else{

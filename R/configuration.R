@@ -78,10 +78,7 @@ get_codecheck_yml_osf <- function(x) {
 #' @importFrom httr GET content
 #' @importFrom yaml yaml.load
 get_codecheck_yml_gitlab <- function(x) {
-  # Loading config.R file which is needed for the hyperlink
-  source(system.file("extdata", "config.R", package = "codecheck"))
-
-  link <- paste0(CONFIG$HYPERLINKS[["gitlab"]], x, "/-/raw/main/codecheck.yml?inline=false")
+  link <- paste0("https://gitlab.com/", x, "/-/raw/main/codecheck.yml?inline=false")
   response <- httr::GET(link)
   
   if (response$status == 200) {
@@ -189,6 +186,12 @@ validate_codecheck_yml <- function(configuration) {
   # the report MUST be a valid DOI
   assertthat::assert_that(codecheck_yml$report %in% rorcid::check_dois(codecheck_yml$report)$good,
                           msg = paste0(codecheck_yml$report, " is not a valid DOI"))
+
+  # Check if the paper_link contains a valid URL. We only check that it starts with https?://
+  url_regex <- "^https?://"
+  if (!grepl(url_regex, codecheck_yml$paper$reference)) {
+    warning("The paper reference in the codecheck.yml is not a valid URL")
+  } 
   
   # if ORCID are used, they must be without URL prefix and valid form, actual checking requires login, see #11
   orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"

@@ -11,6 +11,51 @@ register_clear_cache <- function() {
   unlink(path, recursive = TRUE)
 }
 
+#' Function for adding clickable links to the paper for each entry in the register table.
+#' 
+#' @param register_table The register table
+#' @param register The register from the register.csv file
+#' @return The adjusted register table
+add_paper_links <- function(register_table, register){
+  list_hyperlinks <- c()
+
+  # Looping over the entries in the register
+  for (i in seq_len(nrow(register))) {
+    # Retrieving the link to the paper 
+    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+    paper_link <- config_yml[["paper"]][["reference"]]
+    paper_title <- config_yml[["paper"]][["title"]]
+
+    # Removing new lines from paper title and link
+    paper_title <- gsub("\n", " ", paper_title)
+    paper_link <- gsub("\n$", "", paper_link)
+
+    # Checking if there is a valid url for the paper. If not we just add the title as it is
+    url_regex <- "^https?://"
+    if (!grepl(url_regex, paper_link)){
+      warning("The codecheck_yml's paper reference is not a valid url.")
+      list_hyperlinks <- c(list_hyperlinks, paper_title)
+    }
+
+    # If we have a valid url we add hyperlink
+    else{
+      paper_hyperlink <- paste0(
+        "[",
+        paper_title,
+        "](",
+        paper_link,
+        ")"
+      )
+      list_hyperlinks <- c(list_hyperlinks, paper_hyperlink)
+    }
+  }
+  # Creating a new "Paper Title" column and moving it next to the "Repository" column
+  register_table <- register_table %>% 
+    mutate(`Paper Title` = list_hyperlinks) %>%
+    relocate(`Paper Title`, .after = Repository)
+  return(register_table)
+}
+
 #' Function for adding clickable links to the report for each entry in the register table.
 #' 
 #' @param register_table The register table
@@ -144,5 +189,6 @@ preprocess_register <- function(register, filter_by) {
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
     register_table <- add_check_time(register_table, register)
+    register_table <- add_paper_links(register_table, register)
     return(register_table)
 }

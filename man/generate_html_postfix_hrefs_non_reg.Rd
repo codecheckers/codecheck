@@ -8,6 +8,8 @@ generate_html_postfix_hrefs_non_reg(filter, table_details)
 }
 \arguments{
 \item{filter}{The filter being used such as "venues" or "codecheckers"}
+
+\item{table_details}{A list of metadata about the table (e.g., title, subtext, extra text).}
 }
 \value{
 A list of the hrefs.

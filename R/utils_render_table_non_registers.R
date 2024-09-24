@@ -80,7 +80,7 @@ generate_table_details_non_reg <- function(table, filter, subcat = NULL){
 #' Generates postfix hrefs for the venues/ codecheckers list pages
 #' 
 #' @param filter The filter being used such as "venues" or "codecheckers"
-#' @param table_details
+#' @param table_details A list of metadata about the table (e.g., title, subtext, extra text).
 #' @return A list of the hrefs.
 generate_html_postfix_hrefs_non_reg <- function(filter, table_details){  
   # Case we do not have subcat
