@@ -31,6 +31,7 @@ render_cert_htmls <- function(register_table, register, force_download = FALSE){
 
     create_cert_md(cert_id, register[i, ]$Repo)
     render_cert_html(cert_id)
+    stop()
   }
 }
 
@@ -90,7 +91,7 @@ create_cert_md <- function(cert_id, repo_link){
   md_content <- gsub("\\$codecheck_date\\$", config_yml$check_time, md_content)
 
   # Adjusting the repo link
-  md_content <- gsub("\\$codecheck_repo\\$", repo_link, md_content)
+  md_content <- add_repository_hyperlink(md_content, repo_link)
 
   # Identifying the number of cert pages 
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
@@ -155,4 +156,38 @@ create_cert_page_section_files <- function(output_dir){
   # Create header
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["header"]], warn = FALSE)
   writeLines(header_template, paste0(output_dir, "index_header.html"))
+}
+
+add_repository_hyperlink <- function(md_content, repo_link) {
+  
+  spec <- parse_repository_spec(repo_link)
+  if (!any(is.na(spec))) {
+    urrl <- "#"
+
+    switch(spec["type"],
+      "github" = {
+        repo_link <- paste0("https://github.com/", spec[["repo"]])
+        paste0("[", spec[["repo"]], "](", repo_link, ")")
+      },
+      "osf" = {
+        repo_link <- paste0("https://osf.io/", spec[["repo"]])
+        paste0("[", spec[["repo"]], "](", repo_link, ")")
+      },
+      "gitlab" = {
+        repo_link <- paste0("https://gitlab.com/", spec[["repo"]])
+        paste0("[", spec[["repo"]], "](", repo_link, ")")
+      },
+
+      # Type is none of the above
+      {
+        repo_link
+      }
+    )
+  } else {
+    repository
+  }
+
+  md_content <- gsub("\\$codecheck_repo\\$", repo_link, md_content)
+
+  return(md_content)
 }
