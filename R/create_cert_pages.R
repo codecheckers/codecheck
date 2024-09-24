@@ -1,5 +1,7 @@
 
 render_cert_htmls <- function(register_table, register, force_download = FALSE){
+  # Keeping a list of failed cert pages. No hyperlinks will be added for these certs
+  CONFIG$LIST_FAILED_CERT_PAGES <- list()
 
   # Read template
   html_template <- readLines(CONFIG$CERTS_DIR[["cert_page_template"]])
@@ -14,37 +16,39 @@ render_cert_htmls <- function(register_table, register, force_download = FALSE){
     # Define paths for the certificate PDF and JPEG
     pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf")
     pdf_exists <- file.exists(pdf_path)
-    
+
     # Download the PDF if it doesn't exist or if force_download is TRUE
     if (!pdf_exists || force_download) {
       download_cert_status <- download_cert_pdf(report_link, cert_id)
 
       # Failed in downloading cert
       if (download_cert_status == 0){
+        CONFIG$LIST_FAILED_CERT_PAGES <- append(CONFIG$LIST_FAILED_CERT_PAGES, cert_id)
+        Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
         next
       }
+
+      # Proceeding to convert pdfs to jpegs
       convert_cert_pdf_to_jpeg(cert_id)
 
       # Delaying reqwuests to adhere to request limits
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
-
     create_cert_md(cert_id, register[i, ]$Repo)
     render_cert_html(cert_id)
   }
 }
 
 convert_cert_pdf_to_jpeg <- function(cert_id){
-
   # Checking if the certs dir exist
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id) 
 
   # Get the number of pages in the PDF
-  cert_pdf_path <- paste0(cert_dir, "cert.pdf")
+  cert_pdf_path <- file.path(cert_dir, "cert.pdf")
   num_pages <- pdftools::pdf_info(cert_pdf_path)$pages
 
   # Create image filenames
-  image_filenames <- sapply(1:num_pages, function(page) paste0(cert_dir, "cert_", page, ".png"))
+  image_filenames <- sapply(1:num_pages, function(page) file.path(cert_dir, paste0("cert_", page, ".png")))
   
   # Read and convert PDF to PNG images
   pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = CONFIG$CERT_DPI)
@@ -125,7 +129,8 @@ render_cert_html <- function(cert_id){
   create_cert_page_section_files(paste0(output_dir, "/"))
   generate_html_document_yml(paste0(output_dir, "/"))
 
-  yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml", fsep="")))
+  yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml")))
+
   # Render HTML from markdown
   rmarkdown::render(
     input = temp_md_path,
@@ -170,15 +175,15 @@ add_repository_hyperlink <- function(md_content, repo_link) {
 
     switch(spec["type"],
       "github" = {
-        repo_link <- paste0("https://github.com/", spec[["repo"]])
+        repo_link <- paste0(CONFIG$HYPERLINKS[["github"]], spec[["repo"]])
         paste0("[", spec[["repo"]], "](", repo_link, ")")
       },
       "osf" = {
-        repo_link <- paste0("https://osf.io/", spec[["repo"]])
+        repo_link <- paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
         paste0("[", spec[["repo"]], "](", repo_link, ")")
       },
       "gitlab" = {
-        repo_link <- paste0("https://gitlab.com/", spec[["repo"]])
+        repo_link <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
         paste0("[", spec[["repo"]], "](", repo_link, ")")
       },
 
