@@ -15,7 +15,7 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
     report_link <- register_table[i, ]$Report
     cert_hyperlink <- register_table[i, ]$Certificate
     cert_id <- sub("\\[(.*)\\]\\(.*\\)", "\\1", cert_hyperlink)
-    if (cert_id != "2020-002"){
+    if (cert_id != "2020-001"){
       next
     }
     print(paste("CERT", cert_id))
@@ -31,6 +31,7 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
       if (download_cert_status == 0){
         CONFIG$LIST_FAILED_CERT_PAGES <- append(CONFIG$LIST_FAILED_CERT_PAGES, cert_id)
         Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
+        print(cert_id)
         next
       }
 
@@ -40,8 +41,7 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
       # Delaying reqwuests to adhere to request limits
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
-    create_cert_md(cert_id, register_table[i, ]$Repository)
-    render_cert_html(cert_id)
+    render_cert_html(cert_id, register_table[i, ]$Repository)
     stop()
   }
   print(CONFIG$LIST_FAILED_ABSTRACT)
@@ -71,14 +71,18 @@ create_cert_md <- function(cert_id, repo_link){
   # Based on this we load the correct template
   abstract <- get_abstract(repo_link)
 
-  if (is.null(abstract)){
+  if (is.null(abstract$text)){
     CONFIG$LIST_FAILED_ABSTRACT <- append(CONFIG$LIST_FAILED_ABSTRACT, cert_id)
     md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template_no_abstract"]])
   }
 
   else{
     md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template"]])
-    md_content <- gsub("\\$abstract\\$", abstract, md_content)
+    md_content <- gsub("\\$abstract\\$", abstract$text, md_content)
+    md_content <- gsub("\\$abstract_platform\\$", abstract$source, md_content)
+
+    platform_link <- CONFIG$HYPERLINKS[[abstract$source]]
+    md_content <- gsub("\\$abstract_platform_link\\$", platform_link, md_content)
   }
 
   # Replacing the title
@@ -136,7 +140,8 @@ create_cert_md <- function(cert_id, repo_link){
   writeLines(md_content, md_file_path)
 }
 
-render_cert_html <- function(cert_id){
+render_cert_html <- function(cert_id, repo_link){
+  create_cert_md(cert_id, repo_link)
 
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")

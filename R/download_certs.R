@@ -50,12 +50,9 @@ get_cert_link <- function(report_link, cert_id){
 
   if (grepl("zenodo", report_link, ignore.case = TRUE)){
     cert_download_url <- get_zenodo_cert_link(report_link, cert_id)
-    print(cert_download_url) 
   }
 
   else if (grepl("OSF", report_link, ignore.case = TRUE)) {
-    cert_download_url <- get_osf_cert_link(report_link, cert_id)
-    print("osf")
   }
 
   else(
@@ -67,7 +64,6 @@ get_cert_link <- function(report_link, cert_id){
 get_osf_cert_link <- function(report_link, cert_id){
   # Retrieve the OSF project node ID 
   node_id <- basename(report_link)
-  print("Retrieving OSF cert link")
   # Prepare the API endpoint to access files for a specific node
   files_url <- paste0(CONFIG$CERT_LINKS[["osf_api"]], "nodes/", node_id, "/files/osfstorage/")
 
@@ -136,7 +132,6 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   record_url <- paste0(CONFIG$CERT_LINKS[["zenodo_api"]], record_id, "/files")
   
   # Make the API request
-  print(record_url)
   response <- GET(record_url, httr::add_headers(Authorization = paste("Bearer", api_key)))
   
   # Check if the request was successful
@@ -146,20 +141,14 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
     record_data <- fromJSON(content(response, "text", encoding = "UTF-8"))
     
     files_list <- record_data$entries
-    print("List of files")
-    # print(files_list)
 
-    print(nrow(files_list))
-    # print(files_list$key)
     # Check for files in the record
     if (!is.null(files_list)) {
       pdf_files <- files_list[grepl("\\.pdf$", files_list$key, ignore.case = TRUE), ]
-      # print(names(pdf_files))
       if (nrow(pdf_files) > 1) {
         # Check if there's a file named "codecheck.pdf". Generally this is the name of the
         # cert file
         codecheck_file <- pdf_files[pdf_files$key == "codecheck.pdf", ]
-        # print(codecheck_file)
         # If the file "codecheck.pdf" exists, return it
         if (nrow(codecheck_file) == 1) {
           return (codecheck_file$links$content)
@@ -177,8 +166,6 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
         if (nrow(zip_files) == 1) {
           # Download the ZIP file
           zip_file_url <- zip_files$links$content
-          print("downloading zip folder")
-          print(zip_file_url)
           return(zip_file_url)
         }
 
@@ -196,24 +183,34 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   }
 }
 
-get_abstract <- function(register_repo){
-  abstract <- get_abstract_crossref(register_repo)
-  print("crossref")
-  print(abstract)
-  if (is.null(abstract)){
-    abstract <- get_abstract_openalex(register_repo)
-    print("openalex")
-    print(abstract)
+get_abstract <- function(register_repo) {
+  # Initialize the abstract source and text
+  abstract_source <- NULL
+  abstract_text <- NULL
+
+  # Try to get the abstract from Crossref first
+  abstract_text <- get_abstract_text_crossref(register_repo)
+
+  # If Crossref fails, try OpenAlex
+  if (is.null(abstract_text)) {
+    abstract_text <- get_abstract_text_openalex(register_repo)
+    if (!is.null(abstract_text)) {
+      abstract_source <- "OpenAlex"
+    }
+  } 
+  # Crossref did not fail, adding cross ref as the source
+  else {
+    abstract_source <- "CrossRef"
   }
 
-  if (is.null(abstract)){
-    print(register_repo)
-    stop()
-  }
-  return(abstract)
+  # Return both the source and the abstract text as a list
+  return(list(
+    source = abstract_source,
+    text = abstract_text
+  ))
 }
 
-get_abstract_openalex <- function(register_repo){
+get_abstract_text_openalex <- function(register_repo){
 
   abstract <- NULL
 
@@ -222,6 +219,8 @@ get_abstract_openalex <- function(register_repo){
 
   # First, attempt to retrieve the abstract using the DOI directly
   doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], doi)
+  # Correcting the api_url if it is malformed
+  doi_api_url <- gsub("\\n", "", doi_api_url)
   response <- httr::GET(doi_api_url)
 
   if (status_code(response) != 200){
@@ -230,12 +229,9 @@ get_abstract_openalex <- function(register_repo){
     redirect_doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], redirect_doi)
     response <- httr::GET(redirect_doi_api_url)
   }
-  print("IN OPENALEX")
-  print(doi_api_url)
 
   if (status_code(response) == 200){
     data <- httr::content(response, "parsed")
-    print(names(data))
     if ("abstract_inverted_index" %in% names(data)){
       # Extract the inverted index from the response
       inverted_index <- data$abstract_inverted_index
@@ -264,23 +260,24 @@ get_abstract_openalex <- function(register_repo){
 }
 
 
-get_abstract_crossref <- function(register_repo) {
+get_abstract_text_crossref <- function(register_repo) {
   config_yml <- get_codecheck_yml(register_repo)
 
   # Retrieving the paper DOI
-  paper_link <- config_yml$paper$reference
+  paper_link <- config_yml$paper$referenc
   doi <- sub(CONFIG$CERTS_URL_PREFIX, "", paper_link)
 
   # Construct the URL to access the CrossRef API
   # Make the HTTP GET request
   api_url <- paste0(CONFIG$CERT_LINKS[["crossref_api"]], doi)
-  print(api_url)
+  # Correcting the api_url if it is malformed
+  api_url <- gsub("\\n", "", api_url)
+
   response <- GET(api_url)
   
   # Check if the request was successful
   if (status_code(response) == 200) {
     data <- content(response, "parsed")
-    print(names(data$message))
     # Retrieve the abstract from the response data, if available
     if (!is.null(data$message$abstract)) {
       return(data$message$abstract)
