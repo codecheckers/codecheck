@@ -198,28 +198,51 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
 
 get_abstract <- function(register_repo){
   abstract <- get_abstract_crossref(register_repo)
-
+  print("crossref")
+  print(abstract)
   if (is.null(abstract)){
     abstract <- get_abstract_openalex(register_repo)
+    print("openalex")
+    print(abstract)
   }
 
+  if (is.null(abstract)){
+    print(register_repo)
+    stop()
+  }
   return(abstract)
 }
 
 get_abstract_openalex <- function(register_repo){
+
+  abstract <- NULL
+
   config_yml <- get_codecheck_yml(register_repo)
   doi <- config_yml$paper$reference
 
-  api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], doi)
-  
-  response <- httr::GET(api_url)
-  abstract <- NULL
+  # First, attempt to retrieve the abstract using the DOI directly
+  doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], doi)
+  response <- httr::GET(doi_api_url)
+
+  if (status_code(response) != 200){
+    # Checking for redirects and retrieving the final doi from there
+    redirect_doi <- response$url 
+    redirect_doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], redirect_doi)
+    response <- httr::GET(redirect_doi_api_url)
+  }
+  print("IN OPENALEX")
+  print(doi_api_url)
+
   if (status_code(response) == 200){
     data <- httr::content(response, "parsed")
-
+    print(names(data))
     if ("abstract_inverted_index" %in% names(data)){
       # Extract the inverted index from the response
       inverted_index <- data$abstract_inverted_index
+
+      if (is.null(inverted_index)){
+        return(NULL)
+      }
 
       # Initialize an empty character vector to store the words by position
       abstract_vector <- character()
@@ -257,7 +280,7 @@ get_abstract_crossref <- function(register_repo) {
   # Check if the request was successful
   if (status_code(response) == 200) {
     data <- content(response, "parsed")
-    
+    print(names(data$message))
     # Retrieve the abstract from the response data, if available
     if (!is.null(data$message$abstract)) {
       return(data$message$abstract)
