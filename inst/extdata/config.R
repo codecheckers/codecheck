@@ -69,6 +69,7 @@ CONFIG$HREF_DETAILS <- list(
 
 # List of hyperlinks
 CONFIG$HYPERLINKS <- list(
+  certs = "https://codecheck.org.uk/register/certs/",
   venues = "https://codecheck.org.uk/register/venues/",
   register = "https://codecheck.org.uk/register/",
   codecheckers = "https://codecheck.org.uk/register/codecheckers/",
