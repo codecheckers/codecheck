@@ -1,18 +1,24 @@
 
-render_cert_htmls <- function(register_table, register, force_download = FALSE){
+render_cert_htmls <- function(register_table, force_download = FALSE){
   # Keeping a list of failed cert pages. No hyperlinks will be added for these certs
   CONFIG$LIST_FAILED_CERT_PAGES <- list()
+  CONFIG$LIST_FAILED_ABSTRACT <- list()
 
   # Read template
   html_template <- readLines(CONFIG$CERTS_DIR[["cert_page_template"]])
 
   # Loop over each cert in the register table
   # for (i in 1:1){
-  for (i in 1:nrow(register)){
-    # Retrieving report link and cert id
+  for (i in 1:nrow(register_table)){
+    # Retrieving report link and cert id. The cert id is retrieved from the 
+    # register since the register_table contains the hyperlinks
     report_link <- register_table[i, ]$Report
-    cert_id <- register_table[i, ]$Certificate
-
+    cert_hyperlink <- register_table[i, ]$Certificate
+    cert_id <- sub("\\[(.*)\\]\\(.*\\)", "\\1", cert_hyperlink)
+    if (cert_id != "2020-002"){
+      next
+    }
+    print(paste("CERT", cert_id))
     # Define paths for the certificate PDF and JPEG
     pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf")
     pdf_exists <- file.exists(pdf_path)
@@ -34,9 +40,12 @@ render_cert_htmls <- function(register_table, register, force_download = FALSE){
       # Delaying reqwuests to adhere to request limits
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
-    create_cert_md(cert_id, register[i, ]$Repo)
+    create_cert_md(cert_id, register_table[i, ]$Repository)
     render_cert_html(cert_id)
+    stop()
   }
+  print(CONFIG$LIST_FAILED_ABSTRACT)
+  print(length(CONFIG$LIST_FAILED_ABSTRACT))
 }
 
 convert_cert_pdf_to_jpeg <- function(cert_id){
@@ -58,9 +67,19 @@ convert_cert_pdf_to_jpeg <- function(cert_id){
 # Creates a markdown file of the certificate which is then rendered
 # to html
 create_cert_md <- function(cert_id, repo_link){
+  # Initially checking if an abstract is available
+  # Based on this we load the correct template
+  abstract <- get_abstract(repo_link)
 
-  # Loading the template
-  md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template"]])
+  if (is.null(abstract)){
+    CONFIG$LIST_FAILED_ABSTRACT <- append(CONFIG$LIST_FAILED_ABSTRACT, cert_id)
+    md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template_no_abstract"]])
+  }
+
+  else{
+    md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template"]])
+    md_content <- gsub("\\$abstract\\$", abstract, md_content)
+  }
 
   # Replacing the title
   title <- paste(CONFIG$MD_TITLES[["certs"]], cert_id)
@@ -72,6 +91,7 @@ create_cert_md <- function(cert_id, repo_link){
   # Formatting the paper title as hyperlink
   paper_title_hyperlink <- paste0("[", config_yml$paper$title, "]", "(", config_yml$paper$reference, ")")
   md_content <- gsub("\\$paper_title\\$", paper_title_hyperlink, md_content)
+  # md_content <- gsub("\\$paper_link\\$", config_yml$paper$reference, md_content)
 
   # Formatting the authors list
   paper_authors <- paste(lapply(config_yml$paper$authors, function(author) {
@@ -111,10 +131,6 @@ create_cert_md <- function(cert_id, repo_link){
                      paste0("var images = [", list_images, "];"), 
                      md_content)
   
-  # Adding the abstract
-  abstract <- get_abstract(repo_link)
-  md_content <- gsub("\\$abstract\\$", abstract, md_content)
-
   # Saving the md file
   md_file_path <- file.path(cert_dir, "temp.md")
   writeLines(md_content, md_file_path)
