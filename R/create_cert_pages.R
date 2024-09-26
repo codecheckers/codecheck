@@ -15,7 +15,7 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
     report_link <- register_table[i, ]$Report
     cert_hyperlink <- register_table[i, ]$Certificate
     cert_id <- sub("\\[(.*)\\]\\(.*\\)", "\\1", cert_hyperlink)
-    if (cert_id != "2020-001"){
+    if (cert_id != "2024-002"){
       next
     }
     print(paste("CERT", cert_id))
@@ -27,21 +27,21 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
     if (!pdf_exists || force_download) {
       download_cert_status <- download_cert_pdf(report_link, cert_id)
 
-      # Failed in downloading cert
-      if (download_cert_status == 0){
-        CONFIG$LIST_FAILED_CERT_PAGES <- append(CONFIG$LIST_FAILED_CERT_PAGES, cert_id)
-        Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
-        print(cert_id)
-        next
+      # Successfully downloaded cert
+      # Proceeding to convert pdfs to jpegs
+      if (download_cert_status == 1){
+        convert_cert_pdf_to_jpeg(cert_id)
       }
 
-      # Proceeding to convert pdfs to jpegs
-      convert_cert_pdf_to_jpeg(cert_id)
-
+      # Failed in downloading cert
+      else{
+        CONFIG$LIST_FAILED_CERT_PAGES <- append(CONFIG$LIST_FAILED_CERT_PAGES, cert_id)
+        Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
+      }
       # Delaying reqwuests to adhere to request limits
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
-    render_cert_html(cert_id, register_table[i, ]$Repository)
+    render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status)
     stop()
   }
   print(CONFIG$LIST_FAILED_ABSTRACT)
@@ -63,29 +63,8 @@ convert_cert_pdf_to_jpeg <- function(cert_id){
   pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = CONFIG$CERT_DPI)
 }
 
-
-# Creates a markdown file of the certificate which is then rendered
-# to html
-create_cert_md <- function(cert_id, repo_link){
-  # Initially checking if an abstract is available
-  # Based on this we load the correct template
-  abstract <- get_abstract(repo_link)
-
-  if (is.null(abstract$text)){
-    CONFIG$LIST_FAILED_ABSTRACT <- append(CONFIG$LIST_FAILED_ABSTRACT, cert_id)
-    md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template_no_abstract"]])
-  }
-
-  else{
-    md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["md_template"]])
-    md_content <- gsub("\\$abstract\\$", abstract$text, md_content)
-    md_content <- gsub("\\$abstract_platform\\$", abstract$source, md_content)
-
-    platform_link <- CONFIG$HYPERLINKS[[abstract$source]]
-    md_content <- gsub("\\$abstract_platform_link\\$", platform_link, md_content)
-  }
-
-  # Replacing the title
+add_paper_details_md <- function(md_content, cert_id, repo_link){
+    # Replacing the title
   title <- paste(CONFIG$MD_TITLES[["certs"]], cert_id)
   md_content <- gsub("\\$title\\$", title, md_content)
 
@@ -123,25 +102,66 @@ create_cert_md <- function(cert_id, repo_link){
 
   # Adjusting the repo link
   md_content <- add_repository_hyperlink(md_content, repo_link)
+  
+  return(md_content)
+}
 
-  # Identifying the number of cert pages 
+add_paper_abstract_md <- function(abstract, md_content){
+  md_content <- gsub("\\$abstract\\$", abstract$text, md_content)
+  md_content <- gsub("\\$abstract_platform\\$", abstract$source, md_content)
+
+  platform_link <- CONFIG$HYPERLINKS[[abstract$source]]
+  md_content <- gsub("\\$abstract_platform_link\\$", platform_link, md_content)
+  return(md_content)
+}
+
+
+# Creates a markdown file of the certificate which is then rendered
+# to html
+create_cert_md <- function(cert_id, repo_link, download_cert_status){
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
-  no_cert_pages <- length(list.files(path = cert_dir, pattern = "^cert_.*\\.png$", full.names = TRUE))
 
-  # Creating a list of images to slide through based on number of cert pages
-  list_images <- paste0('"cert_', 1:no_cert_pages, '.png"', collapse = ", ")
-  # Replacing the list of images for the slider
-  md_content <- gsub("\\$var_images\\$", 
-                     paste0("var images = [", list_images, "];"), 
-                     md_content)
+  # Base template to load
+  template_type <- "md_template_base"
+  
+  # Initially checking if a cert is available
+  if (download_cert_status == 0) {
+    template_type <- "md_template_no_cert"
+  }
+
+  # Initially checking if an abstract is available
+  abstract <- get_abstract(repo_link)
+  if (is.null(abstract$text)) {
+    template_type <- "md_template_no_abstract"
+  }
+
+  # Load the base template
+  md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][[template_type]])
+
+  md_content <- add_paper_details_md(md_content, cert_id, repo_link)
+
+  # Inserting the cert 
+  if (download_cert_status == 1){
+    no_cert_pages <- length(list.files(path = cert_dir, pattern = "^cert_.*\\.png$", full.names = TRUE))
+    # Creating a list of images to slide through based on number of cert pages
+    list_images <- paste0('"cert_', 1:no_cert_pages, '.png"', collapse = ", ")
+    # Replacing the list of images for the slider
+    md_content <- gsub("\\$var_images\\$", 
+                      paste0("var images = [", list_images, "];"), 
+                      md_content)
+  }
+
+  if (!is.null(abstract$text)){
+    md_content <- add_paper_abstract_md(abstract, md_content)
+  }
   
   # Saving the md file
   md_file_path <- file.path(cert_dir, "temp.md")
   writeLines(md_content, md_file_path)
 }
 
-render_cert_html <- function(cert_id, repo_link){
-  create_cert_md(cert_id, repo_link)
+render_cert_html <- function(cert_id, repo_link, download_cert_status){
+  create_cert_md(cert_id, repo_link, download_cert_status)
 
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")

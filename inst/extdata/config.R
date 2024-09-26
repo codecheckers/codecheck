@@ -217,8 +217,9 @@ CONFIG$TEMPLATE_DIR<- list(
     "postfix" = system.file("extdata", "templates/cert/index_postfix_template.html", package = "codecheck"),
     "header" = system.file("extdata", "templates/general/index_header_template.html", package = "codecheck"),
     "prefix" = system.file("extdata", "templates/general/index_prefix_template.html", package = "codecheck"),
-    md_template = system.file("extdata", "templates/cert/template.md", package = "codecheck"),
-    md_template_no_abstract = system.file("extdata", "templates/cert/template_no_abstract.md", package = "codecheck")
+    md_template_base = system.file("extdata", "templates/cert/template_base.md", package = "codecheck"),
+    md_template_no_abstract = system.file("extdata", "templates/cert/template_no_abstract.md", package = "codecheck"),
+    md_template_no_cert = system.file("extdata", "templates/cert/template_no_cert.md", package = "codecheck")
   )
 )
 
