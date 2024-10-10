@@ -14,7 +14,7 @@ title: $title$
     flex: 1;
   }
 
-  .paper-details, .abstract-section {
+  .paper-details, .codecheck-details {
     max-width: 600px; /* Set a maximum width */
     border: 1px solid #ccc;
     background-color: #f9f9f9;
@@ -45,17 +45,18 @@ title: $title$
   <h3 style="color: darkgreen; margin-top: 0;">Paper details</h3>
   <p><strong>Paper title</strong>: $paper_title$</p>  
   <p><strong>Paper authors</strong>: $paper_authors$</p>  
-  <p><strong>Codechecker name</strong>: $codechecker_name$</p>  
-  <p><strong>Date of codecheck</strong>: $codecheck_date$</p>  
-  <p><strong>Codecheck repo</strong>: $codecheck_repo$</p>
+  $abstract$
   </div>
 
   <!-- Abstract Section -->
-  <div class="abstract-section">
-  <h3 style="color: darkgreen; margin-top: 0;">Abstract</h3>
-  <p><i>This abstract was obtained from $abstract_platform$: $abstract_platform_link$</i></p>
-  <p>$abstract$</p> 
-  </div>
+  <div class="codecheck-details">
+  <h3 style="color: darkgreen; margin-top: 0;">Codecheck details</h3>
+  <p><strong>Codecheck certificate</strong>: $codecheck_cert$</p>
+  <p><strong>$codechecker_names_heading$</strong>: $codechecker_names$</p>
+  <p><strong>Codecheck time</strong>: $codecheck_time$</p>  
+  <p><strong>Codecheck repo</strong>: $codecheck_repo$</p>
+  <p><strong>Codecheck report</strong>: $codecheck_report$</p>
+  <p><strong>Summary</strong>: $codecheck_summary$</p>
 
   </div>
 
