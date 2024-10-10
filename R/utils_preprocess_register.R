@@ -159,6 +159,24 @@ add_codechecker <- function(register_table, register) {
   return(register_table)
 }
 
+#' Function for adding clickable links to the paper for each entry in the register table.
+#' 
+#' @param register_table The register table to be adjusted.
+#' @return The adjusted register table with clickable Certificate links.
+add_cert_links <- function(register_table){
+  # Looping over the entries in the register
+  for (i in seq_len(nrow(register_table))) {
+
+    # Constructing the hyperlink
+    cert_id <- register_table[i, ]$Certificate
+    hyperlink <- paste0("[", cert_id, "](", CONFIG$HYPERLINKS[["certs"]], cert_id, "/)")
+
+    register_table[i, ]$Certificate <- hyperlink
+  }
+
+  return(register_table)
+}
+
 #' Creates a temporary CSV register with a "Codechecker" column.
 #' 
 #' The function flattens the "Codechecker" column and saves the resulting table 
@@ -186,6 +204,7 @@ preprocess_register <- function(register, filter_by) {
       # filter the registers by codecheckers
       create_temp_register_with_codechecker(register_table)
     }
+    register_table <- add_cert_links(register_table)
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
     register_table <- add_check_time(register_table, register)
