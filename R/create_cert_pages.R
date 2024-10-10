@@ -91,17 +91,33 @@ add_paper_details_md <- function(md_content, cert_id, repo_link){
   }), collapse = ", ")
   md_content <- gsub("\\$paper_authors\\$", paper_authors, md_content)
 
-  # Adding the Codechecker name, Date of codecheck, and Codecheck repo
+  # Adding the Codechecker name
   codechecker_names <- paste(lapply(config_yml$codechecker, function(checker) {
     paste0("[", checker$name, "](", 
     CONFIG$HYPERLINKS["orcid"], checker$ORCID, ")")
     }), collapse = ", ")
-  md_content <- gsub("\\$codechecker_name\\$", codechecker_names, md_content)
-  
-  md_content <- gsub("\\$codecheck_date\\$", config_yml$check_time, md_content)
 
-  # Adjusting the repo link
+  # Adjusting the codechecker name heading 
+  if (codechecker_names > 1){
+    codechecker_names_heading <- "Codechecker name"
+  }
+  
+  else{
+    codechecker_names_heading <- "Codechecker names"
+  }
+
+  md_content <- gsub("\\$codechecker_heading\\$", codechecker_names_heading, md_content)
+  md_content <- gsub("\\$codechecker_names\\$", codechecker_names, md_content)
+  
+  # Adding codecheck date, summary and cert no.
+  md_content <- gsub("\\$codecheck_time\\$", config_yml$check_time, md_content)
+  md_content <- gsub("\\$codecheck_summary\\$", config_yml$summary, md_content)
+  md_content <- gsub("\\$codecheck_cert\\$", config_yml$certificate, md_content)
+
+  # Adjusting the repo and report links
   md_content <- add_repository_hyperlink(md_content, repo_link)
+  report_link <- paste0("[Link]", "(", config_yml$report, ")")
+  md_content <- gsub("\\$codecheck_report\\$", report_link, md_content)
   
   return(md_content)
 }
@@ -129,16 +145,15 @@ create_cert_md <- function(cert_id, repo_link, download_cert_status){
     template_type <- "md_template_no_cert"
   }
 
-  # Initially checking if an abstract is available
-  abstract <- get_abstract(repo_link)
-  if (is.null(abstract$text)) {
-    template_type <- "md_template_no_abstract"
-  }
-
-  # Load the base template
+  # Load the template
   md_content <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][[template_type]])
-
   md_content <- add_paper_details_md(md_content, cert_id, repo_link)
+
+  # Inserting the abstract if available
+  abstract <- get_abstract(repo_link)
+  if (!is.null(abstract$text)) {  
+    md_content <- add_abstract(abstract, md_content)
+  }
 
   # Inserting the cert 
   if (download_cert_status == 1){
@@ -151,10 +166,6 @@ create_cert_md <- function(cert_id, repo_link, download_cert_status){
                       md_content)
   }
 
-  if (!is.null(abstract$text)){
-    md_content <- add_paper_abstract_md(abstract, md_content)
-  }
-  
   # Saving the md file
   md_file_path <- file.path(cert_dir, "temp.md")
   writeLines(md_content, md_file_path)
@@ -239,5 +250,18 @@ add_repository_hyperlink <- function(md_content, repo_link) {
 
   md_content <- gsub("\\$codecheck_repo\\$", repo_link, md_content)
 
+  return(md_content)
+}
+
+add_abstract <- function(md_content, abstract){
+  platform_link <- CONFIG$HYPERLINKS[[abstract$source]]
+
+  abstract_full <- paste0(
+    "<p><strong>Abstract</strong>:</p>",
+    "<p><i>This abstract was obtained from ", abstract$source, ": ", platform_link, "</i></p>",
+    "<p>", abstract$text, "</p>"
+  ) 
+
+  md_content <- gsub("\\$abstract\\$", abstract_full, md_content)
   return(md_content)
 }
