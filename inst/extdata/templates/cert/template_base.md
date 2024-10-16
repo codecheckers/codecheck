@@ -22,13 +22,13 @@ title: $title$
     flex-direction: column;
     justify-content: space-between;
     background-color: #fff;
-  }
-
-  /* Ensure the image in the slider scales while maintaining aspect ratio */
-  .image-slider img {
-      max-width: 100%;
-      height: auto;
-      object-fit: contain;
+    width: 100%; 
+    height: auto; 
+    flex-grow: 1; 
+    background-size: contain;
+    background-position: center top 10px;
+    background-repeat: no-repeat;
+    padding-top: 10px;
   }
 
   /* Buttons for image slider */
@@ -39,6 +39,7 @@ title: $title$
     background-color: #f9f9f9;
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
     margin-right: 10px;
+    margin-top: -10px;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 
@@ -59,6 +60,7 @@ title: $title$
   /* Paper details and Codecheck details */
   .paper-details, .codecheck-details {
     max-width: 550px;
+    min-width: 450px;
     border: 1px solid #ccc;
     background-color: #f9f9f9;
     padding: 15px;
@@ -78,19 +80,14 @@ title: $title$
 
 <div class="content-wrapper">
 
-  <div class="image-slider">
-  <!-- Image Slider Section -->
-  <div style="max-width: 450px; padding: 5px; text-align: center;">
+  <div class="image-slider" id="image-slider">
   
   <!-- Buttons for changing the image -->
   <div class="slider-buttons" style="margin-top: 5px;">
   <button onclick="changeImage(-1)">Previous</button>
   <button onclick="changeImage(1)">Next</button>
   </div>
-
-  <!-- Slider Image -->
-  <img id="slider-image" src="cert_1.png" alt="Image 1" style="width: 100%; height: auto;">
-  </div>
+  
   </div>
 
   <!-- Right Side Content (Paper Details + Codecheck details) -->
@@ -149,61 +146,9 @@ function changeImage(direction) {
   } else if (currentIndex >= images.length) {
     currentIndex = 0;
   }
-  document.getElementById('slider-image').src = images[currentIndex];
+  // Change the background image of the slider
+  document.getElementById('image-slider').style.backgroundImage = `url(${images[currentIndex]})`;
 }
-
-// Function to adjust the div element height and width
-function adjustDivHeightWidth(divElement){
-  var newHeight = divElement.scrollHeight + 'px';
-  var newWidth = divElement.scrollWidth + 'px';
-
-  divElement.style.height = newHeight;
-  divElement.style.width = newWidth;
-}
-
-function adjustContentDisplay(contentElement, boxElement, minHeight, sectionElement) {
-
-  console.log("Checking content:", contentElement.textContent.trim());
-  // Check if the content is empty, in which case we hide the section
-  if (!contentElement.textContent.trim()) {
-    sectionElement.style.display = 'none';  
-    return; 
-  }
-
-  // Temporarily set content to block to measure height accurately
-  contentElement.style.display = 'block';
-  
-  // Check the height of the content
-  var contentHeight = contentElement.offsetHeight;
-  
-  // If the content exceeds minHeight, show the box element
-  if (contentHeight > minHeight) {
-    contentElement.style.display = 'none';  // Hide inline content
-    boxElement.style.display = 'block';     // Show box content
-  } else {
-    contentElement.style.display = 'inline'; // Keep inline content visible
-    boxElement.style.display = 'none';       // Hide box
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-  // Adjust for the summary section
-  var summarySection = document.getElementById("summary-section"); // The entire summary section container
-  var summaryContent = document.getElementById("summary-content");
-  var summaryBox = document.getElementById("scrollable-text-box-summary");
-  var minHeightSummary = 100; // Minimum height for summary
-
-  adjustContentDisplay(summaryContent, summaryBox, minHeightSummary, summarySection);
-
-  // Adjust for the abstract section
-  var abstractSection = document.getElementById("abstract-section"); // The entire abstract section container
-  var abstractContent = document.getElementById("abstract-content");
-  var abstractBox = document.getElementById("scrollable-text-box-abstract");
-  var minHeightAbstract = 100; // Minimum height for abstract
-
-  adjustContentDisplay(abstractContent, abstractBox, minHeightAbstract, abstractSection);
-});
-
 
 // Function to adjust heights of imageslider to match the right content 
 document.addEventListener("DOMContentLoaded", function() {
@@ -223,6 +168,9 @@ document.addEventListener("DOMContentLoaded", function() {
     window.addEventListener('resize', function() {
         adjustSliderHeight();
     });
+
+    // Set the initial background image
+    changeImage(0); // Load the first image
 });
 
 
