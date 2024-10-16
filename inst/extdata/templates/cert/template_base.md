@@ -15,14 +15,21 @@ title: $title$
 
   /* Left side (Image slider) */
   .image-slider {
-    /* max-width: 550px; */
     border: 1px solid #ccc;
     padding: 5px;
     text-align: center;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    background-color: #fff;
   }
 
+  /* Ensure the image in the slider scales while maintaining aspect ratio */
+  .image-slider img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+  }
 
   /* Buttons for image slider */
   .slider-buttons button {
@@ -160,8 +167,6 @@ function adjustContentDisplay(contentElement, boxElement, minHeight, sectionElem
   // Check if the content is empty, in which case we hide the section
   if (!contentElement.textContent.trim()) {
     sectionElement.style.display = 'none';  
-    // var paperSection = document.querySelector(".paper-details");
-    // adjustDivHeightWidth(paperSection);
     return; 
   }
 
@@ -190,9 +195,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
   adjustContentDisplay(summaryContent, summaryBox, minHeightSummary, summarySection);
 
-  // var codecheckSection = document.querySelector(".codecheck-details");
-  // adjustDivHeightWidth(codecheckSection);
-
   // Adjust for the abstract section
   var abstractSection = document.getElementById("abstract-section"); // The entire abstract section container
   var abstractContent = document.getElementById("abstract-content");
@@ -200,8 +202,28 @@ document.addEventListener("DOMContentLoaded", function() {
   var minHeightAbstract = 100; // Minimum height for abstract
 
   adjustContentDisplay(abstractContent, abstractBox, minHeightAbstract, abstractSection);
-  // var paperSection = document.querySelector(".paper-details");
-  // adjustDivHeightWidth(paperSection);
 });
+
+
+// Function to adjust heights of imageslider to match the right content 
+document.addEventListener("DOMContentLoaded", function() {
+    // Get the right content and image slider elements
+    var rightContent = document.querySelector('.right-content');
+    var imageSlider = document.querySelector('.image-slider');
+    
+    // Set the image slider height to match the right content
+    function adjustSliderHeight() {
+        imageSlider.style.height = rightContent.offsetHeight + 'px';
+    }
+
+    // Call the function to adjust the height initially
+    adjustSliderHeight();
+
+    // Optionally, adjust the height when the window is resized
+    window.addEventListener('resize', function() {
+        adjustSliderHeight();
+    });
+});
+
 
 </script>
