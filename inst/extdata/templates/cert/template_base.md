@@ -10,7 +10,7 @@ title: $title$
   .content-wrapper {
     display: flex;
     gap: 20px; /* Space between the image slider and the right content */
-    align-items: stretch; /* Make both sides (left and right) stretch to the same height */
+    align-items: flex-start; /* Make both sides (left and right) stretch to the same height */
   }
 
   /* Left side (Image slider) */
@@ -23,8 +23,22 @@ title: $title$
     flex-direction: column;
   }
 
-  .slider-buttons {
-    margin-top: 5px;
+
+  /* Buttons for image slider */
+  .slider-buttons button {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+    margin-right: 10px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Effects when hovering over slider buttons */
+  .slider-buttons button:hover {
+    background-color: #e0e0e0;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
   }
 
   /* Right content container */
@@ -44,17 +58,8 @@ title: $title$
     flex-grow: 1; /* Allow both sections to grow equally */
   }
 
-  /* Style to handle long abstracts */
-  .abstract-box {
-    max-height: 100px; /* Set a maximum height */
-    overflow-y: auto; /* Enable vertical scrolling if content exceeds max-height */
-    border: 1px solid #ddd;
-    padding: 10px;
-    background-color: #fff;
-  }
-
-  /* Style to handle long summaries */
-  .summary-box {
+  /* Style to handle long abstracts and summaries */
+  .scrollable-text-box {
     max-height: 100px;
     overflow-y: auto;
     border: 1px solid #ddd;
@@ -62,11 +67,6 @@ title: $title$
     background-color: #fff;
   }
 
-  /* Style to define when we need a scrollable box*/
-  .scrollable {
-    max-height: 100px;
-    overflow-y: auto;
-  }
 </style>
 
 <div class="content-wrapper">
@@ -76,9 +76,9 @@ title: $title$
   <div style="max-width: 450px; padding: 5px; text-align: center;">
   
   <!-- Buttons for changing the image -->
-  <div style="margin-top: 5px;">
-  <button onclick="changeImage(-1)" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; background-color: #f9f9f9; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);">Previous</button>
-  <button onclick="changeImage(1)" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; background-color: #f9f9f9; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);">Next</button>
+  <div class="slider-buttons" style="margin-top: 5px;">
+  <button onclick="changeImage(-1)">Previous</button>
+  <button onclick="changeImage(1)">Next</button>
   </div>
 
   <!-- Slider Image -->
@@ -95,8 +95,16 @@ title: $title$
   <p><strong>Paper title</strong>: $paper_title$</p>  
   <p><strong>Paper authors</strong>: $paper_authors$</p>  
   
-  <!-- Abstract section if available -->
-  $abstract$
+  <!-- Abstract section -->
+  <div id="abstract-section">
+  <p><strong>Abstract</strong>: 
+  <i>This abstract was obtained from $abstract_source$: $abstract_platform_link$</i>
+  </p>
+  <span id="abstract-content">$abstract_content$</span>
+  <div class="scrollable-text-box" id="scrollable-text-box-abstract" style="display: none;">
+  <p>$abstract_content$</p>
+  </div>
+  </div>
   </div>
 
   <!-- Codecheck Details Section -->
@@ -109,9 +117,11 @@ title: $title$
   <p><strong>Codecheck report</strong>: $codecheck_report$</p>
   
   <!-- Summary -->
+  <div id="summary-section">
   <p><strong>Summary</strong>: <span id="summary-content">$codecheck_summary$</span></p>
-  <div class="summary-box" id="summary-box" style="display: none;">
-  <p id="summary-content-div">$codecheck_summary$</p>
+  <div class="scrollable-text-box" id="scrollable-text-box-summary" style="display: none;">
+  <p>$codecheck_summary$</p>
+  </div>
   </div>
 
   </div>
@@ -135,30 +145,63 @@ function changeImage(direction) {
   document.getElementById('slider-image').src = images[currentIndex];
 }
 
-// Dynamically adjusting the summary section
-document.addEventListener("DOMContentLoaded", function() {
-  var summaryContent = document.getElementById("summary-content");
-  var summaryBox = document.getElementById("summary-box");
-  var summaryContentDiv = document.getElementById("summary-content-div");
-  
-  var minHeight = 100; // Set your minimum height
+// Function to adjust the div element height and width
+function adjustDivHeightWidth(divElement){
+  var newHeight = divElement.scrollHeight + 'px';
+  var newWidth = divElement.scrollWidth + 'px';
 
-  // Temporarily set to block to measure height accurately
-  summaryContent.style.display = 'block';
-  
-  // Check the height of the inline content
-  var contentHeight = summaryContent.offsetHeight;
-  
-  // If the content exceeds minHeight, use the summary-box div
-  if (contentHeight > minHeight) {
-    summaryContent.style.display = 'none';
-    summaryBox.style.display = 'block';
-  } 
-  
-  // If the content is less than or equal to minHeight, keep it inline
-  else {
-    summaryContent.style.display = 'inline';
-    summaryBox.style.display = 'none';
+  divElement.style.height = newHeight;
+  divElement.style.width = newWidth;
+}
+
+function adjustContentDisplay(contentElement, boxElement, minHeight, sectionElement) {
+
+  console.log("Checking content:", contentElement.textContent.trim());
+  // Check if the content is empty, in which case we hide the section
+  if (!contentElement.textContent.trim()) {
+    sectionElement.style.display = 'none';  
+    // var paperSection = document.querySelector(".paper-details");
+    // adjustDivHeightWidth(paperSection);
+    return; 
   }
+
+  // Temporarily set content to block to measure height accurately
+  contentElement.style.display = 'block';
+  
+  // Check the height of the content
+  var contentHeight = contentElement.offsetHeight;
+  
+  // If the content exceeds minHeight, show the box element
+  if (contentHeight > minHeight) {
+    contentElement.style.display = 'none';  // Hide inline content
+    boxElement.style.display = 'block';     // Show box content
+  } else {
+    contentElement.style.display = 'inline'; // Keep inline content visible
+    boxElement.style.display = 'none';       // Hide box
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  // Adjust for the summary section
+  var summarySection = document.getElementById("summary-section"); // The entire summary section container
+  var summaryContent = document.getElementById("summary-content");
+  var summaryBox = document.getElementById("scrollable-text-box-summary");
+  var minHeightSummary = 100; // Minimum height for summary
+
+  adjustContentDisplay(summaryContent, summaryBox, minHeightSummary, summarySection);
+
+  // var codecheckSection = document.querySelector(".codecheck-details");
+  // adjustDivHeightWidth(codecheckSection);
+
+  // Adjust for the abstract section
+  var abstractSection = document.getElementById("abstract-section"); // The entire abstract section container
+  var abstractContent = document.getElementById("abstract-content");
+  var abstractBox = document.getElementById("scrollable-text-box-abstract");
+  var minHeightAbstract = 100; // Minimum height for abstract
+
+  adjustContentDisplay(abstractContent, abstractBox, minHeightAbstract, abstractSection);
+  // var paperSection = document.querySelector(".paper-details");
+  // adjustDivHeightWidth(paperSection);
 });
+
 </script>
