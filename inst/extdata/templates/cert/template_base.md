@@ -111,13 +111,13 @@ title: $title$
   <div class="paper-details">
   <h3>Paper details</h3>
   
-  <p><strong>Paper title</strong>: $paper_title$</p>  
-  <p><strong>Paper authors</strong>: $paper_authors$</p>  
+  <p><strong>Title</strong>: $paper_title$</p>  
+  <p><strong>$author_names_heading$</strong>: $paper_authors$</p>  
   
   <!-- Abstract section -->
   <div id="abstract-section">
   <p><strong>Abstract</strong>: 
-  <i>Obtained from $abstract_source$: $abstract_platform_link$</i>
+  <i>Obtained from $abstract_source$</i>
   </p>
   <span id="abstract-content">$abstract_content$</span>
   <div class="scrollable-text-box" id="scrollable-text-box-abstract" style="display: none;">
@@ -129,10 +129,10 @@ title: $title$
   <!-- Codecheck Details Section -->
   <div class="codecheck-details">
   <h3 style="color: darkgreen; margin-top: 0;">Codecheck details</h3>
-  <p><strong>Codecheck certificate</strong>: $codecheck_cert$</p>
+  <p><strong>Certificate identifier</strong>: $codecheck_cert$</p>
   <p><strong>$codechecker_names_heading$</strong>: $codechecker_names$</p>
-  <p><strong>Codecheck time</strong>: $codecheck_time$</p>  
-  <p><strong>Codecheck repo</strong>: $codecheck_repo$</p>
+  <p><strong>Time of codecheck</strong>: $codecheck_time$</p>  
+  <p><strong>Repository</strong>: $codecheck_repo$</p>
   <p><strong>Codecheck report</strong>: $codecheck_report$</p>
   
   <!-- Summary -->
