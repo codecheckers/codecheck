@@ -19,7 +19,6 @@ title: $title$
   .content-wrapper {
     display: flex;
     gap: 20px; /* Space between the image slider and the right content */
-    /* align-items: stretch; */
   }
 
   /* Left side (Image slider) */
@@ -32,12 +31,13 @@ title: $title$
     justify-content: space-between;
     background-color: #fff;
     width: 100%; 
-    height: 68vh; 
+    min-height: 68vh; 
     flex-grow: 1; 
     background-size: contain;
-    background-position: center top 10px;
+    background-position: center center;
     background-repeat: no-repeat;
     padding-top: 10px;
+    flex-grow: 1;
   }
 
   /* Buttons for image slider */
@@ -49,6 +49,7 @@ title: $title$
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
     margin-right: 10px;
     margin-top: -10px;
+    margin-bottom: 50px;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 
@@ -68,7 +69,8 @@ title: $title$
 
   /* Paper details and Codecheck details */
   .paper-details, .codecheck-details {
-    padding: 25px;
+    padding: 20px;
+    /* height: auto; */
     /* display: flex; 
     flex-direction: column;
     justify-content: center; */
