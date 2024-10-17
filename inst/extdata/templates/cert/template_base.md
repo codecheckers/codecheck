@@ -102,7 +102,7 @@ title: $title$
   <!-- Abstract section -->
   <div id="abstract-section">
   <p><strong>Abstract</strong>: 
-  <i>This abstract was obtained from $abstract_source$: $abstract_platform_link$</i>
+  <i>Obtained from $abstract_source$: $abstract_platform_link$</i>
   </p>
   <span id="abstract-content">$abstract_content$</span>
   <div class="scrollable-text-box" id="scrollable-text-box-abstract" style="display: none;">
@@ -149,6 +149,49 @@ function changeImage(direction) {
   // Change the background image of the slider
   document.getElementById('image-slider').style.backgroundImage = `url(${images[currentIndex]})`;
 }
+
+function adjustContentDisplay(contentElement, boxElement, minHeight, sectionElement) {
+
+  console.log("Checking content:", contentElement.textContent.trim());
+  // Check if the content is empty, in which case we hide the section
+  if (!contentElement.textContent.trim()) {
+    sectionElement.style.display = 'none';  
+    return; 
+  }
+
+  // Temporarily set content to block to measure height accurately
+  contentElement.style.display = 'block';
+  
+  // Check the height of the content
+  var contentHeight = contentElement.offsetHeight;
+  
+  // If the content exceeds minHeight, show the box element
+  if (contentHeight > minHeight) {
+    contentElement.style.display = 'none';  // Hide inline content
+    boxElement.style.display = 'block';     // Show box content
+  } else {
+    contentElement.style.display = 'inline'; // Keep inline content visible
+    boxElement.style.display = 'none';       // Hide box
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  // Adjust for the summary section
+  var summarySection = document.getElementById("summary-section"); // The entire summary section container
+  var summaryContent = document.getElementById("summary-content");
+  var summaryBox = document.getElementById("scrollable-text-box-summary");
+  var minHeightSummary = 100; // Minimum height for summary
+
+  adjustContentDisplay(summaryContent, summaryBox, minHeightSummary, summarySection);
+
+  // Adjust for the abstract section
+  var abstractSection = document.getElementById("abstract-section"); // The entire abstract section container
+  var abstractContent = document.getElementById("abstract-content");
+  var abstractBox = document.getElementById("scrollable-text-box-abstract");
+  var minHeightAbstract = 100; // Minimum height for abstract
+
+  adjustContentDisplay(abstractContent, abstractBox, minHeightAbstract, abstractSection);
+});
 
 // Function to adjust heights of imageslider to match the right content 
 document.addEventListener("DOMContentLoaded", function() {
