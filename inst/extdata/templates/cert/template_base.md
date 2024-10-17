@@ -4,13 +4,22 @@ title: $title$
 
 <style>
   h1 {
-    margin-bottom: 10px; 
+    margin-bottom: 20px;
+    color: darkgreen;
+    text-align: center;
+  }
+
+  h3 {
+    margin-top: 0;
+    color: darkgreen;
+    padding-bottom: 10px;
+    border-bottom: 2px solid green;
   }
 
   .content-wrapper {
     display: flex;
     gap: 20px; /* Space between the image slider and the right content */
-    align-items: flex-start; /* Make both sides (left and right) stretch to the same height */
+    /* align-items: stretch; */
   }
 
   /* Left side (Image slider) */
@@ -23,7 +32,7 @@ title: $title$
     justify-content: space-between;
     background-color: #fff;
     width: 100%; 
-    height: auto; 
+    height: 68vh; 
     flex-grow: 1; 
     background-size: contain;
     background-position: center top 10px;
@@ -59,11 +68,14 @@ title: $title$
 
   /* Paper details and Codecheck details */
   .paper-details, .codecheck-details {
+    padding: 25px;
+    /* display: flex; 
+    flex-direction: column;
+    justify-content: center; */
     max-width: 550px;
     min-width: 450px;
     border: 1px solid #ccc;
     background-color: #f9f9f9;
-    padding: 15px;
     flex-grow: 1; /* Allow both sections to grow equally */
   }
 
@@ -95,7 +107,8 @@ title: $title$
     
   <!-- Paper Details Section -->
   <div class="paper-details">
-  <h3 style="color: darkgreen; margin-top: 0;">Paper details</h3>
+  <h3>Paper details</h3>
+  
   <p><strong>Paper title</strong>: $paper_title$</p>  
   <p><strong>Paper authors</strong>: $paper_authors$</p>  
   
@@ -150,6 +163,9 @@ function changeImage(direction) {
   document.getElementById('image-slider').style.backgroundImage = `url(${images[currentIndex]})`;
 }
 
+// Setting the cert page 1 as the display image
+changeImage(0);
+
 function adjustContentDisplay(contentElement, boxElement, minHeight, sectionElement) {
 
   console.log("Checking content:", contentElement.textContent.trim());
@@ -192,29 +208,5 @@ document.addEventListener("DOMContentLoaded", function() {
 
   adjustContentDisplay(abstractContent, abstractBox, minHeightAbstract, abstractSection);
 });
-
-// Function to adjust heights of imageslider to match the right content 
-document.addEventListener("DOMContentLoaded", function() {
-    // Get the right content and image slider elements
-    var rightContent = document.querySelector('.right-content');
-    var imageSlider = document.querySelector('.image-slider');
-    
-    // Set the image slider height to match the right content
-    function adjustSliderHeight() {
-        imageSlider.style.height = rightContent.offsetHeight + 'px';
-    }
-
-    // Call the function to adjust the height initially
-    adjustSliderHeight();
-
-    // Optionally, adjust the height when the window is resized
-    window.addEventListener('resize', function() {
-        adjustSliderHeight();
-    });
-
-    // Set the initial background image
-    changeImage(0); // Load the first image
-});
-
 
 </script>
