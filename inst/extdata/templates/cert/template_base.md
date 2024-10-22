@@ -19,10 +19,12 @@ title: $title$
   .content-wrapper {
     display: flex;
     gap: 20px; /* Space between the image slider and the right content */
+    max-width: 100%; /* Prevents overflow */
   }
 
   /* Left side (Image slider) */
   .image-slider {
+    max-width: calc(68vh * 1.5); /* Fixed width based on viewport height */
     border: 1px solid #ccc;
     padding: 5px;
     text-align: center;
@@ -31,13 +33,10 @@ title: $title$
     justify-content: space-between;
     background-color: #fff;
     width: 100%; 
-    min-height: 68vh; 
-    flex-grow: 1; 
+    min-height: 68vh; /* Fixed height */
     background-size: contain;
     background-position: center center;
     background-repeat: no-repeat;
-    padding-top: 10px;
-    flex-grow: 1;
   }
 
   /* Buttons for image slider */
@@ -70,10 +69,6 @@ title: $title$
   /* Paper details and Codecheck details */
   .paper-details, .codecheck-details {
     padding: 20px;
-    /* height: auto; */
-    /* display: flex; 
-    flex-direction: column;
-    justify-content: center; */
     max-width: 550px;
     min-width: 450px;
     border: 1px solid #ccc;
@@ -94,6 +89,7 @@ title: $title$
 
 <div class="content-wrapper">
 
+  <!-- Left Column (Image Slider) -->
   <div class="image-slider" id="image-slider">
   
   <!-- Buttons for changing the image -->
@@ -116,9 +112,7 @@ title: $title$
   
   <!-- Abstract section -->
   <div id="abstract-section">
-  <p><strong>Abstract</strong>: 
-  <i>Obtained from $abstract_source$</i>
-  </p>
+  <p><strong>Abstract</strong>: <i>Obtained from $abstract_source$</i></p>
   <span id="abstract-content">$abstract_content$</span>
   <div class="scrollable-text-box" id="scrollable-text-box-abstract" style="display: none;">
   <p>$abstract_content$</p>
