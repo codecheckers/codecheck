@@ -17,14 +17,13 @@ title: $title$
   }
 
   .content-wrapper {
-    display: flex;
-    gap: 20px; /* Space between the image slider and the right content */
     max-width: 100%; /* Prevents overflow */
+    padding-right: 0px;
+    display: flex;
   }
 
   /* Left side (Image slider) */
   .image-slider {
-    max-width: calc(68vh * 1.5); /* Fixed width based on viewport height */
     border: 1px solid #ccc;
     padding: 5px;
     text-align: center;
@@ -66,11 +65,21 @@ title: $title$
     flex-grow: 1; /* Take all available space */
   }
 
+  .row {
+    display: flex; /* Make row a flex container */
+    flex-wrap: wrap; /* Ensure items wrap on smaller screens */
+  }
+
+  .col-md-6 {
+    display: flex; 
+    flex-direction: column; 
+  }
+
   /* Paper details and Codecheck details */
   .paper-details, .codecheck-details {
     padding: 20px;
-    max-width: 550px;
-    min-width: 450px;
+    /* max-width: 550px; */
+    /* min-width: 450px; */
     border: 1px solid #ccc;
     background-color: #f9f9f9;
     flex-grow: 1; /* Allow both sections to grow equally */
@@ -87,29 +96,31 @@ title: $title$
 
 </style>
 
-<div class="content-wrapper">
-
+<div class="container content-wrapper">
+  <div class="row">
+    
   <!-- Left Column (Image Slider) -->
+  <!-- <div class="col-md-6" style="border: 1px solid #ccc"> -->
+  <div class="col-md-6">
   <div class="image-slider" id="image-slider">
-  
   <!-- Buttons for changing the image -->
   <div class="slider-buttons" style="margin-top: 5px;">
   <button onclick="changeImage(-1)">Previous</button>
   <button onclick="changeImage(1)">Next</button>
   </div>
-  
   </div>
-
+  </div>
+  
   <!-- Right Side Content (Paper Details + Codecheck details) -->
+  <div class="col-md-6">
   <div class="right-content">
-    
+
   <!-- Paper Details Section -->
   <div class="paper-details">
   <h3>Paper details</h3>
-  
   <p><strong>Title</strong>: $paper_title$</p>  
   <p><strong>$author_names_heading$</strong>: $paper_authors$</p>  
-  
+
   <!-- Abstract section -->
   <div id="abstract-section">
   <p><strong>Abstract</strong>: <i>Obtained from $abstract_source$</i></p>
@@ -128,7 +139,7 @@ title: $title$
   <p><strong>Time of codecheck</strong>: $codecheck_time$</p>  
   <p><strong>Repository</strong>: $codecheck_repo$</p>
   <p><strong>Codecheck report</strong>: $codecheck_report$</p>
-  
+
   <!-- Summary -->
   <div id="summary-section">
   <p><strong>Summary</strong>: <span id="summary-content">$codecheck_summary$</span></p>
@@ -136,11 +147,12 @@ title: $title$
   <p>$codecheck_summary$</p>
   </div>
   </div>
-
   </div>
 
   </div>
+  </div>
 
+  </div>
 </div>
 
 <script>
@@ -163,7 +175,6 @@ function changeImage(direction) {
 changeImage(0);
 
 function adjustContentDisplay(contentElement, boxElement, minHeight, sectionElement) {
-
   console.log("Checking content:", contentElement.textContent.trim());
   // Check if the content is empty, in which case we hide the section
   if (!contentElement.textContent.trim()) {
