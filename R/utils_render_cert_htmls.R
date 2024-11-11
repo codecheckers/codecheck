@@ -44,8 +44,6 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
     }
 
     render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status=1)
-    print("stopping")
-    stop()
   }
   print(CONFIG$LIST_FAILED_ABSTRACT)
   print(length(CONFIG$LIST_FAILED_ABSTRACT))

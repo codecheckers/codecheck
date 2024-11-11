@@ -1,6 +1,14 @@
 library(httr)
 library(jsonlite)
 
+#' Downloads a certificate PDF from a report link and saves it locally. 
+#' If the download link is a ZIP file, it extracts the PDF from 
+#' the archive. Returns status based on success.
+#'
+#' @param report_link URL of the report from which to download the certificate.
+#' @param cert_id ID of the certificate, used for directory naming and logging.
+#'
+#' @return 1 if the certificate is successfully downloaded and saved; otherwise, 0.
 download_cert_pdf <- function(report_link, cert_id){
   # Checking if the certs dir exist
   cert_dir <- CONFIG$CERTS_DIR[["cert"]]
@@ -46,6 +54,12 @@ download_cert_pdf <- function(report_link, cert_id){
   }
 }
 
+#' Retrieves the download link for a certificate file from either Zenodo or OSF.
+#'
+#' @param report_link URL of the report to access, either from Zenodo or OSF.
+#' @param cert_id ID of the certificate, used for logging and warnings.
+#'
+#' @return The download link for the certificate file as a string if found; otherwise, NULL.
 get_cert_link <- function(report_link, cert_id){
 
   if (grepl("zenodo", report_link, ignore.case = TRUE)){
@@ -53,6 +67,7 @@ get_cert_link <- function(report_link, cert_id){
   }
 
   else if (grepl("OSF", report_link, ignore.case = TRUE)) {
+    cert_download_url <- get_osf_cert_link(report_link, cert_id)
   }
 
   else(
@@ -61,6 +76,15 @@ get_cert_link <- function(report_link, cert_id){
 
   return(cert_download_url)
 }
+
+#' Retrieves the link to a certificate PDF file from an OSF project node. It retrieves its files, 
+#' and searches for a single PDF certificate file within the node. If multiple or no PDF 
+#' files are found, it returns NULL with a warning.
+#'
+#' @param report_link URL of the OSF report to access.
+#' @param cert_id ID of the certificate, used for logging and warnings.
+#'
+#' @return The download link for the certificate file as a string if a single PDF is found; otherwise, NULL.
 get_osf_cert_link <- function(report_link, cert_id){
   # Retrieve the OSF project node ID 
   node_id <- basename(report_link)
@@ -120,7 +144,14 @@ get_osf_cert_link <- function(report_link, cert_id){
   return(cert_file$links$download)
 }
 
-
+#' Accesses a codecheck's Zenodo record via its report link, retrieves the record ID, 
+#' and searches for a certificate PDF or ZIP file within the record's files using the Zenodo API.
+#'
+#' @param report_link URL of the Zenodo report to access.
+#' @param cert_id ID of the certificate, used for logging and warnings.
+#' @param api_key (Optional) API key for Zenodo authentication if required.
+#'
+#' @return The download link for the certificate file as a string if found; otherwise, NULL.
 get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   # Checking for redirects and retrieving the record_id from there
   response <- GET(report_link)
@@ -183,118 +214,15 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   }
 }
 
-get_abstract <- function(register_repo) {
-  # Initialize the abstract source and text
-  abstract_source <- NULL
-  abstract_text <- NULL
-
-  # Try to get the abstract from Crossref first
-  abstract_text <- get_abstract_text_crossref(register_repo)
-
-  # If Crossref fails, try OpenAlex
-  if (is.null(abstract_text)) {
-    abstract_text <- get_abstract_text_openalex(register_repo)
-    if (!is.null(abstract_text)) {
-      abstract_source <- "OpenAlex"
-    }
-  } 
-  # Crossref did not fail, adding cross ref as the source
-  else {
-    abstract_source <- "CrossRef"
-  }
-
-  # Return both the source and the abstract text as a list
-  return(list(
-    source = abstract_source,
-    text = abstract_text
-  ))
-}
-
-get_abstract_text_openalex <- function(register_repo){
-
-  abstract <- NULL
-
-  config_yml <- get_codecheck_yml(register_repo)
-  doi <- config_yml$paper$reference
-
-  # First, attempt to retrieve the abstract using the DOI directly
-  doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], doi)
-  # Correcting the api_url if it is malformed
-  doi_api_url <- gsub("\\n", "", doi_api_url)
-  response <- httr::GET(doi_api_url)
-
-  if (status_code(response) != 200){
-    # Checking for redirects and retrieving the final doi from there
-    redirect_doi <- response$url 
-    redirect_doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], redirect_doi)
-    response <- httr::GET(redirect_doi_api_url)
-  }
-
-  if (status_code(response) == 200){
-    data <- httr::content(response, "parsed")
-    if ("abstract_inverted_index" %in% names(data)){
-      # Extract the inverted index from the response
-      inverted_index <- data$abstract_inverted_index
-
-      if (is.null(inverted_index)){
-        return(NULL)
-      }
-
-      # Initialize an empty character vector to store the words by position
-      abstract_vector <- character()
-
-      # Iterate over the inverted index to place each word at its correct position
-      for (word in names(inverted_index)) {
-        positions <- inverted_index[[word]]
-        
-        # For each position, assign the word in that position
-        for (position in positions) {
-          abstract_vector[position + 1] <- word  # +1 to account for R's 1-based indexing
-        }
-      }
-      # Combine the words into a single string to form the abstract
-      abstract <- paste(abstract_vector, collapse = " ")
-    }
-  }
-  return(abstract)
-}
 
 
-get_abstract_text_crossref <- function(register_repo) {
-  config_yml <- get_codecheck_yml(register_repo)
-
-  # Retrieving the paper DOI
-  paper_link <- config_yml$paper$referenc
-  doi <- sub(CONFIG$CERTS_URL_PREFIX, "", paper_link)
-
-  # Construct the URL to access the CrossRef API
-  # Make the HTTP GET request
-  api_url <- paste0(CONFIG$CERT_LINKS[["crossref_api"]], doi)
-  # Correcting the api_url if it is malformed
-  api_url <- gsub("\\n", "", api_url)
-
-  response <- GET(api_url)
-  
-  # Check if the request was successful
-  if (status_code(response) == 200) {
-    data <- content(response, "parsed")
-    # Retrieve the abstract from the response data, if available
-    if (!is.null(data$message$abstract)) {
-      return(data$message$abstract)
-    } 
-
-    # No abstract was found, returning NULL
-    warning(paste("No abstract available for DOI", doi))
-    return(NULL)
-  } 
-
-  # Could not retrieve data for DOI
-  else {
-    warning(paste("Failed to retrieve data for DOI", doi))
-    return(NULL)
-  }
-}
-
+#' Downloads a ZIP file from the given URL, searches for "codecheck.pdf" within its contents,
+#' renames it to "cert.pdf," and saves it in the specified directory. 
+#'
+#' @param zip_download_url URL to download the ZIP file from.
+#' @param cert_sub_dir Directory to save the extracted certificate PDF.
+#'
+#' @return 1 if "codecheck.pdf" is found and saved, otherwise 0.
 extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir){
   zip_dir <- file.path(cert_sub_dir, "content.zip")
   
@@ -346,4 +274,7 @@ convert_cert_pdf_to_jpeg <- function(cert_id){
   
   # Read and convert PDF to PNG images
   pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = CONFIG$CERT_DPI)
+
+  # Remove the the pdf file
+  file.remove(cert_pdf_path)
 }
