@@ -274,7 +274,4 @@ convert_cert_pdf_to_jpeg <- function(cert_id){
   
   # Read and convert PDF to PNG images
   pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = CONFIG$CERT_DPI)
-
-  # Remove the the pdf file
-  file.remove(cert_pdf_path)
 }
