@@ -55,7 +55,9 @@ CONFIG$MD_TITLES <- list(
     venue_type <- table_details[["subcat"]]
     venue_name <- table_details[["name"]]
     paste0("CODECHECK Register for ", venue_type, " (", venue_name, ")")
-  }
+  },
+
+  "certs" = "CODECHECK Certificate"
 )
 
 CONFIG$HREF_DETAILS <- list(
@@ -67,6 +69,7 @@ CONFIG$HREF_DETAILS <- list(
 
 # List of hyperlinks
 CONFIG$HYPERLINKS <- list(
+  certs = "https://codecheck.org.uk/register/certs/",
   venues = "https://codecheck.org.uk/register/venues/",
   register = "https://codecheck.org.uk/register/",
   codecheckers = "https://codecheck.org.uk/register/codecheckers/",
@@ -76,7 +79,9 @@ CONFIG$HYPERLINKS <- list(
   github = "https://github.com/",
   doi = "https://doi.org/",
   codecheck_issue = "https://github.com/codecheckers/register/issues/",
-  zenodo_deposit = "https://zenodo.org/deposit/"
+  zenodo_deposit = "https://zenodo.org/deposit/",
+  CrossRef = "https://www.crossref.org",
+  OpenAlex = "https://openalex.org"
 )
 
 # Plural of venue subcategories 
@@ -175,7 +180,26 @@ CONFIG$FILTER_SUBCAT_COLUMNS <- list(
 # OTHERS
 CONFIG$DICT_ORCID_ID_NAME <- list()
 
+# Delaying requests by 1 second to adhere to the rate limit of 60 requests/ minute for Zenodo
+CONFIG$CERT_REQUEST_DELAY <- 1
+
+# CERT LINKS
+CONFIG$CERT_LINKS <- list(
+  osf_api = "https://api.osf.io/v2/",
+  zenodo_api = "https://zenodo.org/api/records/",
+  crossref_api = "https://api.crossref.org/works/",
+  openalex_api = "https://api.openalex.org/works/"
+)
+
+CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"
+CONFIG$CERT_DPI <- 800 
+
 # DIRECTORIES
+CONFIG$CERTS_DIR <- list(
+  cert_page_template = system.file("extdata", "templates/cert/template_cert_page.html", package = "codecheck"),
+  cert = "docs/certs"
+)
+
 CONFIG$TEMPLATE_DIR<- list(
   "non_reg" = list(
     "postfix" = system.file("extdata", "templates/non_reg_tables/index_postfix_template.html", package = "codecheck"),
@@ -188,6 +212,13 @@ CONFIG$TEMPLATE_DIR<- list(
     "header" = system.file("extdata", "templates/general/index_header_template.html", package = "codecheck"),
     "prefix" = system.file("extdata", "templates/general/index_prefix_template.html", package = "codecheck"),
     "md_template" = system.file("extdata", "templates/reg_tables/template.md", package = "codecheck")
+  ),
+  "cert" = list(
+    "postfix" = system.file("extdata", "templates/cert/index_postfix_template.html", package = "codecheck"),
+    "header" = system.file("extdata", "templates/general/index_header_template.html", package = "codecheck"),
+    "prefix" = system.file("extdata", "templates/general/index_prefix_template.html", package = "codecheck"),
+    md_template_base = system.file("extdata", "templates/cert/template_base.md", package = "codecheck"),
+    md_template_no_cert = system.file("extdata", "templates/cert/template_no_cert.md", package = "codecheck")
   )
 )
 
