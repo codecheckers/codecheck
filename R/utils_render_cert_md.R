@@ -37,6 +37,137 @@ add_repository_hyperlink <- function(md_content, repo_link) {
   return(md_content)
 }
 
+#' Retrieves the abstract of a research paper from CrossRef or OpenAlex.
+#'
+#' This function attempts to retrieve a paper's abstract using the OpenAlex. API first.
+#' If that fails it then attempts to retrieve from CrossRef
+#'
+#' @param register_repo URL or path to the repository containing the paper's configuration.
+#'
+#' @return A list with two elements: `source` (indicating "CrossRef" or "OpenAlex" if found)
+#'   and `text` (the abstract text as a string, or NULL if unavailable).
+get_abstract <- function(register_repo) {
+  # Initialize the abstract source and text
+  abstract_source <- NULL
+  abstract_text <- NULL
+
+  # Try to get the abstract from Crossref first
+  abstract_text <- get_abstract_text_crossref(register_repo)
+
+  # If Crossref fails, try OpenAlex
+  if (is.null(abstract_text)) {
+    abstract_text <- get_abstract_text_openalex(register_repo)
+    if (!is.null(abstract_text)) {
+      abstract_source <- "OpenAlex"
+    }
+  } 
+  # Crossref did not fail, adding cross ref as the source
+  else {
+    abstract_source <- "CrossRef"
+  }
+
+  # Return both the source and the abstract text as a list
+  return(list(
+    source = abstract_source,
+    text = abstract_text
+  ))
+}
+
+#' Retrieves the abstract of a research paper using the OpenAlex API.
+#'
+#' @param register_repo URL or path to the repository containing the paper's configuration.
+#'
+#' @return The abstract text as a string if available; otherwise, NULL.
+get_abstract_text_openalex <- function(register_repo){
+
+  abstract <- NULL
+
+  config_yml <- get_codecheck_yml(register_repo)
+  doi <- config_yml$paper$reference
+
+  # First, attempt to retrieve the abstract using the DOI directly
+  doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], doi)
+  # Correcting the api_url if it is malformed
+  doi_api_url <- gsub("\\n", "", doi_api_url)
+  response <- httr::GET(doi_api_url)
+
+  if (status_code(response) != 200){
+    # Checking for redirects and retrieving the final doi from there
+    redirect_doi <- response$url 
+    redirect_doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], redirect_doi)
+    response <- httr::GET(redirect_doi_api_url)
+  }
+
+  if (status_code(response) == 200){
+    data <- httr::content(response, "parsed")
+    if ("abstract_inverted_index" %in% names(data)){
+      # Extract the inverted index from the response
+      inverted_index <- data$abstract_inverted_index
+
+      if (is.null(inverted_index)){
+        return(NULL)
+      }
+
+      # Initialize an empty character vector to store the words by position
+      abstract_vector <- character()
+
+      # Iterate over the inverted index to place each word at its correct position
+      for (word in names(inverted_index)) {
+        positions <- inverted_index[[word]]
+        
+        # For each position, assign the word in that position
+        for (position in positions) {
+          abstract_vector[position + 1] <- word  # +1 to account for R's 1-based indexing
+        }
+      }
+      # Combine the words into a single string to form the abstract
+      abstract <- paste(abstract_vector, collapse = " ")
+    }
+  }
+  return(abstract)
+}
+
+#' Extracts the paper DOI from the config_yml of the paper, 
+#' constructs a CrossRef API request, and returns the abstract text if available.
+#'
+#' @param register_repo URL or path to the repository containing the paper's configuration.
+#'
+#' @return The abstract text as a string if available; otherwise, NULL.
+get_abstract_text_crossref <- function(register_repo) {
+  config_yml <- get_codecheck_yml(register_repo)
+
+  # Retrieving the paper DOI
+  paper_link <- config_yml$paper$referenc
+  doi <- sub(CONFIG$CERTS_URL_PREFIX, "", paper_link)
+
+  # Construct the URL to access the CrossRef API
+  # Make the HTTP GET request
+  api_url <- paste0(CONFIG$CERT_LINKS[["crossref_api"]], doi)
+  # Correcting the api_url if it is malformed
+  api_url <- gsub("\\n", "", api_url)
+
+  response <- GET(api_url)
+  
+  # Check if the request was successful
+  if (status_code(response) == 200) {
+    data <- content(response, "parsed")
+    # Retrieve the abstract from the response data, if available
+    if (!is.null(data$message$abstract)) {
+      return(data$message$abstract)
+    } 
+
+    # No abstract was found, returning NULL
+    warning(paste("No abstract available for DOI", doi))
+    return(NULL)
+  } 
+
+  # Could not retrieve data for DOI
+  else {
+    warning(paste("Failed to retrieve data for DOI", doi))
+    return(NULL)
+  }
+}
+
 #' Inserts the abstract text and source link into the Markdown content if an abstract is found for the given repository. 
 #' If no abstract is found, an empty string is inserted in place of the abstract content.
 #'
@@ -187,7 +318,16 @@ add_codecheck_details_md <- function(md_content, repo_link){
   
   # Adding codecheck date, summary and cert no.
   md_content <- gsub("\\$codecheck_time\\$", config_yml$check_time, md_content)
-  md_content <- gsub("\\$codecheck_summary\\$", config_yml$summary, md_content)
+
+  # Adding summary if it exists else adding empty string
+  if ("summary" %in% names(config_yml)){
+    md_content <- gsub("\\$codecheck_summary\\$", config_yml$summary, md_content)
+  }
+  else{
+    print("No summary")
+    md_content <- gsub("\\$codecheck_summary\\$", "", md_content)
+  }
+
   md_content <- gsub("\\$codecheck_cert\\$", config_yml$certificate, md_content)
 
   # Adjusting the repo and report links
