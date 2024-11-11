@@ -324,7 +324,6 @@ add_codecheck_details_md <- function(md_content, repo_link){
     md_content <- gsub("\\$codecheck_summary\\$", config_yml$summary, md_content)
   }
   else{
-    print("No summary")
     md_content <- gsub("\\$codecheck_summary\\$", "", md_content)
   }
 
