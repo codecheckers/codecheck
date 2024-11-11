@@ -5,10 +5,18 @@ title: $title$
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
 <style>
+  body {
+    font-family: "PT Sans", Helvetica, Arial, sans-serif;
+  }
+
+  h1 {
+    margin-top: 2rem;
+  }
+
   /* Add minimum height to cards when screen less than md */
   @media (max-width: 768px) {
     .card {
-      min-height: 250px;
+      min-height: 270px;
     }
   }
 
@@ -46,7 +54,7 @@ title: $title$
 <div class="container">
   <div class="row">
   <div class="col-md-6">
-  <div class="card mb-3 mb-md-0">
+  <div class="card mb-3">
   <div class="card-body">
   <!-- Buttons to change cert page -->
   <div class="d-flex justify-content-center">
@@ -87,12 +95,11 @@ title: $title$
 
   </div>
 
-  <div class="card flex-grow-1">
+  <div class="card mb-3 flex-grow-1">
   <div class="card-header pt-4">
   <h2 class="card-title" style="color: darkgreen; margin-top: 0;">Codecheck details</h2>
   </div>
-  <div class="card-body">
-  <div class="codecheck-details">
+  <div class="card-body d-flex flex-column">
   <p><strong>Certificate identifier</strong>: $codecheck_cert$</p>
   <p><strong>$codechecker_names_heading$</strong>: $codechecker_names$</p>
   <p><strong>Time of codecheck</strong>: $codecheck_time$</p>
@@ -104,7 +111,6 @@ title: $title$
   <p><strong>Summary</strong>:</p>
   <div class="scrollable-text-box" id="summary-content">
   <p>$codecheck_summary$</p>
-  </div>
   </div>
   </div>
   </div>
