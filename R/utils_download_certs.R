@@ -329,3 +329,21 @@ extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir){
       return(0)
     }
 }
+
+#' Converts each page of a certificate PDF to JPEG format images, saving them in the specified certificate directory. 
+#'
+#' @param cert_id The certificate identifier. This ID is used to locate the PDF and save the resulting images.
+convert_cert_pdf_to_jpeg <- function(cert_id){
+  # Checking if the certs dir exist
+  cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id) 
+
+  # Get the number of pages in the PDF
+  cert_pdf_path <- file.path(cert_dir, "cert.pdf")
+  num_pages <- pdftools::pdf_info(cert_pdf_path)$pages
+
+  # Create image filenames
+  image_filenames <- sapply(1:num_pages, function(page) file.path(cert_dir, paste0("cert_", page, ".png")))
+  
+  # Read and convert PDF to PNG images
+  pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = CONFIG$CERT_DPI)
+}
