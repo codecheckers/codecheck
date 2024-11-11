@@ -104,7 +104,12 @@ generate_href <- function(filter, table_details, href_type) {
 
   # Setting href for filters with subcategories
   if ("subcat" %in% names(table_details)){
-    return(paste0(base_url, filter, "/", table_details[["subcat"]], "/", table_details[["slug_name"]], "/register", href_details$ext))
+    subcat <- table_details[["subcat"]]
+    # If subcat is venue type, we pluralize the venue names
+    if (subcat %in% names(CONFIG$VENUE_SUBCAT_PLURAL)){
+      subcat <- CONFIG$VENUE_SUBCAT_PLURAL[[subcat]]
+    }
+    return(paste0(base_url, filter, "/", subcat, "/", table_details[["slug_name"]], "/register", href_details$ext))
   }
 
   # For filters without subcategories

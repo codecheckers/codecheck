@@ -94,7 +94,8 @@ add_all_venues_hyperlink <- function(table){
       !!col_names[["Venue"]] := paste0(
         "[", !!sym(col_names[["Venue"]]), "](",
         CONFIG$HYPERLINKS[["venues"]], 
-        !!sym(col_names[["Type"]]), "/",
+        # Retrieving the plural venue types
+        CONFIG$VENUE_SUBCAT_PLURAL[[!!sym(col_names[["Type"]])]], "/",
         venue_slug, "/)"
       ),
 
@@ -103,7 +104,8 @@ add_all_venues_hyperlink <- function(table){
         !!sym(col_names[["no_codechecks"]]), 
         " [(see all checks)](",
         CONFIG$HYPERLINKS[["venues"]], 
-        !!sym(col_names[["Type"]]), "/",
+        # Retrieving the plural venue types
+        CONFIG$VENUE_SUBCAT_PLURAL[[!!sym(col_names[["Type"]])]], "/",
         venue_slug, "/)"
       ),
 
@@ -111,7 +113,8 @@ add_all_venues_hyperlink <- function(table){
       !!col_names[["Type"]] := paste0(
         "[", stringr::str_to_title(!!sym(col_names[["Type"]])), 
         "](", CONFIG$HYPERLINKS[["venues"]], 
-        !!sym(col_names[["Type"]]), "/)"
+        # Retrieving the plural venue types
+        CONFIG$VENUE_SUBCAT_PLURAL[[!!sym(col_names[["Type"]])]], "/)"
       )
     )
 
@@ -182,6 +185,9 @@ add_venue_type_hyperlink <- function(table, venue_type) {
   table_col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
   
   venue_col_name <- paste(stringr::str_to_title(venue_type), "name")
+
+  # Making the venue type plural for consistency in URL
+  venue_type <- CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]]
 
   # Ensure slug_name exists (if not, generate it from the Venue column)
   if (!"venue_slug" %in% colnames(table)) {
