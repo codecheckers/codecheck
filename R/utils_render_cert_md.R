@@ -201,7 +201,7 @@ add_abstract <- function(repo_link, md_content){
 create_cert_md <- function(cert_id, repo_link, download_cert_status){
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   
-  # Initially checking if a cert is available
+  # Loading the correct template based on whether cert exists
   if (download_cert_status == 0) {
     template_type <- "md_template_no_cert"
   }
@@ -218,6 +218,7 @@ create_cert_md <- function(cert_id, repo_link, download_cert_status){
 
   # We add the report link in the subtext when we do not have cert
   if (download_cert_status == 0){
+    config_yml <- get_codecheck_yml(repo_link)
     report_hyperlink <- paste0("[link](", config_yml$report, ")")
     md_content <- gsub("\\$codecheck_report_subtext\\$", report_hyperlink, md_content)
   }

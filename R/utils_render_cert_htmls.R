@@ -43,7 +43,12 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
 
-    render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status=1)
+    # The pdf exists and force download is False
+    else{
+      download_cert_status <- 1
+    }
+
+    render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status)
   }
 }
 
