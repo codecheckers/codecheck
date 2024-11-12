@@ -5,10 +5,6 @@
 #' @param register_table A data frame containing details of each certificate, including repository links and report links.
 #' @param force_download Logical; if TRUE, forces the download of certificate PDFs even if they already exist locally. Defaults to FALSE.
 render_cert_htmls <- function(register_table, force_download = FALSE){
-  # Keeping a list of failed cert pages. No hyperlinks will be added for these certs
-  CONFIG$LIST_FAILED_CERT_PAGES <- list()
-  CONFIG$LIST_FAILED_ABSTRACT <- list()
-
   # Read template
   html_template <- readLines(CONFIG$CERTS_DIR[["cert_page_template"]])
 
@@ -34,11 +30,6 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
         convert_cert_pdf_to_jpeg(cert_id)
       }
 
-      # Failed in downloading cert
-      else{
-        CONFIG$LIST_FAILED_CERT_PAGES <- append(CONFIG$LIST_FAILED_CERT_PAGES, cert_id)
-        Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
-      }
       # Delaying reqwuests to adhere to request limits
       Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
     }
