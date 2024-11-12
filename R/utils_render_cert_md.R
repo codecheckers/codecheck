@@ -300,10 +300,21 @@ add_codecheck_details_md <- function(md_content, repo_link){
   config_yml <- get_codecheck_yml(repo_link)
 
   # Adding the Codechecker name
-  codechecker_names <- paste(lapply(config_yml$codechecker, function(checker) {
-    paste0("[", checker$name, "](", 
-    CONFIG$HYPERLINKS["orcid"], checker$ORCID, ")")
-    }), collapse = ", ")
+  codechecker_names <- c()
+
+  for (checker in config_yml$codechecker){
+    # Creating a hyperlink if the ORCID ID is available
+    if ("ORCID" %in% names(checker)){
+      codechecker <- paste0("[", checker$name, "](", CONFIG$HYPERLINKS["orcid"], checker$ORCID, ")")
+    }
+
+    else{
+      codechecker <- checker$name
+    }
+    codechecker_names <- append(codechecker_names, codechecker)
+  }
+  # Concatenate all entries into a single string separated by commas
+  codechecker_names <- paste(codechecker_names, collapse = ", ")
 
   # Adjusting the codechecker name heading 
   # Multiple codecheckers
