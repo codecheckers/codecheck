@@ -201,7 +201,7 @@ add_abstract <- function(repo_link, md_content){
 create_cert_md <- function(cert_id, repo_link, download_cert_status){
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   
-  # Initially checking if a cert is available
+  # Loading the correct template based on whether cert exists
   if (download_cert_status == 0) {
     template_type <- "md_template_no_cert"
   }
