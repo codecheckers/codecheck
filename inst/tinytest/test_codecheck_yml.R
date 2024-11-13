@@ -28,7 +28,9 @@ expect_error(validate_codecheck_yml("yaml/codechecker_name_missing/codecheck.yml
 
 # repository/ies ----
 expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck.yml"),
-             pattern = "URL does not exist")
+             pattern = "URL returns error")
+expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-with-list.yml"),
+             pattern = "URL returns error")
 expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-with-list.yml"),
              pattern = "does_not_exist")
 expect_silent(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-valid.yml"))
