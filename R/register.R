@@ -26,6 +26,8 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 
   # Loading config.R file
   source(system.file("extdata", "config.R", package = "codecheck"))
+  
+  message("Using cache path ", R.cache::getCacheRootPath())
 
   register_table <- preprocess_register(register, filter_by)
   # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
@@ -54,6 +56,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 #' @param to The last register entry to check
 #'
 #' @author Daniel Nüst
+#' @importFrom R.cache getCacheRootPath
 #' @importFrom gh gh
 #' @export
 register_check <- function(register = read.csv("register.csv", as.is = TRUE),
@@ -61,7 +64,9 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE),
                            to = nrow(register)) {
   # Loading config.R file
   source(system.file("extdata", "config.R", package = "codecheck"))
-
+  
+  message("Using cache path ", R.cache::getCacheRootPath())
+  
   for (i in seq(from = from, to = to)) {
     cat("Checking", toString(register[i, ]), "\n")
     entry <- register[i, ]
