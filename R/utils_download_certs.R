@@ -260,6 +260,7 @@ extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir){
 
 #' Converts each page of a certificate PDF to JPEG format images, saving them in the specified certificate directory. 
 #'
+#' @importFrom pdftools pdf_info
 #' @param cert_id The certificate identifier. This ID is used to locate the PDF and save the resulting images.
 convert_cert_pdf_to_jpeg <- function(cert_id){
   # Checking if the certs dir exist
