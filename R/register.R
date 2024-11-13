@@ -1,6 +1,6 @@
 #' Function for rendering the register into different view
 #'
-#' NOTE: You should put a GitHub API token inth the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
+#' NOTE: You should put a GitHub API token in the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
 #'
 #' - `.html`
 #' - `.md``

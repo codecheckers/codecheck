@@ -19,7 +19,7 @@ register_render(
 A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 }
 \description{
-NOTE: You should put a GitHub API token inth the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
+NOTE: You should put a GitHub API token in the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
 }
 \details{
 - `.html`
