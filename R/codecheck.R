@@ -281,15 +281,33 @@ cite_certificate <- function(metadata) {
 ##' @importFrom zen4R ZenodoRecord
 ##' 
 ##' @export
-create_zenodo_record <- function(zen) {
-  myrec <- zen$createEmptyRecord()
-  this_doi = myrec$metadata$prereserve_doi$doi
-  cat("The following URL is your Zenodo DOI.\n")
-  cat("Please add this to codecheck.yml in report: field\n")
-  print(paste0(CONFIG$HYPERLINKS[["doi"]], this_doi))
-  cat("Remember to reload the yaml file after editing it.\n")
-  get_zenodo_record(this_doi)
+get_or_create_zenodo_record <- function(zen, metadata, warn=TRUE) {
+  id <- get_zenodo_record(metadata$report)
+  if (!is.na(id)) {
+    my_rec <- zen$getDepositionById(id)
+  } else {
+    ## no record, create a new one.
+    if(warn) { 
+      proceed <- askYesNo("You do not have a zenodo record; I can fix this for you but please make sure your codecheck.yaml is saved, as I will need to update it.  Proceed?")
+      stopifnot(proceed==TRUE)
+    }
+    my_rec <- zen$createEmptyRecord()
+  }
+  my_rec
 }
+  
+    
+##   myrec <- zen$createEmptyRecord()
+##   this_doi = myrec$metadata$prereserve_doi$doi
+##   cat("The following URL is your Zenodo DOI.\n")
+##   cat("Please add this to codecheck.yml in report: field\n")
+##   print(paste0(CONFIG$HYPERLINKS[["doi"]], this_doi))
+##   cat("Remember to reload the yaml file after editing it.\n")
+##   get_zenodo_record(this_doi)
+## }
+
+
+
 
 ##' Extract the Zenodo record number from the report URL
 ##'
@@ -307,55 +325,79 @@ create_zenodo_record <- function(zen) {
 ##' @author Stephen Eglen
 ##' @importFrom stringr str_match
 ##' @export
-get_zenodo_record <- function(report) {
+get_zenodo_id <- function(report) {
   result = str_match(report, "10\\.5281/zenodo\\.([0-9]{7,})")[2]
-  if(is.na(result))
-    stop("metadata$report does not contain suitable record.")
   as.integer(result)
 }
 
-set_zenodo_metadata <- function(zen, record, metadata) {
-  draft <- zen$getDepositionById(record)
-  if (is.null(draft)) {
-    draft <- zen$getRecordById(record)
+##' Get the full Zenodo record from the metadata
+##'
+##' Retrieve the zenodo record, if one exists.
+##' If no record number is currently  listed in the metadata (i.e. the "FIXME" tag is still there)
+##' then the code returns NULL and an empty record should be created.
+##' @title Get the full zenodo record using the record number stored in the metadata.
+##' @param zenodo 
+##' @param metadata 
+##' @return The Zenodo record, or NULL.
+##' @author Stephen Eglen
+##' @export
+get_zenodo_record <- function(zenodo, metadata) {
+  id <- get_zenodo_id(metadata$report)
+  if (is.na(id)) {
+    NULL
+  } else {
+    zenodo$getDepositionById(id)
   }
-  
-  if (is.null(draft))
-    stop("Neither deposition nor record found for ID ", record)
+}
 
-  draft$setPublicationType("report")
-  draft$setCommunities(communities = c("codecheck"))
-  draft$setTitle(paste("CODECHECK certificate", metadata$certificate))
-  draft$setLanguage(language = "eng")
+##' Upload codecheck metadata to Zenodo.
+##'
+##' The contents of codecheck.yml are uploaded to Zenodo using this funciton.
+##' 
+##' @title Upload metadata to Zenodod
+##' @param zen 
+##' @param myrec 
+##' @param metadata 
+##' @return rec -- the updated record.
+##' @author Stephen Eglen
+##' @export
+upload_zenodo_metadata <- function(zen, myrec, metadata) {
+  ##draft$setPublicationType("report")
+  ##draft$setCommunities(communities = c("codecheck"))
+  myrec$metadata <- NULL
+  myrec$setTitle(paste("CODECHECK certificate", metadata$certificate))
+  myrec$addLanguage(language = "eng")
+  myrec$setLicense("cc-by-4.0")
 
-  draft$metadata$creators = NULL
-  num_creators = length(metadata$codechecker)
+  myrec$metadata$creators <- NULL
+  num_creators <- length(metadata$codechecker)
   for (i in 1:num_creators) {
-    draft$addCreator(
-                    name  = metadata$codechecker[[i]]$name,
-                    orcid = metadata$codechecker[[i]]$ORCID)
+    myrec$addCreator(
+            name  = metadata$codechecker[[i]]$name,
+            orcid = metadata$codechecker[[i]]$ORCID)
   }
 
-  description_text = paste("CODECHECK certificate for paper:",
+  myrec$setPublicationDate(substring(metadata$check_time, 1, 10))
+  myrec$setPublisher("CODECHECK")
+  myrec$setResourceType("publication-preprint")
+
+  description_text <- paste("CODECHECK certificate for paper:",
                            metadata$paper$title)
-  repo_url = gsub("[<>]", "", metadata$repository)
-  description_text = paste(description_text,
+  repo_url <- gsub("[<>]", "", metadata$repository)
+  description_text <- paste(description_text,
                            sprintf('<p><p>Repository: <a href="%s">%s</a>',
                                    repo_url, repo_url))
-  draft$setDescription(description_text)
-  draft$setKeywords(keywords = c("CODECHECK"))
-  draft$setNotes(notes = c("See file LICENSE for license of the contained code. The report document codecheck.pdf is published under CC-BY 4.0 International."))
-  draft$setAccessRight(accessRight = "open")
-  draft$setLicense(licenseId = "other-open")
-  draft$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$repository)
-  draft$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$paper$reference)
+  myrec$setDescription(description_text)
+  myrec$setSubjects(subjects= c("CODECHECK"))
+  myrec$setNotes(notes = c("See file LICENSE for license of the contained code. The report document codecheck.pdf is published under CC-BY 4.0 International."))
+  ##myrec$setAccessRight(accessRight = "open")
+  ##myrec$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$repository)
+  ##myrec$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$paper$reference)
+  cat(paste0("Check your record online at ",  myrec$links$self_html, "\n"))
+  myrec <- zen$depositRecord(myrec)
 
-  draft <- zen$depositRecord(draft)
-  cat(paste0("Check your record online at", 
-            CONFIG$HYPERLINKS[["zenodo_deposit"]],
-             record,
-             "\n"))
 }
+
 
 ##' Upload the CODECHECK certificate to Zenodo.
 ##'
@@ -377,3 +419,14 @@ set_zenodo_certificate <- function(zen, record, certificate) {
 
 ## We deliberately do not provide a function to publish the certificate.
 ## You should go check it yourself.
+
+
+## Helper functions
+add_id_to_yml <- function(id, yml_file) {
+  ## Add id to the yaml file.
+  data1 <- readLines(yml_file)
+  data2 <- gsub(pattern = "zenodo.FIXME$",
+                replace = paste0("zenodo.",id),
+                x = data1)
+  writeLines(data2, yml_file)
+}

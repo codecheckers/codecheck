@@ -2,27 +2,25 @@
 % Please edit documentation in R/codecheck.R
 \name{get_zenodo_record}
 \alias{get_zenodo_record}
-\title{Extract the Zenodo record number from the report URL}
+\title{Get the full zenodo record using the record number stored in the metadata.}
 \usage{
-get_zenodo_record(report)
+get_zenodo_record(zenodo, metadata)
 }
 \arguments{
-\item{report}{- string containing the report URL on Zenodo.}
+\item{zenodo}{}
+
+\item{metadata}{}
 }
 \value{
-the Zenodo record number (a number with at least 7 digits).
+The Zenodo record, or NULL.
 }
 \description{
-Extract the Zenodo record number from the report URL
+Get the full Zenodo record from the metadata
 }
 \details{
-The report paramater should contain a URL like:
-http://doi.org/10.5281/zenodo.3750741 where the final part of the
-URL is zenodo.X where X is a number containing at least 7 digits.
-X is returned.  If we cannot extract the number X, we return an
-error, in which case the function create_zenodo_record() can be
-run to create a new record.  Alternatively, the report URL is
-pre-assigned a DOI when manually creating the record.
+Retrieve the zenodo record, if one exists.
+If no record number is currently  listed in the metadata (i.e. the "FIXME" tag is still there)
+then the code returns NULL and an empty record should be created.
 }
 \author{
 Stephen Eglen
