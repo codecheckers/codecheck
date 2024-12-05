@@ -76,6 +76,7 @@ get_abstract <- function(register_repo) {
 #' Retrieves the abstract of a research paper using the OpenAlex API.
 #'
 #' @param register_repo URL or path to the repository containing the paper's configuration.
+#' @importFrom httr GET status_code content
 #'
 #' @return The abstract text as a string if available; otherwise, NULL.
 get_abstract_text_openalex <- function(register_repo){
@@ -91,14 +92,14 @@ get_abstract_text_openalex <- function(register_repo){
   doi_api_url <- gsub("\\n", "", doi_api_url)
   response <- httr::GET(doi_api_url)
 
-  if (status_code(response) != 200){
+  if (httr::status_code(response) != 200){
     # Checking for redirects and retrieving the final doi from there
     redirect_doi <- response$url 
     redirect_doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], redirect_doi)
     response <- httr::GET(redirect_doi_api_url)
   }
 
-  if (status_code(response) == 200){
+  if (httr::status_code(response) == 200){
     data <- httr::content(response, "parsed")
     if ("abstract_inverted_index" %in% names(data)){
       # Extract the inverted index from the response
@@ -131,6 +132,8 @@ get_abstract_text_openalex <- function(register_repo){
 #' constructs a CrossRef API request, and returns the abstract text if available.
 #'
 #' @param register_repo URL or path to the repository containing the paper's configuration.
+#' 
+#' @importFrom httr GET status_code content
 #'
 #' @return The abstract text as a string if available; otherwise, NULL.
 get_abstract_text_crossref <- function(register_repo) {
@@ -146,11 +149,11 @@ get_abstract_text_crossref <- function(register_repo) {
   # Correcting the api_url if it is malformed
   api_url <- gsub("\\n", "", api_url)
 
-  response <- GET(api_url)
+  response <- httr::GET(api_url)
   
   # Check if the request was successful
-  if (status_code(response) == 200) {
-    data <- content(response, "parsed")
+  if (httr::status_code(response) == 200) {
+    data <- httr::content(response, "parsed")
     # Retrieve the abstract from the response data, if available
     if (!is.null(data$message$abstract)) {
       return(data$message$abstract)

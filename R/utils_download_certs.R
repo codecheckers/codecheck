@@ -7,6 +7,7 @@ library(jsonlite)
 #'
 #' @param report_link URL of the report from which to download the certificate.
 #' @param cert_id ID of the certificate, used for directory naming and logging.
+#' @importFrom httr status_code GET write_disk
 #'
 #' @return 1 if the certificate is successfully downloaded and saved; otherwise, 0.
 download_cert_pdf <- function(report_link, cert_id){
@@ -38,9 +39,9 @@ download_cert_pdf <- function(report_link, cert_id){
     else {
       # Download the PDF file
       pdf_path <- file.path(cert_sub_dir, "cert.pdf") 
-      download_response <- GET(cert_download_url, httr::write_disk(pdf_path, overwrite = TRUE))
+      download_response <- httr::GET(cert_download_url, httr::write_disk(pdf_path, overwrite = TRUE))
       
-      if (status_code(download_response) == 200) {
+      if (httr::status_code(download_response) == 200) {
         message(paste("Cert", cert_id, "downloaded successfully"))
         return(1)
       } 
@@ -83,7 +84,7 @@ get_cert_link <- function(report_link, cert_id){
 #'
 #' @param report_link URL of the OSF report to access.
 #' @param cert_id ID of the certificate, used for logging and warnings.
-#'
+#' @importFrom httr status_code content
 #' @return The download link for the certificate file as a string if a single PDF is found; otherwise, NULL.
 get_osf_cert_link <- function(report_link, cert_id){
   # Retrieve the OSF project node ID 
@@ -96,15 +97,15 @@ get_osf_cert_link <- function(report_link, cert_id){
 
   # Continue making requests while there is a 'next' page
   while (!is.null(files_url)) {
-    response <- GET(files_url)
+    response <- httr::GET(files_url)
     
     # Check if the request was successful
-    if (status_code(response) != 200) {
+    if (httr::status_code(response) != 200) {
       stop("Failed to retrieve files: ", status_code(response))
     }
     
     # Parse the response content
-    response_content <- content(response, as = "parsed", type = "application/json")
+    response_content <- httr::content(response, as = "parsed", type = "application/json")
     
     # Add the files from the current page to the list of all files
     all_files <- c(all_files, response_content$data)
@@ -150,11 +151,13 @@ get_osf_cert_link <- function(report_link, cert_id){
 #' @param report_link URL of the Zenodo report to access.
 #' @param cert_id ID of the certificate, used for logging and warnings.
 #' @param api_key (Optional) API key for Zenodo authentication if required.
+#' 
+#' @importFrom httr GET status_code content
 #'
 #' @return The download link for the certificate file as a string if found; otherwise, NULL.
 get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   # Checking for redirects and retrieving the record_id from there
-  response <- GET(report_link)
+  response <- httr::GET(report_link)
   final_url <- response$url 
   record_id <- basename(final_url)
 
@@ -163,13 +166,13 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   record_url <- paste0(CONFIG$CERT_LINKS[["zenodo_api"]], record_id, "/files")
   
   # Make the API request
-  response <- GET(record_url, httr::add_headers(Authorization = paste("Bearer", api_key)))
+  response <- httr::GET(record_url, httr::add_headers(Authorization = paste("Bearer", api_key)))
   
   # Check if the request was successful
-  if (status_code(response) == 200) {
+  if (httr::status_code(response) == 200) {
     
     # Parse the response
-    record_data <- fromJSON(content(response, "text", encoding = "UTF-8"))
+    record_data <- fromJSON(httr::content(response, "text", encoding = "UTF-8"))
     
     files_list <- record_data$entries
 
