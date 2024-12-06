@@ -23,7 +23,7 @@ create_non_register_files <- function(register_table, filter_by){
 
       render_html(table, table_details, filter)
       
-      # Removing the unneccessary columns before creating html and json
+      # Removing the unnecessary columns before creating html and json
       if (filter == "venues"){
         table <- table %>% select(-`venue_slug`)
       }

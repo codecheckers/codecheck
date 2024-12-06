@@ -54,25 +54,25 @@ set_paper_title_references <- function(register_table){
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
 render_register_json <- function(register_table, table_details, filter) {
-  register_table <- add_repository_links_json(register_table)
+  register_table_json <- add_repository_links_json(register_table)
 
   # Set paper titles and references
-  register_table <- set_paper_title_references(register_table)
+  register_table_json <- set_paper_title_references(register_table_json)
 
   output_dir <- table_details[["output_dir"]]
 
   # Keeping only those columns that are mentioned in the json columns and those that 
   # register table already has
-  columns_to_keep <- intersect(CONFIG$JSON_COLUMNS, names(register_table))
+  columns_to_keep <- intersect(CONFIG$JSON_COLUMNS, names(register_table_json))
 
   jsonlite::write_json(
-    register_table[, columns_to_keep],
+    register_table_json[, columns_to_keep],
     path = paste0(output_dir, "register.json"),
     pretty = TRUE
   )
 
   jsonlite::write_json(
-    utils::tail(register_table, 10)[, columns_to_keep],
+    utils::tail(register_table_json, CONFIG$FEATURED_COUNT)[, columns_to_keep],
     path = paste0(output_dir, "featured.json"),
     pretty = TRUE
   )
@@ -80,7 +80,7 @@ render_register_json <- function(register_table, table_details, filter) {
   jsonlite::write_json(
     list(
       source = generate_href(filter, table_details, "json"),
-      cert_count = nrow(register_table)
+      cert_count = nrow(register_table_json)
       # TODO count conferences, preprints,
       # journals, etc.
     ),

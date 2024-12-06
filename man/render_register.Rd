@@ -4,7 +4,7 @@
 \alias{render_register}
 \title{Render Register in Specified Output Format}
 \usage{
-render_register(register_table, table_details, filter, output_type)
+render_register(register_table, table_details, filter = NA, output_type)
 }
 \arguments{
 \item{register_table}{The register table that needs to be rendered into different files.}

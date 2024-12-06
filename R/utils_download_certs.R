@@ -1,6 +1,3 @@
-library(httr)
-library(jsonlite)
-
 #' Downloads a certificate PDF from a report link and saves it locally. 
 #' If the download link is a ZIP file, it extracts the PDF from 
 #' the archive. Returns status based on success.
@@ -153,6 +150,7 @@ get_osf_cert_link <- function(report_link, cert_id){
 #' @param api_key (Optional) API key for Zenodo authentication if required.
 #' 
 #' @importFrom httr GET status_code content
+#' @importFrom jsonlite fromJSON
 #'
 #' @return The download link for the certificate file as a string if found; otherwise, NULL.
 get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
@@ -172,7 +170,7 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   if (httr::status_code(response) == 200) {
     
     # Parse the response
-    record_data <- fromJSON(httr::content(response, "text", encoding = "UTF-8"))
+    record_data <- jsonlite::fromJSON(httr::content(response, "text", encoding = "UTF-8"))
     
     files_list <- record_data$entries
 
@@ -265,7 +263,7 @@ extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir){
 #'
 #' @importFrom pdftools pdf_info
 #' @param cert_id The certificate identifier. This ID is used to locate the PDF and save the resulting images.
-convert_cert_pdf_to_jpeg <- function(cert_id){
+convert_cert_pdf_to_png <- function(cert_id){
   # Checking if the certs dir exist
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id) 
 

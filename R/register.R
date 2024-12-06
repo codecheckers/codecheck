@@ -7,6 +7,7 @@
 #'
 #' @param register A `data.frame` with all required information for the register's view
 #' @param outputs The output formats to create
+#' @param config A list of configuration files to be sourced at the beginning of the rending process
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #'
@@ -16,16 +17,17 @@
 #' @importFrom knitr kable
 #' @importFrom utils capture.output read.csv tail
 #' @import     jsonlite
+#' @import     dplyr
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE),
                             filter_by = c("venues", "codecheckers"),
-                            outputs = c("html", "md", "json")) {
-  # Loading the dplyr package otherwise we cant use "%>%"
-  library(dplyr)
-
-  # Loading config.R file
-  source(system.file("extdata", "config.R", package = "codecheck"))
+                            outputs = c("html", "md", "json"),
+                            config = c(system.file("extdata", "config.R", package = "codecheck"))) {
+  # Loading config.R files
+  for (i in seq(length(config))) {
+    source(config[i])
+  }
   
   message("Using cache path ", R.cache::getCacheRootPath())
 
@@ -33,7 +35,11 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
   # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
   # done by multiple authors.
   CONFIG$NO_CODECHECKS <- nrow(register_table)
-  render_cert_htmls(register_table, force_download = FALSE)
+  
+  if("html" %in% outputs) {
+    render_cert_htmls(register_table, force_download = FALSE)
+  }
+  
   create_filtered_reg_csvs(register, filter_by)
   create_register_files(register_table, filter_by, outputs)
   create_non_register_files(register_table, filter_by)

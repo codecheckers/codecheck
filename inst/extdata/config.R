@@ -23,7 +23,7 @@ CONFIG$REGISTER_COLUMNS <- list(
   html = c("Certificate", "Paper Title", "Type", "Venue", "Issue", "Report", "Check date"),
   md = c("Certificate", "Paper Title", "Type", "Venue", "Issue", "Report", "Check date"),
   csv =   c("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date"),
-  json =  c("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
+  json =  c("Certificate ID", "Certificate Link", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
 )
 
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
@@ -41,7 +41,7 @@ CONFIG$FILTER_COLUMN_NAMES_TO_DROP <- list(
 )
 
 CONFIG$MD_TITLES <- list(
-  "none" = function(table_details){
+  "default" = function(table_details){
     "CODECHECK Register"
   },
 
@@ -180,8 +180,11 @@ CONFIG$FILTER_SUBCAT_COLUMNS <- list(
 # OTHERS
 CONFIG$DICT_ORCID_ID_NAME <- list()
 
-# Delaying requests by 1 second to adhere to the rate limit of 60 requests/ minute for Zenodo
+# Delaying requests by 1 second to adhere to the rate limit of 60 requests/minute for Zenodo
 CONFIG$CERT_REQUEST_DELAY <- 1
+
+# Number of items in the featured lists of certificates
+CONFIG$FEATURED_COUNT <- 10
 
 # CERT LINKS
 CONFIG$CERT_LINKS <- list(
@@ -192,7 +195,9 @@ CONFIG$CERT_LINKS <- list(
 )
 
 CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"
-CONFIG$CERT_DPI <- 800 
+CONFIG$CERT_DPI <- 800
+
+CONFIG$CERT_DOWNLOAD_AND_CONVERT <- TRUE
 
 # DIRECTORIES
 CONFIG$CERTS_DIR <- list(
@@ -239,7 +244,8 @@ CONFIG$DICT_VENUE_NAMES <- list(
 # JSON FILE INFORMATION
 # List specifying the columns to keep for JSON files
 CONFIG$JSON_COLUMNS <- c(
-  "Certificate",
+  "Certificate ID",
+  "Certificate Link",
   "Repository Link",
   "Type",
   "Venue",

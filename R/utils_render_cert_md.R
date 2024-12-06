@@ -204,6 +204,11 @@ add_abstract <- function(repo_link, md_content){
 create_cert_md <- function(cert_id, repo_link, download_cert_status){
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   
+  # Create the directory if it does not exist (e.g., because no PDFs are downloaded)
+  if (!dir.exists(cert_dir)) {
+    dir.create(cert_dir, recursive = TRUE) 
+  }
+  
   # Loading the correct template based on whether cert exists
   if (download_cert_status == 0) {
     template_type <- "md_template_no_cert"

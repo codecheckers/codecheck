@@ -10,6 +10,8 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
 
   # Loop over each cert in the register table
   for (i in 1:nrow(register_table)){
+    download_cert_status <- NA
+    
     abstract <- get_abstract(register_table[i, ]$Repository)
 
     # Retrieving report link and cert id
@@ -17,28 +19,33 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
     cert_hyperlink <- register_table[i, ]$Certificate
     cert_id <- sub("\\[(.*)\\]\\(.*\\)", "\\1", cert_hyperlink)
 
-    # Define paths for the certificate PDF and JPEG
-    pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf")
-    pdf_exists <- file.exists(pdf_path)
-
-    # Download the PDF if it doesn't exist or if force_download is TRUE
-    if (!pdf_exists || force_download) {
-      download_cert_status <- download_cert_pdf(report_link, cert_id)
-      # Successfully downloaded cert
-      # Proceeding to convert pdfs to jpegs
-      if (download_cert_status == 1){
-        convert_cert_pdf_to_jpeg(cert_id)
+    if(CONFIG$CERT_DOWNLOAD_AND_CONVERT) {
+      # Define paths for the certificate PDF and JPEG
+      pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf")
+      pdf_exists <- file.exists(pdf_path)
+      
+      # Download the PDF if it doesn't exist or if force_download is TRUE
+      if (!pdf_exists || force_download) {
+        download_cert_status <- download_cert_pdf(report_link, cert_id)
+        # Successfully downloaded cert
+        # Proceeding to convert pdfs to jpegs
+        if (download_cert_status == 1){
+          convert_cert_pdf_to_png(cert_id)
+        }
+        
+        # Delaying requests to adhere to request limits
+        Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
       }
-
-      # Delaying reqwuests to adhere to request limits
-      Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
+      
+      # The pdf exists and force download is False
+      else{
+        download_cert_status <- 1
+      }
+    } else {
+      # do not display a certificate
+      download_cert_status <- 0
     }
-
-    # The pdf exists and force download is False
-    else{
-      download_cert_status <- 1
-    }
-
+    
     render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status)
   }
 }
@@ -48,7 +55,7 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
 #'
 #' @importFrom pdftools pdf_info
 #' @param cert_id The certificate identifier. This ID is used to locate the PDF and save the resulting images.
-convert_cert_pdf_to_jpeg <- function(cert_id){
+convert_cert_pdf_to_png <- function(cert_id){
   # Checking if the certs dir exist
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id) 
 

@@ -6,7 +6,7 @@
 #' The function iterates through the provided output types, generates an output directory,
 #' filters and adjusts the register table, and renders the original register files based on the specified formats.
 create_original_register_files <- function(register_table, outputs){
-  filter <- "none"
+  filter <- NA
   for (output_type in outputs){
     table_details <- list(is_reg_table = TRUE)
     table_details[["output_dir"]] <- generate_output_dir(filter, table_details)
@@ -150,7 +150,7 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
 #'        "csv" for CSVs, "md" for MD and "html" for HTMLs.
 #'
 #' @return None. The function generates a file in the specified format.
-render_register <- function(register_table, table_details, filter, output_type){
+render_register <- function(register_table, table_details, filter = NA, output_type){
   register_table <- filter_and_drop_register_columns(register_table, filter, output_type)
   
   switch(output_type,
@@ -175,7 +175,7 @@ generate_output_dir <- function(filter, table_details = list()) {
   # We have register tables
   if (table_details[["is_reg_table"]]){
     # We have the original register table
-    if (filter=="none"){
+    if (is.na(filter)){
       output_dir <- base_dir
     }
 

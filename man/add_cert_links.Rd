@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_preprocess_register.R
 \name{add_cert_links}
 \alias{add_cert_links}
-\title{Function for adding clickable links to the paper for each entry in the register table.}
+\title{Function for adding clickable links to the paper for each entry in the register table and add certificate identifier and link as extra columns}
 \usage{
 add_cert_links(register_table)
 }
@@ -10,8 +10,8 @@ add_cert_links(register_table)
 \item{register_table}{The register table to be adjusted.}
 }
 \value{
-The adjusted register table with clickable Certificate links.
+The adjusted register table with clickable Certificate links and new columns for certificate identifier and certificate URL
 }
 \description{
-Function for adding clickable links to the paper for each entry in the register table.
+Function for adding clickable links to the paper for each entry in the register table and add certificate identifier and link as extra columns
 }

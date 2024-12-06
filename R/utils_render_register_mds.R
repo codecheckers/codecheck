@@ -7,18 +7,21 @@
 #' @return The modified markdown table
 add_markdown_title <- function(table_details, md_table, filter){
   # The filter is in the CONFIG$MD_TITLES
-  if (filter %in% names(CONFIG$MD_TITLES)) {
+  title_fn <- NULL
+  
+  if (is.na(filter)) {
+    title_fn <- CONFIG$MD_TITLES[["default"]]
+  } else if (filter %in% names(CONFIG$MD_TITLES)) {
     # Loading the title function (if present) and passing the argument
     title_fn <- CONFIG$MD_TITLES[[filter]]
-    title <- title_fn(table_details)
-  } 
-  
-  # No titles provided in the CONFIG file for the filter type
-  # Stopping the process
-  else {
+  } else {
+    # No filter or no titles provided in the CONFIG file for the filter type
+    # Stopping the process
     stop("Invalid filter provided.")
   }
 
+  title <- title_fn(table_details)
+  
   md_table <- gsub("\\$title\\$", title, md_table)
   return(md_table)
 }
