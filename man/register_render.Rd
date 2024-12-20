@@ -14,6 +14,8 @@ register_render(
 \arguments{
 \item{register}{A `data.frame` with all required information for the register's view}
 
+\item{filter_by}{The filter or list o filters (if applicable)}
+
 \item{outputs}{The output formats to create}
 
 \item{config}{A list of configuration files to be sourced at the beginning of the rending process}

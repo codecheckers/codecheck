@@ -29,7 +29,6 @@ Depends: R (>= 4.0.0), gh, R.cache, parsedate
 Imports: 
     dplyr,
     tidyr,
-    magrittr,
     yaml,
     xtable,
     stringr,

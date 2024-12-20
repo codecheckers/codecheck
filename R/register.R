@@ -6,6 +6,7 @@
 #' - `.md``
 #'
 #' @param register A `data.frame` with all required information for the register's view
+#' @param filter_by The filter or list o filters (if applicable)
 #' @param outputs The output formats to create
 #' @param config A list of configuration files to be sourced at the beginning of the rending process
 #'

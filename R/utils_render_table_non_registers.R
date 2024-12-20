@@ -172,7 +172,7 @@ generate_html_title_non_registers <- function(filter, subcat){
 #' There is only extra text for the codecheckers HTML page to explain
 #' the reason for discrepancy between total_codechecks != SUM(no.of codechecks)
 #' 
-#' @param filter The filter
+#' @param filter A string specifying the filter applied (e.g., "venues", "codecheckers").
 #' @return The extra text to place under the table
 generate_html_extra_text_non_register <- function(filter){
   extra_text <- ""
@@ -188,8 +188,8 @@ generate_html_extra_text_non_register <- function(filter){
 #' the number of codechecks and number of codechecks/ venues etc.
 #' 
 #' @param table The table to showcase in the html
-#' @param page_type The HTML page type that needs to rendered
-#' @param table_name The name of the table
+#' @param filter A string specifying the filter applied (e.g., "venues", "codecheckers").
+#' @param subcat An optional string for the subcategory (if applicable).
 #' @return The subtext to put under the html title
 generate_html_subtext_non_register <- function(table, filter, subcat = NULL){
   # The filter is in the CONFIG$NON_REG_SUBTEXT

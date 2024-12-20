@@ -10,7 +10,7 @@ the reason for discrepancy between total_codechecks != SUM(no.of codechecks)}
 generate_html_extra_text_non_register(filter)
 }
 \arguments{
-\item{filter}{The filter}
+\item{filter}{A string specifying the filter applied (e.g., "venues", "codecheckers").}
 }
 \value{
 The extra text to place under the table

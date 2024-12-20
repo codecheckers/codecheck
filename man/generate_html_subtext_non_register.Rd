@@ -10,9 +10,9 @@ generate_html_subtext_non_register(table, filter, subcat = NULL)
 \arguments{
 \item{table}{The table to showcase in the html}
 
-\item{page_type}{The HTML page type that needs to rendered}
+\item{filter}{A string specifying the filter applied (e.g., "venues", "codecheckers").}
 
-\item{table_name}{The name of the table}
+\item{subcat}{An optional string for the subcategory (if applicable).}
 }
 \value{
 The subtext to put under the html title

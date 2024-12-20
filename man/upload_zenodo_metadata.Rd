@@ -4,14 +4,14 @@
 \alias{upload_zenodo_metadata}
 \title{Upload metadata to Zenodod}
 \usage{
-upload_zenodo_metadata(zen, myrec, metadata)
+upload_zenodo_metadata(zenodo, myrec, metadata)
 }
 \arguments{
-\item{zen}{}
+\item{zenodo}{object from zen4R to connect with Zenodo}
 
-\item{myrec}{}
+\item{myrec}{a Zenodo record object}
 
-\item{metadata}{}
+\item{metadata}{codecheck metadata, likely loaded from a codecheck.yml file}
 }
 \value{
 rec -- the updated record.

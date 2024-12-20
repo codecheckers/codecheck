@@ -7,7 +7,9 @@
 preprocess_register(register, filter_by)
 }
 \arguments{
-\item{register}{The register}
+\item{register}{The register.}
+
+\item{filter_by}{The filter (if applicable).}
 }
 \value{
 The preprocessed register table

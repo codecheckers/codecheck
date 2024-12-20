@@ -271,16 +271,19 @@ cite_certificate <- function(metadata) {
 
 # Zenodo records interaction ----
 
-##' Create a new Zenodo record and return its pre-assigned DOI
-##'
-##' Run this only once per new codecheck.
-##' @title Create a new Zenodo record and return its pre-assigned DOI
-##' @param zen - Object from zen4R to interact with Zenodo
-##' @return Number of zenodo record created.
-##' @author Stephen Eglen
-##' @importFrom zen4R ZenodoRecord
-##' 
-##' @export
+#' Create a new Zenodo record and return its pre-assigned DOI
+#'
+#' Run this only once per new codecheck.
+#' @title Create a new Zenodo record and return its pre-assigned DOI
+#' @param zen Object from zen4R to interact with Zenodo
+#' @param metadata codecheck.yml file
+#' @param warn Ask for user input before creating a new record
+#' @return Number of Zenodo record created
+#' @author Stephen Eglen
+#' @importFrom zen4R ZenodoRecord
+#' @importFrom utils askYesNo
+#' 
+#' @export
 get_or_create_zenodo_record <- function(zen, metadata, warn=TRUE) {
   id <- get_zenodo_record(metadata$report)
   if (!is.na(id)) {
@@ -288,7 +291,7 @@ get_or_create_zenodo_record <- function(zen, metadata, warn=TRUE) {
   } else {
     ## no record, create a new one.
     if(warn) { 
-      proceed <- askYesNo("You do not have a zenodo record; I can fix this for you but please make sure your codecheck.yaml is saved, as I will need to update it.  Proceed?")
+      proceed <- askYesNo("You do not have a Zenodo record yet; I can fix this for you but please make sure your codecheck.yaml is saved, as I will need to update it. Proceed?")
       stopifnot(proceed==TRUE)
     }
     my_rec <- zen$createEmptyRecord()
@@ -330,17 +333,17 @@ get_zenodo_id <- function(report) {
   as.integer(result)
 }
 
-##' Get the full Zenodo record from the metadata
-##'
-##' Retrieve the zenodo record, if one exists.
-##' If no record number is currently  listed in the metadata (i.e. the "FIXME" tag is still there)
-##' then the code returns NULL and an empty record should be created.
-##' @title Get the full zenodo record using the record number stored in the metadata.
-##' @param zenodo 
-##' @param metadata 
-##' @return The Zenodo record, or NULL.
-##' @author Stephen Eglen
-##' @export
+#' Get the full Zenodo record from the metadata
+#'
+#' Retrieve the Zenodo record, if one exists.
+#' If no record number is currently  listed in the metadata (i.e. the "FIXME" tag is still there)
+#' then the code returns NULL and an empty record should be created.
+#' @title Get the full zenodo record using the record number stored in the metadata.
+#' @param zenodo An object from zen4R to connect with Zenodo
+#' @param metadata A codecheck configuration (likely read from a codecheck.yml)
+#' @return The Zenodo record, or NULL.
+#' @author Stephen Eglen
+#' @export
 get_zenodo_record <- function(zenodo, metadata) {
   id <- get_zenodo_id(metadata$report)
   if (is.na(id)) {
@@ -350,18 +353,18 @@ get_zenodo_record <- function(zenodo, metadata) {
   }
 }
 
-##' Upload codecheck metadata to Zenodo.
-##'
-##' The contents of codecheck.yml are uploaded to Zenodo using this funciton.
-##' 
-##' @title Upload metadata to Zenodod
-##' @param zen 
-##' @param myrec 
-##' @param metadata 
-##' @return rec -- the updated record.
-##' @author Stephen Eglen
-##' @export
-upload_zenodo_metadata <- function(zen, myrec, metadata) {
+#' Upload codecheck metadata to Zenodo.
+#'
+#' The contents of codecheck.yml are uploaded to Zenodo using this funciton.
+#' 
+#' @title Upload metadata to Zenodod
+#' @param zenodo object from zen4R to connect with Zenodo
+#' @param myrec a Zenodo record object
+#' @param metadata codecheck metadata, likely loaded from a codecheck.yml file
+#' @return rec -- the updated record.
+#' @author Stephen Eglen
+#' @export
+upload_zenodo_metadata <- function(zenodo, myrec, metadata) {
   ##draft$setPublicationType("report")
   ##draft$setCommunities(communities = c("codecheck"))
   myrec$metadata <- NULL
@@ -394,23 +397,23 @@ upload_zenodo_metadata <- function(zen, myrec, metadata) {
   ##myrec$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$repository)
   ##myrec$addRelatedIdentifier(relation = "isSupplementTo", identifier = metadata$paper$reference)
   cat(paste0("Check your record online at ",  myrec$links$self_html, "\n"))
-  myrec <- zen$depositRecord(myrec)
+  myrec <- zenodo$depositRecord(myrec)
 
 }
 
 
-##' Upload the CODECHECK certificate to Zenodo.
-##'
-##' Upload the CODECHECK certificate to Zenodo as a draft.  Warning: if
-##' the file has already been uploaded once, you will need to delete it via
-##' the web interface before being able to upload a new versin.
-##' @title Upload the CODECHECK certificate to Zenodo.
-##' @param zen - Object from zen4R to interact with Zenodo
-##' @param record - string containing the report URL on Zenodo.
-##' @param certificate name of the PDF file.
-##' @return NULL
-##' @author Stephen Eglen
-##' @export
+#' Upload the CODECHECK certificate to Zenodo.
+#'
+#' Upload the CODECHECK certificate to Zenodo as a draft.  Warning: if
+#' the file has already been uploaded once, you will need to delete it via
+#' the web interface before being able to upload a new versin.
+#' @title Upload the CODECHECK certificate to Zenodo.
+#' @param zen - Object from zen4R to interact with Zenodo
+#' @param record - string containing the report URL on Zenodo.
+#' @param certificate name of the PDF file.
+#' @return NULL
+#' @author Stephen Eglen
+#' @export
 set_zenodo_certificate <- function(zen, record, certificate) {
   draft <- zen$getDepositionById(record)
   stopifnot(file.exists(certificate))
@@ -426,7 +429,7 @@ add_id_to_yml <- function(id, yml_file) {
   ## Add id to the yaml file.
   data1 <- readLines(yml_file)
   data2 <- gsub(pattern = "zenodo.FIXME$",
-                replace = paste0("zenodo.",id),
+                replacement = paste0("zenodo.",id),
                 x = data1)
   writeLines(data2, yml_file)
 }

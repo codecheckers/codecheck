@@ -254,6 +254,7 @@ create_cert_md <- function(cert_id, repo_link, download_cert_status){
 #'
 #' @param md_content A character string containing the Markdown template content with placeholders.
 #' @param repo_link A character string containing the repository link associated with the certificate.
+#' @param download_cert_status An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).
 #' @return The markdown content, with paper details placeholders filled.
 add_paper_details_md <- function(md_content, repo_link, download_cert_status){
   config_yml <- get_codecheck_yml(repo_link)

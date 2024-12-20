@@ -7,9 +7,9 @@
 get_zenodo_record(zenodo, metadata)
 }
 \arguments{
-\item{zenodo}{}
+\item{zenodo}{An object from zen4R to connect with Zenodo}
 
-\item{metadata}{}
+\item{metadata}{A codecheck configuration (likely read from a codecheck.yml)}
 }
 \value{
 The Zenodo record, or NULL.
@@ -18,7 +18,7 @@ The Zenodo record, or NULL.
 Get the full Zenodo record from the metadata
 }
 \details{
-Retrieve the zenodo record, if one exists.
+Retrieve the Zenodo record, if one exists.
 If no record number is currently  listed in the metadata (i.e. the "FIXME" tag is still there)
 then the code returns NULL and an empty record should be created.
 }

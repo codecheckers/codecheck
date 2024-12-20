@@ -202,7 +202,10 @@ create_temp_register_with_codechecker <- function(register_table){
 }
 
 #' Function for preprocessing the register to create and return the preprocessed register table.
-#' @param register The register
+#' 
+#' @param register The register.
+#' @param filter_by The filter (if applicable).
+#' 
 #' @return The preprocessed register table
 preprocess_register <- function(register, filter_by) {
     register_table <- register

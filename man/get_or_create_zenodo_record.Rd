@@ -7,10 +7,14 @@
 get_or_create_zenodo_record(zen, metadata, warn = TRUE)
 }
 \arguments{
-\item{zen}{- Object from zen4R to interact with Zenodo}
+\item{zen}{Object from zen4R to interact with Zenodo}
+
+\item{metadata}{codecheck.yml file}
+
+\item{warn}{Ask for user input before creating a new record}
 }
 \value{
-Number of zenodo record created.
+Number of Zenodo record created
 }
 \description{
 Create a new Zenodo record and return its pre-assigned DOI

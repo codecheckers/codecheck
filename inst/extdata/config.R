@@ -1,5 +1,7 @@
 CONFIG <- new.env()
 
+utils::globalVariables(c("CONFIG"))
+
 # REGISTER TABLE
 
 # Specifying the register table column widths
