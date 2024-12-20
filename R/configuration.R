@@ -8,7 +8,9 @@ get_codecheck_yml_uncached <- function(x) {
   result <- switch (spec[["type"]],
     "github" = get_codecheck_yml_github(spec[["repo"]]),
     "osf" = get_codecheck_yml_osf(spec[["repo"]]),
-    "gitlab" = get_codecheck_yml_gitlab(spec[["repo"]])
+    "gitlab" = get_codecheck_yml_gitlab(spec[["repo"]]),
+    "zenodo" = get_codecheck_yml_zenodo(spec[["repo"]]),
+    "zenodo-sandbox" = get_codecheck_yml_zenodo(spec[["repo"]], sandbox = TRUE),
   )
   
   return(result)
@@ -91,6 +93,40 @@ get_codecheck_yml_gitlab <- function(x) {
   }
 }
 
+#' Retrieve a codecheck.yml file from a Zenodo record
+#' 
+#' @author Daniel Nüst
+#' @param x the record ID on Zenodo
+#' @param sandbox connect with the Zenodo Sandbox instead of the real service
+#' @importFrom httr GET content
+#' @importFrom yaml yaml.load
+#' @importFrom zen4R ZenodoManager
+get_codecheck_yml_zenodo <- function(x, sandbox = FALSE) {
+  zenodo <- ZenodoManager$new(
+    url = "https://zenodo.org/api",
+    sandbox = sandbox,
+    logger = "INFO"
+  )
+  
+  record <- zenodo$getRecordById(x)
+  
+  if(!is.null(record)) {
+    files <- record$files
+    for(f in files) {
+      if(f$filename == "codecheck.yml") {
+        response <- httr::GET(f$download)
+        content <- httr::content(response, as = "text", encoding = "UTF-8")
+        config_file <- yaml::yaml.load(content)
+        return(config_file)
+      }
+    }
+  }
+  
+  # record is null, or no file with the required name was in the list of files
+  warning("codecheck.yml not found in record ", x, " (sandbox? ", sandbox, ")")
+  return(NULL)
+}
+
 #' Parse the repository specification in the column "Repo" in the register CSV file
 #' 
 #' Based roughly on [`remotes::parse_one_extra`](https://github.com/r-lib/remotes/blob/master/R/deps.R#L519)
@@ -114,8 +150,9 @@ parse_repository_spec <- function(x) {
     stop("Malformed repository specification '", x, "'")
   }
   
-  if (! type %in% c("github", "osf", "gitlab")) {
-    stop("Unsupported repository type '", type, "'")
+  supported_repos <- c("github", "osf", "gitlab", "zenodo", "zenodo-sandbox")
+  if (! type %in% supported_repos) {
+    stop("Unsupported repository type '", type, "' - must be one of ", toString(supported_repos))
   }
   
   return(c(type = type, repo = repo))

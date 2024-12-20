@@ -1,0 +1,35 @@
+---
+title: "codecheck: Render the register"
+author: "Daniel Nüst"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{codecheck: Render the register}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Installing the package
+
+The latest version of the package can be installed using:
+```{r install, eval=FALSE}
+remotes::install_github("codecheckers/codecheck")
+```
+
+## Render the register
+
+```{r render, eval=FALSE}
+codecheck::register_render(); warnings()
+```
+
+## Check the register
+
+```{r check, eval=FALSE}
+codecheck::register_check(); warnings()
+```
+
+## Clear the cache
+
+```{r clear, eval=FALSE}
+codecheck::register_clear_cache();
+```

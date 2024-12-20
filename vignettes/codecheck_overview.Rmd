@@ -18,7 +18,7 @@ remotes::install_github("codecheckers/codecheck")
 
 ## Pre-requisites for being a CODECHECKER>
 
-1. Member of the github codecheckers community.
+1. Member of the GitHub codecheckers community.
 2. Have a Zenodo account.
 3. Experience with R Markdown and R is helpful, but not essential.
 
@@ -91,7 +91,7 @@ then store the resulting URL in `codecheck.yml`.  The rest of the
 metadata can remain as before.
 
 Once you are ready, upload the certificate itself using the
-function `set_zenodo_certificate()`.  Whilst the zenodo record is in
+function `set_zenodo_certificate()`.  Whilst the Zenodo record is in
 draft form, you can delete files from the website, and then re-add
 them using the API.
 

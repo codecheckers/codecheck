@@ -1,0 +1,26 @@
+---
+version: https://codecheck.org.uk/spec/config/1.0
+
+paper:
+  title: The basics of integration testing
+  authors:
+    - name: Josiah Carberry
+      orcid: 0000-0002-1825-0097
+  reference: http://doi.org/10.5555/12345678
+
+manifest:
+  - file: Fig1.pdf
+    comment: manuscript Figure 1
+
+codechecker:
+  - name: Stephen J. Eglen
+    ORCID: 0000-0001-8607-8025
+  - name: Daniel Nüst
+    ORCID: 0000-0002-0024-5046
+
+summary: >
+  Notebook, data - all works.
+repository: 
+check_time: "2024-12-20 10:00:00"
+certificate: 2024-111
+report: https://doi.org/10.5072/zenodo.145250
