@@ -25,12 +25,12 @@ create_venues_tables <- function(register_table){
 #' @param subcat An optional string specifying the subcategory (venue type) for the venues.
 #'
 #' @return The data frame with hyperlinks added to the appropriate columns.
-add_venues_hyperlink <- function(table, subcat){
+add_venues_hyperlinks_non_reg <- function(table, subcat){
   if (is.null(subcat)){
-    return(add_all_venues_hyperlink(table))
+    return(add_all_venues_hyperlinks_non_reg(table))
   }
 
-  return(add_venue_type_hyperlink(table, venue_type = subcat))
+  return(add_venue_type_hyperlinks_non_reg(table, venue_type = subcat))
 }
 
 #' Create All Venues Table
@@ -79,7 +79,7 @@ create_all_venues_table <- function(register_table){
 #' @param table The data frame containing data on all venues.
 #'
 #' @return The data frame with hyperlinks added to the appropriate columns.
-add_all_venues_hyperlink <- function(table){
+add_all_venues_hyperlinks_non_reg <- function(table){
   # Extracting column names from CONFIG
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
 
@@ -181,7 +181,7 @@ create_venue_type_tables <- function(register_table){
 #' @param venue_type A string specifying the venue type.
 #'
 #' @return The data frame with hyperlinks added to the appropriate columns.
-add_venue_type_hyperlink <- function(table, venue_type) {
+add_venue_type_hyperlinks_non_reg <- function(table, venue_type) {
   table_col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
   
   venue_col_name <- paste(stringr::str_to_title(venue_type), "name")
