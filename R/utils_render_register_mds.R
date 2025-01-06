@@ -32,7 +32,9 @@ add_markdown_title <- function(table_details, md_table, filter){
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
 render_register_md <- function(register_table, table_details, filter) {
-  
+  register_table <- add_venue_hyperlinks_reg(register_table)
+  register_table <- add_venue_type_hyperlinks_reg(register_table)
+
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)
   output_dir <- table_details[["output_dir"]]
