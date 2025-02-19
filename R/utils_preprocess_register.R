@@ -141,19 +141,33 @@ add_codechecker <- function(register_table, register) {
   for (i in seq_len(nrow(register))) {
     config_yml <- get_codecheck_yml(register[i, ]$Repo)
 
-    codechecker_info <- c()
+    codechecker_orcids <- c()
     if (!is.null(config_yml)  && !is.null(config_yml$codechecker)) {
-      # For each codechecker we enter the data in the form {name} (orcid id: {orcid_id})
+      
       for (codechecker in config_yml$codechecker) {
-        if (!((codechecker$name) %in% CONFIG$DICT_ORCID_ID_NAME)){
-          CONFIG$DICT_ORCID_ID_NAME[codechecker$ORCID] <- codechecker$name
+        if(is.null(codechecker$name)) {
+          stop("Codechecker name is missing in ", config_yml$certificate)
         }
-        #! If they want codechecker column
-        #formatted_string <- paste0(codechecker$name, " (ORCID: ", toString(codechecker$ORCID), ")")
-        codechecker_info <- c(codechecker_info, codechecker$ORCID)
+        
+        if (!((codechecker$name) %in% CONFIG$DICT_ORCID_ID_NAME) && !is.null(codechecker$name) && !is.null(codechecker$ORCID)){
+          CONFIG$DICT_ORCID_ID_NAME[codechecker$ORCID] <- codechecker$name
+        } else if (!(codechecker$name) %in% CONFIG$DICT_ORCID_ID_NAME){
+          CONFIG$DICT_ORCID_ID_NAME["0000-0000-0000-0000"] <- codechecker$name
+        }
+        
+        if (!is.null(codechecker$ORCID)){
+          # stop here when new spec version is released
+          codechecker_orcids <- c(codechecker_orcids, codechecker$ORCID)
+        } else {
+          codechecker_orcids <- c(codechecker_orcids, NA)
+          warning("codechecker ORCID missing for ", toString(codechecker), " in ", config_yml$certificate)
+        }
       }
+    } else {
+      warning("codechecker not found in record ", toString(register[i, ]))
     }
-    codecheckers[[i]] <- codechecker_info
+    
+    codecheckers[[i]] <- codechecker_orcids
   }
   register_table$`Codechecker` <- codecheckers
   return(register_table)
