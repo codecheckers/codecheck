@@ -22,6 +22,10 @@ add_repository_hyperlink <- function(md_content, repo_link) {
         repo_link <- paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
         paste0("[", spec[["repo"]], "](", repo_link, ")")
       },
+      "zenodo" = {
+        repo_link <- paste0(CONFIG$HYPERLINKS[["zenodo"]], spec[["repo"]])
+        paste0("[", spec[["repo"]], "](", repo_link, ")")
+      },
 
       # Type is none of the above
       {

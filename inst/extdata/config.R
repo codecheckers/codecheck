@@ -83,7 +83,8 @@ CONFIG$HYPERLINKS <- list(
   codecheck_issue = "https://github.com/codecheckers/register/issues/",
   zenodo_deposit = "https://zenodo.org/deposit/",
   CrossRef = "https://www.crossref.org",
-  OpenAlex = "https://openalex.org"
+  OpenAlex = "https://openalex.org",
+  zenodo = "https://zenodo.org/records/"
 )
 
 # Plural of venue subcategories 

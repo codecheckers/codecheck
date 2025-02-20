@@ -14,6 +14,8 @@ add_repository_links_json <- function(register_table) {
         paste0(CONFIG$HYPERLINKS[["osf"]], spec[["repo"]])
       } else if (spec[["type"]] == "gitlab") {
         paste0(CONFIG$HYPERLINKS[["gitlab"]], spec[["repo"]])
+      } else if (spec[["type"]] == "zenodo") {
+        paste0(CONFIG$HYPERLINKS[["zenodo"]], spec[["repo"]])
       } else {
         repository
       }
