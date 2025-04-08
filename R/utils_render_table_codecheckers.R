@@ -22,9 +22,13 @@ create_all_codecheckers_table <- function(register_table){
     mutate(`codechecker_name` = recode(Codechecker, !!!CONFIG$DICT_ORCID_ID_NAME))
 
   # Adding no. of codechecks column
+  # Count no. codechecks per Codechecker
+  codecheck_counts <- register_table %>%
+    count(Codechecker, name = "no_codechecks")
+
+  # Join no_codechecks column to new_table
   new_table <- new_table %>%
-    group_by(Codechecker) %>%
-    mutate(`no_codechecks` = sum(register_table$Codechecker == Codechecker))
+    left_join(codecheck_counts, by = "Codechecker")
 
   # Rename the column using the key-value pairs from the CONFIG list
   col_names_dict <- CONFIG$NON_REG_TABLE_COL_NAMES[["codecheckers"]]
