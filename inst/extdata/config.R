@@ -56,7 +56,7 @@ CONFIG$MD_TITLES <- list(
   "venues" = function(table_details) {
     venue_type <- table_details[["subcat"]]
     venue_name <- table_details[["name"]]
-    paste0("CODECHECK Register for ", venue_type, " (", venue_name, ")")
+    paste0("CODECHECK Register for ", venue_name, " (", venue_type, ")")
   },
 
   "certs" = "CODECHECK Certificate"
@@ -157,13 +157,13 @@ CONFIG$NON_REG_SUBTEXT <- list(
 CONFIG$NON_REG_TABLE_COL_NAMES <- list(
   "codecheckers" = c(
     "codechecker_name" = "Codechecker name",
-    "Codechecker" = "ORCID ID",
+    "Codechecker" = "ORCID",
     "no_codechecks" = "No. of codechecks"
   ),
 
   "venues" = c(
-    "Type" = "Venue type", 
     "Venue" = "Venue name",
+    "Type" = "Venue type",
     "no_codechecks" = "No. of codechecks"
   )
 )
