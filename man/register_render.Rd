@@ -5,7 +5,7 @@
 \title{Function for rendering the register into different view}
 \usage{
 register_render(
-  register = read.csv("register.csv", as.is = TRUE),
+  register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   filter_by = c("venues", "codecheckers"),
   outputs = c("html", "md", "json"),
   config = c(system.file("extdata", "config.R", package = "codecheck"))

@@ -5,7 +5,7 @@
 \title{Function for checking all entries in the register}
 \usage{
 register_check(
-  register = read.csv("register.csv", as.is = TRUE),
+  register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   from = 1,
   to = nrow(register)
 )

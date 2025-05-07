@@ -16,15 +16,17 @@
 #' @importFrom parsedate parse_date
 #' @importFrom rmarkdown render
 #' @importFrom knitr kable
-#' @importFrom utils capture.output read.csv tail
+#' @importFrom utils capture.output read.csv tail packageVersion
 #' @import     jsonlite
 #' @import     dplyr
 #'
 #' @export
-register_render <- function(register = read.csv("register.csv", as.is = TRUE),
+register_render <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
                             filter_by = c("venues", "codecheckers"),
                             outputs = c("html", "md", "json"),
                             config = c(system.file("extdata", "config.R", package = "codecheck"))) {
+  message("Rendering register using codecheck version ", utils::packageVersion("codecheck"))
+  
   # Loading config.R files
   for (i in seq(length(config))) {
     source(config[i])
@@ -64,11 +66,14 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE),
 #'
 #' @author Daniel Nüst
 #' @importFrom R.cache getCacheRootPath
+#' @importFrom utils packageVersion
 #' @importFrom gh gh
 #' @export
-register_check <- function(register = read.csv("register.csv", as.is = TRUE),
+register_check <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
                            from = 1,
                            to = nrow(register)) {
+  message("Checking register using codecheck version ", utils::packageVersion("codecheck"))
+  
   # Loading config.R file
   source(system.file("extdata", "config.R", package = "codecheck"))
   
