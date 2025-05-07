@@ -241,7 +241,8 @@ CONFIG$DICT_VENUE_NAMES <- list(
   "codecheck NL" = "CODECHECK NL",
   "in press" = "In press",
   "preprint" = "Preprint",
-  "AUMC" = "Amsterdam UMC"
+  "AUMC" = "Amsterdam UMC",
+  "Lifecycle Journal" = "Lifecycle Journal"
 )
 
 # JSON FILE INFORMATION
