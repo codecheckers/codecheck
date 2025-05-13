@@ -56,7 +56,7 @@ CONFIG$MD_TITLES <- list(
   "venues" = function(table_details) {
     venue_type <- table_details[["subcat"]]
     venue_name <- table_details[["name"]]
-    paste0("CODECHECK Register for ", venue_type, " (", venue_name, ")")
+    paste0("CODECHECK Register for ", venue_name, " (", venue_type, ")")
   },
 
   "certs" = "CODECHECK Certificate"
@@ -91,7 +91,8 @@ CONFIG$HYPERLINKS <- list(
 CONFIG$VENUE_SUBCAT_PLURAL <- list(
   conference = "conferences",
   journal = "journals",
-  community = "communities"
+  community = "communities",
+  institution = "institutions"
 )
 
 # NON-REGISTER_TABLE
@@ -111,7 +112,8 @@ CONFIG$NON_REG_TITLE_FNS <- list(
       plural_subcat <- switch (subcat,
         "conference" = "conferences",
         "journal" = "journals",
-        "community" = "communities"
+        "community" = "communities",
+        "institution" = "institutions"
       )
       return(paste("CODECHECK List of", plural_subcat))
     }
@@ -157,13 +159,13 @@ CONFIG$NON_REG_SUBTEXT <- list(
 CONFIG$NON_REG_TABLE_COL_NAMES <- list(
   "codecheckers" = c(
     "codechecker_name" = "Codechecker name",
-    "Codechecker" = "ORCID ID",
+    "Codechecker" = "ORCID",
     "no_codechecks" = "No. of codechecks"
   ),
 
   "venues" = c(
-    "Type" = "Venue type", 
     "Venue" = "Venue name",
+    "Type" = "Venue type",
     "no_codechecks" = "No. of codechecks"
   )
 )
@@ -171,7 +173,7 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
 # REGISTER FILTER SUBCATEGORIES
 # Each filter can be further divided into each of these subgroups
 CONFIG$FILTER_SUBCATEGORIES <- list(
-  venues = list("community", "journal", "conference") 
+  venues = list("community", "journal", "conference", "institution") 
 )
 
 # For each filter with subcategories we have a reference to the column
@@ -241,7 +243,9 @@ CONFIG$DICT_VENUE_NAMES <- list(
   "codecheck NL" = "CODECHECK NL",
   "in press" = "In press",
   "preprint" = "Preprint",
-  "AUMC" = "Amsterdam UMC"
+  "AUMC" = "Amsterdam UMC",
+  "Lifecycle Journal" = "Lifecycle Journal",
+  "TU Delft DCC" = "TU Delft Digital Competence Centre"
 )
 
 # JSON FILE INFORMATION
