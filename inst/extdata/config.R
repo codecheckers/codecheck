@@ -91,7 +91,8 @@ CONFIG$HYPERLINKS <- list(
 CONFIG$VENUE_SUBCAT_PLURAL <- list(
   conference = "conferences",
   journal = "journals",
-  community = "communities"
+  community = "communities",
+  institution = "institutions"
 )
 
 # NON-REGISTER_TABLE
@@ -111,7 +112,8 @@ CONFIG$NON_REG_TITLE_FNS <- list(
       plural_subcat <- switch (subcat,
         "conference" = "conferences",
         "journal" = "journals",
-        "community" = "communities"
+        "community" = "communities",
+        "institution" = "institutions"
       )
       return(paste("CODECHECK List of", plural_subcat))
     }
@@ -171,7 +173,7 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
 # REGISTER FILTER SUBCATEGORIES
 # Each filter can be further divided into each of these subgroups
 CONFIG$FILTER_SUBCATEGORIES <- list(
-  venues = list("community", "journal", "conference") 
+  venues = list("community", "journal", "conference", "institution") 
 )
 
 # For each filter with subcategories we have a reference to the column
@@ -242,7 +244,9 @@ CONFIG$DICT_VENUE_NAMES <- list(
   "in press" = "In press",
   "preprint" = "Preprint",
   "AUMC" = "Amsterdam UMC",
-  "Lifecycle Journal" = "Lifecycle Journal"
+  "Lifecycle Journal" = "Lifecycle Journal",
+  "4TUResearchData" = "4TU.ResearchData",
+  "TU Delft DCC" = "TU Delft Digital Competence Centre"
 )
 
 # JSON FILE INFORMATION
