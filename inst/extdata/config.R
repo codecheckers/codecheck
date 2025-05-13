@@ -245,7 +245,6 @@ CONFIG$DICT_VENUE_NAMES <- list(
   "preprint" = "Preprint",
   "AUMC" = "Amsterdam UMC",
   "Lifecycle Journal" = "Lifecycle Journal",
-  "4TUResearchData" = "4TU.ResearchData",
   "TU Delft DCC" = "TU Delft Digital Competence Centre"
 )
 
