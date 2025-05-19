@@ -112,6 +112,22 @@ for(i in c(1:nrow(manifest_df))) {
     cat("\\scriptsize \n\n", "```txt\n")
     print(skimr::skim(read.csv(path)))
     cat("\n\n``` \n\n", "\\normalsize \n\n")
+  } else if (stringr::str_ends(path, "(xls|xlsx)")) {
+    cat("## ", basename(path), "\n\n", "Partial content of tabular data:", "\n\n")
+    cat("\\scriptsize \n\n", "```txt\n")
+    print(readxl::read_excel(path))
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
+  } else if (stringr::str_ends(path, "(htm|html)")) {
+    if(Sys.which("wkhtmltopdf") != "") {
+      cat("## ", basename(path), "\n\n", "Content of HTML file (starts on next page):", "\n\n")
+      out_file <- paste0(path, ".pdf")
+      system2("wkhtmltopdf", c(shQuote(path), shQuote(out_file)))
+      cat(paste0("\\includepdf[pages={-}]{", out_file, "}"))
+      cat("\n\n End of ", basename(path), "on previous page.", "\n\n")
+    } else {
+      cat("## ", basename(path), "\n\n")
+      cat("Cannot inlcude output file as figure.")
+    }
   } else {
     cat("## ", basename(path), "\n\n")
     cat("Cannot inlcude output file as figure.")
