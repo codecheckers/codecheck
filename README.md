@@ -36,6 +36,13 @@ remotes::install_github("codecheckers/codecheck")
 
 See the main vignette.
 
+tl;dr: Go the the directory where you want to create a CODECHECK workspace, then run
+
+```r
+require("codecheck")
+create_codecheck_files()
+```
+
 ## Development
 
 The package uses
