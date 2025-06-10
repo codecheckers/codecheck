@@ -189,10 +189,10 @@ as_latex_url  <- function(x) {
 ##' @export
 latex_summary_of_metadata <- function(metadata) {
   summary_entries = list(
-    "Title" =            metadata$paper$title,
-    "Authors" =          .names(metadata$paper$authors),
-    "Reference" =        as_latex_url(metadata$paper$reference),
-    "Codechecker" =      .names(metadata$codechecker),
+    "Title of checked publication" =            metadata$paper$title,
+    "Author(s)" =       .names(metadata$paper$authors),
+    "Reference" =       as_latex_url(metadata$paper$reference),
+    "Codechecker(s)" =  .names(metadata$codechecker),
     "Date of check" =   metadata$check_time,
     "Summary" =         metadata$summary,
     "Repository" =      as_latex_url(metadata$repository))

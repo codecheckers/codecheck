@@ -51,22 +51,24 @@ create_codecheck_files()
 These create several files that need to be edited for the codecheck
 process:
 
-1. *codecheck.yml* contains the metadata for the reproduction. If
+1. `codecheck.yml` contains the metadata for the reproduction. If
   the author or someone else has already created it, double-check
   if all required information is provided - see the
   [specification](https://codecheck.org.uk/spec/config/latest/).
-2. *codecheck/codecheck.Rmd* is a suggested R Markdown script to
-	edit, along with *Makefile* and *codecheck-preamble.sty* to help
+2. `codecheck/codecheck.Rmd` is a suggested R Markdown script to
+	edit, along with `Makefile` and `codecheck-preamble.sty` to help
 	compile the PDF.
-3. *codecheck/zenodo-codecheck.R* for help in loading the certificate
+3. `codecheck/zenodo-codecheck.R` for help in loading the certificate
    to Zenodo along with the corresponding metadata.
+4. `CODECHECK_report_template.odt` and `.docx` are templates for usage with
+   common word processors - please delete if you use the `.Rmd` file.
 
-There is also a Makefile so that `make` within the codecheck folder
+There is also a Makefile so that `make` within the `codecheck/` folder
 will rebuild `codecheck.pdf`.
 
 ## Completing the metadata file *codecheck.yml*
 
-The *codecheck.yml* file contains all the relevant metadata for the
+The `codecheck.yml` file contains all the relevant metadata for the
 certificate.  Simply edit it to your needs, bearing in mind the
 specification comments at <https://codecheck.org.uk/spec/config/latest>.
 

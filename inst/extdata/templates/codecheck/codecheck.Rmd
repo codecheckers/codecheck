@@ -16,9 +16,9 @@ require("xtable")
 require("tibble")
 require("readr")
 options(width = 60)
-opts_chunk$set(cache=FALSE)
+opts_chunk$set(cache = FALSE)
 
-root = find_root("codecheck.yml")
+root <- find_root("codecheck.yml")
 ```
 
 ```{r codecheck_logo, echo=FALSE,results='asis'}
@@ -26,19 +26,20 @@ latex_codecheck_logo()
 ```
 
 ```{r manifest, eval=TRUE, include=FALSE}
-metadata = codecheck_metadata(root)
-manifest = metadata$manifest
+metadata <- codecheck_metadata(root)
+manifest <- metadata$manifest
 
-dest_dir = file.path(root, "codecheck", "outputs")
+dest_dir <- file.path(root, "codecheck", "outputs")
 ## Create the outputs directory if missing
-if ( !dir.exists(dest_dir) ) {
+if (!dir.exists(dest_dir) ) {
   dir.create(dest_dir)
 }
 
-manifest_df = copy_manifest_files(root, metadata,
+manifest_df <- copy_manifest_files(root, metadata,
                                   dest_dir, keep_full_path = FALSE,
                                   overwrite = FALSE
                                   )
+# manifest_df <- list_manifest_files(root, metadata, dest_dir)
 ```
 
 ---
@@ -92,8 +93,8 @@ I suggest to the authors to consider the following suggestions for their next pu
 # Manifest files
 
 ```{r, echo=FALSE, results="asis", width=100}
-for(i in c(1:nrow(manifest_df))) {
-  path <- manifest_df[i,"dest"]
+for (i in c(1:nrow(manifest_df))) {
+  path <- manifest_df[i, "dest"]
   if(stringr::str_ends(path, "(png|pdf|jpg|jpeg)")) {
     # include graphics with knitr has to happen at top level in chunks, see https://github.com/yihui/knitr/issues/1260
     # see also https://stackoverflow.com/questions/51268623/insert-images-using-knitrinclude-graphics-in-a-for-loop
@@ -101,7 +102,7 @@ for(i in c(1:nrow(manifest_df))) {
     # Therefore, generate Markdown code here:
     cat("## ", basename(path), "\n\n")
     cat("**Comment:** ", manifest_df[i,"comment"], "\n\n")
-    cat(paste0("![", "Test ", "](", path, ")\n"))
+    cat(paste0("![", manifest_df[i,"comment"], "](", path, ")\n"))
   } else if (stringr::str_ends(path, "(Rout|txt)")) {
     cat("## ", basename(path), "\n\n")
     cat("\\scriptsize \n\n", "```txt\n")

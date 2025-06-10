@@ -170,7 +170,7 @@ get_abstract_text_crossref <- function(register_repo) {
 
   # Could not retrieve data for DOI
   else {
-    warning(paste("Failed to retrieve data for DOI", doi))
+    warning(paste("Failed to retrieve abstract text for DOI", doi))
     return(NULL)
   }
 }
