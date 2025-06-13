@@ -52,9 +52,9 @@ download_cert_pdf <- function(report_link, cert_id){
   }
 }
 
-#' Retrieves the download link for a certificate file from either Zenodo or OSF.
+#' Retrieves the download link for a certificate file from Zenodo, OSF, or ResearchEquals.
 #'
-#' @param report_link URL of the report to access, either from Zenodo or OSF.
+#' @param report_link URL of the report to access, either from Zenodo, OSF, or ResearchEquals.
 #' @param cert_id ID of the certificate, used for logging and warnings.
 #'
 #' @return The download link for the certificate file as a string if found; otherwise, NULL.
@@ -66,6 +66,11 @@ get_cert_link <- function(report_link, cert_id){
 
   else if (grepl("OSF", report_link, ignore.case = TRUE)) {
     cert_download_url <- get_osf_cert_link(report_link, cert_id)
+  }
+  
+  # use issuer prefix for LibSci, see https://web.archive.org/web/20250504015818/https://www.libscie.org/blog/working-openly-1/minting-dois-for-research-modules-147/
+  else if (grepl("10.53962", report_link, ignore.case = TRUE)) {
+    cert_download_url <- get_researchequals_cert_link(report_link, cert_id)
   }
 
   else(
@@ -215,6 +220,30 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   }
 }
 
+
+#' Accesses a codecheck's ResearchEquals record via its report link and download the main file of the module
+#'
+#' @param report_link URL of the ResearchEquals report to access.
+#' @param cert_id ID of the certificate, used for logging and warnings.
+#' 
+#' @importFrom httr GET status_code content
+#' @importFrom jsonlite fromJSON
+#'
+#' @return The download link for the certificate file as a string if found; otherwise, NULL.
+get_researchequals_cert_link <- function(report_link, cert_id) {
+  # Download link example: https://www.researchequals.com/api/modules/main/wxh7-8yjd
+  # Let's guess the ID from the report_link
+  
+  # Checking for redirects and retrieving the record_id from there
+  response <- httr::GET(report_link)
+  final_url <- response$url
+  record_id <- basename(final_url)
+  
+  # Set the base URL for the ResearchEquals API
+  record_url <- paste0(CONFIG$CERT_LINKS[["researchequals_api"]], record_id)
+  
+  return (record_url)
+}
 
 
 #' Downloads a ZIP file from the given URL, searches for "codecheck.pdf" within its contents,

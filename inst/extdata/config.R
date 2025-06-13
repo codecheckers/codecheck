@@ -196,7 +196,8 @@ CONFIG$CERT_LINKS <- list(
   osf_api = "https://api.osf.io/v2/",
   zenodo_api = "https://zenodo.org/api/records/",
   crossref_api = "https://api.crossref.org/works/",
-  openalex_api = "https://api.openalex.org/works/"
+  openalex_api = "https://api.openalex.org/works/",
+  researchequals_api = "https://www.researchequals.com/api/modules/main/"
 )
 
 CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"

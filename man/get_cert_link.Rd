@@ -2,12 +2,12 @@
 % Please edit documentation in R/utils_download_certs.R
 \name{get_cert_link}
 \alias{get_cert_link}
-\title{Retrieves the download link for a certificate file from either Zenodo or OSF.}
+\title{Retrieves the download link for a certificate file from Zenodo, OSF, or ResearchEquals.}
 \usage{
 get_cert_link(report_link, cert_id)
 }
 \arguments{
-\item{report_link}{URL of the report to access, either from Zenodo or OSF.}
+\item{report_link}{URL of the report to access, either from Zenodo, OSF, or ResearchEquals.}
 
 \item{cert_id}{ID of the certificate, used for logging and warnings.}
 }
@@ -15,5 +15,5 @@ get_cert_link(report_link, cert_id)
 The download link for the certificate file as a string if found; otherwise, NULL.
 }
 \description{
-Retrieves the download link for a certificate file from either Zenodo or OSF.
+Retrieves the download link for a certificate file from Zenodo, OSF, or ResearchEquals.
 }
