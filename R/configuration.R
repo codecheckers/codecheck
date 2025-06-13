@@ -22,15 +22,23 @@ get_codecheck_yml_uncached <- function(x) {
 #' @importFrom gh gh
 #' @param x the org/repo to download the file from
 get_codecheck_yml_github <- function(x) {
-  org_repo <- strsplit(x, "/", fixed = TRUE)[[1]]
+  org_repo <- regmatches(x, regexpr("/", x), invert =TRUE)[[1]]
   
   if (length(org_repo) != 2) {
-    stop("Incomplete repo specification for type 'github', need 'org/repo' but have '", x, "'")
+    stop("Incomplete repo specification for type 'github', need 'org/repo(|path)' but have '", x, "'")
   }
   
-  repo_files <- gh::gh("GET /repos/:org/:repo/contents/",
+  repo_path <- strsplit(org_repo[[2]], "|", fixed = TRUE)[[1]]
+  path <- ""
+  if (length(repo_path) == 2) {
+    org_repo[[2]] <- repo_path[[1]]
+    path <- repo_path[[2]]
+  }
+  
+  repo_files <- gh::gh("GET /repos/:org/:repo/contents/:path",
                        org = org_repo[[1]],
                        repo = org_repo[[2]],
+                       path = path,
                        .accept = "application/vnd.github.VERSION.raw")
   repo_file_names <- sapply(repo_files, "[[", "name")
   
@@ -39,7 +47,7 @@ get_codecheck_yml_github <- function(x) {
       "GET /repos/:org/:repo/contents/:file",
       org = org_repo[[1]],
       repo = org_repo[[2]],
-      file = "codecheck.yml",
+      file = ifelse(path == "", "codecheck.yml", paste0(path, "/codecheck.yml")),
       .accept = "application/vnd.github.VERSION.raw")
     config_file <- yaml::read_yaml(text = config_file_response$message)
     return(config_file)

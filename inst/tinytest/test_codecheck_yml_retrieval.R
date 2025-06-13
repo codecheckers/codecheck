@@ -17,6 +17,12 @@ expect_warning(get_codecheck_yml("gitlab::nuest/sensebox-binder"),
 expect_silent({ piccolo <- get_codecheck_yml("github::codecheckers/Piccolo-2020") })
 expect_equal(piccolo$report, "http://doi.org/10.5281/zenodo.3674056")
 
+# GitHub nested ----
+expect_silent({ agile03 <- get_codecheck_yml("github::reproducible-agile/reviews-2024|reports/03") })
+expect_equal(agile03$certificate, "2024-013")
+expect_silent({ agile21 <- get_codecheck_yml("github::reproducible-agile/reviews-2024|reports/21") })
+expect_equal(agile21$certificate, "2024-011")
+
 # OSF ----
 expect_silent({ agile <- get_codecheck_yml("osf::5SVMT") })
 expect_equal(agile$report, "https://doi.org/10.17605/OSF.IO/5SVMT")
