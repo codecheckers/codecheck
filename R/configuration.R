@@ -204,6 +204,13 @@ validate_codecheck_yml <- function(configuration) {
     stop("Could not load codecheck configuration from input '", configuration, "'")
   }
   
+  # MUST have a non-empty certificate identifier matching the pattern NNNN-NNN
+  assertthat::assert_that(isTRUE(grepl("^\\d{4}-\\d{3}$", codecheck_yml$certificate)), # if certificate is missing, grepl returns a logical(0)
+                          msg = paste0("The certificate identifier '",
+                                       codecheck_yml$certificate,
+                                       "' is missing or invalid")
+                          )
+  
   # MUST have manifest
   assertthat::assert_that(assertthat::has_name(codecheck_yml, "manifest"),
                           msg = paste0("codecheck.yml must have a root-level node 'manifest'",
@@ -235,9 +242,8 @@ validate_codecheck_yml <- function(configuration) {
 
   # Check if the paper_link contains a valid URL. We only check that it starts with https?://
   url_regex <- "^https?://"
-  if (!grepl(url_regex, codecheck_yml$paper$reference)) {
-    warning("The paper reference in the codecheck.yml is not a valid URL")
-  } 
+  assertthat::assert_that(grepl(url_regex, codecheck_yml$paper$reference),
+                          msg = paste0(codecheck_yml$paper$reference, " is not a valid URL"))
   
   # if ORCID are used, they must be without URL prefix and valid form, actual checking requires login, see #11
   orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"

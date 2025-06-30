@@ -4,6 +4,15 @@ tinytest::using(ttdo)
 expect_silent(validate_codecheck_yml("yaml/codecheck.yml"))
 expect_true(validate_codecheck_yml("yaml/codecheck.yml"))
 
+# certificate ID ----
+expect_error(validate_codecheck_yml("yaml/certificate_id_missing/codecheck.yml"),
+             pattern = "'' is missing or invalid")
+expect_error(validate_codecheck_yml("yaml/certificate_id_invalid/codecheck1.yml"),
+             pattern = "'20XX-000' is missing or invalid")
+expect_error(validate_codecheck_yml("yaml/certificate_id_invalid/codecheck2.yml"),
+             pattern = "'2025-99' is missing or invalid")
+expect_error(validate_codecheck_yml("yaml/certificate_id_invalid/codecheck3.yml"),
+             pattern = "'' is missing or invalid")
 # manifest ----
 expect_error(validate_codecheck_yml("yaml/manifest_missing/codecheck.yml"),
              pattern = "root-level node 'manifest'")

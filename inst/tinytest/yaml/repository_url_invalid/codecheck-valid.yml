@@ -42,5 +42,5 @@ repository:
   - https://zenodo.org/record/6040066
   - https://doi.org/10.5281/zenodo.6040066
 check_time: "2020-04-13 10:00:00"
-certificate: 2020-XYZ
+certificate: 2020-999
 report: https://doi.org/10.5281/zenodo.FIXME
