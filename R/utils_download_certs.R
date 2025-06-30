@@ -251,13 +251,15 @@ get_researchequals_cert_link <- function(report_link, cert_id) {
 #'
 #' @param zip_download_url URL to download the ZIP file from.
 #' @param cert_sub_dir Directory to save the extracted certificate PDF.
+#' 
+#' @importFrom utils download.file unzip
 #'
 #' @return 1 if "codecheck.pdf" is found and saved, otherwise 0.
 extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir){
   zip_dir <- file.path(cert_sub_dir, "content.zip")
   
   # Download the ZIP file
-  download.file(zip_download_url, zip_dir)
+  utils::download.file(zip_download_url, zip_dir)
   
   # Create a temporary unzip directory inside cert_sub_dir
   temp_unzip_dir <- file.path(cert_sub_dir, "temp_unzip")

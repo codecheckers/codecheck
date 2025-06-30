@@ -209,6 +209,9 @@ add_cert_links <- function(register_table){
 #' by codecheckers.
 #' 
 #' @param register_table The register table with a "Codechecker" column.
+#' 
+#' @importFrom utils write.csv
+#' 
 create_temp_register_with_codechecker <- function(register_table){
   # Flatten the Codechecker column (convert list elements to comma-separated strings)
   # This is done since jsons cannot handle list columns directly

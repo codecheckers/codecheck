@@ -8,6 +8,8 @@
 #' @param register The register to be filtered.
 #' @param filter_by List of filters to apply (e.g., "venues", "codecheckers").
 #' 
+#' @importFrom utils write.csv
+#' 
 create_filtered_reg_csvs <- function(register, filter_by){
   for (filter in filter_by){
     if (filter == "codecheckers"){
