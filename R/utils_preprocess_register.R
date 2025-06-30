@@ -29,7 +29,8 @@ add_paper_links <- function(register_table, register){
     # Removing new lines from paper title and link
     paper_title <- gsub("\n", " ", paper_title)
     paper_link <- gsub("\n$", "", paper_link)
-
+    
+    #cat("Adding paper link for ", paper_title, " with link ", paper_link, " for ", register[i, ]$Repo)
     # Checking if there is a valid url for the paper. If not we just add the title as it is
     url_regex <- "^https?://"
     if (!grepl(url_regex, paper_link)){

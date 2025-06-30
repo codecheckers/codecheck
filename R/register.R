@@ -9,6 +9,8 @@
 #' @param filter_by The filter or list o filters (if applicable)
 #' @param outputs The output formats to create
 #' @param config A list of configuration files to be sourced at the beginning of the rending process
+#' @param from The first register entry to check
+#' @param to The last register entry to check
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #'
@@ -24,8 +26,10 @@
 register_render <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
                             filter_by = c("venues", "codecheckers"),
                             outputs = c("html", "md", "json"),
-                            config = c(system.file("extdata", "config.R", package = "codecheck"))) {
-  message("Rendering register using codecheck version ", utils::packageVersion("codecheck"))
+                            config = c(system.file("extdata", "config.R", package = "codecheck")),
+                            from = 1,
+                            to = nrow(register)) {
+  message("Rendering register using codecheck version ", utils::packageVersion("codecheck"), " from ", from, " to ", to)
   
   # Loading config.R files
   for (i in seq(length(config))) {
@@ -33,6 +37,8 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   }
   
   message("Using cache path ", R.cache::getCacheRootPath())
+  
+  register <- register[(from:to),]
 
   register_table <- preprocess_register(register, filter_by)
   # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
@@ -72,7 +78,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
 register_check <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
                            from = 1,
                            to = nrow(register)) {
-  message("Checking register using codecheck version ", utils::packageVersion("codecheck"))
+  message("Checking register using codecheck version ", utils::packageVersion("codecheck"), " from ", from, " to ", to)
   
   # Loading config.R file
   source(system.file("extdata", "config.R", package = "codecheck"))

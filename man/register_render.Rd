@@ -8,7 +8,9 @@ register_render(
   register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   filter_by = c("venues", "codecheckers"),
   outputs = c("html", "md", "json"),
-  config = c(system.file("extdata", "config.R", package = "codecheck"))
+  config = c(system.file("extdata", "config.R", package = "codecheck")),
+  from = 1,
+  to = nrow(register)
 )
 }
 \arguments{
@@ -19,6 +21,10 @@ register_render(
 \item{outputs}{The output formats to create}
 
 \item{config}{A list of configuration files to be sourced at the beginning of the rending process}
+
+\item{from}{The first register entry to check}
+
+\item{to}{The last register entry to check}
 }
 \value{
 A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
