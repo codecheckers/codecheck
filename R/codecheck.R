@@ -32,7 +32,7 @@ copy_codecheck_yaml_template <- function(target = ".") {
 copy_codecheck_report_template <- function(target = ".") {
   templates <- system.file("extdata", "templates", package="codecheck")
   file.copy(file.path(templates, "codecheck"), target, recursive = TRUE)
-  cat("Created codecheck report files at ", target, ":", toString(list.files("codecheck")), "\n")
+  cat("Created CODECHECK certificate files at ", target, ":", toString(list.files("codecheck")), "\n")
 }
 
 ##' Return the metadata for the codecheck project in root folder of project
@@ -211,7 +211,7 @@ latex_summary_of_metadata <- function(metadata) {
 ##'
 ##' Format a latex table that summarises the main CODECHECK manifest
 ##' @title Print a latex table to summarise CODECHECK metadata
-##' @param metadata - the codecheck metadata list.
+##' @param metadata - the CODECHECK metadata list.
 ##' @param manifest_df - The manifest data frame
 ##' @param root - root directory of the project
 ##' @param align - alignment flags for the table.

@@ -12,7 +12,7 @@ latex_summary_of_manifest(
 )
 }
 \arguments{
-\item{metadata}{- the codecheck metadata list.}
+\item{metadata}{- the CODECHECK metadata list.}
 
 \item{manifest_df}{- The manifest data frame}
 

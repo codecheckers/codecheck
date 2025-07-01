@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_render_cert_md.R
 \name{add_codecheck_details_md}
 \alias{add_codecheck_details_md}
-\title{Populates an existing markdown content template with details about the codecheck details.}
+\title{Populates an existing markdown content template with details about the CODECHECK details.}
 \usage{
 add_codecheck_details_md(md_content, repo_link)
 }
@@ -12,8 +12,8 @@ add_codecheck_details_md(md_content, repo_link)
 \item{repo_link}{A character string containing the repository link associated with the certificate.}
 }
 \value{
-The markdown content, with codecheck details placeholders filled.
+The markdown content, with CODECHECK details placeholders filled.
 }
 \description{
-Populates an existing markdown content template with details about the codecheck details.
+Populates an existing markdown content template with details about the CODECHECK details.
 }

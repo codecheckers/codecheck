@@ -72,7 +72,7 @@ title: $title$
   </div>
   </div>
 
-  <!-- Right Side Content (Paper Details + Codecheck details) -->
+  <!-- Right Side Content (Paper details + CODECHECK details) -->
   <div class="col-md-6 d-flex flex-column">
   <div class="card mb-3 flex-grow-1">
   <div class="card-header pt-4">
@@ -97,14 +97,14 @@ title: $title$
 
   <div class="card mb-3 flex-grow-1">
   <div class="card-header pt-4">
-  <h2 class="card-title" style="color: darkgreen; margin-top: 0;">Codecheck details</h2>
+  <h2 class="card-title" style="color: darkgreen; margin-top: 0;">CODECHECK details</h2>
   </div>
   <div class="card-body d-flex flex-column">
   <p><strong>Certificate identifier</strong>: $codecheck_cert$</p>
   <p><strong>$codechecker_names_heading$</strong>: $codechecker_names$</p>
-  <p><strong>Time of codecheck</strong>: $codecheck_time$</p>
+  <p><strong>Time of check</strong>: $codecheck_time$</p>
   <p><strong>Repository</strong>: $codecheck_repo$</p>
-  <p><strong>Codecheck report</strong>: $codecheck_report$</p>
+  <p><strong>Full certificate</strong>: $codecheck_full_certificate$</p>
 
   <!-- Summary -->
   <div class="scrollable-container" id="summary-section">

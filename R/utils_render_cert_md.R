@@ -304,19 +304,19 @@ add_paper_details_md <- function(md_content, repo_link, download_cert_status){
   return(md_content)
 }
 
-#' Populates an existing markdown content template with details about the codecheck details.
+#' Populates an existing markdown content template with details about the CODECHECK details.
 #'
 #' @param md_content A character string containing the Markdown template content with placeholders.
 #' @param repo_link A character string containing the repository link associated with the certificate.
-#' @return The markdown content, with codecheck details placeholders filled.
+#' @return The markdown content, with CODECHECK details placeholders filled.
 add_codecheck_details_md <- function(md_content, repo_link){
   config_yml <- get_codecheck_yml(repo_link)
 
-  # Adding the Codechecker name
+  # Adding the codechecker name
   codechecker_names <- c()
 
   for (checker in config_yml$codechecker){
-    # Creating a hyperlink if the ORCID ID is available
+    # Creating a hyperlink if the ORCID ID available
     if ("ORCID" %in% names(checker)){
       codechecker <- paste0("[", checker$name, "](", CONFIG$HYPERLINKS["orcid"], checker$ORCID, ")")
     }
@@ -341,7 +341,7 @@ add_codecheck_details_md <- function(md_content, repo_link){
   md_content <- gsub("\\$codechecker_names_heading\\$", codechecker_names_heading, md_content)
   md_content <- gsub("\\$codechecker_names\\$", codechecker_names, md_content)
   
-  # Adding codecheck date, summary and cert no.
+  # Adding check date, summary and cert no.
   md_content <- gsub("\\$codecheck_time\\$", config_yml$check_time, md_content)
 
   # Adding summary if it exists else adding empty string
@@ -356,7 +356,7 @@ add_codecheck_details_md <- function(md_content, repo_link){
 
   # Adjusting the repo and report links
   md_content <- add_repository_hyperlink(md_content, repo_link)
-  md_content <- gsub("\\$codecheck_report\\$", config_yml$report, md_content)
+  md_content <- gsub("\\$codecheck_full_certificate\\$", config_yml$report, md_content)
 
   return(md_content)
 }
