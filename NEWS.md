@@ -1,8 +1,33 @@
 # codecheck 0.22.0
 
+* **New feature**: `validate_yaml_syntax()` - Validate YAML syntax before parsing
+  - Checks if a YAML file has valid syntax that can be parsed
+  - Provides clear error messages for syntax errors
+  - Integrated into certificate template (codecheck.Rmd) to prevent compilation with invalid YAML
+  - Can be used standalone with `stop_on_error = FALSE` to check validity without stopping execution
+  - Comprehensive test suite in `test_yaml_syntax_validation.R` (6 tests)
 * **New feature**: `complete_codecheck_yml()` - Analyze and complete codecheck.yml files with missing fields
+  - Validates codecheck.yml against the specification at https://codecheck.org.uk/spec/config/1.0/
+  - Reports missing mandatory, recommended, and optional fields
+  - Can add placeholders for missing mandatory fields (`add_mandatory = TRUE`)
+  - Can add placeholders for all missing fields including recommended and optional (`add_optional = TRUE`)
+  - Shows diff of changes before applying (similar to `update_codecheck_yml_from_lifecycle()`)
+  - Comprehensive test suite in `test_complete_codecheck_yml.R`
+* **New feature**: `validate_codecheck_yml_crossref()` - Validate metadata against CrossRef
+  - Retrieves paper metadata from CrossRef API using the paper's DOI
+  - Validates title matches between local codecheck.yml and published paper
+  - Validates author information (names and ORCIDs) against CrossRef data
+  - Validates codechecker information is present and properly formatted
+  - Supports strict mode that throws errors on mismatches (fails certificate rendering)
+  - Integrated into certificate template (codecheck.Rmd) for automatic validation during rendering
+  - Comprehensive test suite in `test_crossref_validation.R` (13 tests)
 * **New feature**: Lifecycle Journal automation (addresses #82)
-* **New tests**: Added comprehensive test coverage (~155 new tests)
+  - `get_lifecycle_metadata()`: Retrieve article metadata from Lifecycle Journal via CrossRef API using submission ID or DOI
+  - `update_codecheck_yml_from_lifecycle()`: Auto-populate `codecheck.yml` with paper metadata (title, authors with ORCIDs, DOI reference)
+  - Preview changes before applying with diff view
+  - Smart field updates: only populate empty/placeholder fields by default, with option to overwrite existing fields
+  - `test_lifecycle_journal.R`: 24 tests validating metadata retrieval and codecheck.yml updates
+* **New tests**: Added comprehensive test coverage (~180 new tests)
   
 # codecheck 0.21.0
 

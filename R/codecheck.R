@@ -937,3 +937,269 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 
   invisible(list(missing = missing, updated = if(length(changes) > 0) updated else NULL))
 }
+
+
+##' Validate codecheck.yml metadata against CrossRef
+##'
+##' Retrieves metadata from CrossRef for the paper's DOI and compares it with
+##' the local codecheck.yml metadata. Validates title and author information
+##' (names and ORCIDs). Also validates that codechecker information is present
+##' and properly formatted in the local file.
+##'
+##' This function is useful for ensuring consistency between the published paper
+##' metadata and the CODECHECK certificate, helping to catch typos, outdated
+##' information, or missing data.
+##'
+##' @title Validate codecheck.yml metadata against CrossRef
+##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
+##'   If \code{FALSE} (default), only issue warnings.
+##' @param check_orcids Logical. If \code{TRUE} (default), validate ORCID
+##'   identifiers. If \code{FALSE}, skip ORCID validation.
+##' @return Invisibly returns a list with validation results:
+##'   \describe{
+##'     \item{valid}{Logical indicating if all checks passed}
+##'     \item{issues}{Character vector of any issues found}
+##'     \item{crossref_metadata}{The metadata retrieved from CrossRef (if available)}
+##'   }
+##' @author Daniel Nüst
+##' @importFrom httr GET content status_code
+##' @export
+##' @examples
+##' \dontrun{
+##'   # Validate with warnings only
+##'   result <- validate_codecheck_yml_crossref()
+##'
+##'   # Validate with strict error checking
+##'   validate_codecheck_yml_crossref(strict = TRUE)
+##'
+##'   # Skip ORCID validation
+##'   validate_codecheck_yml_crossref(check_orcids = FALSE)
+##' }
+validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
+                                            strict = FALSE,
+                                            check_orcids = TRUE) {
+
+  if (!file.exists(yml_file)) {
+    stop("codecheck.yml file not found at: ", yml_file)
+  }
+
+  # Read local metadata
+  local_meta <- yaml::read_yaml(yml_file)
+
+  issues <- character(0)
+  crossref_meta <- NULL
+
+  # Check if paper metadata exists
+  if (is.null(local_meta$paper)) {
+    issues <- c(issues, "No paper metadata found in codecheck.yml")
+    if (strict) {
+      stop("Validation failed: No paper metadata found in codecheck.yml")
+    }
+    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
+  }
+
+  # Check if paper reference (DOI) exists
+  if (is.null(local_meta$paper$reference)) {
+    issues <- c(issues, "No paper reference (DOI) found in codecheck.yml")
+    if (strict) {
+      stop("Validation failed: No paper reference found")
+    }
+    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
+  }
+
+  # Extract DOI from reference
+  paper_ref <- local_meta$paper$reference
+
+  # Skip validation if reference contains placeholder
+  if (grepl("FIXME|TODO|template|example", paper_ref, ignore.case = TRUE)) {
+    message("Skipping CrossRef validation: paper reference contains placeholder")
+    return(invisible(list(valid = TRUE, issues = character(0), crossref_metadata = NULL)))
+  }
+
+  # Try to extract DOI
+  doi <- sub("^https?://(dx\\.)?doi\\.org/", "", paper_ref)
+  doi <- sub("^doi:", "", doi)
+
+  # Fetch metadata from CrossRef
+  api_url <- paste0("https://api.crossref.org/works/", doi)
+  message("Fetching metadata from CrossRef: ", api_url)
+
+  response <- tryCatch(
+    httr::GET(api_url),
+    error = function(e) {
+      issues <<- c(issues, paste("Failed to connect to CrossRef API:", e$message))
+      return(NULL)
+    }
+  )
+
+  if (is.null(response)) {
+    if (strict) {
+      stop("Validation failed: Could not connect to CrossRef API")
+    }
+    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
+  }
+
+  if (httr::status_code(response) != 200) {
+    msg <- paste0("CrossRef API returned status code ", httr::status_code(response),
+                  " for DOI: ", doi)
+    issues <- c(issues, msg)
+    if (strict) {
+      stop("Validation failed: ", msg)
+    }
+    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
+  }
+
+  crossref_meta <- httr::content(response, "parsed")$message
+
+  # Validate title
+  if (!is.null(local_meta$paper$title) && !is.null(crossref_meta$title)) {
+    local_title <- tolower(trimws(local_meta$paper$title))
+    # CrossRef returns title as a list, take first element
+    crossref_title <- tolower(trimws(crossref_meta$title[[1]]))
+
+    # Remove common differences (punctuation, extra spaces)
+    local_title_clean <- gsub("[[:punct:]]", "", gsub("\\s+", " ", local_title))
+    crossref_title_clean <- gsub("[[:punct:]]", "", gsub("\\s+", " ", crossref_title))
+
+    if (local_title_clean != crossref_title_clean) {
+      issue <- paste0("Title mismatch:\n",
+                     "  Local:    ", local_meta$paper$title, "\n",
+                     "  CrossRef: ", crossref_meta$title[[1]])
+      issues <- c(issues, issue)
+      warning(issue)
+    } else {
+      message("✓ Title matches CrossRef metadata")
+    }
+  }
+
+  # Validate authors
+  if (!is.null(local_meta$paper$authors) && !is.null(crossref_meta$author)) {
+    local_authors <- local_meta$paper$authors
+    crossref_authors <- crossref_meta$author
+
+    # Check author count
+    if (length(local_authors) != length(crossref_authors)) {
+      issue <- paste0("Author count mismatch: local has ", length(local_authors),
+                     " authors, CrossRef has ", length(crossref_authors), " authors")
+      issues <- c(issues, issue)
+      warning(issue)
+    }
+
+    # Compare each author
+    for (i in seq_along(local_authors)) {
+      if (i > length(crossref_authors)) break
+
+      local_author <- local_authors[[i]]
+      crossref_author <- crossref_authors[[i]]
+
+      # Build full name from CrossRef
+      crossref_name <- paste(
+        if (!is.null(crossref_author$given)) crossref_author$given else "",
+        if (!is.null(crossref_author$family)) crossref_author$family else ""
+      )
+      crossref_name <- trimws(crossref_name)
+
+      # Compare names (case-insensitive)
+      if (!is.null(local_author$name)) {
+        local_name_clean <- tolower(trimws(local_author$name))
+        crossref_name_clean <- tolower(trimws(crossref_name))
+
+        # Allow for different name formats (e.g., "John Smith" vs "Smith, John")
+        # Just check if key parts are present
+        local_parts <- strsplit(local_name_clean, "\\s+")[[1]]
+        crossref_parts <- strsplit(crossref_name_clean, "\\s+")[[1]]
+
+        # Check if all significant parts match (at least 2 characters)
+        local_parts_sig <- local_parts[nchar(local_parts) >= 2]
+        crossref_parts_sig <- crossref_parts[nchar(crossref_parts) >= 2]
+
+        if (!all(local_parts_sig %in% crossref_parts_sig) &&
+            !all(crossref_parts_sig %in% local_parts_sig)) {
+          issue <- paste0("Author ", i, " name mismatch:\n",
+                         "  Local:    ", local_author$name, "\n",
+                         "  CrossRef: ", crossref_name)
+          issues <- c(issues, issue)
+          warning(issue)
+        } else {
+          message("✓ Author ", i, " name matches: ", local_author$name)
+        }
+      }
+
+      # Compare ORCIDs if checking is enabled
+      if (check_orcids && !is.null(local_author$ORCID)) {
+        if (!is.null(crossref_author$ORCID)) {
+          # Normalize ORCIDs (remove URL prefix if present)
+          local_orcid <- sub("^https?://orcid\\.org/", "", local_author$ORCID)
+          crossref_orcid <- sub("^https?://orcid\\.org/", "", crossref_author$ORCID)
+
+          if (local_orcid != crossref_orcid) {
+            issue <- paste0("Author ", i, " ORCID mismatch:\n",
+                           "  Local:    ", local_orcid, "\n",
+                           "  CrossRef: ", crossref_orcid)
+            issues <- c(issues, issue)
+            warning(issue)
+          } else {
+            message("✓ Author ", i, " ORCID matches: ", local_orcid)
+          }
+        } else {
+          msg <- paste0("Author ", i, " has ORCID in local file but not in CrossRef")
+          message("ℹ ", msg)
+        }
+      }
+    }
+  }
+
+  # Validate codechecker information exists and is properly formatted
+  if (is.null(local_meta$codechecker) || length(local_meta$codechecker) == 0) {
+    issue <- "No codechecker information found in codecheck.yml"
+    issues <- c(issues, issue)
+    warning(issue)
+  } else {
+    message("✓ Codechecker information present")
+
+    # Validate each codechecker has a name
+    for (i in seq_along(local_meta$codechecker)) {
+      checker <- local_meta$codechecker[[i]]
+      if (is.null(checker$name) || trimws(checker$name) == "") {
+        issue <- paste0("Codechecker ", i, " is missing a name")
+        issues <- c(issues, issue)
+        warning(issue)
+      } else {
+        message("✓ Codechecker ", i, ": ", checker$name)
+      }
+
+      # Validate ORCID format if present
+      if (check_orcids && !is.null(checker$ORCID)) {
+        orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"
+        if (!grepl(orcid_regex, checker$ORCID, perl = TRUE)) {
+          issue <- paste0("Codechecker ", i, " has invalid ORCID format: ", checker$ORCID,
+                         " (should be NNNN-NNNN-NNNN-NNNX)")
+          issues <- c(issues, issue)
+          warning(issue)
+        } else {
+          message("✓ Codechecker ", i, " ORCID valid: ", checker$ORCID)
+        }
+      }
+    }
+  }
+
+  # Final validation result
+  valid <- length(issues) == 0
+
+  if (!valid) {
+    message("\n⚠ Validation completed with ", length(issues), " issue(s)")
+    if (strict) {
+      stop("Validation failed with ", length(issues), " issue(s):\n",
+           paste(issues, collapse = "\n"))
+    }
+  } else {
+    message("\n✓ All validations passed!")
+  }
+
+  invisible(list(
+    valid = valid,
+    issues = issues,
+    crossref_metadata = crossref_meta
+  ))
+}

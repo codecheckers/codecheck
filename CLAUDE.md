@@ -50,13 +50,19 @@ When bumping the version in `DESCRIPTION`, add a new section to `NEWS.md` with t
 
 - `codecheck_metadata()` - Load and parse `codecheck.yml`
 - `copy_manifest_files()` - Copy output files specified in the manifest to the codecheck folder
-- `validate_codecheck_yml()` - Validate that a codecheck.yml file meets the specification (R/configuration.R:196)
+- `validate_yaml_syntax()` - Validate YAML syntax before parsing; checks if file is valid YAML; integrated into certificate template to prevent compilation with invalid YAML (R/configuration.R:184)
+- `validate_codecheck_yml()` - Validate that a codecheck.yml file meets the specification (R/configuration.R:229)
 - `complete_codecheck_yml()` - Analyze and complete codecheck.yml with missing fields; validates against specification; can add placeholders for mandatory and optional fields
+- `validate_codecheck_yml_crossref()` - Validate metadata against CrossRef; checks title, authors, and ORCID consistency; integrated into certificate template
 
 **Lifecycle Journal automation**: Functions for auto-populating metadata from Lifecycle Journal articles:
 
 - `get_lifecycle_metadata()` - Retrieve article metadata from CrossRef API using submission ID or DOI (prefix: `10.71240/lcyc.`)
 - `update_codecheck_yml_from_lifecycle()` - Update local `codecheck.yml` with metadata; shows diff before applying changes; supports preview mode and selective field updates
+
+**CrossRef validation**: Ensure consistency with published paper metadata:
+
+- `validate_codecheck_yml_crossref()` - Validates codecheck.yml metadata against CrossRef API; compares title, author names, and ORCIDs; validates codechecker information format; supports strict mode for certificate rendering
 
 **Zenodo integration**: Functions for uploading certificates to Zenodo:
 

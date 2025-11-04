@@ -181,17 +181,61 @@ get_codecheck_yml <- function(x) {
   return(configuration)
 }
 
+#' Validate YAML syntax of a codecheck.yml file
+#'
+#' This function checks whether a YAML file has valid syntax that can be parsed.
+#' It does not validate the content or structure against the CODECHECK specification.
+#' Use \code{\link{validate_codecheck_yml}} for full validation.
+#'
+#' @param yml_file Path to the YAML file to validate
+#' @param stop_on_error If TRUE (default), stop execution with an error message if YAML is invalid.
+#'   If FALSE, return FALSE on invalid YAML instead of stopping.
+#'
+#' @return Invisibly returns TRUE if YAML is valid. If stop_on_error is FALSE, returns FALSE
+#'   on invalid YAML. If stop_on_error is TRUE, stops execution with an error message.
+#'
+#' @examples
+#' \dontrun{
+#' # Validate a codecheck.yml file
+#' validate_yaml_syntax("codecheck.yml")
+#'
+#' # Check without stopping on error
+#' is_valid <- validate_yaml_syntax("codecheck.yml", stop_on_error = FALSE)
+#' }
+#'
+#' @author Daniel Nüst
+#' @export
+validate_yaml_syntax <- function(yml_file, stop_on_error = TRUE) {
+  if (!file.exists(yml_file)) {
+    stop("File does not exist: ", yml_file)
+  }
+
+  result <- tryCatch({
+    yaml::read_yaml(yml_file)
+    TRUE
+  }, error = function(e) {
+    error_msg <- paste0("Invalid YAML syntax in '", yml_file, "':\n", e$message)
+    if (stop_on_error) {
+      stop(error_msg, call. = FALSE)
+    } else {
+      message(error_msg)
+      return(FALSE)
+    }
+  })
+
+  invisible(result)
+}
+
 #' Validate a CODECHECK configuration
-#' 
+#'
 #' This functions checks "MUST"-contents only, see https://codecheck.org.uk/spec/config/latest/
-#' 
+#'
 #' @param configuration R object of class `list`, or a path to a file
 #' @return `TRUE` if the provided configuration is valid, otherwise the function stops with an error
-#' 
 #' @author Daniel Nüst
 #' @importFrom rorcid check_dois
 #' @importFrom httr http_error http_status GET
-#' 
+#'
 #' @export
 validate_codecheck_yml <- function(configuration) {
   codecheck_yml <- NULL

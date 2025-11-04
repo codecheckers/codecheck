@@ -10,3 +10,6 @@
 ^docs$
 ^pkgdown$
 ^CODE_OF_CONDUCT\.md$
+^CONTRIBUTING\.md$
+^CLAUDE\.md$
+^\.claude$

@@ -21,6 +21,11 @@ opts_chunk$set(cache = FALSE)
 root <- find_root("codecheck.yml")
 ```
 
+```{r validate_yaml_syntax, eval=TRUE, include=FALSE}
+## Validate YAML syntax - will stop rendering if YAML is invalid
+validate_yaml_syntax(file.path(root, "codecheck.yml"))
+```
+
 ```{r codecheck_logo, echo=FALSE,results='asis'}
 latex_codecheck_logo()
 ```
@@ -40,6 +45,16 @@ manifest_df <- copy_manifest_files(root, metadata,
                                   overwrite = FALSE
                                   )
 # manifest_df <- list_manifest_files(root, metadata, dest_dir)
+```
+
+```{r validate_crossref, eval=TRUE, include=FALSE}
+## Validate metadata against CrossRef (strict mode - will fail rendering on mismatch)
+## Set strict = FALSE or remove this chunk if you want to skip validation
+validation_result <- validate_codecheck_yml_crossref(
+  yml_file = file.path(root, "codecheck.yml"),
+  strict = TRUE,
+  check_orcids = TRUE
+)
 ```
 
 ---
