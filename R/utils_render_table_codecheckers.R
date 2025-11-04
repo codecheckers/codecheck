@@ -61,6 +61,7 @@ add_all_codecheckers_hyperlink <- function(table){
 
     # NOTE: The order of these mutation must be kept in this order because of
     # dependencies on the links on the column values
+    # Using ':=' to generate names programmatically, see https://dplyr.tidyverse.org/articles/programming.html#name-injection
     mutate(
       # Generate codechecker table hyperlink
       !!col_names[["codechecker_name"]] := paste0(
