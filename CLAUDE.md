@@ -27,6 +27,16 @@ tinytest::build_install_test(".")
 
 The package uses GitHub Actions for CI/CD. Check `.github/workflows/R-CMD-check.yaml` for the automated testing setup.
 
+### Changelog Management
+
+**IMPORTANT**: When making changes to the package, always update `NEWS.md` with:
+- A brief description of the change
+- For new features, document the user-facing functionality
+- For bug fixes, reference the issue or describe the problem solved
+- For breaking changes, clearly mark them as such
+
+When bumping the version in `DESCRIPTION`, add a new section to `NEWS.md` with the version number and date. Follow the existing format with `# codecheck X.Y.Z` headers.
+
 ## Core Architecture
 
 ### 1. Workspace Creation (R/codecheck.R)
@@ -137,5 +147,6 @@ Templates are located in `inst/extdata/templates/`:
 - **Manifest files**: Paths in the manifest are relative to the root of the repository
 - **Zenodo sandbox**: Use `zenodo-sandbox::` prefix for testing uploads without affecting the main Zenodo repository
 - **Configuration updates**: Update `inst/extdata/config.R` for changes in URL patterns, table structures, etc.
-- **Testing**: Use `tinytest` for unit tests located in `inst/extdata/tests/`
+- **Testing**: Use `tinytest` for unit tests located in `inst/tinytest/`. Run tests with `tinytest::test_package("codecheck")` from the installed package or `tinytest::test_all(".")` from source.
 - **Documentation**: Use `roxygen2` for function documentation
+- **Changelog**: Always update `NEWS.md` when making changes. Each version should have its own section documenting new features, bug fixes, and breaking changes.
