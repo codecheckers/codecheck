@@ -144,7 +144,7 @@ get_abstract_text_crossref <- function(register_repo) {
   config_yml <- get_codecheck_yml(register_repo)
 
   # Retrieving the paper DOI
-  paper_link <- config_yml$paper$referenc
+  paper_link <- config_yml$paper$reference
   doi <- sub(CONFIG$CERTS_URL_PREFIX, "", paper_link)
 
   # Construct the URL to access the CrossRef API
