@@ -55,7 +55,11 @@ better, run the tests in a fresh install/temporary directory using
 build_install_test(".")
 ```
 
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+
 ## License
 
-Copyright 2024 S. Eglen & D. Nüst. The `codecheck` package is published
+Copyright 2025 S. Eglen & D. Nüst. The `codecheck` package is published
 under the MIT license, see file `LICENSE`.

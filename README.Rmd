@@ -52,6 +52,16 @@ Even better, run the tests in a fresh install/temporary directory using
 build_install_test(".")
 ```
 
+## Contribute
+
+_All contributions are welcome!_
+Check out the existing issues or open a new one.
+
+## Code of Conduct
+  
+Please note that the codecheck project is released with a [Contributor Code of Conduct](http://codecheck.org.uk/codecheck/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms.
+
 ## License
 
 Copyright 2022 S. Eglen & D. Nüst.
