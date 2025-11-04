@@ -16,7 +16,7 @@ The latest version of the package can be installed using:
 remotes::install_github("codecheckers/codecheck")
 ```
 
-## Pre-requisites for being a CODECHECKER>
+## Pre-requisites for being a CODECHECKER using the codecheck R package
 
 1. Member of the GitHub codecheckers community.
 2. Have a Zenodo account.
@@ -29,7 +29,7 @@ organisation.
 
 ## Get a certificate number 
 
-Note: Visit the **CODECHECK Launch Pad** at <https://codecheck.org.uk/launch-pad/> to easily open a new issue for your check.
+**Note**: Visit the **CODECHECK Launch Pad** at <https://codecheck.org.uk/launch-pad/> to easily open a new issue for your check.
 
 The manual way: Go onto <https://github.com/codecheckers/register> and add an issue
 for the new paper to reproduce. Check the other issues for the highest

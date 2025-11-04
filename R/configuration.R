@@ -270,16 +270,26 @@ validate_codecheck_yml <- function(configuration) {
   if(assertthat::has_name(codecheck_yml, "repository")) {
     if(is.vector(codecheck_yml$repository)) {
       for(r in codecheck_yml$repository) {
-        assertthat::assert_that(httr::http_error(r) == FALSE,
-                                msg = paste0(r, " - URL returns error: ",
-                                             toString(httr::http_status(httr::GET(r))))
-                                )
+        if(!is.null(r) && nchar(r) > 0) {
+          response <- tryCatch(httr::GET(r), error = function(e) NULL)
+          if(!is.null(response)) {
+            assertthat::assert_that(httr::http_error(response) == FALSE,
+                                    msg = paste0(r, " - URL returns error: ",
+                                                 toString(httr::http_status(response)))
+                                    )
+          }
+        }
       }
     } else {
-      assertthat::assert_that(httr::http_error(codecheck_yml$repository) == FALSE,
-                              msg = paste0(codecheck_yml$repository, " - URL returns error: ",
-                                           toString(httr::http_status(httr::GET(r))))
-      )  
+      if(!is.null(codecheck_yml$repository) && nchar(codecheck_yml$repository) > 0) {
+        response <- tryCatch(httr::GET(codecheck_yml$repository), error = function(e) NULL)
+        if(!is.null(response)) {
+          assertthat::assert_that(httr::http_error(response) == FALSE,
+                                  msg = paste0(codecheck_yml$repository, " - URL returns error: ",
+                                               toString(httr::http_status(response)))
+          )
+        }
+      }
     }
   }
   

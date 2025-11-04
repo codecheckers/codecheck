@@ -51,6 +51,12 @@ When bumping the version in `DESCRIPTION`, add a new section to `NEWS.md` with t
 - `codecheck_metadata()` - Load and parse `codecheck.yml`
 - `copy_manifest_files()` - Copy output files specified in the manifest to the codecheck folder
 - `validate_codecheck_yml()` - Validate that a codecheck.yml file meets the specification (R/configuration.R:196)
+- `complete_codecheck_yml()` - Analyze and complete codecheck.yml with missing fields; validates against specification; can add placeholders for mandatory and optional fields
+
+**Lifecycle Journal automation**: Functions for auto-populating metadata from Lifecycle Journal articles:
+
+- `get_lifecycle_metadata()` - Retrieve article metadata from CrossRef API using submission ID or DOI (prefix: `10.71240/lcyc.`)
+- `update_codecheck_yml_from_lifecycle()` - Update local `codecheck.yml` with metadata; shows diff before applying changes; supports preview mode and selective field updates
 
 **Zenodo integration**: Functions for uploading certificates to Zenodo:
 

@@ -1,13 +1,9 @@
 # codecheck 0.22.0
 
 * **New feature**: `complete_codecheck_yml()` - Analyze and complete codecheck.yml files with missing fields
-  - Validates codecheck.yml against the specification at https://codecheck.org.uk/spec/config/1.0/
-  - Reports missing mandatory, recommended, and optional fields
-  - Can add placeholders for missing mandatory fields (`add_mandatory = TRUE`)
-  - Can add placeholders for all missing fields including recommended and optional (`add_optional = TRUE`)
-  - Shows diff of changes before applying (similar to `update_codecheck_yml_from_lifecycle()`)
-  - Comprehensive test suite in `test_complete_codecheck_yml.R`
-
+* **New feature**: Lifecycle Journal automation (addresses #82)
+* **New tests**: Added comprehensive test coverage (~155 new tests)
+  
 # codecheck 0.21.0
 
 * Added pkgdown configuration and workflow for documentation site
@@ -18,21 +14,6 @@
 * Added launch pad link to documentation
 * Added clarifying comments in core functions
 * **Bug fix**: Fixed `validate_codecheck_yml()` repository URL validation - now correctly calls `http_error()` on response objects instead of URL strings
-* **New feature**: Lifecycle Journal automation (addresses #82)
-  - `get_lifecycle_metadata()`: Retrieve article metadata from Lifecycle Journal via CrossRef API using submission ID or DOI
-  - `update_codecheck_yml_from_lifecycle()`: Auto-populate `codecheck.yml` with paper metadata (title, authors with ORCIDs, DOI reference)
-  - Preview changes before applying with diff view
-  - Smart field updates: only populate empty/placeholder fields by default, with option to overwrite existing fields
-  - `test_lifecycle_journal.R`: 24 tests validating metadata retrieval and codecheck.yml updates
-* **New tests**: Added comprehensive test coverage (~155 new tests) for Priority 1 and Priority 2 functions:
-  - `test_manifest_files.R`: Tests for `copy_manifest_files()` and `list_manifest_files()` (34 tests)
-  - `test_workspace_creation.R`: Tests for `create_codecheck_files()` and `codecheck_metadata()` (10 tests)
-  - `test_register_check.R`: Tests for `register_check()` and `register_clear_cache()` (16 tests)
-  - `test_zenodo.R`: Tests for `get_zenodo_id()` and Zenodo integration (17 tests)
-  - `test_error_handling.R`: Comprehensive error handling tests (44 tests)
-  - `test_register_edge_cases.R`: Edge case tests for register rendering (10 tests)
-  - `test_lifecycle_journal.R`: Tests for Lifecycle Journal automation (24 tests)
-* Test coverage increased from 35% to ~75-80% of exported functions
 
 # codecheck 0.20.0
 

@@ -1,6 +1,10 @@
 tinytest::using(ttdo)
 
-source(system.file("extdata", "config.R", package = "codecheck"))
+config_path <- system.file("extdata", "config.R", package = "codecheck")
+if (config_path == "" || !file.exists(config_path)) {
+  exit_file("Package not installed properly")
+}
+source(config_path)
 
 tmp <- tempdir()
 CONFIG$CERTS_DIR[["cert"]] <- tmp

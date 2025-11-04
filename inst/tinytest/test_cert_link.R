@@ -1,6 +1,10 @@
 tinytest::using(ttdo)
 
-source(system.file("extdata", "config.R", package = "codecheck"))
+config_path <- system.file("extdata", "config.R", package = "codecheck")
+if (config_path == "" || !file.exists(config_path)) {
+  exit_file("Package not installed properly")
+}
+source(config_path)
 
 expect_equal(codecheck:::get_cert_link("https://doi.org/10.17605/osf.io/CSB7R", "999-010"),
              "https://osf.io/download/36nsb/")

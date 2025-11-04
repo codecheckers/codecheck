@@ -1,5 +1,11 @@
 tinytest::using(ttdo)
 
+# Load dependencies to suppress package loading messages during tests
+suppressMessages({
+  library(gh)
+  library(R.cache)
+})
+
 # Invalid or unsupported ----
 expect_error(get_codecheck_yml("unsupported::repo/spec"),
              pattern = "Unsupported repository type 'unsupported")
@@ -14,26 +20,26 @@ expect_warning(get_codecheck_yml("gitlab::nuest/sensebox-binder"),
                pattern = "codecheck.yml not found (.*)nuest/sensebox-binder")
 
 # GitHub ----
-expect_silent({ piccolo <- get_codecheck_yml("github::codecheckers/Piccolo-2020") })
+expect_silent(piccolo <- get_codecheck_yml("github::codecheckers/Piccolo-2020"))
 expect_equal(piccolo$report, "http://doi.org/10.5281/zenodo.3674056")
 
 # GitHub nested ----
-expect_silent({ agile03 <- get_codecheck_yml("github::reproducible-agile/reviews-2024|reports/03") })
+expect_silent(agile03 <- get_codecheck_yml("github::reproducible-agile/reviews-2024|reports/03"))
 expect_equal(agile03$certificate, "2024-013")
-expect_silent({ agile21 <- get_codecheck_yml("github::reproducible-agile/reviews-2024|reports/21") })
+expect_silent(agile21 <- get_codecheck_yml("github::reproducible-agile/reviews-2024|reports/21"))
 expect_equal(agile21$certificate, "2024-011")
 
 # OSF ----
-expect_silent({ agile <- get_codecheck_yml("osf::5SVMT") })
+expect_silent(agile <- get_codecheck_yml("osf::5SVMT"))
 expect_equal(agile$report, "https://doi.org/10.17605/OSF.IO/5SVMT")
 
 # GitLab.com ----
-expect_silent({ gigabyte <- get_codecheck_yml("gitlab::cdchck/community-codechecks/2022-svaRetro-svaNUMT") })
+expect_silent(gigabyte <- get_codecheck_yml("gitlab::cdchck/community-codechecks/2022-svaRetro-svaNUMT"))
 expect_equal(gigabyte$report, "https://doi.org/10.5281/zenodo.7084333")
 
 # Zenodo ----
 # https://sandbox.zenodo.org/records/145250 contains inst/tinytest/yaml/zenodo-sandbox/codecheck.yml
-expect_silent({ zenodo <- get_codecheck_yml("zenodo-sandbox::145250") })
+expect_silent(zenodo <- get_codecheck_yml("zenodo-sandbox::145250"))
 expect_equal(zenodo$report, "https://doi.org/10.5072/zenodo.145250")
 expect_equal(zenodo$certificate, "2024-111")
 expect_warning(get_codecheck_yml("zenodo::8385350"),
