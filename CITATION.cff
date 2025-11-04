@@ -7,8 +7,11 @@ authors:
   - family-names: Nüst
     given-names: Daniel
     orcid: https://orcid.org/0000-0002-0024-5046
+  - family-names: Monin
+    given-names: Angelina
+    orcid: https://orcid.org/0000-0002-6875-1551
 title: "codecheck R package: Helper Functions for CODECHECK Project"
-version: 0.1.0
+version: 0.21.0
 #doi: 10.5281/zenodo.TODO
 date-released: 2020-02-09
 license: MIT
