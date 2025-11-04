@@ -6,3 +6,6 @@
 ^\.github$
 ^\.zenodo\.json$
 ^CITATION\.cff$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
