@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Rscript:*)"
+      "Bash(Rscript:*)",
+      "Bash(git tag:*)",
+      "WebFetch(domain:api.crossref.org)",
+      "WebFetch(domain:lifecycle-journal.com)",
+      "Bash(curl:*)",
+      "WebFetch(domain:lifecycle-flax.fly.dev)",
+      "WebFetch(domain:codecheck.org.uk)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

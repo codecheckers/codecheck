@@ -433,3 +433,266 @@ add_id_to_yml <- function(id, yml_file) {
                 x = data1)
   writeLines(data2, yml_file)
 }
+
+##' Analyze and complete codecheck.yml with missing fields
+##'
+##' Analyzes a codecheck.yml file to identify missing mandatory and optional
+##' fields according to the CODECHECK specification (https://codecheck.org.uk/spec/config/1.0/).
+##' Can add placeholders for missing fields. By default, shows what would be
+##' changed without actually modifying the file.
+##'
+##' The function identifies three categories of fields:
+##' \itemize{
+##'   \item \strong{Mandatory fields}: manifest, codechecker, report
+##'   \item \strong{Recommended fields}: version, paper (title, authors, reference)
+##'   \item \strong{Optional fields}: source, summary, repository, check_time, certificate
+##' }
+##'
+##' @title Analyze and complete codecheck.yml with missing fields
+##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+##' @param add_mandatory Logical. If \code{TRUE}, add placeholders for all
+##'   missing mandatory fields. Default is \code{FALSE}.
+##' @param add_optional Logical. If \code{TRUE}, add placeholders for all
+##'   missing optional and recommended fields. Default is \code{FALSE}.
+##' @param apply_updates Logical. If \code{TRUE}, actually update the file.
+##'   If \code{FALSE} (default), only show what would be changed.
+##' @return Invisibly returns a list with two elements:
+##'   \describe{
+##'     \item{missing}{List of missing fields by category (mandatory, recommended, optional)}
+##'     \item{updated}{The updated metadata list (if changes were made)}
+##'   }
+##' @author Daniel Nüst
+##' @importFrom yaml read_yaml write_yaml
+##' @export
+##' @examples
+##' \dontrun{
+##'   # Analyze current codecheck.yml
+##'   result <- complete_codecheck_yml()
+##'
+##'   # Add mandatory fields only
+##'   complete_codecheck_yml(add_mandatory = TRUE, apply_updates = TRUE)
+##'
+##'   # Add all missing fields
+##'   complete_codecheck_yml(add_mandatory = TRUE, add_optional = TRUE,
+##'                          apply_updates = TRUE)
+##' }
+complete_codecheck_yml <- function(yml_file = "codecheck.yml",
+                                   add_mandatory = FALSE,
+                                   add_optional = FALSE,
+                                   apply_updates = FALSE) {
+
+  if (!file.exists(yml_file)) {
+    stop("codecheck.yml file not found at: ", yml_file,
+         "\nPlease create it first using create_codecheck_files().")
+  }
+
+  # Read existing metadata
+  existing <- yaml::read_yaml(yml_file)
+
+  # Define field specifications
+  mandatory_fields <- list(
+    manifest = list(
+      type = "list",
+      placeholder = list(list(file = "FIXME.pdf", comment = "FIXME: describe this output file"))
+    ),
+    codechecker = list(
+      type = "list",
+      placeholder = list(list(name = "FIXME", ORCID = "0000-0000-0000-0000"))
+    ),
+    report = list(
+      type = "string",
+      placeholder = "https://doi.org/10.5281/zenodo.FIXME"
+    )
+  )
+
+  recommended_fields <- list(
+    version = list(
+      type = "string",
+      placeholder = "https://codecheck.org.uk/spec/config/1.0/"
+    ),
+    paper = list(
+      type = "list",
+      placeholder = list(
+        title = "FIXME: Paper title",
+        authors = list(list(name = "FIXME", ORCID = "0000-0000-0000-0000")),
+        reference = "https://FIXME"
+      )
+    )
+  )
+
+  optional_fields <- list(
+    source = list(
+      type = "string",
+      placeholder = "FIXME: Description of material provenance"
+    ),
+    summary = list(
+      type = "string",
+      placeholder = "FIXME: Short summary of the CODECHECK certificate"
+    ),
+    repository = list(
+      type = "string",
+      placeholder = "https://FIXME"
+    ),
+    check_time = list(
+      type = "string",
+      placeholder = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    ),
+    certificate = list(
+      type = "string",
+      placeholder = "YYYY-NNN"
+    )
+  )
+
+  # Helper function to check if a field is missing or empty
+  is_missing_or_placeholder <- function(value) {
+    is.null(value) ||
+      identical(value, "") ||
+      (is.list(value) && length(value) == 0) ||
+      (is.character(value) && grepl("FIXME|TODO|template|example", value, ignore.case = TRUE))
+  }
+
+  # Analyze missing fields
+  missing <- list(
+    mandatory = character(0),
+    recommended = character(0),
+    optional = character(0)
+  )
+
+  for (field in names(mandatory_fields)) {
+    if (is_missing_or_placeholder(existing[[field]])) {
+      missing$mandatory <- c(missing$mandatory, field)
+    }
+  }
+
+  for (field in names(recommended_fields)) {
+    if (is_missing_or_placeholder(existing[[field]])) {
+      missing$recommended <- c(missing$recommended, field)
+    }
+  }
+
+  for (field in names(optional_fields)) {
+    if (is_missing_or_placeholder(existing[[field]])) {
+      missing$optional <- c(missing$optional, field)
+    }
+  }
+
+  # Print analysis
+  cat("\n")
+  cat("=", rep("=", 78), "\n", sep = "")
+  cat("CODECHECK.YML ANALYSIS FOR ", yml_file, "\n", sep = "")
+  cat("=", rep("=", 78), "\n", sep = "")
+  cat("\n")
+
+  cat("Missing MANDATORY fields:\n")
+  if (length(missing$mandatory) > 0) {
+    for (field in missing$mandatory) {
+      cat("  - ", field, "\n", sep = "")
+    }
+  } else {
+    cat("  (none - all mandatory fields present)\n")
+  }
+  cat("\n")
+
+  cat("Missing RECOMMENDED fields:\n")
+  if (length(missing$recommended) > 0) {
+    for (field in missing$recommended) {
+      cat("  - ", field, "\n", sep = "")
+    }
+  } else {
+    cat("  (none - all recommended fields present)\n")
+  }
+  cat("\n")
+
+  cat("Missing OPTIONAL fields:\n")
+  if (length(missing$optional) > 0) {
+    for (field in missing$optional) {
+      cat("  - ", field, "\n", sep = "")
+    }
+  } else {
+    cat("  (none - all optional fields present)\n")
+  }
+  cat("\n")
+
+  # Build updated configuration if requested
+  updated <- existing
+  changes <- list()
+
+  if (add_mandatory) {
+    for (field in missing$mandatory) {
+      changes[[field]] <- list(
+        old = existing[[field]],
+        new = mandatory_fields[[field]]$placeholder,
+        category = "mandatory"
+      )
+      updated[[field]] <- mandatory_fields[[field]]$placeholder
+    }
+  }
+
+  if (add_optional) {
+    for (field in missing$recommended) {
+      changes[[field]] <- list(
+        old = existing[[field]],
+        new = recommended_fields[[field]]$placeholder,
+        category = "recommended"
+      )
+      updated[[field]] <- recommended_fields[[field]]$placeholder
+    }
+
+    for (field in missing$optional) {
+      changes[[field]] <- list(
+        old = existing[[field]],
+        new = optional_fields[[field]]$placeholder,
+        category = "optional"
+      )
+      updated[[field]] <- optional_fields[[field]]$placeholder
+    }
+  }
+
+  # Print changes if any
+  if (length(changes) > 0) {
+    cat("=", rep("=", 78), "\n", sep = "")
+    cat("CHANGES TO BE APPLIED\n")
+    cat("=", rep("=", 78), "\n", sep = "")
+    cat("\n")
+
+    for (field_name in names(changes)) {
+      change <- changes[[field_name]]
+      cat("Field: ", field_name, " (", toupper(change$category), ")\n", sep = "")
+      cat(rep("-", 80), "\n", sep = "")
+
+      cat("OLD:\n")
+      if (is.null(change$old)) {
+        cat("  (field does not exist)\n")
+      } else if (is.list(change$old)) {
+        cat("  ", yaml::as.yaml(change$old), sep = "")
+      } else {
+        cat("  ", change$old, "\n", sep = "")
+      }
+
+      cat("\nNEW:\n")
+      if (is.list(change$new)) {
+        cat("  ", yaml::as.yaml(change$new), sep = "")
+      } else {
+        cat("  ", change$new, "\n", sep = "")
+      }
+      cat("\n")
+    }
+
+    cat("=", rep("=", 78), "\n", sep = "")
+
+    if (apply_updates) {
+      yaml::write_yaml(updated, yml_file)
+      cat("\n✓ Changes applied to ", yml_file, "\n\n", sep = "")
+    } else {
+      cat("\n⚠ No changes applied. Use apply_updates = TRUE to save changes.\n\n")
+    }
+  } else {
+    if (add_mandatory || add_optional) {
+      cat("No fields to add.\n\n")
+    } else {
+      cat("Use add_mandatory = TRUE and/or add_optional = TRUE to add placeholders.\n\n")
+    }
+  }
+
+  invisible(list(missing = missing, updated = if(length(changes) > 0) updated else NULL))
+}
