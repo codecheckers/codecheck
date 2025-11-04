@@ -29,7 +29,9 @@ organisation.
 
 ## Get a certificate number 
 
-Go onto <https://github.com/codecheckers/register> and add an issue
+Note: Visit the **CODECHECK Launch Pad** at <https://codecheck.org.uk/launch-pad/> to easily open a new issue for your check.
+
+The manual way: Go onto <https://github.com/codecheckers/register> and add an issue
 for the new paper to reproduce. Check the other issues for the highest
 used certificate number, and claim the next one by adding it to an
 issue comment and adding the tag ["id assigned"](https://github.com/codecheckers/register/issues?q=is%3Aissue+is%3Aopen+label%3A%22id+assigned%22).

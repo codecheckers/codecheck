@@ -34,7 +34,7 @@ remotes::install_github("codecheckers/codecheck")
 
 ## Usage
 
-See the main vignette.
+See the [main vignette](https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_overview.Rmd).
 
 tl;dr: Go the the directory where you want to create a CODECHECK workspace, then run
 
