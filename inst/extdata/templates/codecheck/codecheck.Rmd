@@ -58,6 +58,17 @@ if (is_placeholder_certificate(yml_path)) {
 latex_codecheck_logo()
 ```
 
+```{r validate_certificate, echo=FALSE, results='asis'}
+## Validate certificate and display warning if placeholder
+## Set strict = TRUE to fail rendering if certificate is a placeholder
+## Set display_warning = FALSE to suppress the warning box in PDF output
+validate_certificate_for_rendering(
+  yml_file = file.path(root, "codecheck.yml"),
+  strict = FALSE,           # Set to TRUE to fail rendering
+  display_warning = TRUE    # Set to FALSE to hide warning in PDF
+)
+```
+
 ```{r manifest, eval=TRUE, include=FALSE}
 metadata <- codecheck_metadata(root)
 manifest <- metadata$manifest

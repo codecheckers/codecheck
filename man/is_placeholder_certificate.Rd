@@ -2,35 +2,54 @@
 % Please edit documentation in R/codecheck.R
 \name{is_placeholder_certificate}
 \alias{is_placeholder_certificate}
-\title{Check if certificate identifier is a placeholder}
+\title{Check if certificate identifier or DOI is a placeholder}
 \usage{
-is_placeholder_certificate(yml_file = "codecheck.yml", metadata = NULL)
+is_placeholder_certificate(
+  yml_file = "codecheck.yml",
+  metadata = NULL,
+  strict = FALSE,
+  check_doi = TRUE
+)
 }
 \arguments{
 \item{yml_file}{Path to the codecheck.yml file (defaults to "./codecheck.yml")}
 
 \item{metadata}{Optional metadata list. If NULL (default), loads from yml_file.}
+
+\item{strict}{Logical. If TRUE and certificate or DOI is a placeholder, stops
+execution with an error. Default is FALSE (returns TRUE/FALSE without stopping).}
+
+\item{check_doi}{Logical. If TRUE (default), also checks the report DOI field
+for placeholder patterns.}
 }
 \value{
-Logical value: TRUE if certificate is a placeholder, FALSE otherwise
+Logical value: TRUE if certificate or DOI is a placeholder, FALSE otherwise.
+  If strict=TRUE and either is a placeholder, stops with an error instead.
 }
 \description{
-Check if certificate identifier is a placeholder
+Check if certificate identifier or DOI is a placeholder
 }
 \details{
-Determines whether a certificate identifier in codecheck.yml is a placeholder
-that needs to be replaced with an actual certificate ID. Checks for common
-placeholder patterns like "YYYY-NNN", "0000-000", or placeholder year prefixes.
+Determines whether a certificate identifier or report DOI in codecheck.yml is a
+placeholder that needs to be replaced. Checks for common placeholder patterns
+like "YYYY-NNN", "0000-000", or placeholder year prefixes in certificate ID,
+and "FIXME", "TODO", etc. in the report DOI.
 }
 \examples{
 \dontrun{
-  # Check if certificate is a placeholder
+  # Check if certificate or DOI is a placeholder
   if (is_placeholder_certificate()) {
-    message("Certificate ID needs to be set")
+    message("Certificate ID or DOI needs to be set")
   }
 
   # Check specific file
   is_placeholder_certificate("path/to/codecheck.yml")
+
+  # Only check certificate, not DOI
+  is_placeholder_certificate(check_doi = FALSE)
+
+  # Fail if certificate or DOI is a placeholder
+  is_placeholder_certificate(strict = TRUE)
 }
 }
 \author{

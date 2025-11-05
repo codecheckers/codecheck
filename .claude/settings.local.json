@@ -12,7 +12,10 @@
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
       "Bash(R CMD build:*)",
-      "Bash(R CMD INSTALL:*)"
+      "Bash(R CMD INSTALL:*)",
+      "Bash(pdfinfo:*)",
+      "Bash(pdftotext:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

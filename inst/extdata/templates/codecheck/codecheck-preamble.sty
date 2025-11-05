@@ -2,15 +2,12 @@
 \usepackage{booktabs}
 \usepackage{rotating}
 \usepackage{makecell}
-\usepackage{hyperref}
 %% \usepackage[a4paper,margin=2cm]{geometry}
 
 \usepackage{pdfpages}
-
-\newcommand{\orcidlogo}{\textcolor{orcidlogocol}{\aiOrcid}}
+\usepackage{xcolor}  % For colored warning boxes
 \usepackage[font=Large,labelfont=bf,textfont=bf]{caption}
 \DeclareCaptionLabelFormat{addC}{#1 C#2}
-
 
 %% This solution for adding the ORCID logo was taken from:
 %% https://tex.stackexchange.com/questions/445563/ieeetran-how-to-include-orcid-in-tex-pdf-with-pdflatex/445583
@@ -18,6 +15,11 @@
 \usepackage{scalerel}
 \usepackage{tikz}
 \usetikzlibrary{svg.path}
+
+%% Load hyperref after other packages to avoid conflicts
+\usepackage{hyperref}
+%% Set hyperlinks in colour to the "CODECHECK colour".
+\hypersetup{colorlinks=true, urlcolor = [rgb]{0,.5,0.2}}
 
 \definecolor{orcidlogocol}{HTML}{A6CE39}
 \tikzset{
@@ -34,6 +36,3 @@
 \pic{orcidlogo};
 \end{tikzpicture}
 }{+}}}}
-
-%% Set hyperlinks in colour to the "CODECHECK colour".
-\hypersetup{colorlinks=true, urlcolor = [rgb]{0,.5,0.2}}

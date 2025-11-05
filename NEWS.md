@@ -1,5 +1,10 @@
 # codecheck 0.22.0
 
+* **Enhancement**: DOI validation is now platform-agnostic
+  - Error messages no longer assume Zenodo is the only repository
+  - Validates DOIs from any platform (Zenodo, OSF, ResearchEquals, etc.)
+  - Updated error messages to say "certificate report" instead of "Zenodo DOI"
+  - Missing DOI error suggests all supported platforms as examples
 * **New feature**: `get_certificate_from_github_issue()` - Retrieve certificate identifier from GitHub issues
   - Searches open issues in codecheckers/register repository by matching author names
   - Extracts certificate ID (YYYY-NNN format) from issue titles
@@ -7,12 +12,16 @@
   - Returns certificate ID, issue number, title, and matched author
   - Can accept codecheck.yml file path or metadata list as input
   - Comprehensive test suite in `test_github_certificate_retrieval.R` (6 tests)
-* **New feature**: `is_placeholder_certificate()` - Check if certificate ID is a placeholder
-  - Detects common placeholder patterns ("YYYY-NNN", "0000-000", "9999-999")
-  - Checks for placeholder year prefixes (YYYY, 0000, 9999)
-  - Identifies template-like patterns (FIXME, TODO, template, example)
+* **New feature**: `is_placeholder_certificate()` - Check if certificate ID or report DOI is a placeholder
+  - Detects common placeholder patterns ("YYYY-NNN", "0000-000", "9999-999") in certificate ID
+  - Checks for placeholder year prefixes (YYYY, 0000, 9999) in certificate ID
+  - Identifies template-like patterns (FIXME, TODO, template, example) in certificate ID
+  - **NEW**: Validates report DOI field for placeholder patterns (FIXME, TODO, placeholder, XXXXX)
+  - **NEW**: Detects incomplete DOI patterns (e.g., doi.org/10.XXXXX/repo.FIXME)
+  - Works with DOIs from any repository (Zenodo, OSF, ResearchEquals, etc.)
+  - **NEW**: `check_doi` parameter (default TRUE) to optionally skip DOI validation
   - Can accept file path or metadata list as input
-  - Comprehensive test suite in `test_certificate_placeholder.R` (19 tests)
+  - Comprehensive test suite in `test_certificate_placeholder.R` (47 tests)
 * **New feature**: `update_certificate_from_github()` - Automatically update certificate ID from GitHub
   - Checks if current certificate is a placeholder using `is_placeholder_certificate()`
   - Searches for matching GitHub issues using `get_certificate_from_github_issue()`
@@ -43,6 +52,31 @@
   - Handles multiple repositories (uses first one)
   - Falls back to plain file paths without hyperlinks when repository unavailable
   - Comprehensive test suite in `test_manifest_summary.R` (9 tests)
+* **Bug fix**: Fixed ORCID icon hyperlinks in PDF certificates (codecheck-preamble.sty)
+  - Moved `\usepackage{hyperref}` to load after `tikz` and `scalerel` packages to avoid conflicts
+  - Removed obsolete `\orcidlogo` command definition with undefined `\aiOrcid`
+  - Reorganized preamble to load packages in proper order per LaTeX best practices
+  - ORCID icons next to author and codechecker names are now clickable links to ORCID profiles
+* **Bug fix**: Removed dependency on pifont package (codecheck-preamble.sty and validate_certificate_for_rendering)
+  - Replaced `\ding{43}` LaTeX command with UTF-8 warning emoji ⚠ for visual warnings
+  - Removed `\usepackage{pifont}` from LaTeX preamble
+  - Warning boxes in PDF certificates now use native UTF-8 emoji without requiring additional packages
+  - Improves compatibility with minimal LaTeX installations
+* **Enhancement**: Added `strict` parameter to `is_placeholder_certificate()`
+  - When `strict = TRUE`, stops execution with error if certificate is a placeholder
+  - Provides clear error messages indicating the placeholder type
+  - Default `strict = FALSE` maintains backward compatibility
+  - Added 7 new tests for strict mode behavior (tests 20-26)
+* **New feature**: `validate_certificate_for_rendering()` - Visual warning for placeholder certificates and DOIs
+  - Validates certificate ID and report DOI, displays warning box in PDF output when placeholders detected
+  - **NEW**: Displays separate warnings for certificate ID and DOI placeholders
+  - **NEW**: Shows both issues in single warning box when both are placeholders
+  - Shows red warning icons (⚠) with yellow background box in rendered PDF
+  - Includes certificate ID, DOI value, and clear instructions in warning box
+  - Supports `strict` mode to fail rendering if certificate or DOI is placeholder
+  - Optional `display_warning` parameter to control visual output
+  - Integrated into certificate template (codecheck.Rmd)
+  - Uses UTF-8 emoji ⚠ for warning icons (no special packages required)
 * **New feature**: `validate_yaml_syntax()` - Validate YAML syntax before parsing
   - Checks if a YAML file has valid syntax that can be parsed
   - Provides clear error messages for syntax errors

@@ -292,7 +292,7 @@ latex_codecheck_logo <- function() {
   logo_file = system.file("extdata", "codecheck_logo.pdf", package="codecheck")
   cat(sprintf("\\centerline{\\includegraphics[width=4cm]{%s}}",
               logo_file))
-  cat("\\vspace*{2cm}")
+  cat("\\vspace*{1cm}")
 }  
 
 ##' Print a citation for the codecheck certificate.
@@ -1554,29 +1554,44 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
 }
 
 
-##' Check if certificate identifier is a placeholder
+##' Check if certificate identifier or DOI is a placeholder
 ##'
-##' Determines whether a certificate identifier in codecheck.yml is a placeholder
-##' that needs to be replaced with an actual certificate ID. Checks for common
-##' placeholder patterns like "YYYY-NNN", "0000-000", or placeholder year prefixes.
+##' Determines whether a certificate identifier or report DOI in codecheck.yml is a
+##' placeholder that needs to be replaced. Checks for common placeholder patterns
+##' like "YYYY-NNN", "0000-000", or placeholder year prefixes in certificate ID,
+##' and "FIXME", "TODO", etc. in the report DOI.
 ##'
-##' @title Check if certificate identifier is a placeholder
+##' @title Check if certificate identifier or DOI is a placeholder
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
 ##' @param metadata Optional metadata list. If NULL (default), loads from yml_file.
-##' @return Logical value: TRUE if certificate is a placeholder, FALSE otherwise
+##' @param strict Logical. If TRUE and certificate or DOI is a placeholder, stops
+##'   execution with an error. Default is FALSE (returns TRUE/FALSE without stopping).
+##' @param check_doi Logical. If TRUE (default), also checks the report DOI field
+##'   for placeholder patterns.
+##' @return Logical value: TRUE if certificate or DOI is a placeholder, FALSE otherwise.
+##'   If strict=TRUE and either is a placeholder, stops with an error instead.
 ##' @author Daniel Nüst
 ##' @export
 ##' @examples
 ##' \dontrun{
-##'   # Check if certificate is a placeholder
+##'   # Check if certificate or DOI is a placeholder
 ##'   if (is_placeholder_certificate()) {
-##'     message("Certificate ID needs to be set")
+##'     message("Certificate ID or DOI needs to be set")
 ##'   }
 ##'
 ##'   # Check specific file
 ##'   is_placeholder_certificate("path/to/codecheck.yml")
+##'
+##'   # Only check certificate, not DOI
+##'   is_placeholder_certificate(check_doi = FALSE)
+##'
+##'   # Fail if certificate or DOI is a placeholder
+##'   is_placeholder_certificate(strict = TRUE)
 ##' }
-is_placeholder_certificate <- function(yml_file = "codecheck.yml", metadata = NULL) {
+is_placeholder_certificate <- function(yml_file = "codecheck.yml",
+                                       metadata = NULL,
+                                       strict = FALSE,
+                                       check_doi = TRUE) {
   # Load metadata if not provided
   if (is.null(metadata)) {
     if (!file.exists(yml_file)) {
@@ -1586,31 +1601,207 @@ is_placeholder_certificate <- function(yml_file = "codecheck.yml", metadata = NU
   }
 
   cert_id <- metadata$certificate
+  has_cert_placeholder <- FALSE
+  has_doi_placeholder <- FALSE
+  error_messages <- character(0)
 
+  # Check certificate identifier
   # Check if certificate is missing or empty
   if (is.null(cert_id) || cert_id == "") {
-    return(TRUE)
+    has_cert_placeholder <- TRUE
+    error_messages <- c(error_messages,
+                       "Certificate identifier is missing or empty in codecheck.yml. Please set a valid certificate ID (format: YYYY-NNN).")
+  } else {
+    # Placeholder patterns
+    placeholder_patterns <- c("YYYY-NNN", "0000-000", "9999-999")
+
+    # Check exact matches with placeholder patterns
+    if (cert_id %in% placeholder_patterns) {
+      has_cert_placeholder <- TRUE
+      error_messages <- c(error_messages,
+                         paste0("Certificate identifier '", cert_id, "' is a placeholder. Please set a valid certificate ID (format: YYYY-NNN)."))
+    }
+
+    # Check for placeholder year prefixes (YYYY, 0000, 9999)
+    if (grepl("^(YYYY|0000|9999)-\\d{3}$", cert_id)) {
+      has_cert_placeholder <- TRUE
+      error_messages <- c(error_messages,
+                         paste0("Certificate identifier '", cert_id, "' uses a placeholder year prefix. Please set a valid certificate ID with the correct year."))
+    }
+
+    # Check for template-like patterns
+    if (grepl("(FIXME|TODO|template|example)", cert_id, ignore.case = TRUE)) {
+      has_cert_placeholder <- TRUE
+      error_messages <- c(error_messages,
+                         paste0("Certificate identifier '", cert_id, "' contains template text. Please set a valid certificate ID (format: YYYY-NNN)."))
+    }
   }
 
-  # Placeholder patterns
-  placeholder_patterns <- c("YYYY-NNN", "0000-000", "9999-999")
+  # Check report DOI if requested
+  if (check_doi) {
+    report_doi <- metadata$report
 
-  # Check exact matches with placeholder patterns
-  if (cert_id %in% placeholder_patterns) {
-    return(TRUE)
+    # Check if DOI is missing or empty
+    if (is.null(report_doi) || report_doi == "") {
+      has_doi_placeholder <- TRUE
+      error_messages <- c(error_messages,
+                         "Report DOI is missing or empty in codecheck.yml. Please set a valid DOI for the certificate report (e.g., from Zenodo, OSF, or ResearchEquals).")
+    } else {
+      # Check for placeholder text in DOI
+      if (grepl("(FIXME|TODO|placeholder|example|XXXXX)", report_doi, ignore.case = TRUE)) {
+        has_doi_placeholder <- TRUE
+        error_messages <- c(error_messages,
+                           paste0("Report DOI '", report_doi, "' contains placeholder text. Please set a valid DOI for the certificate report."))
+      }
+
+      # Check for incomplete DOI patterns
+      if (grepl("doi\\.org/10\\.\\d+/[^/]*\\.(FIXME|TODO)", report_doi, ignore.case = TRUE)) {
+        has_doi_placeholder <- TRUE
+        error_messages <- c(error_messages,
+                           paste0("Report DOI '", report_doi, "' is incomplete. Please set a valid DOI for the certificate report."))
+      }
+    }
   }
 
-  # Check for placeholder year prefixes (YYYY, 0000, 9999)
-  if (grepl("^(YYYY|0000|9999)-\\d{3}$", cert_id)) {
-    return(TRUE)
+  # Determine if any placeholder found
+  is_placeholder <- has_cert_placeholder || has_doi_placeholder
+
+  # Handle strict mode
+  if (strict && is_placeholder) {
+    stop(paste(error_messages, collapse = "\n"), call. = FALSE)
   }
 
-  # Check for template-like patterns
-  if (grepl("(FIXME|TODO|template|example)", cert_id, ignore.case = TRUE)) {
-    return(TRUE)
+  return(is_placeholder)
+}
+
+
+##' Validate certificate for rendering and display warning if placeholder
+##'
+##' This function checks if the certificate identifier and report DOI are
+##' placeholders and prints a LaTeX warning box with a warning icon if they are.
+##' Intended for use in R Markdown templates to alert users about placeholder
+##' certificates and DOIs.
+##'
+##' @title Validate certificate for rendering with visual warning
+##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+##' @param metadata Optional metadata list. If NULL (default), loads from yml_file.
+##' @param strict Logical. If TRUE and certificate or DOI is a placeholder, stops execution.
+##'   Default is FALSE (displays warning but continues).
+##' @param display_warning Logical. If TRUE (default), displays a warning box in
+##'   the rendered output when certificate or DOI is a placeholder.
+##' @return Invisibly returns TRUE if certificate and DOI are valid, FALSE if any placeholder
+##' @author Daniel Nüst
+##' @export
+##' @examples
+##' \dontrun{
+##'   # In an R Markdown template, use in a chunk:
+##'   validate_certificate_for_rendering()
+##'
+##'   # Fail rendering if certificate or DOI is a placeholder:
+##'   validate_certificate_for_rendering(strict = TRUE)
+##' }
+validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
+                                               metadata = NULL,
+                                               strict = FALSE,
+                                               display_warning = TRUE) {
+  # Load metadata if not provided
+  if (is.null(metadata)) {
+    if (!file.exists(yml_file)) {
+      stop("codecheck.yml file not found at: ", yml_file)
+    }
+    metadata <- yaml::read_yaml(yml_file)
   }
 
-  return(FALSE)
+  # Check certificate placeholder (DOI check disabled)
+  has_cert_placeholder <- is_placeholder_certificate(yml_file = yml_file,
+                                                       metadata = metadata,
+                                                       strict = FALSE,
+                                                       check_doi = FALSE)
+
+  # Check DOI placeholder directly by examining report field
+  has_doi_placeholder <- FALSE
+  report_doi <- metadata$report
+
+  if (is.null(report_doi) || report_doi == "") {
+    has_doi_placeholder <- TRUE
+  } else if (grepl("(FIXME|TODO|placeholder|example|XXXXX)", report_doi, ignore.case = TRUE)) {
+    has_doi_placeholder <- TRUE
+  } else if (grepl("doi\\.org/10\\.\\d+/[^/]*\\.(FIXME|TODO)", report_doi, ignore.case = TRUE)) {
+    has_doi_placeholder <- TRUE
+  }
+
+  # Check if any placeholder found
+  is_placeholder <- has_cert_placeholder || has_doi_placeholder
+
+  if (is_placeholder) {
+    cert_id <- if (is.null(metadata$certificate) || metadata$certificate == "") {
+      "NOT SET"
+    } else {
+      metadata$certificate
+    }
+
+    report_doi <- if (is.null(metadata$report) || metadata$report == "") {
+      "NOT SET"
+    } else {
+      metadata$report
+    }
+
+    # Build warning messages
+    warning_parts <- character(0)
+    console_warnings <- character(0)
+
+    if (has_cert_placeholder) {
+      warning_parts <- c(warning_parts,
+                        paste0("\\textbf{Certificate ID is a placeholder: \\texttt{", cert_id, "}}"))
+      console_warnings <- c(console_warnings,
+                           paste0("Certificate identifier '", cert_id, "' is a placeholder"))
+    }
+
+    if (has_doi_placeholder) {
+      warning_parts <- c(warning_parts,
+                        paste0("\\textbf{Report DOI is a placeholder: \\texttt{", report_doi, "}}"))
+      console_warnings <- c(console_warnings,
+                           paste0("Report DOI '", report_doi, "' is a placeholder"))
+    }
+
+    # Display warning in PDF output if requested
+    if (display_warning) {
+      cat("\\begin{center}\n")
+      cat("\\fcolorbox{red}{yellow}{\\parbox{0.9\\textwidth}{\\centering\n")
+      cat("\\textbf{\\Large \\textcolor{red}{⚠} WARNING \\textcolor{red}{⚠}}\\\\\n")
+      cat("\\vspace{0.2cm}\n")
+
+      # Display each warning part
+      for (i in seq_along(warning_parts)) {
+        cat(warning_parts[i], "\\\\\n", sep = "")
+        if (i < length(warning_parts)) {
+          cat("\\vspace{0.1cm}\n")
+        }
+      }
+
+      cat("\\vspace{0.1cm}\n")
+      cat("This certificate is not yet finalized.\\\\")
+      cat("Please set valid identifiers before publishing.\n")
+      cat("}}\n")
+      cat("\\end{center}\n\n")
+    }
+
+    # Print warning message to console
+    warning(paste(console_warnings, collapse = ". "), ". ",
+            "Please set valid values before finalizing.",
+            call. = FALSE)
+
+    # Stop if strict mode
+    if (strict) {
+      stop("Certificate validation failed: ", paste(console_warnings, collapse = "; "), ". ",
+           "Rendering stopped. Please set valid identifiers.",
+           call. = FALSE)
+    }
+
+    return(invisible(FALSE))
+  }
+
+  return(invisible(TRUE))
 }
 
 

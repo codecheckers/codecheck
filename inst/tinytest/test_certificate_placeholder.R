@@ -260,5 +260,424 @@ manifest:
                info = paste("Failed for certificate:", test_case$cert))
 }
 
+# Test 20: is_placeholder_certificate with strict=TRUE throws error
+cat("---
+certificate: YYYY-NNN
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_error(
+  is_placeholder_certificate(test_yml, strict = TRUE),
+  pattern = "is a placeholder"
+)
+
+# Test 21: is_placeholder_certificate with strict=TRUE and valid certificate
+cat("---
+certificate: 2024-001
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+# Should NOT error with valid certificate
+result_strict_valid <- tryCatch({
+  is_placeholder_certificate(test_yml, strict = TRUE)
+  TRUE
+}, error = function(e) {
+  FALSE
+})
+
+expect_true(result_strict_valid, info = "strict mode should not error with valid certificate")
+
+# Test 22: validate_certificate_for_rendering returns FALSE for placeholder
+cat("---
+certificate: YYYY-NNN
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+result_val <- suppressWarnings(
+  validate_certificate_for_rendering(test_yml, display_warning = FALSE)
+)
+
+expect_false(result_val, info = "Should return FALSE for placeholder")
+
+# Test 23: validate_certificate_for_rendering returns TRUE for valid
+cat("---
+certificate: 2024-001
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+result_val_valid <- validate_certificate_for_rendering(test_yml, display_warning = FALSE)
+
+expect_true(result_val_valid, info = "Should return TRUE for valid certificate")
+
+# Test 24: validate_certificate_for_rendering with strict=TRUE fails
+cat("---
+certificate: YYYY-NNN
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_error(
+  validate_certificate_for_rendering(test_yml, strict = TRUE, display_warning = FALSE),
+  pattern = "Certificate validation failed"
+)
+
+# Test 25: validate_certificate_for_rendering displays warning (check output)
+cat("---
+certificate: TODO-001
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+output <- capture.output(
+  suppressWarnings(
+    validate_certificate_for_rendering(test_yml, display_warning = TRUE)
+  )
+)
+
+output_text <- paste(output, collapse = "\n")
+expect_true(grepl("WARNING", output_text), info = "Should display WARNING in output")
+expect_true(grepl("TODO-001", output_text), info = "Should show certificate ID in warning")
+
+# Test 26: validate_certificate_for_rendering with NULL certificate
+cat("---
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+output_null <- capture.output(
+  suppressWarnings(
+    validate_certificate_for_rendering(test_yml, display_warning = TRUE)
+  )
+)
+
+output_text_null <- paste(output_null, collapse = "\n")
+expect_true(grepl("NOT SET", output_text_null), info = "Should show 'NOT SET' for NULL certificate")
+
+# Test 27: NULL report DOI is detected as placeholder (when check_doi=TRUE)
+cat("---
+certificate: 2024-001
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "NULL report should be detected as placeholder when check_doi=TRUE")
+
+# Test 28: Empty report DOI is detected as placeholder
+cat("---
+certificate: 2024-001
+report: ''
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Empty report should be detected as placeholder")
+
+# Test 29: Report DOI with FIXME is detected as placeholder
+cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.5281/zenodo.FIXME'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Report with FIXME should be detected as placeholder")
+
+# Test 30: Report DOI with TODO is detected as placeholder
+cat("---
+certificate: 2024-001
+report: 'TODO: set DOI'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Report with TODO should be detected as placeholder")
+
+# Test 31: Report DOI with placeholder text is detected
+cat("---
+certificate: 2024-001
+report: 'placeholder'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Report with placeholder text should be detected")
+
+# Test 32: Report DOI with XXXXX is detected as placeholder
+cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.XXXXX/zenodo.12345'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Report with XXXXX should be detected as placeholder")
+
+# Test 33: Valid certificate and valid DOI (should pass)
+cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.5281/zenodo.12345'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_false(is_placeholder_certificate(test_yml, check_doi = TRUE),
+             info = "Valid certificate and DOI should NOT be detected as placeholder")
+
+# Test 34: Placeholder certificate with valid DOI (should fail due to cert)
+cat("---
+certificate: YYYY-NNN
+report: 'https://doi.org/10.5281/zenodo.12345'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Placeholder certificate should fail even with valid DOI")
+
+# Test 35: Valid certificate with placeholder DOI (should fail due to DOI)
+cat("---
+certificate: 2024-001
+report: 'FIXME'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Valid certificate should fail with placeholder DOI")
+
+# Test 36: Both certificate and DOI placeholders (should fail)
+cat("---
+certificate: YYYY-NNN
+report: 'TODO'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Both placeholders should be detected")
+
+# Test 37: check_doi=FALSE ignores DOI placeholder
+cat("---
+certificate: 2024-001
+report: 'FIXME'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_false(is_placeholder_certificate(test_yml, check_doi = FALSE),
+             info = "Should pass when check_doi=FALSE even with placeholder DOI")
+
+# Test 38: DOI placeholder with strict=TRUE throws error
+cat("---
+certificate: 2024-001
+report: 'FIXME'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_error(
+  is_placeholder_certificate(test_yml, check_doi = TRUE, strict = TRUE),
+  pattern = "Report DOI",
+  info = "strict mode should error for DOI placeholder"
+)
+
+# Test 39: Both placeholders with strict=TRUE throws error mentioning both
+cat("---
+certificate: YYYY-NNN
+report: 'TODO'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+error_caught <- tryCatch({
+  is_placeholder_certificate(test_yml, check_doi = TRUE, strict = TRUE)
+  FALSE
+}, error = function(e) {
+  error_msg <- conditionMessage(e)
+  # Should mention both certificate and report issues
+  has_cert_msg <- grepl("Certificate identifier", error_msg)
+  has_doi_msg <- grepl("Report DOI", error_msg)
+  has_cert_msg && has_doi_msg
+})
+
+expect_true(error_caught, info = "strict mode should mention both placeholders")
+
+# Test 40: validate_certificate_for_rendering detects DOI placeholder
+cat("---
+certificate: 2024-001
+report: 'FIXME'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+result_doi_placeholder <- suppressWarnings(
+  validate_certificate_for_rendering(test_yml, display_warning = FALSE)
+)
+
+expect_false(result_doi_placeholder, info = "Should return FALSE for DOI placeholder")
+
+# Test 41: validate_certificate_for_rendering displays DOI warning
+cat("---
+certificate: 2024-001
+report: 'TODO'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+output_doi <- capture.output(
+  suppressWarnings(
+    validate_certificate_for_rendering(test_yml, display_warning = TRUE)
+  )
+)
+
+output_text_doi <- paste(output_doi, collapse = "\n")
+expect_true(grepl("WARNING", output_text_doi), info = "Should display WARNING for DOI")
+expect_true(grepl("Report DOI", output_text_doi), info = "Should mention Report DOI in warning")
+expect_true(grepl("TODO", output_text_doi), info = "Should show DOI value in warning")
+
+# Test 42: validate_certificate_for_rendering displays both warnings
+cat("---
+certificate: YYYY-NNN
+report: 'FIXME'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+output_both <- capture.output(
+  suppressWarnings(
+    validate_certificate_for_rendering(test_yml, display_warning = TRUE)
+  )
+)
+
+output_text_both <- paste(output_both, collapse = "\n")
+expect_true(grepl("Certificate ID", output_text_both), info = "Should mention Certificate ID")
+expect_true(grepl("Report DOI", output_text_both), info = "Should mention Report DOI")
+expect_true(grepl("YYYY-NNN", output_text_both), info = "Should show certificate value")
+expect_true(grepl("FIXME", output_text_both), info = "Should show DOI value")
+
+# Test 43: validate_certificate_for_rendering with strict=TRUE fails for DOI
+cat("---
+certificate: 2024-001
+report: 'TODO'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_error(
+  validate_certificate_for_rendering(test_yml, strict = TRUE, display_warning = FALSE),
+  pattern = "Report DOI",
+  info = "strict mode should fail for DOI placeholder"
+)
+
+# Test 44: Incomplete DOI pattern (doi.org/10.XXXX/YYYY.FIXME)
+cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.5281/zenodo.FIXME'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Incomplete DOI with .FIXME should be detected")
+
+# Test 45: Incomplete DOI pattern with TODO
+cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.5281/zenodo.TODO'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Incomplete DOI with .TODO should be detected")
+
+# Test 46: Case-insensitive matching for DOI placeholders
+cat("---
+certificate: 2024-001
+report: 'fixme'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Case-insensitive matching should detect lowercase fixme")
+
+# Test 47: Example text in DOI
+cat("---
+certificate: 2024-001
+report: 'example DOI here'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
+            info = "Example text in DOI should be detected")
+
 # Clean up
 unlink(test_yml)
