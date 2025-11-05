@@ -33,6 +33,16 @@
   - `codecheck_metadata()`: Enhanced error handling with clear messages when codecheck.yml is not found
   - **Bug fix**: Fixed `get_or_create_zenodo_record()` to call `get_zenodo_id()` instead of `get_zenodo_record()`
   - Added tests for `codecheck_metadata()` error handling (tests 18-19)
+* **Bug fix**: Fixed `latex_summary_of_metadata()` to handle NULL or empty metadata fields
+  - Added `safe_value()` helper function to ensure all entries return a value
+  - Prevents "arguments imply differing number of rows" error when creating data frame
+  - Now returns empty string for NULL/empty fields instead of skipping them
+* **Bug fix**: Fixed `latex_summary_of_manifest()` to handle NULL or missing repository field
+  - Added safe repository URL extraction with NULL/empty/list handling
+  - Prevents "invalid 'replacement' argument" error when repository is NULL
+  - Handles multiple repositories (uses first one)
+  - Falls back to plain file paths without hyperlinks when repository unavailable
+  - Comprehensive test suite in `test_manifest_summary.R` (9 tests)
 * **New feature**: `validate_yaml_syntax()` - Validate YAML syntax before parsing
   - Checks if a YAML file has valid syntax that can be parsed
   - Provides clear error messages for syntax errors

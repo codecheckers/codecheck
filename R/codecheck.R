@@ -199,16 +199,27 @@ as_latex_url  <- function(x) {
 ##' @importFrom xtable xtable
 ##' @export
 latex_summary_of_metadata <- function(metadata) {
+  # Helper function to safely get value or empty string
+  safe_value <- function(x) {
+    if (is.null(x) || length(x) == 0) {
+      return("")
+    }
+    return(x)
+  }
+
   summary_entries = list(
-    "Title of checked publication" =            metadata$paper$title,
-    "Author(s)" =       .names(metadata$paper$authors),
-    "Reference" =       as_latex_url(metadata$paper$reference),
-    "Codechecker(s)" =  .names(metadata$codechecker),
-    "Date of check" =   metadata$check_time,
-    "Summary" =         metadata$summary,
-    "Repository" =      as_latex_url(metadata$repository))
+    "Title of checked publication" = safe_value(metadata$paper$title),
+    "Author(s)" =       safe_value(.names(metadata$paper$authors)),
+    "Reference" =       safe_value(as_latex_url(metadata$paper$reference)),
+    "Codechecker(s)" =  safe_value(.names(metadata$codechecker)),
+    "Date of check" =   safe_value(metadata$check_time),
+    "Summary" =         safe_value(metadata$summary),
+    "Repository" =      safe_value(as_latex_url(metadata$repository)))
+
+  # Create data frame - all entries now guaranteed to have a value
   summary_df = data.frame(Item=names(summary_entries),
-                          Value=unlist(summary_entries, use.names=FALSE))
+                          Value=unlist(summary_entries, use.names=FALSE),
+                          stringsAsFactors=FALSE)
 
   print(xtable(summary_df, align=c('l', 'l', 'p{10cm}'),
              caption='CODECHECK summary'),
@@ -235,11 +246,31 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
                                       align=c('l', 'p{6cm}', 'p{6cm}', 'p{2cm}')
                                       ) {
   m = manifest_df[, c("output", "comment", "size")]
-  urls = sub(root, sprintf('%s/blob/master', metadata$repository), manifest_df$dest)
-  m1 = sprintf('\\href{%s}{\\path{%s}}',
-               urls,
-               m[,1])
-  m[,1] = m1
+
+  # Safely get repository URL
+  # Handle NULL, empty, or list (multiple repositories)
+  repo_url <- NULL
+  if (!is.null(metadata$repository) && length(metadata$repository) > 0) {
+    if (is.list(metadata$repository)) {
+      # If multiple repositories, use the first one
+      repo_url <- metadata$repository[[1]]
+    } else if (is.character(metadata$repository) && nchar(metadata$repository) > 0) {
+      repo_url <- metadata$repository
+    }
+  }
+
+  # Generate URLs only if we have a valid repository
+  if (!is.null(repo_url) && nchar(repo_url) > 0) {
+    urls = sub(root, sprintf('%s/blob/master', repo_url), manifest_df$dest)
+    m1 = sprintf('\\href{%s}{\\path{%s}}',
+                 urls,
+                 m[,1])
+    m[,1] = m1
+  } else {
+    # No repository URL available - just use file paths without hyperlinks
+    m[,1] = sprintf('\\path{%s}', m[,1])
+  }
+
   names(m) = c("Output", "Comment", "Size (b)")
   xt = xtable(m,
               digits=0,
@@ -1519,5 +1550,228 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
     valid = all_valid,
     crossref_result = crossref_result,
     orcid_result = orcid_result
+  ))
+}
+
+
+##' Check if certificate identifier is a placeholder
+##'
+##' Determines whether a certificate identifier in codecheck.yml is a placeholder
+##' that needs to be replaced with an actual certificate ID. Checks for common
+##' placeholder patterns like "YYYY-NNN", "0000-000", or placeholder year prefixes.
+##'
+##' @title Check if certificate identifier is a placeholder
+##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+##' @param metadata Optional metadata list. If NULL (default), loads from yml_file.
+##' @return Logical value: TRUE if certificate is a placeholder, FALSE otherwise
+##' @author Daniel Nüst
+##' @export
+##' @examples
+##' \dontrun{
+##'   # Check if certificate is a placeholder
+##'   if (is_placeholder_certificate()) {
+##'     message("Certificate ID needs to be set")
+##'   }
+##'
+##'   # Check specific file
+##'   is_placeholder_certificate("path/to/codecheck.yml")
+##' }
+is_placeholder_certificate <- function(yml_file = "codecheck.yml", metadata = NULL) {
+  # Load metadata if not provided
+  if (is.null(metadata)) {
+    if (!file.exists(yml_file)) {
+      stop("codecheck.yml file not found at: ", yml_file)
+    }
+    metadata <- yaml::read_yaml(yml_file)
+  }
+
+  cert_id <- metadata$certificate
+
+  # Check if certificate is missing or empty
+  if (is.null(cert_id) || cert_id == "") {
+    return(TRUE)
+  }
+
+  # Placeholder patterns
+  placeholder_patterns <- c("YYYY-NNN", "0000-000", "9999-999")
+
+  # Check exact matches with placeholder patterns
+  if (cert_id %in% placeholder_patterns) {
+    return(TRUE)
+  }
+
+  # Check for placeholder year prefixes (YYYY, 0000, 9999)
+  if (grepl("^(YYYY|0000|9999)-\\d{3}$", cert_id)) {
+    return(TRUE)
+  }
+
+  # Check for template-like patterns
+  if (grepl("(FIXME|TODO|template|example)", cert_id, ignore.case = TRUE)) {
+    return(TRUE)
+  }
+
+  return(FALSE)
+}
+
+
+##' Update certificate ID from GitHub issue
+##'
+##' Automatically retrieves and updates the certificate identifier from a GitHub issue.
+##' This function checks if the current certificate is a placeholder, searches for
+##' matching GitHub issues, and if a unique match is found, updates the codecheck.yml
+##' file with the certificate ID.
+##'
+##' The function provides detailed logging of all steps and will only update the file
+##' if exactly one matching issue is found (to avoid ambiguity).
+##'
+##' @title Update certificate ID from GitHub issue
+##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+##' @param issue_state State of issues to search: "open" (default), "closed", or "all"
+##' @param force Logical. If TRUE, update even if certificate is not a placeholder.
+##'   Default is FALSE.
+##' @param apply_update Logical. If TRUE, actually update the file. If FALSE (default),
+##'   only show what would be changed.
+##' @return Invisibly returns a list with:
+##'   \describe{
+##'     \item{updated}{Logical indicating if file was updated}
+##'     \item{certificate}{The certificate ID (if found)}
+##'     \item{issue_number}{The GitHub issue number (if found)}
+##'     \item{was_placeholder}{Logical indicating if original was a placeholder}
+##'   }
+##' @author Daniel Nüst
+##' @export
+##' @examples
+##' \dontrun{
+##'   # Preview what would be updated
+##'   result <- update_certificate_from_github()
+##'
+##'   # Actually update the file
+##'   update_certificate_from_github(apply_update = TRUE)
+##'
+##'   # Force update even if not a placeholder
+##'   update_certificate_from_github(force = TRUE, apply_update = TRUE)
+##' }
+update_certificate_from_github <- function(yml_file = "codecheck.yml",
+                                           issue_state = "open",
+                                           force = FALSE,
+                                           apply_update = FALSE) {
+
+  if (!file.exists(yml_file)) {
+    stop("codecheck.yml file not found at: ", yml_file)
+  }
+
+  # Load current metadata
+  metadata <- yaml::read_yaml(yml_file)
+
+  # Check if certificate is a placeholder
+  is_placeholder <- is_placeholder_certificate(yml_file, metadata)
+
+  message("\n", rep("=", 80))
+  message("CERTIFICATE ID UPDATE FROM GITHUB")
+  message(rep("=", 80))
+
+  message("\nCurrent certificate ID: ", metadata$certificate)
+  message("Is placeholder: ", is_placeholder)
+
+  # Check if we should proceed
+  if (!is_placeholder && !force) {
+    message("\n⚠ Certificate ID is already set and is not a placeholder.")
+    message("Use force = TRUE to update anyway.")
+    message(rep("=", 80), "\n")
+
+    return(invisible(list(
+      updated = FALSE,
+      certificate = metadata$certificate,
+      issue_number = NULL,
+      was_placeholder = is_placeholder
+    )))
+  }
+
+  # Try to retrieve certificate from GitHub
+  message("\nSearching for certificate in GitHub issues...")
+  message("Issue state: ", issue_state)
+
+  result <- tryCatch({
+    get_certificate_from_github_issue(yml_file, issue_state = issue_state)
+  }, error = function(e) {
+    message("✖ Error retrieving from GitHub: ", e$message)
+    return(NULL)
+  })
+
+  # Check if we found a result
+  if (is.null(result)) {
+    message("\n✖ No certificate found in GitHub issues")
+    message(rep("=", 80), "\n")
+
+    return(invisible(list(
+      updated = FALSE,
+      certificate = NULL,
+      issue_number = NULL,
+      was_placeholder = is_placeholder
+    )))
+  }
+
+  # Check if we have a certificate
+  if (is.null(result$certificate)) {
+    message("\n✖ No certificate ID found in matching issues")
+    if (!is.null(result$message)) {
+      message("Reason: ", result$message)
+    }
+    message(rep("=", 80), "\n")
+
+    return(invisible(list(
+      updated = FALSE,
+      certificate = NULL,
+      issue_number = result$issue_number,
+      was_placeholder = is_placeholder
+    )))
+  }
+
+  # We have a certificate!
+  message("\n✓ Found certificate: ", result$certificate)
+  message("  Issue #", result$issue_number, ": ", result$title)
+  if (!is.null(result$matched_author)) {
+    message("  Matched author: ", result$matched_author)
+  }
+
+  # Show the change
+  message("\n", rep("-", 80))
+  message("PROPOSED CHANGE")
+  message(rep("-", 80))
+  message("OLD certificate: ", metadata$certificate)
+  message("NEW certificate: ", result$certificate)
+  message(rep("-", 80))
+
+  # Apply update if requested
+  if (apply_update) {
+    message("\nUpdating codecheck.yml...")
+
+    # Update the certificate in metadata
+    metadata$certificate <- result$certificate
+
+    # Write back to file
+    tryCatch({
+      yaml::write_yaml(metadata, yml_file)
+      message("✓ Successfully updated ", yml_file)
+      message("  Certificate ID: ", result$certificate)
+      message("  From GitHub issue #", result$issue_number)
+
+      updated <- TRUE
+    }, error = function(e) {
+      message("✖ Failed to write file: ", e$message)
+      updated <- FALSE
+    })
+  } else {
+    message("\n⚠ No changes applied. Use apply_update = TRUE to save changes.")
+    updated <- FALSE
+  }
+
+  message(rep("=", 80), "\n")
+
+  invisible(list(
+    updated = updated,
+    certificate = result$certificate,
+    issue_number = result$issue_number,
+    was_placeholder = is_placeholder
   ))
 }

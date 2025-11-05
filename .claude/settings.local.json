@@ -8,7 +8,11 @@
       "Bash(curl:*)",
       "WebFetch(domain:lifecycle-flax.fly.dev)",
       "WebFetch(domain:codecheck.org.uk)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(R CMD build:*)",
+      "Bash(R CMD INSTALL:*)"
     ],
     "deny": [],
     "ask": []
