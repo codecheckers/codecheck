@@ -15,7 +15,9 @@
       "Bash(R CMD INSTALL:*)",
       "Bash(pdfinfo:*)",
       "Bash(pdftotext:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "WebFetch(domain:zenodo.org)",
+      "Bash(R CMD check:*)"
     ],
     "deny": [],
     "ask": []

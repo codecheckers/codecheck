@@ -1,123 +1,65 @@
 # codecheck 0.22.0
 
-* **Enhancement**: DOI validation is now platform-agnostic
-  - Error messages no longer assume Zenodo is the only repository
-  - Validates DOIs from any platform (Zenodo, OSF, ResearchEquals, etc.)
-  - Updated error messages to say "certificate report" instead of "Zenodo DOI"
-  - Missing DOI error suggests all supported platforms as examples
-* **New feature**: `get_certificate_from_github_issue()` - Retrieve certificate identifier from GitHub issues
-  - Searches open issues in codecheckers/register repository by matching author names
-  - Extracts certificate ID (YYYY-NNN format) from issue titles
-  - Supports searching open, closed, or all issues
-  - Returns certificate ID, issue number, title, and matched author
-  - Can accept codecheck.yml file path or metadata list as input
-  - Comprehensive test suite in `test_github_certificate_retrieval.R` (6 tests)
-* **New feature**: `is_placeholder_certificate()` - Check if certificate ID or report DOI is a placeholder
-  - Detects common placeholder patterns ("YYYY-NNN", "0000-000", "9999-999") in certificate ID
-  - Checks for placeholder year prefixes (YYYY, 0000, 9999) in certificate ID
-  - Identifies template-like patterns (FIXME, TODO, template, example) in certificate ID
-  - **NEW**: Validates report DOI field for placeholder patterns (FIXME, TODO, placeholder, XXXXX)
-  - **NEW**: Detects incomplete DOI patterns (e.g., doi.org/10.XXXXX/repo.FIXME)
-  - Works with DOIs from any repository (Zenodo, OSF, ResearchEquals, etc.)
-  - **NEW**: `check_doi` parameter (default TRUE) to optionally skip DOI validation
-  - Can accept file path or metadata list as input
-  - Comprehensive test suite in `test_certificate_placeholder.R` (47 tests)
-* **New feature**: `update_certificate_from_github()` - Automatically update certificate ID from GitHub
-  - Checks if current certificate is a placeholder using `is_placeholder_certificate()`
-  - Searches for matching GitHub issues using `get_certificate_from_github_issue()`
-  - Updates codecheck.yml if unique match found
-  - Provides detailed logging of all steps
-  - Preview mode by default (apply_update = FALSE)
-  - Supports force update for non-placeholder certificates
-  - Safe: only updates with exactly one matching issue
-* **Enhancement**: Certificate template (codecheck.Rmd) now uses `update_certificate_from_github()`
-  - Automatically detects placeholder certificate identifiers
-  - Attempts to retrieve certificate ID from GitHub issues
-  - Shows clear instructions for applying updates
-  - Runs during certificate rendering without stopping the process
-* **Enhancement**: Improved Zenodo integration functions to load metadata from codecheck.yml by default
-  - `get_or_create_zenodo_record()`: Now defaults to `metadata = codecheck_metadata(getwd())`
-  - `get_zenodo_record()`: Now defaults to `metadata = codecheck_metadata(getwd())`
-  - `upload_zenodo_metadata()`: Now defaults to `metadata = codecheck_metadata(getwd())`
-  - `codecheck_metadata()`: Enhanced error handling with clear messages when codecheck.yml is not found
-  - **Bug fix**: Fixed `get_or_create_zenodo_record()` to call `get_zenodo_id()` instead of `get_zenodo_record()`
-  - Added tests for `codecheck_metadata()` error handling (tests 18-19)
-* **Bug fix**: Fixed `latex_summary_of_metadata()` to handle NULL or empty metadata fields
-  - Added `safe_value()` helper function to ensure all entries return a value
-  - Prevents "arguments imply differing number of rows" error when creating data frame
-  - Now returns empty string for NULL/empty fields instead of skipping them
-* **Bug fix**: Fixed `latex_summary_of_manifest()` to handle NULL or missing repository field
-  - Added safe repository URL extraction with NULL/empty/list handling
-  - Prevents "invalid 'replacement' argument" error when repository is NULL
-  - Handles multiple repositories (uses first one)
-  - Falls back to plain file paths without hyperlinks when repository unavailable
-  - Comprehensive test suite in `test_manifest_summary.R` (9 tests)
-* **Bug fix**: Fixed ORCID icon hyperlinks in PDF certificates (codecheck-preamble.sty)
-  - Moved `\usepackage{hyperref}` to load after `tikz` and `scalerel` packages to avoid conflicts
-  - Removed obsolete `\orcidlogo` command definition with undefined `\aiOrcid`
-  - Reorganized preamble to load packages in proper order per LaTeX best practices
-  - ORCID icons next to author and codechecker names are now clickable links to ORCID profiles
-* **Bug fix**: Removed dependency on pifont package (codecheck-preamble.sty and validate_certificate_for_rendering)
-  - Replaced `\ding{43}` LaTeX command with UTF-8 warning emoji ⚠ for visual warnings
-  - Removed `\usepackage{pifont}` from LaTeX preamble
-  - Warning boxes in PDF certificates now use native UTF-8 emoji without requiring additional packages
-  - Improves compatibility with minimal LaTeX installations
-* **Enhancement**: Added `strict` parameter to `is_placeholder_certificate()`
-  - When `strict = TRUE`, stops execution with error if certificate is a placeholder
-  - Provides clear error messages indicating the placeholder type
-  - Default `strict = FALSE` maintains backward compatibility
-  - Added 7 new tests for strict mode behavior (tests 20-26)
-* **New feature**: `validate_certificate_for_rendering()` - Visual warning for placeholder certificates and DOIs
-  - Validates certificate ID and report DOI, displays warning box in PDF output when placeholders detected
-  - **NEW**: Displays separate warnings for certificate ID and DOI placeholders
-  - **NEW**: Shows both issues in single warning box when both are placeholders
-  - Shows red warning icons (⚠) with yellow background box in rendered PDF
-  - Includes certificate ID, DOI value, and clear instructions in warning box
-  - Supports `strict` mode to fail rendering if certificate or DOI is placeholder
-  - Optional `display_warning` parameter to control visual output
-  - Integrated into certificate template (codecheck.Rmd)
-  - Uses UTF-8 emoji ⚠ for warning icons (no special packages required)
-* **New feature**: `validate_yaml_syntax()` - Validate YAML syntax before parsing
-  - Checks if a YAML file has valid syntax that can be parsed
-  - Provides clear error messages for syntax errors
-  - Integrated into certificate template (codecheck.Rmd) to prevent compilation with invalid YAML
-  - Can be used standalone with `stop_on_error = FALSE` to check validity without stopping execution
-  - Comprehensive test suite in `test_yaml_syntax_validation.R` (6 tests)
-* **New feature**: `complete_codecheck_yml()` - Analyze and complete codecheck.yml files with missing fields
-  - Validates codecheck.yml against the specification at https://codecheck.org.uk/spec/config/1.0/
-  - Reports missing mandatory, recommended, and optional fields
-  - Can add placeholders for missing mandatory fields (`add_mandatory = TRUE`)
-  - Can add placeholders for all missing fields including recommended and optional (`add_optional = TRUE`)
-  - Shows diff of changes before applying (similar to `update_codecheck_yml_from_lifecycle()`)
-  - Comprehensive test suite in `test_complete_codecheck_yml.R`
-* **New feature**: `validate_codecheck_yml_crossref()` - Validate metadata against CrossRef
-  - Retrieves paper metadata from CrossRef API using the paper's DOI
-  - Validates title matches between local codecheck.yml and published paper
-  - Validates author information (names and ORCIDs) against CrossRef data
-  - Supports strict mode that throws errors on mismatches (fails certificate rendering)
-  - Integrated into certificate template (codecheck.Rmd) for automatic validation during rendering
-  - Comprehensive test suite in `test_crossref_validation.R` (13 tests)
-* **New feature**: `validate_codecheck_yml_orcid()` - Validate metadata against ORCID
-  - Queries ORCID API using rorcid package to retrieve person records
-  - Validates author names match their ORCID records
-  - Validates codechecker names match their ORCID records
-  - Validates ORCID identifier format (NNNN-NNNN-NNNN-NNNX)
-  - Supports selective validation of authors and/or codecheckers
-  - Comprehensive test suite in `test_orcid_validation.R` (13 tests)
-* **New feature**: `validate_contents_references()` - Comprehensive validation wrapper
-  - Combines CrossRef and ORCID validations in a single function
-  - Validates paper metadata against CrossRef
-  - Validates all ORCIDs (authors and codecheckers) against ORCID API
-  - Provides unified validation summary
-  - Supports selective execution of each validation type
-  - Strict mode stops certificate rendering on any validation failure
-* **New feature**: Lifecycle Journal automation (addresses #82)
-  - `get_lifecycle_metadata()`: Retrieve article metadata from Lifecycle Journal via CrossRef API using submission ID or DOI
-  - `update_codecheck_yml_from_lifecycle()`: Auto-populate `codecheck.yml` with paper metadata (title, authors with ORCIDs, DOI reference)
-  - Preview changes before applying with diff view
-  - Smart field updates: only populate empty/placeholder fields by default, with option to overwrite existing fields
-  - `test_lifecycle_journal.R`: 24 tests validating metadata retrieval and codecheck.yml updates
-* **New tests**: Added comprehensive test coverage (~180 new tests)
+## Certificate Automation and Validation
+
+* **New feature**: Automatic certificate ID retrieval from GitHub issues
+  - `get_certificate_from_github_issue()`: Searches codecheckers/register issues by author names
+  - `is_placeholder_certificate()`: Detects placeholder certificate IDs and report DOIs
+  - `update_certificate_from_github()`: Auto-updates certificate IDs from matching GitHub issues
+  - `validate_certificate_for_rendering()`: Displays visual warnings in PDF for placeholder values
+  - Certificate template now automatically attempts to retrieve certificate IDs during rendering
+* **New feature**: YAML validation and field completion
+  - `validate_yaml_syntax()`: Validates YAML syntax before parsing
+  - `complete_codecheck_yml()`: Analyzes and adds missing mandatory/optional fields
+  - Both functions integrated into certificate template
+* **New feature**: External metadata validation via CrossRef and ORCID APIs
+  - `validate_codecheck_yml_crossref()`: Validates paper metadata against CrossRef
+  - `validate_codecheck_yml_orcid()`: Validates author/codechecker names against ORCID records
+  - `validate_contents_references()`: Unified wrapper combining both validations
+  - Integrated into certificate template with strict mode to fail rendering on mismatches
+
+## Lifecycle Journal Integration
+
+* **New feature**: Automatic metadata population from Lifecycle Journal (addresses #82)
+  - `get_lifecycle_metadata()`: Retrieves article metadata via CrossRef API
+  - `update_codecheck_yml_from_lifecycle()`: Auto-populates codecheck.yml with paper metadata
+  - Smart field updates with preview mode and diff view before applying changes
+
+## Bug Fixes
+
+* Fixed ORCID icon hyperlinks in PDF certificates using academicons package
+  - Replaced complex tikz/svg implementation with simple `\aiOrcid` from academicons
+  - Moved `\usepackage{hyperref}` to load after other packages to avoid conflicts
+  - ORCID icons are now clickable links that work reliably across PDF viewers
+* Fixed `latex_summary_of_metadata()` and `latex_summary_of_manifest()` to handle NULL/empty fields
+* Fixed `get_or_create_zenodo_record()` to call correct function (`get_zenodo_id()`)
+
+## Enhancements
+
+* **Automatic YAML updating**: `get_or_create_zenodo_record()` now automatically updates codecheck.yml with Zenodo DOI
+  - When creating a new Zenodo record, automatically updates the report field in codecheck.yml
+  - Detects empty or placeholder values (FIXME, TODO, placeholder, XXXXX, etc.) and updates automatically
+  - For non-placeholder values, asks user confirmation before overwriting (when warn=TRUE)
+  - Handles NULL report field gracefully
+  - Preserves all other fields in codecheck.yml during update
+  - New yml_file parameter allows specifying alternate YAML file location
+  - Comprehensive test suite with 31 tests using mocked Zenodo API
+* **Zenodo curation policy compliance**: `upload_zenodo_metadata()` now fully complies with CODECHECK Zenodo community curation policy
+  - Publisher set to "CODECHECK Community on Zenodo" (was "CODECHECK")
+  - Resource type changed to "report" (was "publication-preprint")
+  - Description now includes certificate summary as required by policy
+  - Adds related identifier for original paper with "reviews" relation
+  - Adds related identifier for code repository with "isSupplementedBy" relation
+  - Adds alternative identifier for certificate ID (http://cdchck.science/register/certs/{ID})
+  - Validates required fields (certificate ID, warns for missing summary)
+  - Handles NULL/empty repository gracefully
+  - Extracts clean DOI from doi.org URLs
+  - New comprehensive test suite with 52 tests using mocked Zenodo API
+* Zenodo functions now load metadata from codecheck.yml by default
+* DOI validation is now platform-agnostic (Zenodo, OSF, ResearchEquals, etc.)
+* Removed pifont package dependency; now uses UTF-8 emoji ⚠ for warnings
+* Enhanced error messages with clearer guidance
+* Added ~230 new tests across all features
   
 # codecheck 0.21.0
 

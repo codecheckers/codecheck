@@ -34,30 +34,33 @@ remotes::install_github("codecheckers/codecheck")
 
 ## Usage
 
-See the [main vignette](https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_overview.Rmd).
-
-tl;dr: Go the the directory where you want to create a CODECHECK workspace, then run
-
-```r
-require("codecheck")
-create_codecheck_files()
-```
+See the [main
+vignette](https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_overview.Rmd).
 
 ## Development
 
 The package uses
 [`tinytest`](https://cran.r-project.org/package=tinytest) for tests. Run
 `test_all("/path/to/package")` to run all tests interactively. Even
-better, run the tests in a fresh install/temporary directory using
+better, run the tests in a fresh install and temporary directory using
 
 ``` r
 # assuming . is the package path
+library(tinytest)
 build_install_test(".")
 ```
 
-## Contributing
+## Contribute
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+*All contributions are welcome!* See [CONTRIBUTING.md](CONTRIBUTING.md)
+for details.
+
+## Code of Conduct
+
+Please note that the codecheck project is released with a [Contributor
+Code of
+Conduct](http://codecheck.org.uk/codecheck/CODE_OF_CONDUCT.html). By
+contributing to this project, you agree to abide by its terms.
 
 ## License
 

@@ -45,17 +45,18 @@ See the [main vignette](https://github.com/codecheckers/codecheck/blob/master/vi
 
 The package uses [`tinytest`](https://cran.r-project.org/package=tinytest) for tests.
 Run `test_all("/path/to/package")` to run all tests interactively.
-Even better, run the tests in a fresh install/temporary directory using 
+Even better, run the tests in a fresh install and temporary directory using 
 
 ```r
 # assuming . is the package path
+library(tinytest)
 build_install_test(".")
 ```
 
 ## Contribute
 
 _All contributions are welcome!_
-Check out the existing issues or open a new one.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Code of Conduct
   
@@ -64,5 +65,5 @@ By contributing to this project, you agree to abide by its terms.
 
 ## License
 
-Copyright 2022 S. Eglen & D. Nüst.
+Copyright `r format(Sys.time(), "%Y")` S. Eglen & D. Nüst.
 The `codecheck` package is published under the MIT license, see file `LICENSE`.
