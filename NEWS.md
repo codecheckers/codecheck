@@ -50,6 +50,21 @@
   - Created internal `is_doi_placeholder()` helper function
   - Now used by both `is_placeholder_certificate()` and `get_or_create_zenodo_record()`
   - Centralized placeholder detection logic for easier maintenance
+* **Code quality**: Fixed R CMD check warnings
+  - Added `utils::globalVariables()` declaration for NSE variables used in dplyr/data.table operations
+  - Fixed incorrect parameter name in `update_certificate_from_github()` call (state vs issue_state)
+  - Resolved all "no visible binding for global variable" warnings
+* **Code quality**: Reorganized package structure for better maintainability
+  - Split monolithic R/codecheck.R (2365 lines) into 7 focused files:
+    - R/workspace.R (73 lines): Workspace creation and initialization
+    - R/manifest.R (74 lines): File operations and manifest handling
+    - R/latex.R (177 lines): LaTeX rendering utilities
+    - R/zenodo.R (530 lines): Zenodo integration
+    - R/lifecycle.R (238 lines): Lifecycle Journal integration
+    - R/validation.R (1103 lines): Validation functions
+    - R/github.R (162 lines): GitHub integration
+  - All roxygen documentation, imports, and exports preserved
+  - All 604 tests pass after refactoring
 
 ## Enhancements
 
