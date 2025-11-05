@@ -50,5 +50,5 @@ and "FIXME", "TODO", etc. in the report DOI.
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

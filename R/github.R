@@ -22,7 +22,7 @@
 ##'     \item{issue_number}{The GitHub issue number (if found)}
 ##'     \item{was_placeholder}{Logical indicating if original was a placeholder}
 ##'   }
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @importFrom yaml read_yaml write_yaml
 ##' @export
 ##' @examples
@@ -60,7 +60,7 @@ update_certificate_from_github <- function(yml_file = "codecheck.yml",
 
   # Check if we should proceed
   if (!is_placeholder && !force) {
-    message("\n⚠ Certificate ID is already set and is not a placeholder.")
+    message("\n\u26a0 Certificate ID is already set and is not a placeholder.")
     message("Use force = TRUE to update anyway.")
     message(rep("=", 80), "\n")
 
@@ -79,13 +79,13 @@ update_certificate_from_github <- function(yml_file = "codecheck.yml",
   result <- tryCatch({
     get_certificate_from_github_issue(yml_file, state = issue_state)
   }, error = function(e) {
-    message("✖ Error retrieving from GitHub: ", e$message)
+    message("\u2716 Error retrieving from GitHub: ", e$message)
     return(NULL)
   })
 
   # Check if we found a result
   if (is.null(result)) {
-    message("\n✖ No certificate found in GitHub issues")
+    message("\n\u2716 No certificate found in GitHub issues")
     message(rep("=", 80), "\n")
 
     return(invisible(list(
@@ -98,7 +98,7 @@ update_certificate_from_github <- function(yml_file = "codecheck.yml",
 
   # Check if we have a certificate
   if (is.null(result$certificate)) {
-    message("\n✖ No certificate ID found in matching issues")
+    message("\n\u2716 No certificate ID found in matching issues")
     if (!is.null(result$message)) {
       message("Reason: ", result$message)
     }
@@ -113,7 +113,7 @@ update_certificate_from_github <- function(yml_file = "codecheck.yml",
   }
 
   # We have a certificate!
-  message("\n✓ Found certificate: ", result$certificate)
+  message("\n\u2713 Found certificate: ", result$certificate)
   message("  Issue #", result$issue_number, ": ", result$title)
   if (!is.null(result$matched_author)) {
     message("  Matched author: ", result$matched_author)
@@ -137,17 +137,17 @@ update_certificate_from_github <- function(yml_file = "codecheck.yml",
     # Write back to file
     tryCatch({
       yaml::write_yaml(metadata, yml_file)
-      message("✓ Successfully updated ", yml_file)
+      message("\u2713 Successfully updated ", yml_file)
       message("  Certificate ID: ", result$certificate)
       message("  From GitHub issue #", result$issue_number)
 
       updated <- TRUE
     }, error = function(e) {
-      message("✖ Failed to write file: ", e$message)
+      message("\u2716 Failed to write file: ", e$message)
       updated <- FALSE
     })
   } else {
-    message("\n⚠ No changes applied. Use apply_update = TRUE to save changes.")
+    message("\n\u26a0 No changes applied. Use apply_update = TRUE to save changes.")
     updated <- FALSE
   }
 

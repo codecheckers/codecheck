@@ -56,5 +56,5 @@ if exactly one matching issue is found (to avoid ambiguity).
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

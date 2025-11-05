@@ -39,5 +39,5 @@ abstract, and publication date.
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

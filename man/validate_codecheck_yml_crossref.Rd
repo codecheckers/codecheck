@@ -55,5 +55,5 @@ codechecker validation, use \code{validate_contents_references()} instead.
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

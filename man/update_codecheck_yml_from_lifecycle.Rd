@@ -49,5 +49,5 @@ apply the changes.
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

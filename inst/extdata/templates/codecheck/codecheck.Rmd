@@ -225,14 +225,13 @@ This document was created using [R Markdown](https://rmarkdown.rstudio.com/) usi
 sessionInfo()
 ```
 
-
 ```{r, include=FALSE, eval=FALSE}
 # handle Zenodo publication (alternative to codecheck-zenodo.R !)
 library("zen4R")
 zenodo <- ZenodoManager$new(token = zenodoToken) # assumes Zenodo token is configured via .Renviron
-record <- codecheck::get_or_create_zenodo_record(zenodo, codecheck_metadata(root))
-record <- codecheck::upload_zenodo_metadata(zenodo, record, codecheck_metadata(root))
-codecheck::upload_zenodo_certificate(zen = zenodo, record = record$id, certificate = file.path(root, "codecheck", "codecheck.pdf"))
+record <- codecheck::get_or_create_zenodo_record(zenodo, codecheck::codecheck_metadata(root))
+record <- codecheck::upload_zenodo_metadata(zenodo, record, codecheck::codecheck_metadata(root))
+codecheck::upload_zenodo_certificate(zenodo = zenodo, record = record$id, certificate = file.path(root, "codecheck", "codecheck.pdf"))
 ```
 
 ```{r, include=FALSE, eval=FALSE}

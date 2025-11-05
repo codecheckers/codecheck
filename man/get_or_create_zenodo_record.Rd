@@ -2,7 +2,7 @@
 % Please edit documentation in R/zenodo.R
 \name{get_or_create_zenodo_record}
 \alias{get_or_create_zenodo_record}
-\title{Create or retrieve Zenodo record and update codecheck.yml}
+\title{Create or retrieve Zenodo record, submit to CODECHECK community, and update codecheck.yml}
 \usage{
 get_or_create_zenodo_record(
   zen,
@@ -35,7 +35,9 @@ Run this only once per new codecheck. By default, loads metadata from
 codecheck.yml in the current working directory.
 
 If a Zenodo record already exists (valid Zenodo DOI in report field), retrieves it.
-If no valid Zenodo DOI exists, creates a new record and updates codecheck.yml:
+If no valid Zenodo DOI exists, creates a new record, submits it to the CODECHECK
+community on Zenodo, and updates codecheck.yml:
+- Automatically submits new records to the CODECHECK community (https://zenodo.org/communities/codecheck/)
 - If report field is empty or contains a placeholder (FIXME, TODO, etc.): Updates automatically
 - If report field contains a non-placeholder value: Asks user before overwriting (when warn=TRUE)
 }

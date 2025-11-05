@@ -16,7 +16,7 @@
 ##'     \item{reference}{The DOI URL}
 ##'     \item{date}{Publication date}
 ##'   }
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @importFrom httr GET content status_code
 ##' @importFrom jsonlite fromJSON
 ##' @export
@@ -107,7 +107,7 @@ get_lifecycle_metadata <- function(identifier) {
 ##'   non-empty fields. If \code{FALSE} (default), only populate empty or
 ##'   placeholder fields.
 ##' @return Invisibly returns the updated metadata list
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @importFrom yaml read_yaml write_yaml
 ##' @export
 ##' @examples
@@ -225,9 +225,9 @@ update_codecheck_yml_from_lifecycle <- function(identifier,
 
     if (apply_updates) {
       yaml::write_yaml(updated, yml_file)
-      cat("\n✓ Changes applied to ", yml_file, "\n\n", sep = "")
+      cat("\n\u2713 Changes applied to ", yml_file, "\n\n", sep = "")
     } else {
-      cat("\n⚠ No changes applied. Use apply_updates = TRUE to save changes.\n\n")
+      cat("\n\u26a0 No changes applied. Use apply_updates = TRUE to save changes.\n\n")
     }
   } else {
     cat("\nNo changes needed. All fields are already populated.\n")

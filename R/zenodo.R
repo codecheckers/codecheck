@@ -4,11 +4,13 @@
 #' codecheck.yml in the current working directory.
 #'
 #' If a Zenodo record already exists (valid Zenodo DOI in report field), retrieves it.
-#' If no valid Zenodo DOI exists, creates a new record and updates codecheck.yml:
+#' If no valid Zenodo DOI exists, creates a new record, submits it to the CODECHECK
+#' community on Zenodo, and updates codecheck.yml:
+#' - Automatically submits new records to the CODECHECK community (https://zenodo.org/communities/codecheck/)
 #' - If report field is empty or contains a placeholder (FIXME, TODO, etc.): Updates automatically
 #' - If report field contains a non-placeholder value: Asks user before overwriting (when warn=TRUE)
 #'
-#' @title Create or retrieve Zenodo record and update codecheck.yml
+#' @title Create or retrieve Zenodo record, submit to CODECHECK community, and update codecheck.yml
 #' @param zen Object from zen4R to interact with Zenodo
 #' @param metadata codecheck.yml metadata (list). Defaults to loading from
 #'   codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.
@@ -41,6 +43,20 @@ get_or_create_zenodo_record <- function(zen, metadata = codecheck_metadata(getwd
 
     # Create new record
     my_rec <- zen$createEmptyRecord()
+
+    # Submit to CODECHECK community on Zenodo
+    # This creates a review request so the record will be added to the community
+    # after publication
+    tryCatch({
+      message("Submitting record to CODECHECK community on Zenodo...")
+      zen$createReviewRequest(my_rec, community = "codecheck")
+      zen$submitRecordForReview(my_rec)
+      message("\u2713 Record submitted to CODECHECK community for review")
+      message("  Once published, the record will be added to: https://zenodo.org/communities/codecheck/")
+    }, error = function(e) {
+      warning("Could not submit record to CODECHECK community: ", e$message,
+              "\nYou can manually submit the published record to the community later.")
+    })
 
     # Get the prereserved DOI from the new record
     if (!is.null(my_rec$metadata$prereserve_doi$doi)) {
@@ -93,7 +109,7 @@ get_or_create_zenodo_record <- function(zen, metadata = codecheck_metadata(getwd
             # Write back to file
             yaml::write_yaml(yaml_data, yml_path)
 
-            message("✓ Updated codecheck.yml with Zenodo DOI: ", new_doi_url)
+            message("\u2713 Updated codecheck.yml with Zenodo DOI: ", new_doi_url)
             message("  Remember to reload metadata after this change if needed")
           }, error = function(e) {
             warning("Could not update codecheck.yml: ", e$message,
@@ -496,7 +512,7 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
       for (f in pdf_files) {
         tryCatch({
           zenodo$deleteFile(draft$id, f$filename)
-          message("  ✓ Deleted: ", f$filename)
+          message("  \u2713 Deleted: ", f$filename)
         }, error = function(e) {
           warning("Failed to delete file '", f$filename, "': ", e$message)
         })
@@ -508,7 +524,7 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
   # NOTE: Zenodo uses the first uploaded file as the preview file by default
   message("Uploading certificate: ", basename(certificate))
   cert_result <- zenodo$uploadFile(certificate, draft)
-  message("✓ Certificate uploaded successfully (will be used as preview)")
+  message("\u2713 Certificate uploaded successfully (will be used as preview)")
 
   # Upload the source file if requested
   # Automatically detect source file based on certificate filename
@@ -561,7 +577,7 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
             for (f in source_files) {
               tryCatch({
                 zenodo$deleteFile(draft$id, f$filename)
-                message("  ✓ Deleted: ", f$filename)
+                message("  \u2713 Deleted: ", f$filename)
               }, error = function(e) {
                 warning("Failed to delete source file '", f$filename, "': ", e$message)
               })
@@ -575,7 +591,7 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
         message("Uploading certificate source: ", basename(source_file))
         tryCatch({
           source_result <- zenodo$uploadFile(source_file, draft)
-          message("✓ Certificate source uploaded successfully")
+          message("\u2713 Certificate source uploaded successfully")
         }, error = function(e) {
           warning("Failed to upload source file '", source_file, "': ", e$message)
         })
@@ -593,7 +609,7 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
       tryCatch({
         file_result <- zenodo$uploadFile(file_path, draft)
         additional_results[[basename(file_path)]] <- file_result
-        message("  ✓ Uploaded: ", basename(file_path))
+        message("  \u2713 Uploaded: ", basename(file_path))
       }, error = function(e) {
         warning("Failed to upload file '", basename(file_path), "': ", e$message)
         additional_results[[basename(file_path)]] <- NULL

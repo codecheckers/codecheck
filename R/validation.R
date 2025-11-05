@@ -25,7 +25,7 @@
 ##'     \item{missing}{List of missing fields by category (mandatory, recommended, optional)}
 ##'     \item{updated}{The updated metadata list (if changes were made)}
 ##'   }
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @importFrom yaml read_yaml write_yaml
 ##' @export
 ##' @examples
@@ -246,9 +246,9 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 
     if (apply_updates) {
       yaml::write_yaml(updated, yml_file)
-      cat("\n✓ Changes applied to ", yml_file, "\n\n", sep = "")
+      cat("\n\u2713 Changes applied to ", yml_file, "\n\n", sep = "")
     } else {
-      cat("\n⚠ No changes applied. Use apply_updates = TRUE to save changes.\n\n")
+      cat("\n\u26a0 No changes applied. Use apply_updates = TRUE to save changes.\n\n")
     }
   } else {
     if (add_mandatory || add_optional) {
@@ -287,7 +287,7 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 ##'     \item{issues}{Character vector of any issues found}
 ##'     \item{crossref_metadata}{The metadata retrieved from CrossRef (if available)}
 ##'   }
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @importFrom httr GET content status_code
 ##' @export
 ##' @examples
@@ -394,7 +394,7 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
       issues <- c(issues, issue)
       warning(issue)
     } else {
-      message("✓ Title matches CrossRef metadata")
+      message("\u2713 Title matches CrossRef metadata")
     }
   }
 
@@ -447,7 +447,7 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
           issues <- c(issues, issue)
           warning(issue)
         } else {
-          message("✓ Author ", i, " name matches: ", local_author$name)
+          message("\u2713 Author ", i, " name matches: ", local_author$name)
         }
       }
 
@@ -465,11 +465,11 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
             issues <- c(issues, issue)
             warning(issue)
           } else {
-            message("✓ Author ", i, " ORCID matches: ", local_orcid)
+            message("\u2713 Author ", i, " ORCID matches: ", local_orcid)
           }
         } else {
           msg <- paste0("Author ", i, " has ORCID in local file but not in CrossRef")
-          message("ℹ ", msg)
+          message("\u2139 ", msg)
         }
       }
     }
@@ -479,13 +479,13 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
   valid <- length(issues) == 0
 
   if (!valid) {
-    message("\n⚠ Validation completed with ", length(issues), " issue(s)")
+    message("\n\u26a0 Validation completed with ", length(issues), " issue(s)")
     if (strict) {
       stop("Validation failed with ", length(issues), " issue(s):\n",
            paste(issues, collapse = "\n"))
     }
   } else {
-    message("\n✓ All validations passed!")
+    message("\n\u2713 All validations passed!")
   }
 
   invisible(list(
@@ -513,7 +513,7 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 ##'     \item{valid}{Logical indicating if all checks passed}
 ##'     \item{issues}{Character vector of any issues found}
 ##'   }
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @importFrom rorcid orcid_person
 ##' @export
 ##' @examples
@@ -624,10 +624,10 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
             issues <- c(issues, issue)
             warning(issue)
           } else {
-            message("✓ Author ", i, " name matches ORCID: ", author$name, " (", author$ORCID, ")")
+            message("\u2713 Author ", i, " name matches ORCID: ", author$name, " (", author$ORCID, ")")
           }
         } else {
-          message("ℹ Could not retrieve ORCID record for author ", i, ": ", author$ORCID)
+          message("\u2139 Could not retrieve ORCID record for author ", i, ": ", author$ORCID)
         }
       }
     }
@@ -653,7 +653,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
           next
         }
 
-        message("✓ Codechecker ", i, ": ", checker$name)
+        message("\u2713 Codechecker ", i, ": ", checker$name)
 
         # Validate ORCID if present
         if (!is.null(checker$ORCID)) {
@@ -690,10 +690,10 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
               issues <- c(issues, issue)
               warning(issue)
             } else {
-              message("✓ Codechecker ", i, " ORCID matches: ", checker$name, " (", checker$ORCID, ")")
+              message("\u2713 Codechecker ", i, " ORCID matches: ", checker$name, " (", checker$ORCID, ")")
             }
           } else {
-            message("ℹ Could not retrieve ORCID record for codechecker ", i, ": ", checker$ORCID)
+            message("\u2139 Could not retrieve ORCID record for codechecker ", i, ": ", checker$ORCID)
           }
         }
       }
@@ -704,13 +704,13 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
   valid <- length(issues) == 0
 
   if (!valid) {
-    message("\n⚠ ORCID validation completed with ", length(issues), " issue(s)")
+    message("\n\u26a0 ORCID validation completed with ", length(issues), " issue(s)")
     if (strict) {
       stop("ORCID validation failed with ", length(issues), " issue(s):\n",
            paste(issues, collapse = "\n"))
     }
   } else {
-    message("\n✓ All ORCID validations passed!")
+    message("\n\u2713 All ORCID validations passed!")
   }
 
   invisible(list(
@@ -739,7 +739,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##'     \item{crossref_result}{Results from CrossRef validation (if performed)}
 ##'     \item{orcid_result}{Results from ORCID validation (if performed)}
 ##'   }
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @export
 ##' @examples
 ##' \dontrun{
@@ -805,7 +805,7 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
     if (!is.null(orcid_result)) total_issues <- total_issues + length(orcid_result$issues)
 
     message("\n", rep("=", 80))
-    message("⚠ VALIDATION SUMMARY: ", total_issues, " issue(s) found")
+    message("\u26a0 VALIDATION SUMMARY: ", total_issues, " issue(s) found")
     message(rep("=", 80))
 
     if (strict) {
@@ -818,7 +818,7 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
     }
   } else {
     message("\n", rep("=", 80))
-    message("✓ ALL VALIDATIONS PASSED!")
+    message("\u2713 ALL VALIDATIONS PASSED!")
     message(rep("=", 80))
   }
 
@@ -874,7 +874,7 @@ is_doi_placeholder <- function(report_doi) {
 ##'   for placeholder patterns.
 ##' @return Logical value: TRUE if certificate or DOI is a placeholder, FALSE otherwise.
 ##'   If strict=TRUE and either is a placeholder, stops with an error instead.
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @export
 ##' @examples
 ##' \dontrun{
@@ -988,7 +988,7 @@ is_placeholder_certificate <- function(yml_file = "codecheck.yml",
 ##' @param display_warning Logical. If TRUE (default), displays a warning box in
 ##'   the rendered output when certificate or DOI is a placeholder.
 ##' @return Invisibly returns TRUE if certificate and DOI are valid, FALSE if any placeholder
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @export
 ##' @examples
 ##' \dontrun{
@@ -1066,7 +1066,7 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
     if (display_warning) {
       cat("\\begin{center}\n")
       cat("\\fcolorbox{red}{yellow}{\\parbox{0.9\\textwidth}{\\centering\n")
-      cat("\\textbf{\\Large \\textcolor{red}{⚠} WARNING \\textcolor{red}{⚠}}\\\\\n")
+      cat("\\textbf{\\Large \\textcolor{red}{\u26a0} WARNING \\textcolor{red}{\u26a0}}\\\\\n")
       cat("\\vspace{0.2cm}\n")
 
       # Display each warning part

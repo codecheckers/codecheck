@@ -56,5 +56,5 @@ This provides comprehensive validation of all external references.
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

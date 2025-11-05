@@ -24,7 +24,8 @@ Authors@R:
            comment = c(ORCID = "0000-0002-1322-1553"))
        )
 Description: This contains helper functions for codecheckers for conducting CODECHECKs, e.g., authoring CODECHECK certificates (<https://codecheck.org.uk>), and the rendering of the CODECHECK Register (<https://codecheck.org.uk/register/>).
-License: MIT + file LICENSE
+License: MIT
+License_is_FOSS: yes
 Depends: R (>= 4.0.0), gh, R.cache, parsedate
 Imports: 
     dplyr,

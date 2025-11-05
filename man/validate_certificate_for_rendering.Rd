@@ -44,5 +44,5 @@ certificates and DOIs.
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

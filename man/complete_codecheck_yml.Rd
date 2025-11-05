@@ -60,5 +60,5 @@ The function identifies three categories of fields:
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

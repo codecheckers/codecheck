@@ -103,6 +103,12 @@
   - Preserves all other fields in codecheck.yml during update
   - New yml_file parameter allows specifying alternate YAML file location
   - Comprehensive test suite with 31 tests using mocked Zenodo API
+* **Automatic CODECHECK community submission**: `get_or_create_zenodo_record()` now automatically submits new records to the CODECHECK community
+  - Newly created Zenodo records are automatically submitted to https://zenodo.org/communities/codecheck/
+  - Uses zen4R's `createReviewRequest()` and `submitRecordForReview()` methods
+  - Record will be added to the community after publication
+  - Graceful error handling if community submission fails - provides warning with manual instructions
+  - Ensures all CODECHECK certificates are discoverable in the central community
 * **Zenodo curation policy compliance**: `upload_zenodo_metadata()` now fully complies with CODECHECK Zenodo community curation policy
   - Publisher set to "CODECHECK Community on Zenodo" (was "CODECHECK")
   - Resource type set to "publication-report" (was "publication-preprint")

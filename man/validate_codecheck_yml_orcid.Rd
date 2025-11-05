@@ -49,5 +49,5 @@ the name in the ORCID record with the name in the local codecheck.yml file.
 }
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }
