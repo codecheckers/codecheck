@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.20.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,12 +38,359 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.22.0" id="codecheck-0220">codecheck 0.22.0<a class="anchor" aria-label="anchor" href="#codecheck-0220"></a></h2>
+<div class="section level3">
+<h3 id="certificate-automation-and-validation-0-22-0">Certificate Automation and Validation<a class="anchor" aria-label="anchor" href="#certificate-automation-and-validation-0-22-0"></a></h3>
+<ul><li>
+<strong>New feature</strong>: Automatic certificate ID retrieval from GitHub issues
+<ul><li>
+<code><a href="../reference/get_certificate_from_github_issue.html">get_certificate_from_github_issue()</a></code>: Searches codecheckers/register issues by author names</li>
+<li>
+<code><a href="../reference/is_placeholder_certificate.html">is_placeholder_certificate()</a></code>: Detects placeholder certificate IDs and report DOIs</li>
+<li>
+<code><a href="../reference/update_certificate_from_github.html">update_certificate_from_github()</a></code>: Auto-updates certificate IDs from matching GitHub issues</li>
+<li>
+<code><a href="../reference/validate_certificate_for_rendering.html">validate_certificate_for_rendering()</a></code>: Displays visual warnings in PDF for placeholder values</li>
+<li>Certificate template now automatically attempts to retrieve certificate IDs during rendering</li>
+</ul></li>
+<li>
+<strong>New feature</strong>: YAML validation and field completion
+<ul><li>
+<code><a href="../reference/validate_yaml_syntax.html">validate_yaml_syntax()</a></code>: Validates YAML syntax before parsing</li>
+<li>
+<code><a href="../reference/complete_codecheck_yml.html">complete_codecheck_yml()</a></code>: Analyzes and adds missing mandatory/optional fields</li>
+<li>Both functions integrated into certificate template</li>
+</ul></li>
+<li>
+<strong>New feature</strong>: External metadata validation via CrossRef and ORCID APIs
+<ul><li>
+<code><a href="../reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code>: Validates paper metadata against CrossRef</li>
+<li>
+<code><a href="../reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code>: Validates author/codechecker names against ORCID records</li>
+<li>
+<code><a href="../reference/validate_contents_references.html">validate_contents_references()</a></code>: Unified wrapper combining both validations</li>
+<li>Integrated into certificate template with strict mode to fail rendering on mismatches</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="lifecycle-journal-integration-0-22-0">Lifecycle Journal Integration<a class="anchor" aria-label="anchor" href="#lifecycle-journal-integration-0-22-0"></a></h3>
+<ul><li>
+<strong>New feature</strong>: Automatic metadata population from Lifecycle Journal (addresses <a href="https://github.com/codecheckers/codecheck/issues/82" class="external-link">#82</a>)
+<ul><li>
+<code><a href="../reference/get_lifecycle_metadata.html">get_lifecycle_metadata()</a></code>: Retrieves article metadata via CrossRef API</li>
+<li>
+<code><a href="../reference/update_codecheck_yml_from_lifecycle.html">update_codecheck_yml_from_lifecycle()</a></code>: Auto-populates codecheck.yml with paper metadata</li>
+<li>Smart field updates with preview mode and diff view before applying changes</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-22-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-22-0"></a></h3>
+<ul><li>
+<strong>Critical fix</strong>: Fixed <code><a href="../reference/upload_zenodo_certificate.html">set_zenodo_certificate()</a></code> to use correct zen4R API signatures
+<ul><li>
+<code>deleteFile()</code> now uses <code>deleteFile(recordId, filename)</code> instead of <code>deleteFile(fileId, recordId)</code>
+</li>
+<li>
+<code>uploadFile()</code> now uses <code>uploadFile(path, record)</code> with record object instead of record ID</li>
+<li>Fixes “cannot coerce type ‘environment’ to vector of type ‘character’” error</li>
+</ul></li>
+<li>Fixed ORCID icon hyperlinks in PDF certificates using academicons package
+<ul><li>Replaced complex tikz/svg implementation with simple <code>\aiOrcid</code> from academicons</li>
+<li>Moved <code>\usepackage{hyperref}</code> to load after other packages to avoid conflicts</li>
+<li>ORCID icons are now clickable links that work reliably across PDF viewers</li>
+</ul></li>
+<li>Fixed <code><a href="../reference/latex_summary_of_metadata.html">latex_summary_of_metadata()</a></code> and <code><a href="../reference/latex_summary_of_manifest.html">latex_summary_of_manifest()</a></code> to handle NULL/empty fields</li>
+<li>Fixed <code><a href="../reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> to call correct function (<code><a href="../reference/get_zenodo_id.html">get_zenodo_id()</a></code>)</li>
+<li>
+<strong>Critical fix</strong>: Fixed <code><a href="../reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> to properly set alternate identifiers per Zenodo curation policy
+<ul><li>Certificate ID now correctly added as <strong>alternate identifiers</strong> (not related identifiers)</li>
+<li>Two alternate identifier entries as required by policy:
+<ul><li>URL schema: <code>http://cdchck.science/register/certs/&lt;CERT ID&gt;</code>
+</li>
+<li>Other schema: <code>cdchck.science/register/certs/&lt;CERT ID&gt;</code> (without protocol)</li>
+</ul></li>
+<li>Sets <code>metadata$alternate_identifiers</code> directly with proper structure</li>
+<li>Related identifiers now only include paper (reviews) and repository (isSupplementedBy)</li>
+<li>Paper DOI uses scheme=“doi” and relation_type=“reviews”</li>
+<li>Repository URL uses scheme=“url” and relation_type=“issupplementedby”</li>
+</ul></li>
+<li>
+<strong>Code quality</strong>: Refactored DOI placeholder detection to eliminate code duplication
+<ul><li>Created internal <code>is_doi_placeholder()</code> helper function</li>
+<li>Now used by both <code><a href="../reference/is_placeholder_certificate.html">is_placeholder_certificate()</a></code> and <code><a href="../reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code>
+</li>
+<li>Centralized placeholder detection logic for easier maintenance</li>
+</ul></li>
+<li>
+<strong>Code quality</strong>: Fixed R CMD check warnings
+<ul><li>Added <code><a href="https://rdrr.io/r/utils/globalVariables.html" class="external-link">utils::globalVariables()</a></code> declaration for NSE variables used in dplyr/data.table operations</li>
+<li>Fixed incorrect parameter name in <code><a href="../reference/update_certificate_from_github.html">update_certificate_from_github()</a></code> call (state vs issue_state)</li>
+<li>Resolved all “no visible binding for global variable” warnings</li>
+</ul></li>
+<li>
+<strong>Code quality</strong>: Reorganized package structure for better maintainability
+<ul><li>Split monolithic R/codecheck.R (2365 lines) into 7 focused files:
+<ul><li>R/workspace.R (73 lines): Workspace creation and initialization</li>
+<li>R/manifest.R (74 lines): File operations and manifest handling</li>
+<li>R/latex.R (177 lines): LaTeX rendering utilities</li>
+<li>R/zenodo.R (530 lines): Zenodo integration</li>
+<li>R/lifecycle.R (238 lines): Lifecycle Journal integration</li>
+<li>R/validation.R (1103 lines): Validation functions</li>
+<li>R/github.R (162 lines): GitHub integration</li>
+</ul></li>
+<li>All roxygen documentation, imports, and exports preserved</li>
+<li>All 604 tests pass after refactoring</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="enhancements-0-22-0">Enhancements<a class="anchor" aria-label="anchor" href="#enhancements-0-22-0"></a></h3>
+<ul><li>
+<strong>Refactored Zenodo certificate upload</strong>: <code><a href="../reference/upload_zenodo_certificate.html">set_zenodo_certificate()</a></code> renamed to <code><a href="../reference/upload_zenodo_certificate.html">upload_zenodo_certificate()</a></code>
+<ul><li>
+<strong>New feature</strong>: Can now upload additional files alongside the certificate via <code>additional_files</code> parameter</li>
+<li>
+<strong>New feature</strong>: Automatically uploads certificate source file (.Rmd or .qmd) by default
+<ul><li>Detects source file by looking for same base name as certificate PDF with .Rmd or .qmd extension</li>
+<li>Tries .Rmd first, then .qmd if .Rmd not found (supports both R Markdown and Quarto)</li>
+<li>Can be disabled with <code>upload_source = FALSE</code> parameter</li>
+<li>Provides informative messages when source file is found/not found</li>
+<li>
+<strong>Smart source file replacement</strong>: Checks for existing source files on Zenodo record
+<ul><li>Prompts user before deleting existing .Rmd or .qmd files (when warn=TRUE)</li>
+<li>Auto-deletes existing source files when warn=FALSE</li>
+<li>Handles multiple existing source files (deletes all before uploading new one)</li>
+<li>Case-insensitive detection (.Rmd, .rmd, .qmd, .QMD all detected)</li>
+</ul></li>
+</ul></li>
+<li>Certificate is always uploaded first to ensure it becomes the preview file for the Zenodo record</li>
+<li>Source file uploaded second (if found and enabled), followed by any additional files</li>
+<li>
+<code><a href="../reference/upload_zenodo_certificate.html">set_zenodo_certificate()</a></code> retained as an alias for backward compatibility</li>
+<li>Returns list with certificate result, source result, and additional_files results</li>
+<li>
+<strong>Improved API</strong>: Parameter renamed from <code>zen</code> to <code>zenodo</code> for clarity</li>
+<li>
+<strong>Flexible record input</strong>: Now accepts either a record ID (string/numeric) or a Zenodo record object</li>
+<li>When a record object is provided, skips unnecessary API fetch for better performance</li>
+</ul></li>
+<li>
+<strong>Smart certificate upload</strong>: <code><a href="../reference/upload_zenodo_certificate.html">upload_zenodo_certificate()</a></code> checks for existing certificate files before uploading
+<ul><li>Automatically detects existing PDF files on Zenodo record</li>
+<li>Prompts user whether to delete existing files and upload new one, or abort operation</li>
+<li>New warn parameter (default TRUE) for interactive prompting; set FALSE for automated/non-interactive contexts</li>
+<li>Shows file details (name, size) before deletion</li>
+<li>Handles multiple PDF files and provides clear feedback during deletion/upload</li>
+<li>Comprehensive error handling with graceful degradation</li>
+<li>Comprehensive test suite with 52 tests covering all scenarios including source file upload and replacement</li>
+</ul></li>
+<li>
+<strong>Automatic YAML updating</strong>: <code><a href="../reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> now automatically updates codecheck.yml with Zenodo DOI
+<ul><li>When creating a new Zenodo record, automatically updates the report field in codecheck.yml</li>
+<li>Detects empty or placeholder values (FIXME, TODO, placeholder, XXXXX, etc.) and updates automatically</li>
+<li>For non-placeholder values, asks user confirmation before overwriting (when warn=TRUE)</li>
+<li>Handles NULL report field gracefully</li>
+<li>Preserves all other fields in codecheck.yml during update</li>
+<li>New yml_file parameter allows specifying alternate YAML file location</li>
+<li>Comprehensive test suite with 31 tests using mocked Zenodo API</li>
+</ul></li>
+<li>
+<strong>Automatic CODECHECK community submission</strong>: <code><a href="../reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> now automatically submits new records to the CODECHECK community
+<ul><li>Newly created Zenodo records are automatically submitted to <a href="https://zenodo.org/communities/codecheck/" class="external-link uri">https://zenodo.org/communities/codecheck/</a>
+</li>
+<li>Uses zen4R’s <code>createReviewRequest()</code> and <code>submitRecordForReview()</code> methods</li>
+<li>Record will be added to the community after publication</li>
+<li>Graceful error handling if community submission fails - provides warning with manual instructions</li>
+<li>Ensures all CODECHECK certificates are discoverable in the central community</li>
+</ul></li>
+<li>
+<strong>Zenodo curation policy compliance</strong>: <code><a href="../reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> now fully complies with CODECHECK Zenodo community curation policy
+<ul><li>Publisher set to “CODECHECK Community on Zenodo” (was “CODECHECK”)</li>
+<li>Resource type set to “publication-report” (was “publication-preprint”)</li>
+<li>Description includes certificate summary as required by policy</li>
+<li>Adds related identifier for original paper with “reviews” relation (scheme=“doi”, relation_type=“reviews”, resource_type=“publication-article”)</li>
+<li>Adds related identifier for code repository with “isSupplementedBy” relation (scheme=“url”, relation_type=“issupplementedby”, resource_type=auto-detected)</li>
+<li>Adds <strong>two alternate identifiers</strong> for certificate ID (URL and Other schemas) - correctly uses alternate_identifiers field per curation policy</li>
+<li>
+<strong>Smart repository type detection</strong>: Automatically detects if repository is software (GitHub, GitLab, Codeberg, etc.) or dataset (DataCite DOI)</li>
+<li>
+<strong>Configurable resource types</strong>: New <code>resource_types</code> parameter allows overriding defaults via named list (paper, repository)</li>
+<li>Prints confidence level messages for low/medium confidence detections to allow user verification</li>
+<li>Validates required fields (certificate ID, warns for missing summary)</li>
+<li>Handles NULL/empty repository gracefully</li>
+<li>Extracts clean DOI from doi.org URLs</li>
+<li>Comprehensive test suite with 38 tests including auto-detection and override scenarios</li>
+</ul></li>
+<li>Zenodo functions now load metadata from codecheck.yml by default</li>
+<li>DOI validation is now platform-agnostic (Zenodo, OSF, ResearchEquals, etc.)</li>
+<li>Removed pifont package dependency; now uses UTF-8 emoji ⚠ for warnings</li>
+<li>Enhanced error messages with clearer guidance</li>
+<li>Added ~230 new tests across all features</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.21.0" id="codecheck-0210">codecheck 0.21.0<a class="anchor" aria-label="anchor" href="#codecheck-0210"></a></h2>
+<ul><li>Added pkgdown configuration and workflow for documentation site</li>
+<li>Added CLAUDE.md with comprehensive guidance for AI-assisted development</li>
+<li>Fixed typo in <code><a href="../reference/get_abstract_text_crossref.html">get_abstract_text_crossref()</a></code> (<code>referenc</code> → <code>reference</code>)</li>
+<li>Fixed test file error handling for missing config files</li>
+<li>Fixed variable scoping issues in tinytest suite</li>
+<li>Added launch pad link to documentation</li>
+<li>Added clarifying comments in core functions</li>
+<li>
+<strong>Bug fix</strong>: Fixed <code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> repository URL validation - now correctly calls <code>http_error()</code> on response objects instead of URL strings</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.20.0" id="codecheck-0200">codecheck 0.20.0<a class="anchor" aria-label="anchor" href="#codecheck-0200"></a></h2>
+<ul><li>Renamed fields in register output for consistency</li>
+<li>Updated footer with improved contact information</li>
+<li>Removed individual maintainer references from footer</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.19.0" id="codecheck-0190">codecheck 0.19.0<a class="anchor" aria-label="anchor" href="#codecheck-0190"></a></h2>
+<ul><li>Fixed namespace issues</li>
+<li>Added support for specifying from-to range when rendering register</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.18.0" id="codecheck-0180">codecheck 0.18.0<a class="anchor" aria-label="anchor" href="#codecheck-0180"></a></h2>
+<ul><li>Added validation of certificate identifier format in <code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code>
+</li>
+<li>Ensures certificate IDs follow the NNNN-NNN pattern (e.g., “2024-001”)</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.17.0" id="codecheck-0170">codecheck 0.17.0<a class="anchor" aria-label="anchor" href="#codecheck-0170"></a></h2>
+<ul><li>Added support for certificate download from ResearchEquals platform</li>
+<li>Extended <code><a href="../reference/get_cert_link.html">get_cert_link()</a></code> to handle ResearchEquals DOIs</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.16.0" id="codecheck-0160">codecheck 0.16.0<a class="anchor" aria-label="anchor" href="#codecheck-0160"></a></h2>
+<ul><li>Added support for sub-paths within GitHub repositories to access codecheck.yml</li>
+<li>Enables accessing codecheck.yml files in subdirectories using <code>github::org/repo|subpath</code> syntax</li>
+<li>Updated check template</li>
+<li>Added TL;DR section to README for template usage</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.15.0" id="codecheck-0150">codecheck 0.15.0<a class="anchor" aria-label="anchor" href="#codecheck-0150"></a></h2>
+<ul><li>Added handling for PDF import in template certificate</li>
+<li>Improved certificate template generation</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.14.0" id="codecheck-0140">codecheck 0.14.0<a class="anchor" aria-label="anchor" href="#codecheck-0140"></a></h2>
+<ul><li>Added TU Delft Data Champion Centre (DCC) as venue</li>
+<li>Added eLife journal as venue</li>
+<li>Removed unused venue entries</li>
+<li>Fixed Zenodo hyperlinks in register output</li>
+<li>Hardened code for missing ORCIDs in codechecker field</li>
+<li>Added venue hyperlinks to register pages</li>
+<li>Fixed issue with missing codechecks column</li>
+<li>Reordered fields in the UI for better usability</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.12.0" id="codecheck-0120">codecheck 0.12.0<a class="anchor" aria-label="anchor" href="#codecheck-0120"></a></h2>
+<ul><li>Added support for retrieving codecheck.yml files from Zenodo records</li>
+<li>New repository specification: <code>zenodo::1234567</code> and <code>zenodo-sandbox::1234567</code>
+</li>
+<li>Fixed various warnings and notes from R CMD check</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.6" id="codecheck-0116">codecheck 0.11.6<a class="anchor" aria-label="anchor" href="#codecheck-0116"></a></h2>
+<ul><li>Fixed JSON output to not include markdown hyperlinks</li>
+<li>Added tests for rendering functions</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.5" id="codecheck-0115">codecheck 0.11.5<a class="anchor" aria-label="anchor" href="#codecheck-0115"></a></h2>
+<ul><li>Fixed imports to reflect API changes in zen4R package</li>
+<li>Added templates for the codecheck report</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.4" id="codecheck-0114">codecheck 0.11.4<a class="anchor" aria-label="anchor" href="#codecheck-0114"></a></h2>
+<ul><li>Replaced custom <code>url_exists()</code> with <code><a href="https://httr.r-lib.org/reference/http_error.html" class="external-link">httr::http_error()</a></code>
+</li>
+<li>Improved URL validation</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.3" id="codecheck-0113">codecheck 0.11.3<a class="anchor" aria-label="anchor" href="#codecheck-0113"></a></h2>
+<ul><li>Added missing import in DESCRIPTION</li>
+<li>Added logging of cache usage for check and render operations</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.2" id="codecheck-0112">codecheck 0.11.2<a class="anchor" aria-label="anchor" href="#codecheck-0112"></a></h2>
+<ul><li>Fixed codechecker hyperlink generation when ORCID ID is missing</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.1" id="codecheck-0111">codecheck 0.11.1<a class="anchor" aria-label="anchor" href="#codecheck-0111"></a></h2>
+<ul><li>Fixed certificate pages that have no certificate preview available</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.0" id="codecheck-0110">codecheck 0.11.0<a class="anchor" aria-label="anchor" href="#codecheck-0110"></a></h2>
+<ul><li>Added generation of individual certificate HTML pages</li>
+<li>New function <code><a href="../reference/create_cert_md.html">create_cert_md()</a></code> for certificate markdown generation</li>
+<li>Added abstract retrieval from CrossRef and OpenAlex APIs</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.10.1" id="codecheck-0101">codecheck 0.10.1<a class="anchor" aria-label="anchor" href="#codecheck-0101"></a></h2>
+<ul><li>Fixed venue type page hyperlinks</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.10.0" id="codecheck-0100">codecheck 0.10.0<a class="anchor" aria-label="anchor" href="#codecheck-0100"></a></h2>
+<ul><li>Fixed URL links in venues and venue type tables</li>
+<li>Made non-register venue tables use plural naming</li>
+<li>Improved hyperlink consistency across all outputs</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.0" id="codecheck-090--080">codecheck 0.9.0 / 0.8.0<a class="anchor" aria-label="anchor" href="#codecheck-090--080"></a></h2>
+<ul><li>Replaced repository column in register with platform-prefixed specifications</li>
+<li>Added support for multiple repository platforms (GitHub, OSF, GitLab, Zenodo)</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.0" id="codecheck-070">codecheck 0.7.0<a class="anchor" aria-label="anchor" href="#codecheck-070"></a></h2>
+<ul><li>Added Amsterdam UMC as venue</li>
+<li>Added codecheckers extra text section</li>
+<li>Improved venue management</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.0" id="codecheck-060">codecheck 0.6.0<a class="anchor" aria-label="anchor" href="#codecheck-060"></a></h2>
+<ul><li>Split register by type (journal, conference, community, institution)</li>
+<li>Created filtered CSV files by venue and codechecker</li>
+<li>Refactored register rendering architecture</li>
+<li>Updated column width configurations</li>
+<li>Moved hyperlinks configuration to config.R</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.0" id="codecheck-050">codecheck 0.5.0<a class="anchor" aria-label="anchor" href="#codecheck-050"></a></h2>
+<ul><li>Initial support for multiple output formats (HTML, JSON, Markdown)</li>
+<li>Added JSON register output</li>
+<li>Improved register table rendering</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="codecheck-040">codecheck 0.4.0<a class="anchor" aria-label="anchor" href="#codecheck-040"></a></h2>
+<ul><li>Enhanced register filtering capabilities</li>
+<li>Added codechecker-specific register views</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="codecheck-030">codecheck 0.3.0<a class="anchor" aria-label="anchor" href="#codecheck-030"></a></h2>
+<ul><li>Improved register preprocessing</li>
+<li>Added remote configuration retrieval</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="codecheck-020">codecheck 0.2.0<a class="anchor" aria-label="anchor" href="#codecheck-020"></a></h2>
+<ul><li>Added register rendering functionality</li>
+<li>Support for multiple venues and codecheckers</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0" id="codecheck-010">codecheck 0.1.0<a class="anchor" aria-label="anchor" href="#codecheck-010"></a></h2>
+<ul><li>Initial release</li>
+<li>Basic CODECHECK workspace creation</li>
+<li>Certificate generation support</li>
+<li>Integration with Zenodo for certificate uploads</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.0.90" id="codecheck-00090xx">codecheck 0.0.0.90xx<a class="anchor" aria-label="anchor" href="#codecheck-00090xx"></a></h2>
 <ul><li>Added tests using <code>tinytest</code>
 </li>
-<li>Added a <code>NEWS.md</code> file to track changes to the package.</li>
+<li>Added a <code>NEWS.md</code> file to track changes to the package</li>
 </ul></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.20.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@
                         <h4 data-toc-skip class="author">Stephen J Eglen
 and Daniel Nüst</h4>
             
-            <h4 data-toc-skip class="date">2025-11-04</h4>
+            <h4 data-toc-skip class="date">2025-11-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_overview.Rmd" class="external-link"><code>vignettes/codecheck_overview.Rmd</code></a></small>
       <div class="d-none name"><code>codecheck_overview.Rmd</code></div>
@@ -77,7 +77,8 @@ and Daniel Nüst</h4>
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"codecheckers/codecheck"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="pre-requisites-for-being-a-codechecker">Pre-requisites for being a CODECHECKER&gt;<a class="anchor" aria-label="anchor" href="#pre-requisites-for-being-a-codechecker"></a>
+<h2 id="pre-requisites-for-being-a-codechecker-using-the-codecheck-r-package">Pre-requisites for being a CODECHECKER using the codecheck R
+package<a class="anchor" aria-label="anchor" href="#pre-requisites-for-being-a-codechecker-using-the-codecheck-r-package"></a>
 </h2>
 <ol style="list-style-type: decimal">
 <li>Member of the GitHub codecheckers community.</li>
@@ -86,23 +87,34 @@ and Daniel Nüst</h4>
 </ol>
 </div>
 <div class="section level2">
-<h2 id="clone-the-project">Clone the project<a class="anchor" aria-label="anchor" href="#clone-the-project"></a>
+<h2 id="clarify-used-workflow">Clarify used workflow<a class="anchor" aria-label="anchor" href="#clarify-used-workflow"></a>
 </h2>
-<p>Clone the project that you wish to check into
-<code>codecheckers/</code> organisation.</p>
+<p>Check with your editor which of the <a href="https://codecheck.org.uk/workflows/" class="external-link">CODECHECK workflows</a>
+applies to your check. The workflow determines some of the steps below
+and guides you through the process. The remainder of this document
+should be seen as a minimalistic guide to get you started.</p>
 </div>
 <div class="section level2">
-<h2 id="get-a-certificate-number">Get a certificate number<a class="anchor" aria-label="anchor" href="#get-a-certificate-number"></a>
+<h2 id="visit-corresponding-issue-or-get-a-certificate-number">Visit corresponding issue or get a certificate number<a class="anchor" aria-label="anchor" href="#visit-corresponding-issue-or-get-a-certificate-number"></a>
 </h2>
-<p>Note: Visit the <strong>CODECHECK Launch Pad</strong> at <a href="https://codecheck.org.uk/launch-pad/" class="external-link uri">https://codecheck.org.uk/launch-pad/</a> to easily open a
+<p>Go the the corresponding issue on the <a href="https://github.com/codecheckers/register/issues/" class="external-link">CODECHECK
+register</a> to find all relevant information about the paper to
+reproduce. If there is none, continue:</p>
+<p>Visit the <strong>CODECHECK Launch Pad</strong> at <a href="https://codecheck.org.uk/launch-pad/" class="external-link uri">https://codecheck.org.uk/launch-pad/</a> to easily open a
 new issue for your check.</p>
-<p>The manual way: Go onto <a href="https://github.com/codecheckers/register" class="external-link uri">https://github.com/codecheckers/register</a> and add an
+<p>Alternatively, do it the manual way: Go to <a href="https://github.com/codecheckers/register" class="external-link uri">https://github.com/codecheckers/register</a> and add an
 issue for the new paper to reproduce. Check the other issues for the
 highest used certificate number, and claim the next one by adding it to
 an issue comment and adding the tag <a href="https://github.com/codecheckers/register/issues?q=is%3Aissue+is%3Aopen+label%3A%22id+assigned%22" class="external-link">“id
 assigned”</a>. Certificate numbers are simply YYYY-NNN where YYYY is the
-date and NNN is a 3 digit number that starts at 001 and increases by 1
-each time.</p>
+current year and NNN is a 3 digit number that starts at 001 and
+increases by 1 with each certificate.</p>
+</div>
+<div class="section level2">
+<h2 id="clone-the-workflow-project">Clone the workflow project<a class="anchor" aria-label="anchor" href="#clone-the-workflow-project"></a>
+</h2>
+<p>Clone the project that you wish to check into <a href="https://github.com/codecheckers/" class="external-link"><code>codecheckers</code>
+organisation</a> on GitHub or <a href="https://gitlab.com/cdchck" class="external-link"><code>cdchck</code></a> on GitLab.</p>
 </div>
 <div class="section level2">
 <h2 id="write-a-codecheck-certificate">Write a codecheck certificate<a class="anchor" aria-label="anchor" href="#write-a-codecheck-certificate"></a>
@@ -137,15 +149,21 @@ you use the <code>.Rmd</code> file.</li>
 <code>codecheck.pdf</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="completing-the-metadata-file-codecheck-yml">Completing the metadata file <em>codecheck.yml</em><a class="anchor" aria-label="anchor" href="#completing-the-metadata-file-codecheck-yml"></a>
+<h2 id="completing-the-metadata-file-codecheck-yml">Completing the metadata file <code>codecheck.yml</code><a class="anchor" aria-label="anchor" href="#completing-the-metadata-file-codecheck-yml"></a>
 </h2>
-<p>The <code>codecheck.yml</code> file contains all the relevant
-metadata for the certificate. Simply edit it to your needs, bearing in
-mind the specification comments at <a href="https://codecheck.org.uk/spec/config/latest" class="external-link uri">https://codecheck.org.uk/spec/config/latest</a>.</p>
+<p>The <code>codecheck.yml</code> eventually contains all the relevant
+metadata for the certificate. The R Markdown template includes diverse
+validations and checks for this metadata file. If you can compile the
+certificate document without warnings then you can be sure that the
+metadata file is fine. Simply edit it to your needs, bearing in mind the
+specification comments at <a href="https://codecheck.org.uk/spec/config/latest" class="external-link uri">https://codecheck.org.uk/spec/config/latest</a>.</p>
 </div>
 <div class="section level2">
-<h2 id="submitting-the-certificate-to-zenodo">Submitting the certificate to Zenodo<a class="anchor" aria-label="anchor" href="#submitting-the-certificate-to-zenodo"></a>
+<h2 id="publish-certificate">Publish certificate<a class="anchor" aria-label="anchor" href="#publish-certificate"></a>
 </h2>
+<div class="section level3">
+<h3 id="submitting-the-certificate-to-the-codecheck-community-on-zenodo">Submitting the certificate to the CODECHECK community on Zenodo<a class="anchor" aria-label="anchor" href="#submitting-the-certificate-to-the-codecheck-community-on-zenodo"></a>
+</h3>
 <p>There is no requirement to use the following code to generate the
 record on Zenodo – if you prefer to do it manually, that is fine.
 However, we encourage codecheckers to use this API as it will save time
@@ -163,19 +181,39 @@ you can create a new empty record on Zenodo using
 <code>codecheck.yml</code>. The rest of the metadata can remain as
 before.</p>
 <p>Once you are ready, upload the certificate itself using the function
-<code><a href="../reference/set_zenodo_certificate.html">set_zenodo_certificate()</a></code>. Whilst the Zenodo record is in
+<code><a href="../reference/upload_zenodo_certificate.html">upload_zenodo_certificate()</a></code> (previously
+<code><a href="../reference/upload_zenodo_certificate.html">set_zenodo_certificate()</a></code>). The certificate is always
+uploaded first to ensure it becomes the preview file. You can also
+upload additional files (e.g., data, code) using the
+<code>additional_files</code> parameter. Whilst the Zenodo record is in
 draft form, you can delete files from the website, and then re-add them
 using the API.</p>
 <p>Once you have uploaded the certificate and checked the metadata, you
-can then publish the record.</p>
+can then submit the record to the CODECHECK community on Zenodo to
+retrieve feedback from a CODECHECK editor before publishing the
+certiciate.</p>
+</div>
+<div class="section level3">
+<h3 id="publish-on-osf-or-researchequals">Publish on OSF or ResearchEquals<a class="anchor" aria-label="anchor" href="#publish-on-osf-or-researchequals"></a>
+</h3>
+<p>CODECHECK supports multiple repositories to publish certificates. If
+you are unfamiliar with Zenodo or prefer to user another platform, you
+can also publish your certificate on <a href="https://osf.io/" class="external-link">OSF</a>
+or <a href="https://researchequals.com/" class="external-link">ResearchEquals</a>. Simply put
+the respective DOI in the <code>report</code> field of the
+<code>codecheck.yml</code> file and use another way of communication to
+get feedback from the CODECHECK editor before publishing.</p>
+</div>
 </div>
 <div class="section level2">
-<h2 id="archive-your-repo-onto-zenodo-so-that-we-have-a-backup">Archive your repo onto zenodo so that we have a backup<a class="anchor" aria-label="anchor" href="#archive-your-repo-onto-zenodo-so-that-we-have-a-backup"></a>
+<h2 id="final-steps">Final steps<a class="anchor" aria-label="anchor" href="#final-steps"></a>
 </h2>
-</div>
-<div class="section level2">
-<h2 id="close-issue-on-register-repo-and-update-register-html-pages-">close issue on register repo and update register html pages.<a class="anchor" aria-label="anchor" href="#close-issue-on-register-repo-and-update-register-html-pages-"></a>
-</h2>
+<p>After the publication, the CODECHECK editor will handle the update of
+the register and the closing of the check’s issue on the register
+repository. Final steps may include setting the code repository as
+“Archived” (read-only) or publishing further data and code on Zenodo or
+other repositories, updating the certificate based on author feedback,
+and more.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

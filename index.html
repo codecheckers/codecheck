@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.20.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,23 +72,30 @@
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
 <p>See the <a href="https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_overview.Rmd" class="external-link">main vignette</a>.</p>
-<p>tl;dr: Go the the directory where you want to create a CODECHECK workspace, then run</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="http://codecheck.org.uk/codecheck/">"codecheck"</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/create_codecheck_files.html">create_codecheck_files</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
 </h2>
-<p>The package uses <a href="https://cran.r-project.org/package=tinytest" class="external-link"><code>tinytest</code></a> for tests. Run <code>test_all("/path/to/package")</code> to run all tests interactively. Even better, run the tests in a fresh install/temporary directory using</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>The package uses <a href="https://cran.r-project.org/package=tinytest" class="external-link"><code>tinytest</code></a> for tests. Run <code>test_all("/path/to/package")</code> to run all tests interactively. Even better, run the tests in a fresh install and temporary directory using</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># assuming . is the package path</span></span>
-<span><span class="fu">build_install_test</span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/markvanderloo/tinytest" class="external-link">tinytest</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/build_install_test.html" class="external-link">build_install_test</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="contribute">Contribute<a class="anchor" aria-label="anchor" href="#contribute"></a>
+</h2>
+<p><em>All contributions are welcome!</em> See <a href="CONTRIBUTING.html">CONTRIBUTING.md</a> for details.</p>
+</div>
+<div class="section level2">
+<h2 id="code-of-conduct">Code of Conduct<a class="anchor" aria-label="anchor" href="#code-of-conduct"></a>
+</h2>
+<p>Please note that the codecheck project is released with a <a href="http://codecheck.org.uk/codecheck/CODE_OF_CONDUCT.html">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
-<p>Copyright 2024 S. Eglen &amp; D. Nüst. The <code>codecheck</code> package is published under the MIT license, see file <code>LICENSE</code>.</p>
+<p>Copyright 2025 S. Eglen &amp; D. Nüst. The <code>codecheck</code> package is published under the MIT license, see file <code>LICENSE</code>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -101,12 +108,18 @@
 <div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>
-<a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
-</li>
+<li><a href="LICENSE.html">Full license</a></li>
+<li><small><a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a></small></li>
 </ul>
 </div>
 
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
+<li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
+</ul>
+</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.20.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,6 +61,11 @@
 <span><span class="co"># Or build, install, and test in a fresh environment</span></span>
 <span><span class="fu">tinytest</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/build_install_test.html" class="external-link">build_install_test</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
 <p>The package uses GitHub Actions for CI/CD. Check <code>.github/workflows/R-CMD-check.yaml</code> for the automated testing setup.</p>
+<div class="section level3">
+<h3 id="changelog-management">Changelog Management<a class="anchor" aria-label="anchor" href="#changelog-management"></a></h3>
+<p><strong>IMPORTANT</strong>: When making changes to the package, always update <code>NEWS.md</code> with: - A brief description of the change - For new features, document the user-facing functionality - For bug fixes, reference the issue or describe the problem solved - For breaking changes, clearly mark them as such</p>
+<p>When bumping the version in <code>DESCRIPTION</code>, add a new section to <code>NEWS.md</code> with the version number and date. Follow the existing format with <code># codecheck X.Y.Z</code> headers.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="core-architecture">Core Architecture<a class="anchor" aria-label="anchor" href="#core-architecture"></a></h2>
@@ -76,14 +81,42 @@
 <li>
 <code><a href="reference/copy_manifest_files.html">copy_manifest_files()</a></code> - Copy output files specified in the manifest to the codecheck folder</li>
 <li>
-<code><a href="reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> - Validate that a codecheck.yml file meets the specification (R/configuration.R:196)</li>
+<code><a href="reference/validate_yaml_syntax.html">validate_yaml_syntax()</a></code> - Validate YAML syntax before parsing; checks if file is valid YAML; integrated into certificate template to prevent compilation with invalid YAML (R/configuration.R:184)</li>
+<li>
+<code><a href="reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> - Validate that a codecheck.yml file meets the specification (R/configuration.R:348)</li>
+<li>
+<code><a href="reference/complete_codecheck_yml.html">complete_codecheck_yml()</a></code> - Analyze and complete codecheck.yml with missing fields; validates against specification; can add placeholders for mandatory and optional fields</li>
+<li>
+<code><a href="reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> - Validate metadata against CrossRef; checks title, authors, and ORCID consistency; integrated into certificate template</li>
+<li>
+<code><a href="reference/get_certificate_from_github_issue.html">get_certificate_from_github_issue()</a></code> - Retrieve certificate identifier from GitHub issues by matching author names; searches codecheckers/register repository; supports open/closed/all issues (R/configuration.R:229)</li>
+<li>
+<code><a href="reference/is_placeholder_certificate.html">is_placeholder_certificate()</a></code> - Check if certificate ID is a placeholder; detects common placeholder patterns and template-like text</li>
+<li>
+<code><a href="reference/update_certificate_from_github.html">update_certificate_from_github()</a></code> - Automatically update certificate ID from GitHub; wraps <code><a href="reference/get_certificate_from_github_issue.html">get_certificate_from_github_issue()</a></code> with placeholder detection and file updating; integrated into certificate template</li>
+</ul><p><strong>Lifecycle Journal automation</strong>: Functions for auto-populating metadata from Lifecycle Journal articles:</p>
+<ul><li>
+<code><a href="reference/get_lifecycle_metadata.html">get_lifecycle_metadata()</a></code> - Retrieve article metadata from CrossRef API using submission ID or DOI (prefix: <code>10.71240/lcyc.</code>)</li>
+<li>
+<code><a href="reference/update_codecheck_yml_from_lifecycle.html">update_codecheck_yml_from_lifecycle()</a></code> - Update local <code>codecheck.yml</code> with metadata; shows diff before applying changes; supports preview mode and selective field updates</li>
+</ul><p><strong>External validation</strong>: Ensure consistency with published paper metadata and ORCID records:</p>
+<ul><li>
+<code><a href="reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> - Validates paper metadata against CrossRef API; compares title and author information with CrossRef data</li>
+<li>
+<code><a href="reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata</li>
+<li>
+<code><a href="reference/validate_contents_references.html">validate_contents_references()</a></code> - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering</li>
 </ul><p><strong>Zenodo integration</strong>: Functions for uploading certificates to Zenodo:</p>
 <ul><li>
-<code><a href="reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> - Create or retrieve a Zenodo record</li>
+<code><a href="reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> - Create or retrieve a Zenodo record; defaults to loading metadata from codecheck.yml in current directory</li>
 <li>
-<code><a href="reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> - Upload metadata from codecheck.yml</li>
+<code><a href="reference/get_zenodo_record.html">get_zenodo_record()</a></code> - Retrieve existing Zenodo record; defaults to loading metadata from codecheck.yml in current directory</li>
 <li>
-<code><a href="reference/set_zenodo_certificate.html">set_zenodo_certificate()</a></code> - Upload the PDF certificate</li>
+<code><a href="reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> - Upload metadata from codecheck.yml; defaults to loading from current directory</li>
+<li>
+<code><a href="reference/upload_zenodo_certificate.html">set_zenodo_certificate()</a></code> - Upload the PDF certificate</li>
+<li>
+<code><a href="reference/get_zenodo_id.html">get_zenodo_id()</a></code> - Extract Zenodo record number from DOI URL</li>
 </ul></div>
 <div class="section level3">
 <h3 id="id_2-register-management-rregisterr">2. Register Management (R/register.R)<a class="anchor" aria-label="anchor" href="#id_2-register-management-rregisterr"></a></h3>
@@ -196,10 +229,11 @@
 <li>
 <strong>Configuration updates</strong>: Update <code>inst/extdata/config.R</code> for changes in URL patterns, table structures, etc.</li>
 <li>
-<strong>Testing</strong>: Use <code>tinytest</code> for unit tests located in <code>inst/extdata/tests/</code>
-</li>
+<strong>Testing</strong>: Use <code>tinytest</code> for unit tests located in <code>inst/tinytest/</code>. Run tests with <code>tinytest::test_package("codecheck")</code> from the installed package or <code>tinytest::test_all(".")</code> from source.</li>
 <li>
 <strong>Documentation</strong>: Use <code>roxygen2</code> for function documentation</li>
+<li>
+<strong>Changelog</strong>: Always update <code>NEWS.md</code> when making changes. Each version should have its own section documenting new features, bug fixes, and breaking changes.</li>
 </ul></div>
 </div>
 

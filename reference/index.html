@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.20.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -185,6 +185,12 @@
 
         </dt>
         <dd>Return the metadata for the codecheck project in root folder of project</dd>
+      </dl><dl><dt>
+
+          <code><a href="complete_codecheck_yml.html">complete_codecheck_yml()</a></code>
+
+        </dt>
+        <dd>Analyze and complete codecheck.yml with missing fields</dd>
       </dl><dl><dt>
 
           <code><a href="convert_cert_pdf_to_png.html">convert_cert_pdf_to_png()</a></code>
@@ -415,6 +421,12 @@
         <dd>Retrieves the download link for a certificate file from Zenodo, OSF, or ResearchEquals.</dd>
       </dl><dl><dt>
 
+          <code><a href="get_certificate_from_github_issue.html">get_certificate_from_github_issue()</a></code>
+
+        </dt>
+        <dd>Get certificate identifier from GitHub issues by matching author names</dd>
+      </dl><dl><dt>
+
           <code><a href="get_codecheck_yml.html">get_codecheck_yml()</a></code>
 
         </dt>
@@ -451,10 +463,16 @@
         <dd>Retrieve a codecheck.yml file from a Zenodo record</dd>
       </dl><dl><dt>
 
+          <code><a href="get_lifecycle_metadata.html">get_lifecycle_metadata()</a></code>
+
+        </dt>
+        <dd>Retrieve metadata from Lifecycle Journal</dd>
+      </dl><dl><dt>
+
           <code><a href="get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code>
 
         </dt>
-        <dd>Create a new Zenodo record and return its pre-assigned DOI</dd>
+        <dd>Create or retrieve Zenodo record, submit to CODECHECK community, and update codecheck.yml</dd>
       </dl><dl><dt>
 
           <code><a href="get_osf_cert_link.html">get_osf_cert_link()</a></code>
@@ -485,6 +503,12 @@
 
         </dt>
         <dd>Get the full zenodo record using the record number stored in the metadata.</dd>
+      </dl><dl><dt>
+
+          <code><a href="is_placeholder_certificate.html">is_placeholder_certificate()</a></code>
+
+        </dt>
+        <dd>Check if certificate identifier or DOI is a placeholder</dd>
       </dl><dl><dt>
 
           <code><a href="latex_codecheck_logo.html">latex_codecheck_logo()</a></code>
@@ -589,22 +613,64 @@
         <dd>Set "Title" and "Paper reference" columns and values to the register_table</dd>
       </dl><dl><dt>
 
-          <code><a href="set_zenodo_certificate.html">set_zenodo_certificate()</a></code>
+          <code><a href="update_certificate_from_github.html">update_certificate_from_github()</a></code>
 
         </dt>
-        <dd>Upload the CODECHECK certificate to Zenodo.</dd>
+        <dd>Update certificate ID from GitHub issue</dd>
+      </dl><dl><dt>
+
+          <code><a href="update_codecheck_yml_from_lifecycle.html">update_codecheck_yml_from_lifecycle()</a></code>
+
+        </dt>
+        <dd>Update codecheck.yml with Lifecycle Journal metadata</dd>
+      </dl><dl><dt>
+
+          <code><a href="upload_zenodo_certificate.html">upload_zenodo_certificate()</a></code> <code><a href="upload_zenodo_certificate.html">set_zenodo_certificate()</a></code>
+
+        </dt>
+        <dd>Upload the CODECHECK certificate and additional files to Zenodo.</dd>
       </dl><dl><dt>
 
           <code><a href="upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code>
 
         </dt>
-        <dd>Upload metadata to Zenodod</dd>
+        <dd>Upload metadata to Zenodo</dd>
+      </dl><dl><dt>
+
+          <code><a href="validate_certificate_for_rendering.html">validate_certificate_for_rendering()</a></code>
+
+        </dt>
+        <dd>Validate certificate for rendering with visual warning</dd>
       </dl><dl><dt>
 
           <code><a href="validate_codecheck_yml.html">validate_codecheck_yml()</a></code>
 
         </dt>
         <dd>Validate a CODECHECK configuration</dd>
+      </dl><dl><dt>
+
+          <code><a href="validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code>
+
+        </dt>
+        <dd>Validate codecheck.yml metadata against CrossRef</dd>
+      </dl><dl><dt>
+
+          <code><a href="validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code>
+
+        </dt>
+        <dd>Validate codecheck.yml metadata against ORCID</dd>
+      </dl><dl><dt>
+
+          <code><a href="validate_contents_references.html">validate_contents_references()</a></code>
+
+        </dt>
+        <dd>Validate codecheck.yml metadata against external references</dd>
+      </dl><dl><dt>
+
+          <code><a href="validate_yaml_syntax.html">validate_yaml_syntax()</a></code>
+
+        </dt>
+        <dd>Validate YAML syntax of a codecheck.yml file</dd>
       </dl></div>
   </main></div>
 

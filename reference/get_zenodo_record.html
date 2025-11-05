@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.20.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.22.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Get the full zenodo record using the record number stored in the metadata.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/codecheck.R" class="external-link"><code>R/codecheck.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/zenodo.R" class="external-link"><code>R/zenodo.R</code></a></small>
       <div class="d-none name"><code>get_zenodo_record.Rd</code></div>
     </div>
 
@@ -44,7 +44,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_zenodo_record</span><span class="op">(</span><span class="va">zenodo</span>, <span class="va">metadata</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_zenodo_record</span><span class="op">(</span><span class="va">zenodo</span>, metadata <span class="op">=</span> <span class="fu"><a href="codecheck_metadata.html">codecheck_metadata</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -56,7 +56,8 @@
 
 
 <dt id="arg-metadata">metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
-<dd><p>A codecheck configuration (likely read from a codecheck.yml)</p></dd>
+<dd><p>A codecheck configuration (list). Defaults to loading from
+codecheck.yml in the current working directory using <code>codecheck_metadata(getwd())</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -65,8 +66,9 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Retrieve the Zenodo record, if one exists.
-If no record number is currently  listed in the metadata (i.e. the "FIXME" tag is still there)
+    <p>Retrieve the Zenodo record, if one exists. By default, loads metadata from
+codecheck.yml in the current working directory.
+If no record number is currently listed in the metadata (i.e. the "FIXME" tag is still there)
 then the code returns NULL and an empty record should be created.</p>
     </div>
     <div class="section level2">
