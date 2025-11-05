@@ -2,16 +2,17 @@
 % Please edit documentation in R/codecheck.R
 \name{upload_zenodo_metadata}
 \alias{upload_zenodo_metadata}
-\title{Upload metadata to Zenodod}
+\title{Upload metadata to Zenodo}
 \usage{
-upload_zenodo_metadata(zenodo, myrec, metadata)
+upload_zenodo_metadata(zenodo, myrec, metadata = codecheck_metadata(getwd()))
 }
 \arguments{
 \item{zenodo}{object from zen4R to connect with Zenodo}
 
 \item{myrec}{a Zenodo record object}
 
-\item{metadata}{codecheck metadata, likely loaded from a codecheck.yml file}
+\item{metadata}{codecheck metadata (list). Defaults to loading from
+codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.}
 }
 \value{
 rec -- the updated record.
@@ -20,7 +21,8 @@ rec -- the updated record.
 Upload codecheck metadata to Zenodo.
 }
 \details{
-The contents of codecheck.yml are uploaded to Zenodo using this funciton.
+The contents of codecheck.yml are uploaded to Zenodo using this function.
+By default, loads metadata from codecheck.yml in the current working directory.
 }
 \author{
 Stephen Eglen

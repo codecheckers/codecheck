@@ -26,6 +26,34 @@ root <- find_root("codecheck.yml")
 validate_yaml_syntax(file.path(root, "codecheck.yml"))
 ```
 
+```{r check_certificate_id, eval=TRUE, include=FALSE}
+## Check if certificate identifier is set properly and try to update from GitHub
+## This will check if the certificate is a placeholder and attempt to retrieve
+## the actual certificate ID from GitHub issues matching the author names
+
+# Check if certificate is a placeholder
+yml_path <- file.path(root, "codecheck.yml")
+if (is_placeholder_certificate(yml_path)) {
+  message("CERTIFICATE ID NOT SET")
+
+  # Try to automatically retrieve and update certificate from GitHub
+  result <- update_certificate_from_github(
+    yml_file = yml_path,
+    issue_state = "open",
+    apply_update = FALSE  # Set to TRUE to automatically update
+  )
+
+  if (!is.null(result$certificate) && result$certificate != "") {
+    message("\n✓ Certificate found! To apply the update, run:")
+    message("\n  update_certificate_from_github(apply_update = TRUE)")
+    message("\nOr manually update codecheck.yml with certificate: ", result$certificate)
+  } else {
+    message("\nℹ No matching certificate found in GitHub issues.")
+    message("You may need to manually set the certificate identifier in codecheck.yml")
+  }
+}
+```
+
 ```{r codecheck_logo, echo=FALSE,results='asis'}
 latex_codecheck_logo()
 ```
@@ -48,12 +76,11 @@ manifest_df <- copy_manifest_files(root, metadata,
 ```
 
 ```{r validate_crossref, eval=TRUE, include=FALSE}
-## Validate metadata against CrossRef (strict mode - will fail rendering on mismatch)
+## Validate metadata against CrossRef and ORCID metadata - will fail rendering on mismatch
 ## Set strict = FALSE or remove this chunk if you want to skip validation
-validation_result <- validate_codecheck_yml_crossref(
+validation_result <- validate_contents_references(
   yml_file = file.path(root, "codecheck.yml"),
-  strict = TRUE,
-  check_orcids = TRUE
+  strict = TRUE
 )
 ```
 
@@ -189,5 +216,5 @@ sessionInfo()
 
 ```{r, include=FALSE, eval=FALSE}
 # render this document in RStudio
-rmarkdown::render("codecheck.Rmd", output_format = "pdf_document") 
+rmarkdown::render("codecheck.Rmd", output_format = "pdf_document")
 ```

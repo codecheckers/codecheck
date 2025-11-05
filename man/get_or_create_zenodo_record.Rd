@@ -4,12 +4,17 @@
 \alias{get_or_create_zenodo_record}
 \title{Create a new Zenodo record and return its pre-assigned DOI}
 \usage{
-get_or_create_zenodo_record(zen, metadata, warn = TRUE)
+get_or_create_zenodo_record(
+  zen,
+  metadata = codecheck_metadata(getwd()),
+  warn = TRUE
+)
 }
 \arguments{
 \item{zen}{Object from zen4R to interact with Zenodo}
 
-\item{metadata}{codecheck.yml file}
+\item{metadata}{codecheck.yml metadata (list). Defaults to loading from
+codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.}
 
 \item{warn}{Ask for user input before creating a new record}
 }
@@ -20,7 +25,8 @@ Number of Zenodo record created
 Create a new Zenodo record and return its pre-assigned DOI
 }
 \details{
-Run this only once per new codecheck.
+Run this only once per new codecheck. By default, loads metadata from
+codecheck.yml in the current working directory.
 }
 \author{
 Stephen Eglen

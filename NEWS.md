@@ -1,5 +1,38 @@
 # codecheck 0.22.0
 
+* **New feature**: `get_certificate_from_github_issue()` - Retrieve certificate identifier from GitHub issues
+  - Searches open issues in codecheckers/register repository by matching author names
+  - Extracts certificate ID (YYYY-NNN format) from issue titles
+  - Supports searching open, closed, or all issues
+  - Returns certificate ID, issue number, title, and matched author
+  - Can accept codecheck.yml file path or metadata list as input
+  - Comprehensive test suite in `test_github_certificate_retrieval.R` (6 tests)
+* **New feature**: `is_placeholder_certificate()` - Check if certificate ID is a placeholder
+  - Detects common placeholder patterns ("YYYY-NNN", "0000-000", "9999-999")
+  - Checks for placeholder year prefixes (YYYY, 0000, 9999)
+  - Identifies template-like patterns (FIXME, TODO, template, example)
+  - Can accept file path or metadata list as input
+  - Comprehensive test suite in `test_certificate_placeholder.R` (19 tests)
+* **New feature**: `update_certificate_from_github()` - Automatically update certificate ID from GitHub
+  - Checks if current certificate is a placeholder using `is_placeholder_certificate()`
+  - Searches for matching GitHub issues using `get_certificate_from_github_issue()`
+  - Updates codecheck.yml if unique match found
+  - Provides detailed logging of all steps
+  - Preview mode by default (apply_update = FALSE)
+  - Supports force update for non-placeholder certificates
+  - Safe: only updates with exactly one matching issue
+* **Enhancement**: Certificate template (codecheck.Rmd) now uses `update_certificate_from_github()`
+  - Automatically detects placeholder certificate identifiers
+  - Attempts to retrieve certificate ID from GitHub issues
+  - Shows clear instructions for applying updates
+  - Runs during certificate rendering without stopping the process
+* **Enhancement**: Improved Zenodo integration functions to load metadata from codecheck.yml by default
+  - `get_or_create_zenodo_record()`: Now defaults to `metadata = codecheck_metadata(getwd())`
+  - `get_zenodo_record()`: Now defaults to `metadata = codecheck_metadata(getwd())`
+  - `upload_zenodo_metadata()`: Now defaults to `metadata = codecheck_metadata(getwd())`
+  - `codecheck_metadata()`: Enhanced error handling with clear messages when codecheck.yml is not found
+  - **Bug fix**: Fixed `get_or_create_zenodo_record()` to call `get_zenodo_id()` instead of `get_zenodo_record()`
+  - Added tests for `codecheck_metadata()` error handling (tests 18-19)
 * **New feature**: `validate_yaml_syntax()` - Validate YAML syntax before parsing
   - Checks if a YAML file has valid syntax that can be parsed
   - Provides clear error messages for syntax errors
@@ -17,10 +50,23 @@
   - Retrieves paper metadata from CrossRef API using the paper's DOI
   - Validates title matches between local codecheck.yml and published paper
   - Validates author information (names and ORCIDs) against CrossRef data
-  - Validates codechecker information is present and properly formatted
   - Supports strict mode that throws errors on mismatches (fails certificate rendering)
   - Integrated into certificate template (codecheck.Rmd) for automatic validation during rendering
   - Comprehensive test suite in `test_crossref_validation.R` (13 tests)
+* **New feature**: `validate_codecheck_yml_orcid()` - Validate metadata against ORCID
+  - Queries ORCID API using rorcid package to retrieve person records
+  - Validates author names match their ORCID records
+  - Validates codechecker names match their ORCID records
+  - Validates ORCID identifier format (NNNN-NNNN-NNNN-NNNX)
+  - Supports selective validation of authors and/or codecheckers
+  - Comprehensive test suite in `test_orcid_validation.R` (13 tests)
+* **New feature**: `validate_contents_references()` - Comprehensive validation wrapper
+  - Combines CrossRef and ORCID validations in a single function
+  - Validates paper metadata against CrossRef
+  - Validates all ORCIDs (authors and codecheckers) against ORCID API
+  - Provides unified validation summary
+  - Supports selective execution of each validation type
+  - Strict mode stops certificate rendering on any validation failure
 * **New feature**: Lifecycle Journal automation (addresses #82)
   - `get_lifecycle_metadata()`: Retrieve article metadata from Lifecycle Journal via CrossRef API using submission ID or DOI
   - `update_codecheck_yml_from_lifecycle()`: Auto-populate `codecheck.yml` with paper metadata (title, authors with ORCIDs, DOI reference)

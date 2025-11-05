@@ -37,6 +37,9 @@ copy_codecheck_report_template <- function(target = ".") {
 
 ##' Return the metadata for the codecheck project in root folder of project
 ##'
+##' Loads and parses the codecheck.yml file from the specified directory.
+##' If the file doesn't exist, stops with a clear error message.
+##'
 ##' @title Return the metadata for the codecheck project in root folder of project
 ##' @param root Path to the root folder of the project, defaults to current working directory
 ##' @return A list containing the metadata found in the codecheck.yml file
@@ -44,7 +47,15 @@ copy_codecheck_report_template <- function(target = ".") {
 ##' @importFrom yaml read_yaml
 ##' @export
 codecheck_metadata <- function(root = getwd()) {
-  read_yaml(file.path(root, "codecheck.yml") )
+  yml_path <- file.path(root, "codecheck.yml")
+
+  if (!file.exists(yml_path)) {
+    stop("No codecheck.yml file found in directory: ", root, "\n",
+         "Please create a codecheck.yml file first using create_codecheck_files() ",
+         "or run this function from a directory containing a codecheck.yml file.")
+  }
+
+  read_yaml(yml_path)
 }
 
 ##' Copy manifest files into the root/codecheck/outputs folder; return manifest.
@@ -269,28 +280,28 @@ cite_certificate <- function(metadata) {
   cat(citation)
 }
 
-# Zenodo records interaction ----
-
 #' Create a new Zenodo record and return its pre-assigned DOI
 #'
-#' Run this only once per new codecheck.
+#' Run this only once per new codecheck. By default, loads metadata from
+#' codecheck.yml in the current working directory.
 #' @title Create a new Zenodo record and return its pre-assigned DOI
 #' @param zen Object from zen4R to interact with Zenodo
-#' @param metadata codecheck.yml file
+#' @param metadata codecheck.yml metadata (list). Defaults to loading from
+#'   codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.
 #' @param warn Ask for user input before creating a new record
 #' @return Number of Zenodo record created
 #' @author Stephen Eglen
 #' @importFrom zen4R ZenodoRecord
 #' @importFrom utils askYesNo
-#' 
+#'
 #' @export
-get_or_create_zenodo_record <- function(zen, metadata, warn=TRUE) {
-  id <- get_zenodo_record(metadata$report)
+get_or_create_zenodo_record <- function(zen, metadata = codecheck_metadata(getwd()), warn=TRUE) {
+  id <- get_zenodo_id(metadata$report)
   if (!is.na(id)) {
     my_rec <- zen$getDepositionById(id)
   } else {
     ## no record, create a new one.
-    if(warn) { 
+    if(warn) {
       proceed <- askYesNo("You do not have a Zenodo record yet; I can fix this for you but please make sure your codecheck.yaml is saved, as I will need to update it. Proceed?")
       stopifnot(proceed==TRUE)
     }
@@ -335,16 +346,18 @@ get_zenodo_id <- function(report) {
 
 #' Get the full Zenodo record from the metadata
 #'
-#' Retrieve the Zenodo record, if one exists.
-#' If no record number is currently  listed in the metadata (i.e. the "FIXME" tag is still there)
+#' Retrieve the Zenodo record, if one exists. By default, loads metadata from
+#' codecheck.yml in the current working directory.
+#' If no record number is currently listed in the metadata (i.e. the "FIXME" tag is still there)
 #' then the code returns NULL and an empty record should be created.
 #' @title Get the full zenodo record using the record number stored in the metadata.
 #' @param zenodo An object from zen4R to connect with Zenodo
-#' @param metadata A codecheck configuration (likely read from a codecheck.yml)
+#' @param metadata A codecheck configuration (list). Defaults to loading from
+#'   codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.
 #' @return The Zenodo record, or NULL.
 #' @author Stephen Eglen
 #' @export
-get_zenodo_record <- function(zenodo, metadata) {
+get_zenodo_record <- function(zenodo, metadata = codecheck_metadata(getwd())) {
   id <- get_zenodo_id(metadata$report)
   if (is.na(id)) {
     NULL
@@ -355,16 +368,19 @@ get_zenodo_record <- function(zenodo, metadata) {
 
 #' Upload codecheck metadata to Zenodo.
 #'
-#' The contents of codecheck.yml are uploaded to Zenodo using this funciton.
-#' 
-#' @title Upload metadata to Zenodod
+#' The contents of codecheck.yml are uploaded to Zenodo using this function.
+#' By default, loads metadata from codecheck.yml in the current working directory.
+#'
+#' @title Upload metadata to Zenodo
 #' @param zenodo object from zen4R to connect with Zenodo
 #' @param myrec a Zenodo record object
-#' @param metadata codecheck metadata, likely loaded from a codecheck.yml file
+#' @param metadata codecheck metadata (list). Defaults to loading from
+#'   codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.
 #' @return rec -- the updated record.
 #' @author Stephen Eglen
 #' @export
-upload_zenodo_metadata <- function(zenodo, myrec, metadata) {
+upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(getwd())) {
+
   ##draft$setPublicationType("report")
   ##draft$setCommunities(communities = c("codecheck"))
   myrec$metadata <- NULL
@@ -943,12 +959,14 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 ##'
 ##' Retrieves metadata from CrossRef for the paper's DOI and compares it with
 ##' the local codecheck.yml metadata. Validates title and author information
-##' (names and ORCIDs). Also validates that codechecker information is present
-##' and properly formatted in the local file.
+##' (names and ORCIDs against CrossRef data).
 ##'
 ##' This function is useful for ensuring consistency between the published paper
 ##' metadata and the CODECHECK certificate, helping to catch typos, outdated
 ##' information, or missing data.
+##'
+##' Note: For comprehensive validation including ORCID name verification and
+##' codechecker validation, use \code{validate_contents_references()} instead.
 ##'
 ##' @title Validate codecheck.yml metadata against CrossRef
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
@@ -1150,40 +1168,6 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
     }
   }
 
-  # Validate codechecker information exists and is properly formatted
-  if (is.null(local_meta$codechecker) || length(local_meta$codechecker) == 0) {
-    issue <- "No codechecker information found in codecheck.yml"
-    issues <- c(issues, issue)
-    warning(issue)
-  } else {
-    message("✓ Codechecker information present")
-
-    # Validate each codechecker has a name
-    for (i in seq_along(local_meta$codechecker)) {
-      checker <- local_meta$codechecker[[i]]
-      if (is.null(checker$name) || trimws(checker$name) == "") {
-        issue <- paste0("Codechecker ", i, " is missing a name")
-        issues <- c(issues, issue)
-        warning(issue)
-      } else {
-        message("✓ Codechecker ", i, ": ", checker$name)
-      }
-
-      # Validate ORCID format if present
-      if (check_orcids && !is.null(checker$ORCID)) {
-        orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"
-        if (!grepl(orcid_regex, checker$ORCID, perl = TRUE)) {
-          issue <- paste0("Codechecker ", i, " has invalid ORCID format: ", checker$ORCID,
-                         " (should be NNNN-NNNN-NNNN-NNNX)")
-          issues <- c(issues, issue)
-          warning(issue)
-        } else {
-          message("✓ Codechecker ", i, " ORCID valid: ", checker$ORCID)
-        }
-      }
-    }
-  }
-
   # Final validation result
   valid <- length(issues) == 0
 
@@ -1201,5 +1185,339 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
     valid = valid,
     issues = issues,
     crossref_metadata = crossref_meta
+  ))
+}
+
+
+##' Validate codecheck.yml metadata against ORCID
+##'
+##' Validates author and codechecker information against the ORCID API.
+##' For each person with an ORCID, retrieves their ORCID record and compares
+##' the name in the ORCID record with the name in the local codecheck.yml file.
+##'
+##' @title Validate codecheck.yml metadata against ORCID
+##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
+##'   If \code{FALSE} (default), only issue warnings.
+##' @param validate_authors Logical. If \code{TRUE} (default), validate author ORCIDs.
+##' @param validate_codecheckers Logical. If \code{TRUE} (default), validate codechecker ORCIDs.
+##' @return Invisibly returns a list with validation results:
+##'   \describe{
+##'     \item{valid}{Logical indicating if all checks passed}
+##'     \item{issues}{Character vector of any issues found}
+##'   }
+##' @author Daniel Nüst
+##' @importFrom rorcid orcid_person
+##' @export
+##' @examples
+##' \dontrun{
+##'   # Validate with warnings only
+##'   result <- validate_codecheck_yml_orcid()
+##'
+##'   # Validate with strict error checking
+##'   validate_codecheck_yml_orcid(strict = TRUE)
+##'
+##'   # Validate only codecheckers
+##'   validate_codecheck_yml_orcid(validate_authors = FALSE)
+##' }
+validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
+                                         strict = FALSE,
+                                         validate_authors = TRUE,
+                                         validate_codecheckers = TRUE) {
+
+  if (!file.exists(yml_file)) {
+    stop("codecheck.yml file not found at: ", yml_file)
+  }
+
+  # Read local metadata
+  local_meta <- yaml::read_yaml(yml_file)
+
+  issues <- character(0)
+
+  # Helper function to normalize names for comparison
+  normalize_name <- function(name) {
+    tolower(trimws(gsub("\\s+", " ", name)))
+  }
+
+  # Helper function to extract name from ORCID record
+  get_orcid_name <- function(orcid_id) {
+    tryCatch({
+      # Query ORCID API
+      person_data <- rorcid::orcid_person(orcid_id)
+
+      if (is.null(person_data) || length(person_data) == 0) {
+        return(NULL)
+      }
+
+      # Extract name from nested structure
+      name_data <- person_data[[1]]$name
+
+      if (is.null(name_data)) {
+        return(NULL)
+      }
+
+      # Try to get given and family names
+      given_names <- name_data$`given-names`$value
+      family_name <- name_data$`family-name`$value
+
+      if (!is.null(given_names) && !is.null(family_name)) {
+        return(paste(given_names, family_name))
+      } else if (!is.null(family_name)) {
+        return(family_name)
+      } else if (!is.null(given_names)) {
+        return(given_names)
+      }
+
+      return(NULL)
+    }, error = function(e) {
+      warning("Failed to retrieve ORCID record for ", orcid_id, ": ", e$message)
+      return(NULL)
+    })
+  }
+
+  # Validate authors
+  if (validate_authors && !is.null(local_meta$paper$authors)) {
+    message("Validating author ORCIDs...")
+
+    for (i in seq_along(local_meta$paper$authors)) {
+      author <- local_meta$paper$authors[[i]]
+
+      if (!is.null(author$ORCID)) {
+        # Validate ORCID format
+        orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"
+        if (!grepl(orcid_regex, author$ORCID, perl = TRUE)) {
+          issue <- paste0("Author ", i, " has invalid ORCID format: ", author$ORCID,
+                         " (should be NNNN-NNNN-NNNN-NNNX)")
+          issues <- c(issues, issue)
+          warning(issue)
+          next
+        }
+
+        # Query ORCID for name
+        orcid_name <- get_orcid_name(author$ORCID)
+
+        if (!is.null(orcid_name)) {
+          local_name_norm <- normalize_name(author$name)
+          orcid_name_norm <- normalize_name(orcid_name)
+
+          # Compare names - check if key parts match
+          local_parts <- strsplit(local_name_norm, "\\s+")[[1]]
+          orcid_parts <- strsplit(orcid_name_norm, "\\s+")[[1]]
+
+          # Filter to significant parts (at least 2 characters)
+          local_parts_sig <- local_parts[nchar(local_parts) >= 2]
+          orcid_parts_sig <- orcid_parts[nchar(orcid_parts) >= 2]
+
+          if (!all(local_parts_sig %in% orcid_parts_sig) &&
+              !all(orcid_parts_sig %in% local_parts_sig)) {
+            issue <- paste0("Author ", i, " name mismatch with ORCID record:\n",
+                           "  Local:  ", author$name, "\n",
+                           "  ORCID:  ", orcid_name, "\n",
+                           "  (ORCID: ", author$ORCID, ")")
+            issues <- c(issues, issue)
+            warning(issue)
+          } else {
+            message("✓ Author ", i, " name matches ORCID: ", author$name, " (", author$ORCID, ")")
+          }
+        } else {
+          message("ℹ Could not retrieve ORCID record for author ", i, ": ", author$ORCID)
+        }
+      }
+    }
+  }
+
+  # Validate codecheckers
+  if (validate_codecheckers) {
+    if (is.null(local_meta$codechecker) || length(local_meta$codechecker) == 0) {
+      issue <- "No codechecker information found in codecheck.yml"
+      issues <- c(issues, issue)
+      warning(issue)
+    } else {
+      message("Validating codechecker information...")
+
+      for (i in seq_along(local_meta$codechecker)) {
+        checker <- local_meta$codechecker[[i]]
+
+        # Check if name exists
+        if (is.null(checker$name) || trimws(checker$name) == "") {
+          issue <- paste0("Codechecker ", i, " is missing a name")
+          issues <- c(issues, issue)
+          warning(issue)
+          next
+        }
+
+        message("✓ Codechecker ", i, ": ", checker$name)
+
+        # Validate ORCID if present
+        if (!is.null(checker$ORCID)) {
+          # Validate ORCID format
+          orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"
+          if (!grepl(orcid_regex, checker$ORCID, perl = TRUE)) {
+            issue <- paste0("Codechecker ", i, " has invalid ORCID format: ", checker$ORCID,
+                           " (should be NNNN-NNNN-NNNN-NNNX)")
+            issues <- c(issues, issue)
+            warning(issue)
+            next
+          }
+
+          # Query ORCID for name
+          orcid_name <- get_orcid_name(checker$ORCID)
+
+          if (!is.null(orcid_name)) {
+            local_name_norm <- normalize_name(checker$name)
+            orcid_name_norm <- normalize_name(orcid_name)
+
+            # Compare names
+            local_parts <- strsplit(local_name_norm, "\\s+")[[1]]
+            orcid_parts <- strsplit(orcid_name_norm, "\\s+")[[1]]
+
+            local_parts_sig <- local_parts[nchar(local_parts) >= 2]
+            orcid_parts_sig <- orcid_parts[nchar(orcid_parts) >= 2]
+
+            if (!all(local_parts_sig %in% orcid_parts_sig) &&
+                !all(orcid_parts_sig %in% local_parts_sig)) {
+              issue <- paste0("Codechecker ", i, " name mismatch with ORCID record:\n",
+                             "  Local:  ", checker$name, "\n",
+                             "  ORCID:  ", orcid_name, "\n",
+                             "  (ORCID: ", checker$ORCID, ")")
+              issues <- c(issues, issue)
+              warning(issue)
+            } else {
+              message("✓ Codechecker ", i, " ORCID matches: ", checker$name, " (", checker$ORCID, ")")
+            }
+          } else {
+            message("ℹ Could not retrieve ORCID record for codechecker ", i, ": ", checker$ORCID)
+          }
+        }
+      }
+    }
+  }
+
+  # Final validation result
+  valid <- length(issues) == 0
+
+  if (!valid) {
+    message("\n⚠ ORCID validation completed with ", length(issues), " issue(s)")
+    if (strict) {
+      stop("ORCID validation failed with ", length(issues), " issue(s):\n",
+           paste(issues, collapse = "\n"))
+    }
+  } else {
+    message("\n✓ All ORCID validations passed!")
+  }
+
+  invisible(list(
+    valid = valid,
+    issues = issues
+  ))
+}
+
+
+##' Validate codecheck.yml metadata against external references
+##'
+##' Wrapper function that validates codecheck.yml metadata against both
+##' CrossRef (for paper metadata) and ORCID (for author and codechecker information).
+##' This provides comprehensive validation of all external references.
+##'
+##' @title Validate codecheck.yml metadata against external references
+##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
+##'   If \code{FALSE} (default), only issue warnings.
+##' @param validate_crossref Logical. If \code{TRUE} (default), validate against CrossRef.
+##' @param validate_orcid Logical. If \code{TRUE} (default), validate against ORCID.
+##' @param check_orcids Logical. If \code{TRUE} (default), validate ORCID identifiers in CrossRef check.
+##' @return Invisibly returns a list with validation results:
+##'   \describe{
+##'     \item{valid}{Logical indicating if all checks passed}
+##'     \item{crossref_result}{Results from CrossRef validation (if performed)}
+##'     \item{orcid_result}{Results from ORCID validation (if performed)}
+##'   }
+##' @author Daniel Nüst
+##' @export
+##' @examples
+##' \dontrun{
+##'   # Validate everything with warnings only
+##'   result <- validate_contents_references()
+##'
+##'   # Validate with strict error checking
+##'   validate_contents_references(strict = TRUE)
+##'
+##'   # Validate only CrossRef
+##'   validate_contents_references(validate_orcid = FALSE)
+##'
+##'   # Validate only ORCID
+##'   validate_contents_references(validate_crossref = FALSE)
+##' }
+validate_contents_references <- function(yml_file = "codecheck.yml",
+                                         strict = FALSE,
+                                         validate_crossref = TRUE,
+                                         validate_orcid = TRUE,
+                                         check_orcids = TRUE) {
+
+  crossref_result <- NULL
+  orcid_result <- NULL
+  all_valid <- TRUE
+
+  # Run CrossRef validation
+  if (validate_crossref) {
+    message("\n", rep("=", 80))
+    message("CROSSREF VALIDATION")
+    message(rep("=", 80), "\n")
+
+    crossref_result <- validate_codecheck_yml_crossref(
+      yml_file = yml_file,
+      strict = FALSE,  # Don't stop on CrossRef errors if we still need to run ORCID
+      check_orcids = check_orcids
+    )
+
+    if (!crossref_result$valid) {
+      all_valid <- FALSE
+    }
+  }
+
+  # Run ORCID validation
+  if (validate_orcid) {
+    message("\n", rep("=", 80))
+    message("ORCID VALIDATION")
+    message(rep("=", 80), "\n")
+
+    orcid_result <- validate_codecheck_yml_orcid(
+      yml_file = yml_file,
+      strict = FALSE  # Don't stop yet
+    )
+
+    if (!orcid_result$valid) {
+      all_valid <- FALSE
+    }
+  }
+
+  # Final result
+  if (!all_valid) {
+    total_issues <- 0
+    if (!is.null(crossref_result)) total_issues <- total_issues + length(crossref_result$issues)
+    if (!is.null(orcid_result)) total_issues <- total_issues + length(orcid_result$issues)
+
+    message("\n", rep("=", 80))
+    message("⚠ VALIDATION SUMMARY: ", total_issues, " issue(s) found")
+    message(rep("=", 80))
+
+    if (strict) {
+      all_issues <- c()
+      if (!is.null(crossref_result)) all_issues <- c(all_issues, crossref_result$issues)
+      if (!is.null(orcid_result)) all_issues <- c(all_issues, orcid_result$issues)
+
+      stop("Validation failed with ", total_issues, " issue(s):\n",
+           paste(all_issues, collapse = "\n"))
+    }
+  } else {
+    message("\n", rep("=", 80))
+    message("✓ ALL VALIDATIONS PASSED!")
+    message(rep("=", 80))
+  }
+
+  invisible(list(
+    valid = all_valid,
+    crossref_result = crossref_result,
+    orcid_result = orcid_result
   ))
 }

@@ -33,12 +33,14 @@ Validate codecheck.yml metadata against CrossRef
 \details{
 Retrieves metadata from CrossRef for the paper's DOI and compares it with
 the local codecheck.yml metadata. Validates title and author information
-(names and ORCIDs). Also validates that codechecker information is present
-and properly formatted in the local file.
+(names and ORCIDs against CrossRef data).
 
 This function is useful for ensuring consistency between the published paper
 metadata and the CODECHECK certificate, helping to catch typos, outdated
 information, or missing data.
+
+Note: For comprehensive validation including ORCID name verification and
+codechecker validation, use \code{validate_contents_references()} instead.
 }
 \examples{
 \dontrun{

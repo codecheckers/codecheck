@@ -15,6 +15,10 @@ A list containing the metadata found in the codecheck.yml file
 \description{
 Return the metadata for the codecheck project in root folder of project
 }
+\details{
+Loads and parses the codecheck.yml file from the specified directory.
+If the file doesn't exist, stops with a clear error message.
+}
 \author{
 Stephen Eglen
 }

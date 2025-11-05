@@ -226,6 +226,125 @@ validate_yaml_syntax <- function(yml_file, stop_on_error = TRUE) {
   invisible(result)
 }
 
+#' Get certificate identifier from GitHub issues by matching author names
+#'
+#' This function retrieves open issues from the codecheckers/register repository
+#' and attempts to match author names from a codecheck.yml file with issue titles
+#' to find the corresponding certificate identifier.
+#'
+#' Issue titles in the register follow the format: "Author Last, Author First | YYYY-NNN"
+#' where YYYY-NNN is the certificate identifier.
+#'
+#' @param yml_file Path to the codecheck.yml file, or a list with codecheck metadata
+#' @param repo GitHub repository in the format "owner/repo". Defaults to "codecheckers/register"
+#' @param state Issue state to search. One of "open", "closed", or "all". Defaults to "open"
+#' @param max_issues Maximum number of issues to retrieve. Defaults to 100
+#'
+#' @return A list with the following elements:
+#'   \itemize{
+#'     \item certificate: The certificate identifier (e.g., "2025-028") if found, otherwise NULL
+#'     \item issue_number: The GitHub issue number if found, otherwise NULL
+#'     \item issue_title: The full issue title if found, otherwise NULL
+#'     \item matched_author: The author name that was matched, otherwise NULL
+#'   }
+#'
+#' @examples
+#' \dontrun{
+#' # Get certificate ID from open issues
+#' result <- get_certificate_from_github_issue("codecheck.yml")
+#' if (!is.null(result$certificate)) {
+#'   cat("Found certificate:", result$certificate, "in issue", result$issue_number, "\n")
+#' }
+#'
+#' # Search closed issues
+#' result <- get_certificate_from_github_issue("codecheck.yml", state = "closed")
+#'
+#' # Pass metadata directly
+#' metadata <- codecheck_metadata(".")
+#' result <- get_certificate_from_github_issue(metadata)
+#' }
+#'
+#' @author Daniel Nüst
+#' @importFrom gh gh
+#' @export
+get_certificate_from_github_issue <- function(yml_file,
+                                               repo = "codecheckers/register",
+                                               state = "open",
+                                               max_issues = 100) {
+
+  # Load configuration
+  if (is.character(yml_file) && file.exists(yml_file)) {
+    config <- yaml::read_yaml(yml_file)
+  } else if (inherits(yml_file, "list")) {
+    config <- yml_file
+  } else {
+    stop("yml_file must be a path to a codecheck.yml file or a codecheck metadata list")
+  }
+
+  # Extract author names
+  if (!assertthat::has_name(config, "paper") ||
+      !assertthat::has_name(config$paper, "authors")) {
+    stop("codecheck.yml must have paper.authors field")
+  }
+
+  authors <- config$paper$authors
+  author_names <- sapply(authors, function(a) a$name)
+
+  # Split repo into owner and name
+  repo_parts <- strsplit(repo, "/")[[1]]
+  if (length(repo_parts) != 2) {
+    stop("repo must be in format 'owner/repo'")
+  }
+
+  # Retrieve issues from GitHub
+  issues <- gh::gh("GET /repos/:owner/:repo/issues",
+                   owner = repo_parts[1],
+                   repo = repo_parts[2],
+                   state = state,
+                   per_page = max_issues)
+
+  # Certificate pattern: YYYY-NNN
+  cert_pattern <- "\\d{4}-\\d{3}"
+
+  # Try to match each author with issue titles
+  for (author_name in author_names) {
+    # Split author name into parts (handles "First Last" or "Last, First" formats)
+    name_parts <- strsplit(author_name, "[, ]+")[[1]]
+
+    for (issue in issues) {
+      issue_title <- issue$title
+
+      # Check if any part of the author name appears in the issue title
+      # (case-insensitive matching)
+      name_match <- any(sapply(name_parts, function(part) {
+        grepl(part, issue_title, ignore.case = TRUE)
+      }))
+
+      if (name_match) {
+        # Extract certificate identifier from title
+        cert_match <- regmatches(issue_title, regexpr(cert_pattern, issue_title))
+
+        if (length(cert_match) > 0) {
+          return(list(
+            certificate = cert_match[1],
+            issue_number = issue$number,
+            issue_title = issue_title,
+            matched_author = author_name
+          ))
+        }
+      }
+    }
+  }
+
+  # No match found
+  return(list(
+    certificate = NULL,
+    issue_number = NULL,
+    issue_title = NULL,
+    matched_author = NULL
+  ))
+}
+
 #' Validate a CODECHECK configuration
 #'
 #' This functions checks "MUST"-contents only, see https://codecheck.org.uk/spec/config/latest/

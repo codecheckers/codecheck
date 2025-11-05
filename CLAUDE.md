@@ -51,24 +51,31 @@ When bumping the version in `DESCRIPTION`, add a new section to `NEWS.md` with t
 - `codecheck_metadata()` - Load and parse `codecheck.yml`
 - `copy_manifest_files()` - Copy output files specified in the manifest to the codecheck folder
 - `validate_yaml_syntax()` - Validate YAML syntax before parsing; checks if file is valid YAML; integrated into certificate template to prevent compilation with invalid YAML (R/configuration.R:184)
-- `validate_codecheck_yml()` - Validate that a codecheck.yml file meets the specification (R/configuration.R:229)
+- `validate_codecheck_yml()` - Validate that a codecheck.yml file meets the specification (R/configuration.R:348)
 - `complete_codecheck_yml()` - Analyze and complete codecheck.yml with missing fields; validates against specification; can add placeholders for mandatory and optional fields
 - `validate_codecheck_yml_crossref()` - Validate metadata against CrossRef; checks title, authors, and ORCID consistency; integrated into certificate template
+- `get_certificate_from_github_issue()` - Retrieve certificate identifier from GitHub issues by matching author names; searches codecheckers/register repository; supports open/closed/all issues (R/configuration.R:229)
+- `is_placeholder_certificate()` - Check if certificate ID is a placeholder; detects common placeholder patterns and template-like text
+- `update_certificate_from_github()` - Automatically update certificate ID from GitHub; wraps `get_certificate_from_github_issue()` with placeholder detection and file updating; integrated into certificate template
 
 **Lifecycle Journal automation**: Functions for auto-populating metadata from Lifecycle Journal articles:
 
 - `get_lifecycle_metadata()` - Retrieve article metadata from CrossRef API using submission ID or DOI (prefix: `10.71240/lcyc.`)
 - `update_codecheck_yml_from_lifecycle()` - Update local `codecheck.yml` with metadata; shows diff before applying changes; supports preview mode and selective field updates
 
-**CrossRef validation**: Ensure consistency with published paper metadata:
+**External validation**: Ensure consistency with published paper metadata and ORCID records:
 
-- `validate_codecheck_yml_crossref()` - Validates codecheck.yml metadata against CrossRef API; compares title, author names, and ORCIDs; validates codechecker information format; supports strict mode for certificate rendering
+- `validate_codecheck_yml_crossref()` - Validates paper metadata against CrossRef API; compares title and author information with CrossRef data
+- `validate_codecheck_yml_orcid()` - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata
+- `validate_contents_references()` - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering
 
 **Zenodo integration**: Functions for uploading certificates to Zenodo:
 
-- `get_or_create_zenodo_record()` - Create or retrieve a Zenodo record
-- `upload_zenodo_metadata()` - Upload metadata from codecheck.yml
+- `get_or_create_zenodo_record()` - Create or retrieve a Zenodo record; defaults to loading metadata from codecheck.yml in current directory
+- `get_zenodo_record()` - Retrieve existing Zenodo record; defaults to loading metadata from codecheck.yml in current directory
+- `upload_zenodo_metadata()` - Upload metadata from codecheck.yml; defaults to loading from current directory
 - `set_zenodo_certificate()` - Upload the PDF certificate
+- `get_zenodo_id()` - Extract Zenodo record number from DOI URL
 
 ### 2. Register Management (R/register.R)
 
