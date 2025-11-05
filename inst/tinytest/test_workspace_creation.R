@@ -1,115 +1,110 @@
 tinytest::using(ttdo)
 
 # Test 1: create_codecheck_files() - basic functionality ----
-expect_silent({
+local({
   test_dir <- file.path(tempdir(), "test_create_workspace")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir)
   old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
   setwd(test_dir)
-  codecheck::create_codecheck_files()
-  setwd(old_wd)
+  expect_silent(codecheck::create_codecheck_files())
+  expect_true(file.exists(file.path(test_dir, "codecheck.yml")))
+  expect_true(dir.exists(file.path(test_dir, "codecheck")))
 })
-expect_true(file.exists(file.path(test_dir, "codecheck.yml")))
-expect_true(dir.exists(file.path(test_dir, "codecheck")))
-unlink(test_dir, recursive = TRUE)
 
 # Test 2: create_codecheck_files() - codecheck.yml content ----
-expect_silent({
+local({
   test_dir <- file.path(tempdir(), "test_create_workspace2")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir)
   old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
   setwd(test_dir)
-  codecheck::create_codecheck_files()
-  setwd(old_wd)
+  expect_silent(codecheck::create_codecheck_files())
+  yml_content <- readLines(file.path(test_dir, "codecheck.yml"))
+  expect_true(length(yml_content) > 0)
+  expect_true(any(grepl("^version:", yml_content)))
+  expect_true(any(grepl("^paper:", yml_content)))
+  expect_true(any(grepl("^manifest:", yml_content)))
 })
-yml_content <- readLines(file.path(test_dir, "codecheck.yml"))
-expect_true(length(yml_content) > 0)
-expect_true(any(grepl("^version:", yml_content)))
-expect_true(any(grepl("^paper:", yml_content)))
-expect_true(any(grepl("^manifest:", yml_content)))
-unlink(test_dir, recursive = TRUE)
 
 # Test 3: create_codecheck_files() - codecheck folder created ----
-expect_silent({
+local({
   test_dir <- file.path(tempdir(), "test_create_workspace3")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir)
   old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
   setwd(test_dir)
-  codecheck::create_codecheck_files()
-  setwd(old_wd)
+  expect_silent(codecheck::create_codecheck_files())
+  expect_true(dir.exists(file.path(test_dir, "codecheck")))
+  # Check for common files in codecheck folder
+  files <- list.files(file.path(test_dir, "codecheck"))
+  expect_true(length(files) > 0)
 })
-expect_true(dir.exists(file.path(test_dir, "codecheck")))
-# Check for common files in codecheck folder
-files <- list.files(file.path(test_dir, "codecheck"))
-expect_true(length(files) > 0)
-unlink(test_dir, recursive = TRUE)
 
 # Test 4: create_codecheck_files() - warning when codecheck.yml exists ----
-expect_warning({
+local({
   test_dir <- file.path(tempdir(), "test_create_workspace4")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir)
   old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
   setwd(test_dir)
   # Create first time
   codecheck::create_codecheck_files()
   # Try to create again
-  codecheck::create_codecheck_files()
-  setwd(old_wd)
-}, pattern = "codecheck.yml already exists")
-unlink(test_dir, recursive = TRUE)
+  expect_warning(codecheck::create_codecheck_files(), pattern = "codecheck.yml already exists")
+})
 
 # Test 5: create_codecheck_files() - error when codecheck folder exists ----
-expect_error({
+local({
   test_dir <- file.path(tempdir(), "test_create_workspace5")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir)
   old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
   setwd(test_dir)
   # Remove codecheck.yml but keep codecheck folder
   codecheck::create_codecheck_files()
   file.remove("codecheck.yml")
   # Try to create again - should error on existing folder
-  codecheck::create_codecheck_files()
-  setwd(old_wd)
-}, pattern = "codecheck folder exists")
-unlink(test_dir, recursive = TRUE)
+  expect_error(codecheck::create_codecheck_files(), pattern = "codecheck folder exists")
+})
 
 # Test 6: codecheck_metadata() - read from current directory ----
-expect_silent({
+local({
   test_dir <- file.path(tempdir(), "test_metadata1")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir)
   old_wd <- getwd()
+  on.exit(setwd(old_wd))
   setwd(test_dir)
   codecheck::create_codecheck_files()
   metadata <- codecheck::codecheck_metadata()
-  setwd(old_wd)
+  expect_inherits(metadata, "list")
+  expect_true("paper" %in% names(metadata))
+  expect_true("manifest" %in% names(metadata))
+  expect_true("codechecker" %in% names(metadata))
+  unlink(test_dir, recursive = TRUE)
 })
-expect_inherits(metadata, "list")
-expect_true("paper" %in% names(metadata))
-expect_true("manifest" %in% names(metadata))
-expect_true("codechecker" %in% names(metadata))
-unlink(test_dir, recursive = TRUE)
 
 # Test 7: codecheck_metadata() - read from specified directory ----
-expect_silent({
+local({
   test_dir <- file.path(tempdir(), "test_metadata2")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir)
   old_wd <- getwd()
+  on.exit(setwd(old_wd))
   setwd(test_dir)
   codecheck::create_codecheck_files()
-  setwd(old_wd)
   # Read from specified directory
   metadata <- codecheck::codecheck_metadata(test_dir)
+  expect_inherits(metadata, "list")
+  expect_true("paper" %in% names(metadata))
+  unlink(test_dir, recursive = TRUE)
 })
-expect_inherits(metadata, "list")
-expect_true("paper" %in% names(metadata))
-unlink(test_dir, recursive = TRUE)
 
 # Test 8: codecheck_metadata() - read test yaml ----
 test_yaml_path <- system.file("tinytest", "yaml", package = "codecheck")
@@ -118,7 +113,7 @@ expect_silent({
 })
 expect_inherits(metadata, "list")
 expect_equal(metadata$certificate, "2020-000")
-expect_equal(metadata$paper$title, "The principal components of natural images")
+expect_equal(trimws(metadata$paper$title), "The principal components of natural images")
 
 # Test 9: codecheck_metadata() - verify structure ----
 test_yaml_path <- system.file("tinytest", "yaml", package = "codecheck")
@@ -138,7 +133,7 @@ expect_error({
   # Try to read from directory without codecheck.yml
   metadata <- codecheck::codecheck_metadata(test_dir)
   unlink(test_dir, recursive = TRUE)
-}, pattern = "No such file")
+}, pattern = "No codecheck.yml file found")
 
 # Clean up any remaining test directories
 test_dirs <- list.files(tempdir(), pattern = "^test_(create_workspace|metadata)", full.names = TRUE)

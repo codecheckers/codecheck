@@ -20,7 +20,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 3: Empty certificate is detected as placeholder
 cat("---
@@ -31,7 +31,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 4: YYYY-NNN pattern is detected as placeholder
 cat("---
@@ -42,7 +42,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 5: 0000-000 pattern is detected as placeholder
 cat("---
@@ -53,7 +53,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 6: 9999-999 pattern is detected as placeholder
 cat("---
@@ -64,7 +64,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 7: YYYY-123 pattern is detected as placeholder
 cat("---
@@ -75,7 +75,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 8: 0000-456 pattern is detected as placeholder
 cat("---
@@ -86,7 +86,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 9: FIXME pattern is detected as placeholder
 cat("---
@@ -97,7 +97,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 10: TODO pattern is detected as placeholder
 cat("---
@@ -108,7 +108,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_true(is_placeholder_certificate(test_yml))
+expect_true(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 11: Valid certificate is NOT detected as placeholder
 cat("---
@@ -119,7 +119,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_false(is_placeholder_certificate(test_yml))
+expect_false(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 12: Valid certificate with different year
 cat("---
@@ -130,7 +130,7 @@ manifest:
   - file: output.pdf
 ", file = test_yml)
 
-expect_false(is_placeholder_certificate(test_yml))
+expect_false(is_placeholder_certificate(test_yml, check_doi = FALSE))
 
 # Test 13: is_placeholder_certificate works with metadata parameter
 metadata_test <- list(
@@ -138,7 +138,7 @@ metadata_test <- list(
   paper = list(title = "Test")
 )
 
-expect_true(is_placeholder_certificate(metadata = metadata_test))
+expect_true(is_placeholder_certificate(metadata = metadata_test, check_doi = FALSE))
 
 # Test 14: is_placeholder_certificate works with valid certificate via metadata
 metadata_valid <- list(
@@ -146,7 +146,7 @@ metadata_valid <- list(
   paper = list(title = "Test")
 )
 
-expect_false(is_placeholder_certificate(metadata = metadata_valid))
+expect_false(is_placeholder_certificate(metadata = metadata_valid, check_doi = FALSE))
 
 # Test 15: update_certificate_from_github fails if file doesn't exist
 expect_error(
@@ -157,6 +157,7 @@ expect_error(
 # Test 16: update_certificate_from_github detects non-placeholder
 cat("---
 certificate: 2024-001
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
   authors:
@@ -255,7 +256,7 @@ manifest:
 "), file = test_yml)
   }
 
-  result <- is_placeholder_certificate(test_yml)
+  result <- is_placeholder_certificate(test_yml, check_doi = FALSE)
   expect_equal(result, test_case$expected,
                info = paste("Failed for certificate:", test_case$cert))
 }
@@ -263,6 +264,7 @@ manifest:
 # Test 20: is_placeholder_certificate with strict=TRUE throws error
 cat("---
 certificate: YYYY-NNN
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
 manifest:
@@ -277,6 +279,7 @@ expect_error(
 # Test 21: is_placeholder_certificate with strict=TRUE and valid certificate
 cat("---
 certificate: 2024-001
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
 manifest:
@@ -296,6 +299,7 @@ expect_true(result_strict_valid, info = "strict mode should not error with valid
 # Test 22: validate_certificate_for_rendering returns FALSE for placeholder
 cat("---
 certificate: YYYY-NNN
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
 manifest:
@@ -311,6 +315,7 @@ expect_false(result_val, info = "Should return FALSE for placeholder")
 # Test 23: validate_certificate_for_rendering returns TRUE for valid
 cat("---
 certificate: 2024-001
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
 manifest:
@@ -324,6 +329,7 @@ expect_true(result_val_valid, info = "Should return TRUE for valid certificate")
 # Test 24: validate_certificate_for_rendering with strict=TRUE fails
 cat("---
 certificate: YYYY-NNN
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
 manifest:
@@ -338,6 +344,7 @@ expect_error(
 # Test 25: validate_certificate_for_rendering displays warning (check output)
 cat("---
 certificate: TODO-001
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
 manifest:
@@ -356,6 +363,7 @@ expect_true(grepl("TODO-001", output_text), info = "Should show certificate ID i
 
 # Test 26: validate_certificate_for_rendering with NULL certificate
 cat("---
+report: https://doi.org/10.5281/zenodo.123456
 paper:
   title: Test Paper
 manifest:

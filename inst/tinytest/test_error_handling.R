@@ -147,7 +147,7 @@ dir.create(test_dir, recursive = TRUE)
 
 expect_error({
   codecheck::codecheck_metadata(test_dir)
-}, pattern = "No such file|cannot open")
+}, pattern = "No codecheck.yml file found")
 unlink(test_dir, recursive = TRUE)
 
 # Test 23: get_zenodo_id() - various invalid inputs ----

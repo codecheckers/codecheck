@@ -24,7 +24,6 @@ expect_error({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
   suppressMessages({
     result <- codecheck::register_render(
@@ -34,9 +33,8 @@ expect_error({
       to = 0
     )
   })
-  setwd(old_wd)
   unlink(test_dir, recursive = TRUE)
-}, pattern = "nrow|empty|invalid|subscript")
+}, pattern = "Malformed")
 # Empty register should error or handle gracefully
 
 # Test 2: register_render() - single entry register ----
@@ -52,7 +50,7 @@ single_register <- data.frame(
 test_dir <- file.path(tempdir(), "test_single_register")
 if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
 dir.create(test_dir, recursive = TRUE)
-old_wd <- getwd()
+dir.create(file.path(test_dir, "docs"), recursive = TRUE)
 setwd(test_dir)
 
 suppressMessages({
@@ -64,7 +62,6 @@ suppressMessages({
   )
 })
 
-setwd(old_wd)
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 1)
 unlink(test_dir, recursive = TRUE)
@@ -84,7 +81,6 @@ expect_silent({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -96,13 +92,13 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
 })
 # Check if JSON file was created
 json_file <- file.path(test_dir, "docs", "register.json")
 if (file.exists(json_file)) {
   json_data <- jsonlite::fromJSON(json_file)
-  expect_inherits(json_data, "list")
+  # jsonlite::fromJSON returns data.frame for tabular JSON
+  expect_true(inherits(json_data, "list") || inherits(json_data, "data.frame"))
 }
 unlink(test_dir, recursive = TRUE)
 
@@ -121,7 +117,6 @@ expect_silent({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -133,7 +128,6 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
 })
 expect_inherits(result, "data.frame")
 unlink(test_dir, recursive = TRUE)
@@ -153,7 +147,6 @@ expect_silent({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -165,7 +158,6 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
 })
 expect_inherits(result, "data.frame")
 unlink(test_dir, recursive = TRUE)
@@ -183,12 +175,11 @@ multi_platform_register <- data.frame(
   stringsAsFactors = FALSE
 )
 
-expect_silent({
+expect_warning({
   test_dir <- file.path(tempdir(), "test_multi_platform")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -200,8 +191,7 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
-})
+}, "codechecker ORCID missing")
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 4)
 unlink(test_dir, recursive = TRUE)
@@ -221,7 +211,6 @@ expect_silent({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -233,7 +222,6 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
 })
 expect_inherits(result, "data.frame")
 unlink(test_dir, recursive = TRUE)
@@ -253,7 +241,6 @@ expect_silent({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -265,7 +252,6 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
 })
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 3)
@@ -286,7 +272,6 @@ expect_silent({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -299,12 +284,12 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
 })
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 3)  # Should only have 3 rows
-expect_equal(result$Certificate[1], "2024-003")
-expect_equal(result$Certificate[3], "2024-005")
+# Check Certificate ID column (plain text) instead of Certificate (markdown link)
+expect_equal(result$`Certificate ID`[1], "2024-003")
+expect_equal(result$`Certificate ID`[3], "2024-005")
 unlink(test_dir, recursive = TRUE)
 
 # Test 10: Different venue types ----
@@ -322,7 +307,6 @@ expect_silent({
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
-  old_wd <- getwd()
   setwd(test_dir)
 
   suppressMessages({
@@ -334,7 +318,6 @@ expect_silent({
     )
   })
 
-  setwd(old_wd)
 })
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 4)
