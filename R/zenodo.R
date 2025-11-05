@@ -409,27 +409,47 @@ upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(
 
 #' Upload the CODECHECK certificate and optional additional files to Zenodo.
 #'
-#' Upload the CODECHECK certificate PDF to Zenodo as a draft, along with any
-#' additional files. The certificate is always uploaded first to ensure it
-#' becomes the preview file for the record. If certificate files already exist
-#' on the Zenodo record, the user is prompted whether to delete the existing
-#' files and upload the new ones, or abort the operation.
+#' Upload the CODECHECK certificate PDF to Zenodo as a draft, along with the
+#' certificate source file (Rmd or qmd) if found, and any additional files. The
+#' certificate is always uploaded first to ensure it becomes the preview file
+#' for the record. The source file is automatically detected by looking for a
+#' file with the same base name as the certificate but with .Rmd or .qmd extension.
+#' If certificate or source files already exist on the Zenodo record, the user is
+#' prompted whether to delete the existing files and upload the new ones, or abort
+#' the operation. This applies separately to PDF certificates and source files,
+#' allowing fine-grained control over what gets replaced.
 #'
 #' @title Upload the CODECHECK certificate and additional files to Zenodo.
-#' @param zen - Object from zen4R to interact with Zenodo
-#' @param record - string containing the report URL on Zenodo.
+#' @param zenodo - Object from zen4R to interact with Zenodo
+#' @param record - either a string/numeric containing the record ID, or a Zenodo
+#'   record object. If a record ID is provided, the function will fetch the
+#'   record; if a record object is provided, it will be used directly.
 #' @param certificate name of the PDF certificate file.
+#' @param upload_source logical; if TRUE (default), also uploads the source file
+#'   (.Rmd or .qmd) with the same base name as the certificate. The function
+#'   first looks for a .Rmd file, then for a .qmd file if no .Rmd is found.
 #' @param additional_files character vector of additional file paths to upload
-#'   (optional). These files are uploaded after the certificate.
+#'   (optional). These files are uploaded after the certificate and source file.
 #' @param warn logical; if TRUE (default), prompts user before deleting existing
 #'   files. If FALSE, automatically deletes existing files without prompting
 #'   (useful for non-interactive/automated contexts).
-#' @return list with upload results: certificate result and additional_files results
+#' @return list with upload results: certificate result, source result (if uploaded),
+#'   and additional_files results
 #' @author Stephen Eglen
 #' @importFrom utils askYesNo
 #' @export
-upload_zenodo_certificate <- function(zen, record, certificate, additional_files = NULL, warn = TRUE) {
-  draft <- zen$getDepositionById(record)
+upload_zenodo_certificate <- function(zenodo, record, certificate,
+                                       upload_source = TRUE,
+                                       additional_files = NULL,
+                                       warn = TRUE) {
+  # Handle both record ID and record object
+  if (inherits(record, c("ZenodoRecord", "list", "environment"))) {
+    # Record object provided - use it directly
+    draft <- record
+  } else {
+    # Record ID provided - fetch the record
+    draft <- zenodo$getDepositionById(record)
+  }
 
   # Verify local certificate file exists
   if (!file.exists(certificate)) {
@@ -475,7 +495,7 @@ upload_zenodo_certificate <- function(zen, record, certificate, additional_files
       message("Deleting ", length(pdf_files), " existing certificate file(s)...")
       for (f in pdf_files) {
         tryCatch({
-          zen$deleteFile(draft$id, f$filename)
+          zenodo$deleteFile(draft$id, f$filename)
           message("  ✓ Deleted: ", f$filename)
         }, error = function(e) {
           warning("Failed to delete file '", f$filename, "': ", e$message)
@@ -485,9 +505,85 @@ upload_zenodo_certificate <- function(zen, record, certificate, additional_files
   }
 
   # Upload the certificate first (so it becomes the preview file)
+  # NOTE: Zenodo uses the first uploaded file as the preview file by default
   message("Uploading certificate: ", basename(certificate))
-  cert_result <- zen$uploadFile(certificate, draft)
+  cert_result <- zenodo$uploadFile(certificate, draft)
   message("✓ Certificate uploaded successfully (will be used as preview)")
+
+  # Upload the source file if requested
+  # Automatically detect source file based on certificate filename
+  source_result <- NULL
+  if (upload_source) {
+    # Get the base name without extension from the certificate PDF
+    cert_base <- tools::file_path_sans_ext(certificate)
+
+    # Try .Rmd first, then .qmd
+    source_file <- NULL
+    if (file.exists(paste0(cert_base, ".Rmd"))) {
+      source_file <- paste0(cert_base, ".Rmd")
+    } else if (file.exists(paste0(cert_base, ".qmd"))) {
+      source_file <- paste0(cert_base, ".qmd")
+    }
+
+    if (!is.null(source_file)) {
+      # Check if source files already exist on the Zenodo record
+      # Need to refresh files list after certificate upload
+      draft <- zenodo$getDepositionById(draft$id)
+      existing_files <- draft$files
+
+      if (!is.null(existing_files) && length(existing_files) > 0) {
+        # Filter for .Rmd and .qmd files
+        source_files <- existing_files[grepl("\\.(Rmd|qmd)$", sapply(existing_files, function(f) f$filename), ignore.case = TRUE)]
+
+        if (length(source_files) > 0) {
+          # Source file(s) already exist
+          if (warn) {
+            cat("\nThe following source file(s) already exist on this Zenodo record:\n")
+            for (f in source_files) {
+              cat("  - ", f$filename, " (", format(f$filesize / 1024, digits = 2), " KB)\n", sep = "")
+            }
+            cat("\n")
+
+            delete_and_upload_source <- askYesNo(
+              "Delete existing source file(s) and upload the new one?",
+              default = FALSE
+            )
+
+            if (!isTRUE(delete_and_upload_source)) {
+              message("Source file upload skipped by user. Existing source file(s) were not modified.")
+              source_file <- NULL  # Skip upload
+            }
+          }
+
+          # Delete existing source files if we're proceeding
+          if (!is.null(source_file)) {
+            message("Deleting ", length(source_files), " existing source file(s)...")
+            for (f in source_files) {
+              tryCatch({
+                zenodo$deleteFile(draft$id, f$filename)
+                message("  ✓ Deleted: ", f$filename)
+              }, error = function(e) {
+                warning("Failed to delete source file '", f$filename, "': ", e$message)
+              })
+            }
+          }
+        }
+      }
+
+      # Upload the new source file if not skipped
+      if (!is.null(source_file)) {
+        message("Uploading certificate source: ", basename(source_file))
+        tryCatch({
+          source_result <- zenodo$uploadFile(source_file, draft)
+          message("✓ Certificate source uploaded successfully")
+        }, error = function(e) {
+          warning("Failed to upload source file '", source_file, "': ", e$message)
+        })
+      }
+    } else {
+      message("Note: No source file (.Rmd or .qmd) found for certificate, skipping upload")
+    }
+  }
 
   # Upload additional files if provided
   additional_results <- list()
@@ -495,7 +591,7 @@ upload_zenodo_certificate <- function(zen, record, certificate, additional_files
     message("Uploading ", length(additional_files), " additional file(s)...")
     for (file_path in additional_files) {
       tryCatch({
-        file_result <- zen$uploadFile(file_path, draft)
+        file_result <- zenodo$uploadFile(file_path, draft)
         additional_results[[basename(file_path)]] <- file_result
         message("  ✓ Uploaded: ", basename(file_path))
       }, error = function(e) {
@@ -507,6 +603,7 @@ upload_zenodo_certificate <- function(zen, record, certificate, additional_files
 
   return(list(
     certificate = cert_result,
+    source = source_result,
     additional_files = if (length(additional_results) > 0) additional_results else NULL
   ))
 }

@@ -21,13 +21,19 @@ zenodo <- ZenodoManager$new(token = my_token)
 ## record = create_zenodo_record(zenodo); metadata = read_yaml( "../codecheck.yml")
 
 record = get_zenodo_record(metadata$report)
-codecheck:::set_zenodo_metadata(zenodo, record, metadata)
+codecheck:::upload_zenodo_metadata(zenodo, record, metadata)
 
 ## Upload the certificate PDF (will be set as the preview file)
-## If you have additional files, you can upload them as well:
+## By default, also uploads the source file (codecheck.Rmd or codecheck.qmd if found)
+## You can also upload additional files if needed:
 ## codecheck:::upload_zenodo_certificate(zenodo, record, "codecheck.pdf")
+##
+## To disable source file upload:
+## codecheck:::upload_zenodo_certificate(zenodo, record, "codecheck.pdf", upload_source = FALSE)
+##
+## To upload additional files:
 ## codecheck:::upload_zenodo_certificate(zenodo, record, "codecheck.pdf",
 ##                                        additional_files = c("data.csv", "code.zip"))
 
 ## Now go to zenodo and check the record (the URL is printed
-## by set_zenodo_metadata() ) and then publish.
+## by upload_zenodo_metadata() ) and then publish.

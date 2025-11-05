@@ -22,7 +22,9 @@
       "WebFetch(domain:github.com)",
       "WebSearch",
       "WebFetch(domain:cran.r-project.org)",
-      "WebFetch(domain:rdrr.io)"
+      "WebFetch(domain:rdrr.io)",
+      "WebFetch(domain:inveniordm.docs.cern.ch)",
+      "WebFetch(domain:blog.zenodo.org)"
     ],
     "deny": [],
     "ask": []

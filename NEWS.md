@@ -70,9 +70,23 @@
 
 * **Refactored Zenodo certificate upload**: `set_zenodo_certificate()` renamed to `upload_zenodo_certificate()`
   - **New feature**: Can now upload additional files alongside the certificate via `additional_files` parameter
+  - **New feature**: Automatically uploads certificate source file (.Rmd or .qmd) by default
+    - Detects source file by looking for same base name as certificate PDF with .Rmd or .qmd extension
+    - Tries .Rmd first, then .qmd if .Rmd not found (supports both R Markdown and Quarto)
+    - Can be disabled with `upload_source = FALSE` parameter
+    - Provides informative messages when source file is found/not found
+    - **Smart source file replacement**: Checks for existing source files on Zenodo record
+      - Prompts user before deleting existing .Rmd or .qmd files (when warn=TRUE)
+      - Auto-deletes existing source files when warn=FALSE
+      - Handles multiple existing source files (deletes all before uploading new one)
+      - Case-insensitive detection (.Rmd, .rmd, .qmd, .QMD all detected)
   - Certificate is always uploaded first to ensure it becomes the preview file for the Zenodo record
+  - Source file uploaded second (if found and enabled), followed by any additional files
   - `set_zenodo_certificate()` retained as an alias for backward compatibility
-  - Returns list with certificate result and additional_files results
+  - Returns list with certificate result, source result, and additional_files results
+  - **Improved API**: Parameter renamed from `zen` to `zenodo` for clarity
+  - **Flexible record input**: Now accepts either a record ID (string/numeric) or a Zenodo record object
+  - When a record object is provided, skips unnecessary API fetch for better performance
 * **Smart certificate upload**: `upload_zenodo_certificate()` checks for existing certificate files before uploading
   - Automatically detects existing PDF files on Zenodo record
   - Prompts user whether to delete existing files and upload new one, or abort operation
@@ -80,7 +94,7 @@
   - Shows file details (name, size) before deletion
   - Handles multiple PDF files and provides clear feedback during deletion/upload
   - Comprehensive error handling with graceful degradation
-  - New test suite with 27 tests covering all scenarios
+  - Comprehensive test suite with 52 tests covering all scenarios including source file upload and replacement
 * **Automatic YAML updating**: `get_or_create_zenodo_record()` now automatically updates codecheck.yml with Zenodo DOI
   - When creating a new Zenodo record, automatically updates the report field in codecheck.yml
   - Detects empty or placeholder values (FIXME, TODO, placeholder, XXXXX, etc.) and updates automatically
