@@ -4,7 +4,12 @@
 \alias{upload_zenodo_metadata}
 \title{Upload metadata to Zenodo}
 \usage{
-upload_zenodo_metadata(zenodo, myrec, metadata = codecheck_metadata(getwd()))
+upload_zenodo_metadata(
+  zenodo,
+  myrec,
+  metadata = codecheck_metadata(getwd()),
+  resource_types = list()
+)
 }
 \arguments{
 \item{zenodo}{object from zen4R to connect with Zenodo}
@@ -13,6 +18,10 @@ upload_zenodo_metadata(zenodo, myrec, metadata = codecheck_metadata(getwd()))
 
 \item{metadata}{codecheck metadata (list). Defaults to loading from
 codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.}
+
+\item{resource_types}{named list to override default resource types for related identifiers.
+Supported names: "paper" (default: "publication-article"), "repository" (default: auto-detected).
+Example: \code{list(paper = "publication-preprint")}}
 }
 \value{
 rec -- the updated record.
@@ -23,6 +32,16 @@ Upload codecheck metadata to Zenodo.
 \details{
 The contents of codecheck.yml are uploaded to Zenodo using this function.
 By default, loads metadata from codecheck.yml in the current working directory.
+
+This function complies with the CODECHECK Zenodo community curation policy:
+https://zenodo.org/communities/codecheck/curation-policy
+
+Requirements:
+- Description must include the certificate summary
+- Publisher must be "CODECHECK Community on Zenodo"
+- Resource type must be "publication-report"
+- Related identifiers for paper (reviews) and repository (isSupplementedBy)
+- Alternate identifiers for certificate ID (URL and Other schemas)
 }
 \author{
 Stephen Eglen

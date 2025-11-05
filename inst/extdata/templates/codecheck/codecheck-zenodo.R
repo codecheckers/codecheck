@@ -23,12 +23,11 @@ zenodo <- ZenodoManager$new(token = my_token)
 record = get_zenodo_record(metadata$report)
 codecheck:::set_zenodo_metadata(zenodo, record, metadata)
 
-## If you have already uploaded the certificate once, you will need to
-## delete it via the web page before uploading it again.
-## codecheck:::set_zenodo_certificate(zenodo, record, "codecheck.pdf")
-
-## You may also create a ZIP archive of of any data or code files that
-## you think should be included in the CODECHECK's record.
+## Upload the certificate PDF (will be set as the preview file)
+## If you have additional files, you can upload them as well:
+## codecheck:::upload_zenodo_certificate(zenodo, record, "codecheck.pdf")
+## codecheck:::upload_zenodo_certificate(zenodo, record, "codecheck.pdf",
+##                                        additional_files = c("data.csv", "code.zip"))
 
 ## Now go to zenodo and check the record (the URL is printed
 ## by set_zenodo_metadata() ) and then publish.

@@ -27,15 +27,45 @@
 
 ## Bug Fixes
 
+* **Critical fix**: Fixed `set_zenodo_certificate()` to use correct zen4R API signatures
+  - `deleteFile()` now uses `deleteFile(recordId, filename)` instead of `deleteFile(fileId, recordId)`
+  - `uploadFile()` now uses `uploadFile(path, record)` with record object instead of record ID
+  - Fixes "cannot coerce type 'environment' to vector of type 'character'" error
 * Fixed ORCID icon hyperlinks in PDF certificates using academicons package
   - Replaced complex tikz/svg implementation with simple `\aiOrcid` from academicons
   - Moved `\usepackage{hyperref}` to load after other packages to avoid conflicts
   - ORCID icons are now clickable links that work reliably across PDF viewers
 * Fixed `latex_summary_of_metadata()` and `latex_summary_of_manifest()` to handle NULL/empty fields
 * Fixed `get_or_create_zenodo_record()` to call correct function (`get_zenodo_id()`)
+* **Critical fix**: Fixed `upload_zenodo_metadata()` to properly set alternate identifiers per Zenodo curation policy
+  - Certificate ID now correctly added as **alternate identifiers** (not related identifiers)
+  - Two alternate identifier entries as required by policy:
+    - URL schema: `http://cdchck.science/register/certs/<CERT ID>`
+    - Other schema: `cdchck.science/register/certs/<CERT ID>` (without protocol)
+  - Sets `metadata$alternate_identifiers` directly with proper structure
+  - Related identifiers now only include paper (reviews) and repository (isSupplementedBy)
+  - Paper DOI uses scheme="doi" and relation_type="reviews"
+  - Repository URL uses scheme="url" and relation_type="issupplementedby"
+* **Code quality**: Refactored DOI placeholder detection to eliminate code duplication
+  - Created internal `is_doi_placeholder()` helper function
+  - Now used by both `is_placeholder_certificate()` and `get_or_create_zenodo_record()`
+  - Centralized placeholder detection logic for easier maintenance
 
 ## Enhancements
 
+* **Refactored Zenodo certificate upload**: `set_zenodo_certificate()` renamed to `upload_zenodo_certificate()`
+  - **New feature**: Can now upload additional files alongside the certificate via `additional_files` parameter
+  - Certificate is always uploaded first to ensure it becomes the preview file for the Zenodo record
+  - `set_zenodo_certificate()` retained as an alias for backward compatibility
+  - Returns list with certificate result and additional_files results
+* **Smart certificate upload**: `upload_zenodo_certificate()` checks for existing certificate files before uploading
+  - Automatically detects existing PDF files on Zenodo record
+  - Prompts user whether to delete existing files and upload new one, or abort operation
+  - New warn parameter (default TRUE) for interactive prompting; set FALSE for automated/non-interactive contexts
+  - Shows file details (name, size) before deletion
+  - Handles multiple PDF files and provides clear feedback during deletion/upload
+  - Comprehensive error handling with graceful degradation
+  - New test suite with 27 tests covering all scenarios
 * **Automatic YAML updating**: `get_or_create_zenodo_record()` now automatically updates codecheck.yml with Zenodo DOI
   - When creating a new Zenodo record, automatically updates the report field in codecheck.yml
   - Detects empty or placeholder values (FIXME, TODO, placeholder, XXXXX, etc.) and updates automatically
@@ -46,15 +76,18 @@
   - Comprehensive test suite with 31 tests using mocked Zenodo API
 * **Zenodo curation policy compliance**: `upload_zenodo_metadata()` now fully complies with CODECHECK Zenodo community curation policy
   - Publisher set to "CODECHECK Community on Zenodo" (was "CODECHECK")
-  - Resource type changed to "report" (was "publication-preprint")
-  - Description now includes certificate summary as required by policy
-  - Adds related identifier for original paper with "reviews" relation
-  - Adds related identifier for code repository with "isSupplementedBy" relation
-  - Adds alternative identifier for certificate ID (http://cdchck.science/register/certs/{ID})
+  - Resource type set to "publication-report" (was "publication-preprint")
+  - Description includes certificate summary as required by policy
+  - Adds related identifier for original paper with "reviews" relation (scheme="doi", relation_type="reviews", resource_type="publication-article")
+  - Adds related identifier for code repository with "isSupplementedBy" relation (scheme="url", relation_type="issupplementedby", resource_type=auto-detected)
+  - Adds **two alternate identifiers** for certificate ID (URL and Other schemas) - correctly uses alternate_identifiers field per curation policy
+  - **Smart repository type detection**: Automatically detects if repository is software (GitHub, GitLab, Codeberg, etc.) or dataset (DataCite DOI)
+  - **Configurable resource types**: New `resource_types` parameter allows overriding defaults via named list (paper, repository)
+  - Prints confidence level messages for low/medium confidence detections to allow user verification
   - Validates required fields (certificate ID, warns for missing summary)
   - Handles NULL/empty repository gracefully
   - Extracts clean DOI from doi.org URLs
-  - New comprehensive test suite with 52 tests using mocked Zenodo API
+  - Comprehensive test suite with 38 tests including auto-detection and override scenarios
 * Zenodo functions now load metadata from codecheck.yml by default
 * DOI validation is now platform-agnostic (Zenodo, OSF, ResearchEquals, etc.)
 * Removed pifont package dependency; now uses UTF-8 emoji ⚠ for warnings

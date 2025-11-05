@@ -103,9 +103,11 @@ then store the resulting URL in `codecheck.yml`.  The rest of the
 metadata can remain as before.
 
 Once you are ready, upload the certificate itself using the
-function `set_zenodo_certificate()`.  Whilst the Zenodo record is in
-draft form, you can delete files from the website, and then re-add
-them using the API.
+function `upload_zenodo_certificate()` (previously `set_zenodo_certificate()`).
+The certificate is always uploaded first to ensure it becomes the preview file.
+You can also upload additional files (e.g., data, code) using the `additional_files`
+parameter. Whilst the Zenodo record is in draft form, you can delete files from
+the website, and then re-add them using the API.
 
 Once you have uploaded the certificate and checked the metadata, you
 can then submit the record to the CODECHECK community on Zenodo to 

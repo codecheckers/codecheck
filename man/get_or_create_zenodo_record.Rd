@@ -2,12 +2,13 @@
 % Please edit documentation in R/codecheck.R
 \name{get_or_create_zenodo_record}
 \alias{get_or_create_zenodo_record}
-\title{Create a new Zenodo record and return its pre-assigned DOI}
+\title{Create or retrieve Zenodo record and update codecheck.yml}
 \usage{
 get_or_create_zenodo_record(
   zen,
   metadata = codecheck_metadata(getwd()),
-  warn = TRUE
+  warn = TRUE,
+  yml_file = "codecheck.yml"
 )
 }
 \arguments{
@@ -16,17 +17,27 @@ get_or_create_zenodo_record(
 \item{metadata}{codecheck.yml metadata (list). Defaults to loading from
 codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.}
 
-\item{warn}{Ask for user input before creating a new record}
+\item{warn}{Logical. If TRUE (default), asks for user confirmation before creating
+a new record or overwriting an existing non-placeholder DOI. If FALSE, skips
+interactive prompts (useful for non-interactive contexts).}
+
+\item{yml_file}{Path to the codecheck.yml file to update. Defaults to "codecheck.yml"
+in the current directory.}
 }
 \value{
-Number of Zenodo record created
+Zenodo record object (ZenodoRecord)
 }
 \description{
-Create a new Zenodo record and return its pre-assigned DOI
+Create a new Zenodo record and automatically update codecheck.yml
 }
 \details{
 Run this only once per new codecheck. By default, loads metadata from
 codecheck.yml in the current working directory.
+
+If a Zenodo record already exists (valid Zenodo DOI in report field), retrieves it.
+If no valid Zenodo DOI exists, creates a new record and updates codecheck.yml:
+- If report field is empty or contains a placeholder (FIXME, TODO, etc.): Updates automatically
+- If report field contains a non-placeholder value: Asks user before overwriting (when warn=TRUE)
 }
 \author{
 Stephen Eglen

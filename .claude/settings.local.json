@@ -17,7 +17,12 @@
       "Bash(pdftotext:*)",
       "Bash(cat:*)",
       "WebFetch(domain:zenodo.org)",
-      "Bash(R CMD check:*)"
+      "Bash(R CMD check:*)",
+      "WebFetch(domain:developers.zenodo.org)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:cran.r-project.org)",
+      "WebFetch(domain:rdrr.io)"
     ],
     "deny": [],
     "ask": []

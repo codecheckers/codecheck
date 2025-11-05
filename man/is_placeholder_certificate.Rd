@@ -27,9 +27,6 @@ Logical value: TRUE if certificate or DOI is a placeholder, FALSE otherwise.
   If strict=TRUE and either is a placeholder, stops with an error instead.
 }
 \description{
-Check if certificate identifier or DOI is a placeholder
-}
-\details{
 Determines whether a certificate identifier or report DOI in codecheck.yml is a
 placeholder that needs to be replaced. Checks for common placeholder patterns
 like "YYYY-NNN", "0000-000", or placeholder year prefixes in certificate ID,
