@@ -24,7 +24,10 @@
       "WebFetch(domain:cran.r-project.org)",
       "WebFetch(domain:rdrr.io)",
       "WebFetch(domain:inveniordm.docs.cern.ch)",
-      "WebFetch(domain:blog.zenodo.org)"
+      "WebFetch(domain:blog.zenodo.org)",
+      "Bash(for file in R/github.R R/lifecycle.R R/validation.R R/zenodo.R)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
