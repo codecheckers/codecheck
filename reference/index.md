@@ -1,0 +1,273 @@
+# Package index
+
+## All functions
+
+- [`add_abstract()`](http://codecheck.org.uk/codecheck/reference/add_abstract.md)
+  : Inserts the abstract text and source link into the Markdown content
+  if an abstract is found for the given repository. If no abstract is
+  found, an empty string is inserted in place of the abstract content.
+- [`add_all_codecheckers_hyperlink()`](http://codecheck.org.uk/codecheck/reference/add_all_codecheckers_hyperlink.md)
+  : Add Hyperlinks to Codecheckers Table
+- [`add_all_venues_hyperlinks_non_reg()`](http://codecheck.org.uk/codecheck/reference/add_all_venues_hyperlinks_non_reg.md)
+  : Add Hyperlinks to All Venues Table
+- [`add_cert_links()`](http://codecheck.org.uk/codecheck/reference/add_cert_links.md)
+  : Function for adding clickable links to the paper for each entry in
+  the register table and add certificate identifier and link as extra
+  columns
+- [`add_check_time()`](http://codecheck.org.uk/codecheck/reference/add_check_time.md)
+  : Function for adding check time to each report in the register table.
+- [`add_codecheck_details_md()`](http://codecheck.org.uk/codecheck/reference/add_codecheck_details_md.md)
+  : Populates an existing markdown content template with details about
+  the CODECHECK details.
+- [`add_codechecker()`](http://codecheck.org.uk/codecheck/reference/add_codechecker.md)
+  : Function for adding codechecker to each report in the register
+  table.
+- [`add_issue_number_links()`](http://codecheck.org.uk/codecheck/reference/add_issue_number_links.md)
+  : Function for adding clickable links to the issue number of each
+  report in the register table.
+- [`add_markdown_title()`](http://codecheck.org.uk/codecheck/reference/add_markdown_title.md)
+  : Function to add the markdown title based on the specific register
+  table name.
+- [`add_paper_details_md()`](http://codecheck.org.uk/codecheck/reference/add_paper_details_md.md)
+  : Populates an existing markdown content template with details about
+  the codechecked paper.
+- [`add_paper_links()`](http://codecheck.org.uk/codecheck/reference/add_paper_links.md)
+  : Function for adding clickable links to the paper for each entry in
+  the register table.
+- [`add_report_links()`](http://codecheck.org.uk/codecheck/reference/add_report_links.md)
+  : Function for adding clickable links to the report for each entry in
+  the register table.
+- [`add_repository_hyperlink()`](http://codecheck.org.uk/codecheck/reference/add_repository_hyperlink.md)
+  : Replaces a placeholder in Markdown content with a hyperlink to the
+  repository, based on the repository type (e.g., GitHub, OSF, GitLab).
+- [`add_repository_links_json()`](http://codecheck.org.uk/codecheck/reference/add_repository_links_json.md)
+  : Function for adding repository links in the register table for the
+  creation of the json file.
+- [`add_venue_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_hyperlinks_reg.md)
+  : Function for adding clickable links to the codecheck venue pages for
+  each entry in the register table.
+- [`add_venue_type_hyperlinks_non_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_type_hyperlinks_non_reg.md)
+  : Add Hyperlinks to Venue Type-Specific Table
+- [`add_venue_type_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_type_hyperlinks_reg.md)
+  : Function for adding clickable links to the codecheck venue type
+  pages for each entry in the register table.
+- [`add_venues_hyperlinks_non_reg()`](http://codecheck.org.uk/codecheck/reference/add_venues_hyperlinks_non_reg.md)
+  : Add Hyperlinks to Venues Table
+- [`as_latex_url()`](http://codecheck.org.uk/codecheck/reference/as_latex_url.md)
+  : Wrap URL for LaTeX
+- [`check_certificate_id()`](http://codecheck.org.uk/codecheck/reference/check_certificate_id.md)
+  : Function for checking ceritificate id if there is a codecheck_yaml.
+  If there is a mismatch a stop is sent. Else a warning is thrown.
+- [`check_issue_status()`](http://codecheck.org.uk/codecheck/reference/check_issue_status.md)
+  : Function issue status. If the issue is not closed a warning is
+  thrown stating that the issue is still open.
+- [`cite_certificate()`](http://codecheck.org.uk/codecheck/reference/cite_certificate.md)
+  : Print a citation for the codecheck certificate.
+- [`codecheck_metadata()`](http://codecheck.org.uk/codecheck/reference/codecheck_metadata.md)
+  : Return the metadata for the codecheck project in root folder of
+  project
+- [`complete_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/complete_codecheck_yml.md)
+  : Analyze and complete codecheck.yml with missing fields
+- [`convert_cert_pdf_to_png()`](http://codecheck.org.uk/codecheck/reference/convert_cert_pdf_to_png.md)
+  : Converts each page of a certificate PDF to JPEG format images,
+  saving them in the specified certificate directory.
+- [`copy_manifest_files()`](http://codecheck.org.uk/codecheck/reference/copy_manifest_files.md)
+  : Copy files from manifest into the codecheck folder and summarise.
+- [`create_all_codecheckers_table()`](http://codecheck.org.uk/codecheck/reference/create_all_codecheckers_table.md)
+  : Create Codecheckers Table
+- [`create_all_venues_table()`](http://codecheck.org.uk/codecheck/reference/create_all_venues_table.md)
+  : Create All Venues Table
+- [`create_cert_md()`](http://codecheck.org.uk/codecheck/reference/create_cert_md.md)
+  : Generates a Markdown file for a certificate based on a specified
+  template, filling in details about the paper, authors, codecheck
+  information, and the certificate images if available. The resulting
+  Markdown file is later rendered to HTML.
+- [`create_cert_page_section_files()`](http://codecheck.org.uk/codecheck/reference/create_cert_page_section_files.md)
+  : Generates section files for a certificate HTML page, including
+  prefix, postfix, and header HTML components.
+- [`create_codecheck_files()`](http://codecheck.org.uk/codecheck/reference/create_codecheck_files.md)
+  : Create template files for the codecheck process.
+- [`create_filtered_reg_csvs()`](http://codecheck.org.uk/codecheck/reference/create_filtered_reg_csvs.md)
+  : Creates filtered CSV files from a register based on specified
+  filters.
+- [`create_index_header_html()`](http://codecheck.org.uk/codecheck/reference/create_index_header_html.md)
+  : Dynamically generates the index_header.html from a template file
+- [`create_index_postfix_html()`](http://codecheck.org.uk/codecheck/reference/create_index_postfix_html.md)
+  : Dynamically generates the index_postfix.html from a template file
+- [`create_index_prefix_html()`](http://codecheck.org.uk/codecheck/reference/create_index_prefix_html.md)
+  : Dynamically generates the index_prefix.html from a template file
+- [`create_index_section_files()`](http://codecheck.org.uk/codecheck/reference/create_index_section_files.md)
+  : Creates index postfix, prefix and the header
+- [`create_md_table()`](http://codecheck.org.uk/codecheck/reference/create_md_table.md)
+  : Creates a markdown table from a register template Adds title to the
+  markdown and adjusts the column widths of the table before returning
+  it.
+- [`create_non_register_files()`](http://codecheck.org.uk/codecheck/reference/create_non_register_files.md)
+  : Create Non-Register Files
+- [`create_original_register_files()`](http://codecheck.org.uk/codecheck/reference/create_original_register_files.md)
+  : Generates original register files in various output formats.
+- [`create_register_files()`](http://codecheck.org.uk/codecheck/reference/create_register_files.md)
+  : Create Register Files
+- [`create_tables_non_register()`](http://codecheck.org.uk/codecheck/reference/create_tables_non_register.md)
+  : Create Non-Register Tables
+- [`create_temp_register_with_codechecker()`](http://codecheck.org.uk/codecheck/reference/create_temp_register_with_codechecker.md)
+  : Creates a temporary CSV register with a "Codechecker" column.
+- [`create_venue_type_tables()`](http://codecheck.org.uk/codecheck/reference/create_venue_type_tables.md)
+  : Create Venue Type-Specific Tables
+- [`create_venues_tables()`](http://codecheck.org.uk/codecheck/reference/create_venues_tables.md)
+  : Create Venues Tables
+- [`download_cert_pdf()`](http://codecheck.org.uk/codecheck/reference/download_cert_pdf.md)
+  : Downloads a certificate PDF from a report link and saves it locally.
+  If the download link is a ZIP file, it extracts the PDF from the
+  archive. Returns status based on success.
+- [`edit_html_lib_paths()`](http://codecheck.org.uk/codecheck/reference/edit_html_lib_paths.md)
+  : Loads a html file and replaces the libs path in the html file to the
+  libs folder in "docs/libs" This is done so all html files can share
+  one libs folder.
+- [`extract_cert_pdf_from_zip()`](http://codecheck.org.uk/codecheck/reference/extract_cert_pdf_from_zip.md)
+  : Downloads a ZIP file from the given URL, searches for
+  "codecheck.pdf" within its contents, renames it to "cert.pdf," and
+  saves it in the specified directory.
+- [`filter_and_drop_register_columns()`](http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.md)
+  : Filter and Drop Columns from Register Table
+- [`generate_href()`](http://codecheck.org.uk/codecheck/reference/generate_href.md)
+  : Generate full href for for different href types.
+- [`generate_html_document_yml()`](http://codecheck.org.uk/codecheck/reference/generate_html_document_yml.md)
+  : Dynamically generates a html_document.yml with the full paths to the
+  index header, prefix and postfix.html files.
+- [`generate_html_extra_text_non_register()`](http://codecheck.org.uk/codecheck/reference/generate_html_extra_text_non_register.md)
+  : Generates the extra text of the HTML pages for non registers. This
+  extra text is to be placed under the table. There is only extra text
+  for the codecheckers HTML page to explain the reason for discrepancy
+  between total_codechecks != SUM(no.of codechecks)
+- [`generate_html_postfix_hrefs_non_reg()`](http://codecheck.org.uk/codecheck/reference/generate_html_postfix_hrefs_non_reg.md)
+  : Generates postfix hrefs for the venues/ codecheckers list pages
+- [`generate_html_postfix_hrefs_reg()`](http://codecheck.org.uk/codecheck/reference/generate_html_postfix_hrefs_reg.md)
+  : Generates the hrefs to set in the postfix.html file for the
+  rendering of register tables.
+- [`generate_html_subtext_non_register()`](http://codecheck.org.uk/codecheck/reference/generate_html_subtext_non_register.md)
+  : Generates the subtext of the HTML pages for non registers with a
+  summary of the number of codechecks and number of codechecks/ venues
+  etc.
+- [`generate_html_title_non_registers()`](http://codecheck.org.uk/codecheck/reference/generate_html_title_non_registers.md)
+  : Generate HTML Title for Non-Register Pages
+- [`generate_output_dir()`](http://codecheck.org.uk/codecheck/reference/generate_output_dir.md)
+  : Generate Output Directory Path
+- [`generate_table_details()`](http://codecheck.org.uk/codecheck/reference/generate_table_details.md)
+  : Generate Table Details
+- [`generate_table_details_non_reg()`](http://codecheck.org.uk/codecheck/reference/generate_table_details_non_reg.md)
+  : Generate Table Details for Non-Register Files
+- [`get_abstract()`](http://codecheck.org.uk/codecheck/reference/get_abstract.md)
+  : Retrieves the abstract of a research paper from CrossRef or
+  OpenAlex.
+- [`get_abstract_text_crossref()`](http://codecheck.org.uk/codecheck/reference/get_abstract_text_crossref.md)
+  : Extracts the paper DOI from the config_yml of the paper, constructs
+  a CrossRef API request, and returns the abstract text if available.
+- [`get_abstract_text_openalex()`](http://codecheck.org.uk/codecheck/reference/get_abstract_text_openalex.md)
+  : Retrieves the abstract of a research paper using the OpenAlex API.
+- [`get_cert_link()`](http://codecheck.org.uk/codecheck/reference/get_cert_link.md)
+  : Retrieves the download link for a certificate file from Zenodo, OSF,
+  or ResearchEquals.
+- [`get_certificate_from_github_issue()`](http://codecheck.org.uk/codecheck/reference/get_certificate_from_github_issue.md)
+  : Get certificate identifier from GitHub issues by matching author
+  names
+- [`get_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml.md)
+  : Get the CODECHECK configuration file from a repository
+- [`get_codecheck_yml_github()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_github.md)
+  : Retrieve a codecheck.yml file from a GitHub repository
+- [`get_codecheck_yml_gitlab()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_gitlab.md)
+  : Retrieve a codecheck.yml file from an GitLab.com project
+- [`get_codecheck_yml_osf()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_osf.md)
+  : Retrieve a codecheck.yml file from an OSF project
+- [`get_codecheck_yml_uncached()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_uncached.md)
+  : Retrieve a codecheck.yml file from a remote repository
+- [`get_codecheck_yml_zenodo()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_zenodo.md)
+  : Retrieve a codecheck.yml file from a Zenodo record
+- [`get_lifecycle_metadata()`](http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.md)
+  : Retrieve metadata from Lifecycle Journal
+- [`get_or_create_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/get_or_create_zenodo_record.md)
+  : Create or retrieve Zenodo record, submit to CODECHECK community, and
+  update codecheck.yml
+- [`get_osf_cert_link()`](http://codecheck.org.uk/codecheck/reference/get_osf_cert_link.md)
+  : Retrieves the link to a certificate PDF file from an OSF project
+  node. It retrieves its files, and searches for a single PDF
+  certificate file within the node. If multiple or no PDF files are
+  found, it returns NULL with a warning.
+- [`get_researchequals_cert_link()`](http://codecheck.org.uk/codecheck/reference/get_researchequals_cert_link.md)
+  : Accesses a codecheck's ResearchEquals record via its report link and
+  download the main file of the module
+- [`get_zenodo_cert_link()`](http://codecheck.org.uk/codecheck/reference/get_zenodo_cert_link.md)
+  : Accesses a codecheck's Zenodo record via its report link, retrieves
+  the record ID, and searches for a certificate PDF or ZIP file within
+  the record's files using the Zenodo API.
+- [`get_zenodo_id()`](http://codecheck.org.uk/codecheck/reference/get_zenodo_id.md)
+  : Extract the Zenodo record number from the report URL
+- [`get_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/get_zenodo_record.md)
+  : Get the full zenodo record using the record number stored in the
+  metadata.
+- [`is_placeholder_certificate()`](http://codecheck.org.uk/codecheck/reference/is_placeholder_certificate.md)
+  : Check if certificate identifier or DOI is a placeholder
+- [`latex_codecheck_logo()`](http://codecheck.org.uk/codecheck/reference/latex_codecheck_logo.md)
+  : Print the latex code to include the CODECHECK logo
+- [`latex_summary_of_manifest()`](http://codecheck.org.uk/codecheck/reference/latex_summary_of_manifest.md)
+  : Print a latex table to summarise CODECHECK metadata
+- [`latex_summary_of_metadata()`](http://codecheck.org.uk/codecheck/reference/latex_summary_of_metadata.md)
+  : Print a latex table to summarise CODECHECK metadata
+- [`list_manifest_files()`](http://codecheck.org.uk/codecheck/reference/list_manifest_files.md)
+  : Summarise manifest files.
+- [`parse_repository_spec()`](http://codecheck.org.uk/codecheck/reference/parse_repository_spec.md)
+  : Parse the repository specification in the column "Repo" in the
+  register CSV file
+- [`preprocess_register()`](http://codecheck.org.uk/codecheck/reference/preprocess_register.md)
+  : Function for preprocessing the register to create and return the
+  preprocessed register table.
+- [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  : Function for checking all entries in the register
+- [`register_clear_cache()`](http://codecheck.org.uk/codecheck/reference/register_clear_cache.md)
+  : Function for clearing the register cache
+- [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  : Function for rendering the register into different view
+- [`render_cert_html()`](http://codecheck.org.uk/codecheck/reference/render_cert_html.md)
+  : Renders an HTML certificate file from a Markdown template for a
+  specific certificate.
+- [`render_cert_htmls()`](http://codecheck.org.uk/codecheck/reference/render_cert_htmls.md)
+  : Generates HTML files for each certificate listed in the given
+  register table. It checks for the existence of the certificate PDF,
+  downloads it if necessary, and converts it to JPEG format for
+  embedding.
+- [`render_html()`](http://codecheck.org.uk/codecheck/reference/render_html.md)
+  : Renders html for a single table
+- [`render_manifest_files()`](http://codecheck.org.uk/codecheck/reference/render_manifest_files.md)
+  : Render manifest files for certificate output
+- [`render_non_register_md()`](http://codecheck.org.uk/codecheck/reference/render_non_register_md.md)
+  : Render Non-Register Markdown Table
+- [`render_register()`](http://codecheck.org.uk/codecheck/reference/render_register.md)
+  : Render Register in Specified Output Format
+- [`render_register_json()`](http://codecheck.org.uk/codecheck/reference/render_register_json.md)
+  : Renders register json for a single register_table
+- [`render_register_md()`](http://codecheck.org.uk/codecheck/reference/render_register_md.md)
+  : Renders register md for a single register_table
+- [`set_paper_title_references()`](http://codecheck.org.uk/codecheck/reference/set_paper_title_references.md)
+  : Set "Title" and "Paper reference" columns and values to the
+  register_table
+- [`update_certificate_from_github()`](http://codecheck.org.uk/codecheck/reference/update_certificate_from_github.md)
+  : Update certificate ID from GitHub issue
+- [`update_codecheck_yml_from_lifecycle()`](http://codecheck.org.uk/codecheck/reference/update_codecheck_yml_from_lifecycle.md)
+  : Update codecheck.yml with Lifecycle Journal metadata
+- [`upload_zenodo_certificate()`](http://codecheck.org.uk/codecheck/reference/upload_zenodo_certificate.md)
+  [`set_zenodo_certificate()`](http://codecheck.org.uk/codecheck/reference/upload_zenodo_certificate.md)
+  : Upload the CODECHECK certificate and additional files to Zenodo.
+- [`upload_zenodo_metadata()`](http://codecheck.org.uk/codecheck/reference/upload_zenodo_metadata.md)
+  : Upload metadata to Zenodo
+- [`validate_certificate_for_rendering()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_for_rendering.md)
+  : Validate certificate for rendering with visual warning
+- [`validate_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.md)
+  : Validate a CODECHECK configuration
+- [`validate_codecheck_yml_crossref()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_crossref.md)
+  : Validate codecheck.yml metadata against CrossRef
+- [`validate_codecheck_yml_orcid()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_orcid.md)
+  : Validate codecheck.yml metadata against ORCID
+- [`validate_contents_references()`](http://codecheck.org.uk/codecheck/reference/validate_contents_references.md)
+  : Validate codecheck.yml metadata against external references
+- [`validate_yaml_syntax()`](http://codecheck.org.uk/codecheck/reference/validate_yaml_syntax.md)
+  : Validate YAML syntax of a codecheck.yml file

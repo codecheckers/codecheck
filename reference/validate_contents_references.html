@@ -49,7 +49,8 @@
 <span>  strict <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  validate_crossref <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  validate_orcid <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  check_orcids <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  check_orcids <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  skip_on_auth_error <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -76,6 +77,13 @@ If <code>FALSE</code> (default), only issue warnings.</p></dd>
 
 <dt id="arg-check-orcids">check_orcids<a class="anchor" aria-label="anchor" href="#arg-check-orcids"></a></dt>
 <dd><p>Logical. If <code>TRUE</code> (default), validate ORCID identifiers in CrossRef check.</p></dd>
+
+
+<dt id="arg-skip-on-auth-error">skip_on_auth_error<a class="anchor" aria-label="anchor" href="#arg-skip-on-auth-error"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, skip ORCID validation
+when authentication fails instead of throwing an error. Default is <code>FALSE</code>,
+which requires ORCID authentication. Set to <code>TRUE</code> to allow the function
+to work without ORCID authentication (e.g., CI/CD pipelines, test environments).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -116,6 +124,9 @@ This provides comprehensive validation of all external references.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Validate only ORCID</span></span></span>
 <span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>validate_crossref <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Skip ORCID validation if authentication is not available</span></span></span>
+<span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>skip_on_auth_error <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -128,7 +139,7 @@ This provides comprehensive validation of all external references.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

@@ -1,10 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.1.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   codecheck_overview: codecheck_overview.html
   codecheck_register: codecheck_register.html
-last_built: 2025-11-06T12:07Z
+last_built: 2025-11-11T13:17Z
 urls:
   reference: http://codecheck.org.uk/codecheck/reference
   article: http://codecheck.org.uk/codecheck/articles

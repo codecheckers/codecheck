@@ -48,7 +48,8 @@
 <span>  yml_file <span class="op">=</span> <span class="st">"codecheck.yml"</span>,</span>
 <span>  strict <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  validate_authors <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  validate_codecheckers <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  validate_codecheckers <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  skip_on_auth_error <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -72,6 +73,13 @@ If <code>FALSE</code> (default), only issue warnings.</p></dd>
 <dt id="arg-validate-codecheckers">validate_codecheckers<a class="anchor" aria-label="anchor" href="#arg-validate-codecheckers"></a></dt>
 <dd><p>Logical. If <code>TRUE</code> (default), validate codechecker ORCIDs.</p></dd>
 
+
+<dt id="arg-skip-on-auth-error">skip_on_auth_error<a class="anchor" aria-label="anchor" href="#arg-skip-on-auth-error"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, skip validation when ORCID
+authentication fails instead of throwing an error. Default is <code>FALSE</code>,
+which requires ORCID authentication. Set to <code>TRUE</code> to allow the function
+to work without ORCID authentication (e.g., CI/CD pipelines, test environments).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -81,6 +89,9 @@ If <code>FALSE</code> (default), only issue warnings.</p></dd>
     <dt>issues</dt>
 <dd><p>Character vector of any issues found</p></dd>
 
+    <dt>skipped</dt>
+<dd><p>Logical indicating if validation was skipped due to auth issues</p></dd>
+
 
 </dl></div>
     <div class="section level2">
@@ -88,7 +99,11 @@ If <code>FALSE</code> (default), only issue warnings.</p></dd>
     <p>Validates author and codechecker information against the ORCID API.
 For each person with an ORCID, retrieves their ORCID record and compares
 the name in the ORCID record with the name in the local codecheck.yml file.</p>
-    </div>
+<p>Note: This function requires access to the ORCID API. If you encounter
+authentication issues, you can either:</p><ul><li><p>Set the <code>ORCID_TOKEN</code> environment variable with your ORCID token</p></li>
+<li><p>Run <code><a href="https://rdrr.io/pkg/rorcid/man/orcid_auth.html" class="external-link">rorcid::orcid_auth()</a></code> to authenticate interactively</p></li>
+<li><p>Set <code>skip_on_auth_error = TRUE</code> to skip validation if authentication fails</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Daniel Nuest</p>
@@ -97,7 +112,7 @@ the name in the ORCID record with the name in the local codecheck.yml file.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span>  <span class="co"># Validate with warnings only</span></span></span>
+<span class="r-in"><span>  <span class="co"># Validate with warnings only (requires ORCID authentication)</span></span></span>
 <span class="r-in"><span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">validate_codecheck_yml_orcid</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Validate with strict error checking</span></span></span>
@@ -105,6 +120,9 @@ the name in the ORCID record with the name in the local codecheck.yml file.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Validate only codecheckers</span></span></span>
 <span class="r-in"><span>  <span class="fu">validate_codecheck_yml_orcid</span><span class="op">(</span>validate_authors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Skip ORCID validation if authentication is not available</span></span></span>
+<span class="r-in"><span>  <span class="fu">validate_codecheck_yml_orcid</span><span class="op">(</span>skip_on_auth_error <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -117,7 +135,7 @@ the name in the ORCID record with the name in the local codecheck.yml file.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

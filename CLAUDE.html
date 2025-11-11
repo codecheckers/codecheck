@@ -54,12 +54,19 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"codecheckers/codecheck"</span><span class="op">)</span></span></code></pre></div>
 <p>Run tests using <code>tinytest</code>:</p>
+<p><strong>⚠️ CRITICAL: ALWAYS use <code>build_install_test()</code> for testing this package!</strong></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Interactive testing</span></span>
-<span><span class="fu">tinytest</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/run_test_dir.html" class="external-link">test_all</a></span><span class="op">(</span><span class="st">"/path/to/package"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Or build, install, and test in a fresh environment</span></span>
+<code class="sourceCode R"><span><span class="co"># CORRECT: Build, install, and test in a fresh environment</span></span>
 <span><span class="fu">tinytest</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/build_install_test.html" class="external-link">build_install_test</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<p><strong>DO NOT use <code>test_all()</code> from the source directory</strong> - it will cause test failures because the package functions won’t be properly loaded. The error “could not find function X” indicates you’re using the wrong test method.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># WRONG - DO NOT USE: Will cause "could not find function" errors</span></span>
+<span><span class="fu">tinytest</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/run_test_dir.html" class="external-link">test_all</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span>  <span class="co"># ❌ DON'T DO THIS</span></span>
+<span></span>
+<span><span class="co"># For interactive testing of specific functions during development:</span></span>
+<span><span class="co"># 1. First install the package: devtools::install()</span></span>
+<span><span class="co"># 2. Then load it: library(codecheck)</span></span>
+<span><span class="co"># 3. Then test interactively or source specific test files</span></span></code></pre></div>
 <p>The package uses GitHub Actions for CI/CD. Check <code>.github/workflows/R-CMD-check.yaml</code> for the automated testing setup.</p>
 <div class="section level3">
 <h3 id="changelog-management">Changelog Management<a class="anchor" aria-label="anchor" href="#changelog-management"></a></h3>
@@ -103,9 +110,9 @@
 <ul><li>
 <code><a href="reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> - Validates paper metadata against CrossRef API; compares title and author information with CrossRef data</li>
 <li>
-<code><a href="reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata</li>
+<code><a href="reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata; requires ORCID authentication by default (set <code>skip_on_auth_error = TRUE</code> to skip validation when authentication is unavailable)</li>
 <li>
-<code><a href="reference/validate_contents_references.html">validate_contents_references()</a></code> - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering</li>
+<code><a href="reference/validate_contents_references.html">validate_contents_references()</a></code> - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering; requires ORCID authentication by default (users can opt-in to skipping via <code>skip_on_auth_error = TRUE</code>)</li>
 </ul><p><strong>Zenodo integration</strong>: Functions for uploading certificates to Zenodo:</p>
 <ul><li>
 <code><a href="reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> - Create or retrieve a Zenodo record; defaults to loading metadata from codecheck.yml in current directory</li>
@@ -246,7 +253,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
