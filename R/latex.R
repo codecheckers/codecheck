@@ -176,18 +176,73 @@ cite_certificate <- function(metadata) {
   cat(citation)
 }
 
+##' Display error box in certificate output
+##'
+##' Internal helper function to display a formatted error message box in LaTeX output.
+##'
+##' @param filename - Name of the file that caused the error
+##' @param error_msg - The error message to display
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_error_box <- function(filename, error_msg) {
+  cat("\\begin{center}\n")
+  cat("\\fcolorbox{red}{yellow!20}{\\parbox{0.9\\textwidth}{\n")
+  cat("\\textbf{\\textcolor{red}{\\Large \\ding{56}} Cannot include file: \\texttt{",
+      filename, "}}\\\\\n", sep = "")
+  cat("\\vspace{0.2cm}\n")
+  cat("\\textbf{Error:} ", gsub("_", "\\\\_", error_msg, fixed = TRUE), "\n", sep = "")
+  cat("}}\n")
+  cat("\\end{center}\n\n")
+}
+
 ##' Render single-page image for certificate output
 ##'
-##' Internal helper function to render PNG, JPG, JPEG, TIF, TIFF images.
+##' Internal helper function to render PNG, JPG, JPEG, TIF, TIFF, GIF images.
+##' TIF/TIFF and GIF files are automatically converted to PNG since LaTeX doesn't natively support them.
 ##'
 ##' @param path - Path to the image file
 ##' @param comment - Comment/caption for the image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @importFrom magick image_read image_write
 ##' @keywords internal
 render_manifest_image <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
-  cat(paste0("![", comment, "](", path, ")\n"))
+
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
+  # Check file extension
+  ext <- tolower(tools::file_ext(path))
+
+  # Handle TIF/TIFF/GIF conversion (pdflatex doesn't support these formats)
+  if (ext %in% c("tif", "tiff", "gif")) {
+    tryCatch({
+      # Read and convert to PNG using magick package
+      img <- magick::image_read(path)
+      png_path <- sub(paste0("\\.", ext, "$"), "_converted.png", path, ignore.case = TRUE)
+      magick::image_write(img, png_path, format = "png")
+
+      format_display <- if (ext == "gif") "GIF" else "TIF/TIFF"
+      cat("\\textit{Note: ", format_display, " image automatically converted to PNG for display.}\n\n", sep = "")
+      cat(paste0("![", comment, "](", png_path, ")\n"))
+    }, error = function(e) {
+      format_name <- toupper(ext)
+      render_error_box(basename(path),
+                      paste("Failed to convert", format_name, "image:", e$message))
+    })
+  } else {
+    # PNG, JPG, JPEG - include directly
+    tryCatch({
+      cat(paste0("![", comment, "](", path, ")\n"))
+    }, error = function(e) {
+      render_error_box(basename(path),
+                      paste("Failed to include image:", e$message))
+    })
+  }
 }
 
 ##' Render EPS image for certificate output
@@ -201,7 +256,19 @@ render_manifest_image <- function(path, comment) {
 render_manifest_eps <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
-  cat(paste0("![", comment, "](", path, ")\n"))
+
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
+  tryCatch({
+    cat(paste0("![", comment, "](", path, ")\n"))
+  }, error = function(e) {
+    render_error_box(basename(path),
+                    paste("Failed to include EPS image:", e$message))
+  })
 }
 
 ##' Render SVG image for certificate output
@@ -217,14 +284,22 @@ render_manifest_svg <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
   # Convert SVG to PDF using rsvg package
   pdf_path <- sub("\\.svg$", "_converted.pdf", path)
 
   tryCatch({
     rsvg::rsvg_pdf(path, pdf_path)
+    cat("\\textit{Note: SVG image automatically converted to PDF for display.}\n\n")
     cat(paste0("![", comment, "](", pdf_path, ")\n"))
   }, error = function(e) {
-    cat("Cannot include SVG file. Error: ", e$message, "\n\n")
+    render_error_box(basename(path),
+                    paste("Failed to convert SVG image:", e$message))
   })
 }
 
@@ -241,6 +316,12 @@ render_manifest_pdf <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
   # Check if PDF has multiple pages using pdftools
   tryCatch({
     pdf_info <- pdftools::pdf_info(path)
@@ -255,9 +336,8 @@ render_manifest_pdf <- function(path, comment) {
       cat(paste0("![", comment, "](", path, ")\n"))
     }
   }, error = function(e) {
-    # Fallback: try to include as image, but show error if that's not possible
-    cat("Cannot read PDF info. Error: ", e$message, "\n\n")
-    cat(paste0("![", comment, "](", path, ")\n"))
+    render_error_box(basename(path),
+                    paste("Failed to process PDF file:", e$message))
   })
 }
 
@@ -273,12 +353,19 @@ render_manifest_text <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
   tryCatch({
     cat("\\scriptsize \n\n", "```txt\n")
     cat(readLines(path, warn = FALSE), sep = "\n")
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    cat("Cannot include text file. Error: ", e$message, "\n\n")
+    render_error_box(basename(path),
+                    paste("Failed to read text file:", e$message))
   })
 }
 
@@ -294,6 +381,12 @@ render_manifest_csv <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
   tryCatch({
     data <- read.csv(path)
     cat("Summary statistics of tabular data:", "\n\n")
@@ -301,7 +394,8 @@ render_manifest_csv <- function(path, comment) {
     print(skimr::skim(data))
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    cat("Cannot include CSV file. Error: ", e$message, "\n\n")
+    render_error_box(basename(path),
+                    paste("Failed to read CSV file:", e$message))
   })
 }
 
@@ -318,6 +412,12 @@ render_manifest_tsv <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
   tryCatch({
     data <- read.delim(path)
     cat("Summary statistics of tabular data:", "\n\n")
@@ -325,7 +425,8 @@ render_manifest_tsv <- function(path, comment) {
     print(skimr::skim(data))
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    cat("Cannot include TSV file. Error: ", e$message, "\n\n")
+    render_error_box(basename(path),
+                    paste("Failed to read TSV file:", e$message))
   })
 }
 
@@ -342,6 +443,12 @@ render_manifest_excel <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
   tryCatch({
     data <- readxl::read_excel(path)
     cat("Partial content of tabular data:", "\n\n")
@@ -349,7 +456,8 @@ render_manifest_excel <- function(path, comment) {
     print(data)
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    cat("Cannot include Excel file. Error: ", e$message, "\n\n")
+    render_error_box(basename(path),
+                    paste("Failed to read Excel file:", e$message))
   })
 }
 
@@ -367,6 +475,12 @@ render_manifest_excel <- function(path, comment) {
 render_manifest_json <- function(path, comment, max_lines = 50) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
+
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
 
   tryCatch({
     # Read and prettify JSON
@@ -389,7 +503,8 @@ render_manifest_json <- function(path, comment, max_lines = 50) {
 
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    cat("Cannot include JSON file. Error: ", e$message, "\n\n")
+    render_error_box(basename(path),
+                    paste("Failed to read JSON file:", e$message))
   })
 }
 
@@ -405,24 +520,33 @@ render_manifest_html <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
-  if (Sys.which("wkhtmltopdf") != "") {
-    tryCatch({
-      cat("Content of HTML file (starts on next page):", "\n\n")
-      out_file <- paste0(path, ".pdf")
-      result <- system2("wkhtmltopdf", c(shQuote(path), shQuote(out_file)),
-                       stdout = FALSE, stderr = FALSE)
-      if (result == 0 && file.exists(out_file)) {
-        cat(paste0("\\includepdf[pages={-}]{", out_file, "}"))
-        cat("\n\n End of ", basename(path), " on previous page.", "\n\n")
-      } else {
-        cat("Cannot include HTML file (conversion failed).\n\n")
-      }
-    }, error = function(e) {
-      cat("Cannot include HTML file. Error: ", e$message, "\n\n")
-    })
-  } else {
-    cat("Cannot include HTML file (wkhtmltopdf not available).\n\n")
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
   }
+
+  if (Sys.which("wkhtmltopdf") == "") {
+    render_error_box(basename(path),
+                    "HTML conversion requires wkhtmltopdf (not installed)")
+    return(invisible(NULL))
+  }
+
+  tryCatch({
+    cat("Content of HTML file (starts on next page):", "\n\n")
+    out_file <- paste0(path, ".pdf")
+    result <- system2("wkhtmltopdf", c(shQuote(path), shQuote(out_file)),
+                     stdout = FALSE, stderr = FALSE)
+    if (result == 0 && file.exists(out_file)) {
+      cat(paste0("\\includepdf[pages={-}]{", out_file, "}"))
+      cat("\n\n End of ", basename(path), " on previous page.", "\n\n")
+    } else {
+      render_error_box(basename(path), "HTML to PDF conversion failed")
+    }
+  }, error = function(e) {
+    render_error_box(basename(path),
+                    paste("Failed to convert HTML file:", e$message))
+  })
 }
 
 ##' Render unsupported file type for certificate output
@@ -435,21 +559,38 @@ render_manifest_html <- function(path, comment) {
 ##' @keywords internal
 render_manifest_unsupported <- function(path, comment) {
   cat("## ", basename(path), "\n\n")
-  cat("Cannot include output file as figure (unsupported format).")
+  cat("**Comment:** ", comment, "\n\n")
+
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
+  # Show file exists but format is not supported
+  ext <- tools::file_ext(path)
+  render_error_box(basename(path),
+                  paste0("Unsupported file format", if(nchar(ext) > 0) paste0(" (.", ext, ")") else ""))
 }
 
 ##' Render manifest files for certificate output
 ##'
 ##' Renders each file in the manifest appropriately based on its file type.
-##' Supported formats include images (PNG, JPG, JPEG, PDF, TIF, TIFF, EPS, SVG),
+##' Supported formats include images (PNG, JPG, JPEG, GIF, PDF, TIF, TIFF, EPS, SVG),
 ##' text files (TXT, Rout), tabular data (CSV, TSV) with skimr statistics, Excel files
 ##' (XLS, XLSX), JSON files (pretty-printed), and HTML files (converted to PDF via wkhtmltopdf).
 ##'
 ##' For PDF files that contain multiple pages, all pages are included using
 ##' \\includepdf[pages=\{-\}]. Page count is determined using the pdftools package.
-##' SVG files are converted to PDF using the rsvg package. EPS files are included
+##' SVG files are converted to PDF using the rsvg package. TIF/TIFF and GIF files are converted
+##' to PNG using the magick package (must be installed). EPS files are included
 ##' directly (LaTeX handles the conversion with epstopdf package). JSON files are
 ##' pretty-printed with a configurable line limit.
+##'
+##' Error handling: If a file is missing, corrupted, or cannot be processed, an error box
+##' is displayed in the certificate output instead of failing the entire rendering. This
+##' allows codecheckers to identify and fix issues with individual files without blocking
+##' the certificate generation.
 ##'
 ##' @title Render manifest files for certificate output
 ##' @param manifest_df - data frame with manifest file information (from copy_manifest_files)
@@ -463,7 +604,7 @@ render_manifest_files <- function(manifest_df, json_max_lines = 50) {
     path <- manifest_df[i, "dest"]
     comment <- manifest_df[i, "comment"]
 
-    if (stringr::str_ends(path, "(png|jpg|jpeg|tif|tiff)")) {
+    if (stringr::str_ends(path, "(png|jpg|jpeg|gif|tif|tiff)")) {
       render_manifest_image(path, comment)
     } else if (stringr::str_ends(path, "svg")) {
       render_manifest_svg(path, comment)

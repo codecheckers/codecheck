@@ -15,6 +15,7 @@ render_manifest_image(path, comment)
 NULL (outputs directly via cat() for knitr/rmarkdown)
 }
 \description{
-Internal helper function to render PNG, JPG, JPEG, TIF, TIFF images.
+Internal helper function to render PNG, JPG, JPEG, TIF, TIFF, GIF images.
+TIF/TIFF and GIF files are automatically converted to PNG since LaTeX doesn't natively support them.
 }
 \keyword{internal}

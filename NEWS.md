@@ -2,21 +2,26 @@
 
 ## ORCID Validation Improvements
 
-* **Graceful authentication handling**: ORCID validation functions now handle authentication failures gracefully instead of requiring interactive login
-* **New `skip_on_auth_error` parameter**: Added to `validate_codecheck_yml_orcid()` and `validate_contents_references()` to control behavior when ORCID authentication is unavailable (defaults to `TRUE` for non-interactive environments)
-* **Enhanced error messages**: Clear guidance provided when ORCID authentication is needed, with instructions for setting `ORCID_TOKEN` environment variable
-* **Test and CI/CD compatibility**: Certificate template and all validation functions now work seamlessly in test and CI/CD environments without requiring ORCID authentication
-* **Backward compatibility**: Existing code continues to work without modification; validation automatically skips when authentication is unavailable
+* **Graceful authentication handling**: ORCID validation functions now handle authentication failures gracefully with clear error messages instead of requiring interactive login
+* **New `skip_on_auth_error` parameter**: Added to `validate_codecheck_yml_orcid()` and `validate_contents_references()` to control behavior when ORCID authentication is unavailable. By default (`FALSE`), functions require authentication. Set to `TRUE` to skip validation when authentication is not available (useful for CI/CD pipelines and test environments).
+* **Enhanced error messages**: Clear guidance provided when ORCID authentication is needed, with instructions for setting `ORCID_TOKEN` environment variable or running `rorcid::orcid_auth()`
+* **Opt-in skipping**: Certificate authors can choose to skip ORCID validation by setting `skip_on_auth_error = TRUE` in the certificate template
 * **Better feedback**: Functions now return a `skipped` field indicating whether validation was skipped due to authentication issues
 
 ## Manifest Rendering Enhancements
 
 * **Expanded format support**: Certificates can now render additional file formats in the manifest section:
-  - Image formats: TIF, TIFF, EPS, and SVG (with automatic PDF conversion)
+  - Image formats: TIF, TIFF, GIF, EPS, and SVG (with automatic conversion)
   - Data formats: JSON (with pretty-printing and configurable line limits) and TSV (tab-separated values)
   - Multi-page PDFs are now fully supported with automatic page detection
+* **GIF format support**: GIF images are now automatically converted to PNG during certificate rendering. pdflatex does not natively support GIF format, so conversion is required.
+* **TIF/TIFF format support**: TIF and TIFF images are now automatically converted to PNG during certificate rendering.
+* **New dependency**: Added `magick` package as a required dependency for image format conversion (TIF/TIFF/GIF to PNG). Previously this was optional, but is now mandatory for proper image format support.
+* **Graceful error handling**: Missing, corrupted, or unsupported files no longer fail the entire certificate rendering. Instead, a formatted error box is displayed in the PDF for each problematic file, allowing codecheckers to identify and fix issues without blocking certificate generation.
+* **File existence checks**: All manifest rendering functions now check for file existence before processing and display helpful error messages.
+* **Improved error messages**: Error messages are now displayed as formatted LaTeX boxes in the rendered PDF with specific information about what went wrong (e.g., "File not found", "Failed to convert GIF image", "Unsupported file format (.xyz)").
 * **Improved maintainability**: Manifest rendering code refactored into modular, testable components
-* **Comprehensive testing**: Added extensive test suite covering all supported formats with manual inspection output
+* **Comprehensive testing**: Added extensive test suite covering all supported formats including GIF with test fixtures
 
 # codecheck 0.22.0
 

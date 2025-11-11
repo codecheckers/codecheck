@@ -9,7 +9,7 @@ validate_codecheck_yml_orcid(
   strict = FALSE,
   validate_authors = TRUE,
   validate_codecheckers = TRUE,
-  skip_on_auth_error = TRUE
+  skip_on_auth_error = FALSE
 )
 }
 \arguments{
@@ -23,9 +23,9 @@ If \code{FALSE} (default), only issue warnings.}
 \item{validate_codecheckers}{Logical. If \code{TRUE} (default), validate codechecker ORCIDs.}
 
 \item{skip_on_auth_error}{Logical. If \code{TRUE}, skip validation when ORCID
-authentication fails instead of throwing an error. Default is \code{TRUE}.
-This allows the function to work gracefully in environments without ORCID
-authentication (e.g., CI/CD pipelines, test environments).}
+authentication fails instead of throwing an error. Default is \code{FALSE},
+which requires ORCID authentication. Set to \code{TRUE} to allow the function
+to work without ORCID authentication (e.g., CI/CD pipelines, test environments).}
 }
 \value{
 Invisibly returns a list with validation results:
@@ -53,7 +53,7 @@ authentication issues, you can either:
 }
 \examples{
 \dontrun{
-  # Validate with warnings only
+  # Validate with warnings only (requires ORCID authentication)
   result <- validate_codecheck_yml_orcid()
 
   # Validate with strict error checking
@@ -62,8 +62,8 @@ authentication issues, you can either:
   # Validate only codecheckers
   validate_codecheck_yml_orcid(validate_authors = FALSE)
 
-  # Fail if authentication is not available
-  validate_codecheck_yml_orcid(skip_on_auth_error = FALSE)
+  # Skip ORCID validation if authentication is not available
+  validate_codecheck_yml_orcid(skip_on_auth_error = TRUE)
 }
 }
 \author{

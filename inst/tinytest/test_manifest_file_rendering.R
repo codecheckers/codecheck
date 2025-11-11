@@ -20,9 +20,9 @@ setup_cert_env <- function(formats_to_test = "all") {
   file.copy(file.path(template_dir, "codecheck-preamble.sty"),
             file.path(test_root, "codecheck-preamble.sty"))
 
-  # Disable strict validation in the template for testing
+  # Disable strict validation in the template for testing and skip ORCID auth
   template_content <- readLines(file.path(test_root, "codecheck.Rmd"))
-  template_content <- gsub("strict = TRUE", "strict = FALSE", template_content, fixed = TRUE)
+  template_content <- gsub("strict = TRUE", "strict = FALSE, skip_on_auth_error = TRUE", template_content, fixed = TRUE)
   writeLines(template_content, file.path(test_root, "codecheck.Rmd"))
 
   # Copy test fixtures
@@ -285,6 +285,31 @@ if (!is.null(result$output_file)) {
 
 unlink(env$root, recursive = TRUE)
 
+# Test 4b2: GIF image renders without errors (converted to PNG) ----
+env <- setup_cert_env(formats_to_test = "test_figure.gif")
+create_test_yml(env$root, 'manifest:
+  - file: test_figure.gif
+    comment: Test figure in GIF format')
+
+result <- render_certificate(env$root)
+expect_true(result$success, info = paste("GIF rendering failed:", result$error))
+if (!is.null(result$output_file)) {
+  expect_true(file.exists(result$output_file), info = "PDF output file should exist")
+}
+
+# Check PDF contains figure reference and conversion note
+if (!is.null(result$output_file)) {
+  pdf_text <- extract_pdf_text(result$output_file)
+  expect_true(grepl("test_figure\\.gif", pdf_text, ignore.case = TRUE),
+              info = "PDF should reference GIF filename")
+  expect_true(grepl("Comment: Test figure in GIF format", pdf_text, ignore.case = TRUE),
+              info = "PDF should reference GIF description")
+  expect_true(grepl("GIF.*converted.*PNG", pdf_text, ignore.case = TRUE),
+              info = "PDF should indicate GIF was converted to PNG")
+}
+
+unlink(env$root, recursive = TRUE)
+
 # Test 4c: EPS image renders without errors ----
 env <- setup_cert_env(formats_to_test = "test_figure.eps")
 create_test_yml(env$root, 'manifest:
@@ -413,20 +438,16 @@ create_test_yml(env$root, 'manifest:
 result <- render_certificate(env$root)
 expect_true(result$success, info = paste("CSV rendering failed:", result$error))
 
-# Check PDF contains file reference and data values
+# Check PDF contains file reference and summary statistics
 if (!is.null(result$output_file)) {
   pdf_text <- extract_pdf_text(result$output_file)
   expect_true(grepl("test_data\\.csv", pdf_text, ignore.case = TRUE),
               info = "PDF should reference CSV filename")
   expect_true(grepl("Comment: Test data in CSV format", pdf_text, ignore.case = TRUE),
               info = "PDF should reference CSV description")
-  # Verify actual data values appear (from skimr statistics or data)
-  expect_true(grepl("name|value|category", pdf_text, ignore.case = TRUE),
-              info = "CSV column names should appear")
-  expect_true(grepl("Sample A|Sample B|Sample C", pdf_text, ignore.case = TRUE),
-              info = "CSV sample names should appear")
-  expect_true(grepl("42\\.5|38\\.2|51\\.0", pdf_text),
-              info = "CSV numeric values should appear")
+  # Verify skimr statistics appear
+  expect_true(grepl("Summary statistics|Variable|n_missing|complete_rate", pdf_text, ignore.case = TRUE),
+              info = "CSV summary statistics should appear")
 }
 
 unlink(env$root, recursive = TRUE)

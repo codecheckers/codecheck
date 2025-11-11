@@ -17,12 +17,24 @@ remotes::install_github("codecheckers/codecheck")
 ```
 
 Run tests using `tinytest`:
-```r
-# Interactive testing
-tinytest::test_all("/path/to/package")
 
-# Or build, install, and test in a fresh environment
+**⚠️ CRITICAL: ALWAYS use `build_install_test()` for testing this package!**
+
+```r
+# CORRECT: Build, install, and test in a fresh environment
 tinytest::build_install_test(".")
+```
+
+**DO NOT use `test_all()` from the source directory** - it will cause test failures because the package functions won't be properly loaded. The error "could not find function X" indicates you're using the wrong test method.
+
+```r
+# WRONG - DO NOT USE: Will cause "could not find function" errors
+tinytest::test_all(".")  # ❌ DON'T DO THIS
+
+# For interactive testing of specific functions during development:
+# 1. First install the package: devtools::install()
+# 2. Then load it: library(codecheck)
+# 3. Then test interactively or source specific test files
 ```
 
 The package uses GitHub Actions for CI/CD. Check `.github/workflows/R-CMD-check.yaml` for the automated testing setup.
@@ -66,8 +78,8 @@ When bumping the version in `DESCRIPTION`, add a new section to `NEWS.md` with t
 **External validation**: Ensure consistency with published paper metadata and ORCID records:
 
 - `validate_codecheck_yml_crossref()` - Validates paper metadata against CrossRef API; compares title and author information with CrossRef data
-- `validate_codecheck_yml_orcid()` - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata
-- `validate_contents_references()` - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering
+- `validate_codecheck_yml_orcid()` - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata; requires ORCID authentication by default (set `skip_on_auth_error = TRUE` to skip validation when authentication is unavailable)
+- `validate_contents_references()` - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering; requires ORCID authentication by default (users can opt-in to skipping via `skip_on_auth_error = TRUE`)
 
 **Zenodo integration**: Functions for uploading certificates to Zenodo:
 

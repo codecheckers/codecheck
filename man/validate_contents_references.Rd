@@ -10,7 +10,7 @@ validate_contents_references(
   validate_crossref = TRUE,
   validate_orcid = TRUE,
   check_orcids = TRUE,
-  skip_on_auth_error = TRUE
+  skip_on_auth_error = FALSE
 )
 }
 \arguments{
@@ -25,10 +25,10 @@ If \code{FALSE} (default), only issue warnings.}
 
 \item{check_orcids}{Logical. If \code{TRUE} (default), validate ORCID identifiers in CrossRef check.}
 
-\item{skip_on_auth_error}{Logical. If \code{TRUE} (default), skip ORCID validation
-when authentication fails instead of throwing an error. This allows the function
-to work gracefully in environments without ORCID authentication (e.g., CI/CD
-pipelines, test environments).}
+\item{skip_on_auth_error}{Logical. If \code{TRUE}, skip ORCID validation
+when authentication fails instead of throwing an error. Default is \code{FALSE},
+which requires ORCID authentication. Set to \code{TRUE} to allow the function
+to work without ORCID authentication (e.g., CI/CD pipelines, test environments).}
 }
 \value{
 Invisibly returns a list with validation results:
@@ -60,8 +60,8 @@ This provides comprehensive validation of all external references.
   # Validate only ORCID
   validate_contents_references(validate_crossref = FALSE)
 
-  # Fail if ORCID authentication is not available
-  validate_contents_references(skip_on_auth_error = FALSE)
+  # Skip ORCID validation if authentication is not available
+  validate_contents_references(skip_on_auth_error = TRUE)
 }
 }
 \author{
