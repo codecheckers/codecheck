@@ -502,23 +502,36 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 ##' For each person with an ORCID, retrieves their ORCID record and compares
 ##' the name in the ORCID record with the name in the local codecheck.yml file.
 ##'
+##' Note: This function requires access to the ORCID API. If you encounter
+##' authentication issues, you can either:
+##' \itemize{
+##'   \item Set the \code{ORCID_TOKEN} environment variable with your ORCID token
+##'   \item Run \code{rorcid::orcid_auth()} to authenticate interactively
+##'   \item Set \code{skip_on_auth_error = TRUE} to skip validation if authentication fails
+##' }
+##'
 ##' @title Validate codecheck.yml metadata against ORCID
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
 ##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
 ##'   If \code{FALSE} (default), only issue warnings.
 ##' @param validate_authors Logical. If \code{TRUE} (default), validate author ORCIDs.
 ##' @param validate_codecheckers Logical. If \code{TRUE} (default), validate codechecker ORCIDs.
+##' @param skip_on_auth_error Logical. If \code{TRUE}, skip validation when ORCID
+##'   authentication fails instead of throwing an error. Default is \code{FALSE},
+##'   which requires ORCID authentication. Set to \code{TRUE} to allow the function
+##'   to work without ORCID authentication (e.g., CI/CD pipelines, test environments).
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
 ##'     \item{valid}{Logical indicating if all checks passed}
 ##'     \item{issues}{Character vector of any issues found}
+##'     \item{skipped}{Logical indicating if validation was skipped due to auth issues}
 ##'   }
 ##' @author Daniel Nuest
 ##' @importFrom rorcid orcid_person
 ##' @export
 ##' @examples
 ##' \dontrun{
-##'   # Validate with warnings only
+##'   # Validate with warnings only (requires ORCID authentication)
 ##'   result <- validate_codecheck_yml_orcid()
 ##'
 ##'   # Validate with strict error checking
@@ -526,11 +539,15 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 ##'
 ##'   # Validate only codecheckers
 ##'   validate_codecheck_yml_orcid(validate_authors = FALSE)
+##'
+##'   # Skip ORCID validation if authentication is not available
+##'   validate_codecheck_yml_orcid(skip_on_auth_error = TRUE)
 ##' }
 validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
                                          strict = FALSE,
                                          validate_authors = TRUE,
-                                         validate_codecheckers = TRUE) {
+                                         validate_codecheckers = TRUE,
+                                         skip_on_auth_error = FALSE) {
 
   if (!file.exists(yml_file)) {
     stop("codecheck.yml file not found at: ", yml_file)
@@ -540,6 +557,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
   local_meta <- yaml::read_yaml(yml_file)
 
   issues <- character(0)
+  validation_skipped <- FALSE
 
   # Helper function to normalize names for comparison
   normalize_name <- function(name) {
@@ -577,7 +595,23 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 
       return(NULL)
     }, error = function(e) {
-      warning("Failed to retrieve ORCID record for ", orcid_id, ": ", e$message)
+      error_msg <- conditionMessage(e)
+
+      # Check if this is an authentication error
+      if (grepl("Unauthorized|401|authentication|token", error_msg, ignore.case = TRUE)) {
+        if (skip_on_auth_error) {
+          validation_skipped <<- TRUE
+          message("\u2139 ORCID authentication required but not available. Skipping validation for ", orcid_id)
+          message("  To enable ORCID validation, set ORCID_TOKEN environment variable or run rorcid::orcid_auth()")
+          return("AUTH_ERROR")
+        } else {
+          stop("ORCID authentication failed for ", orcid_id, ": ", error_msg,
+               "\n  Set ORCID_TOKEN environment variable or run rorcid::orcid_auth() to authenticate.",
+               "\n  Or set skip_on_auth_error = TRUE to skip validation when authentication fails.")
+        }
+      }
+
+      warning("Failed to retrieve ORCID record for ", orcid_id, ": ", error_msg)
       return(NULL)
     })
   }
@@ -602,6 +636,11 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 
         # Query ORCID for name
         orcid_name <- get_orcid_name(author$ORCID)
+
+        # Skip this author if authentication failed and we're in skip mode
+        if (!is.null(orcid_name) && orcid_name == "AUTH_ERROR") {
+          next
+        }
 
         if (!is.null(orcid_name)) {
           local_name_norm <- normalize_name(author$name)
@@ -670,6 +709,11 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
           # Query ORCID for name
           orcid_name <- get_orcid_name(checker$ORCID)
 
+          # Skip this codechecker if authentication failed and we're in skip mode
+          if (!is.null(orcid_name) && orcid_name == "AUTH_ERROR") {
+            next
+          }
+
           if (!is.null(orcid_name)) {
             local_name_norm <- normalize_name(checker$name)
             orcid_name_norm <- normalize_name(orcid_name)
@@ -703,7 +747,10 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
   # Final validation result
   valid <- length(issues) == 0
 
-  if (!valid) {
+  if (validation_skipped) {
+    message("\n\u2139 ORCID validation skipped due to authentication issues")
+    message("  Set ORCID_TOKEN environment variable or run rorcid::orcid_auth() to enable ORCID validation")
+  } else if (!valid) {
     message("\n\u26a0 ORCID validation completed with ", length(issues), " issue(s)")
     if (strict) {
       stop("ORCID validation failed with ", length(issues), " issue(s):\n",
@@ -715,7 +762,8 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 
   invisible(list(
     valid = valid,
-    issues = issues
+    issues = issues,
+    skipped = validation_skipped
   ))
 }
 
@@ -733,6 +781,10 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##' @param validate_crossref Logical. If \code{TRUE} (default), validate against CrossRef.
 ##' @param validate_orcid Logical. If \code{TRUE} (default), validate against ORCID.
 ##' @param check_orcids Logical. If \code{TRUE} (default), validate ORCID identifiers in CrossRef check.
+##' @param skip_on_auth_error Logical. If \code{TRUE}, skip ORCID validation
+##'   when authentication fails instead of throwing an error. Default is \code{FALSE},
+##'   which requires ORCID authentication. Set to \code{TRUE} to allow the function
+##'   to work without ORCID authentication (e.g., CI/CD pipelines, test environments).
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
 ##'     \item{valid}{Logical indicating if all checks passed}
@@ -754,12 +806,16 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##'
 ##'   # Validate only ORCID
 ##'   validate_contents_references(validate_crossref = FALSE)
+##'
+##'   # Skip ORCID validation if authentication is not available
+##'   validate_contents_references(skip_on_auth_error = TRUE)
 ##' }
 validate_contents_references <- function(yml_file = "codecheck.yml",
                                          strict = FALSE,
                                          validate_crossref = TRUE,
                                          validate_orcid = TRUE,
-                                         check_orcids = TRUE) {
+                                         check_orcids = TRUE,
+                                         skip_on_auth_error = FALSE) {
 
   crossref_result <- NULL
   orcid_result <- NULL
@@ -790,7 +846,8 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
 
     orcid_result <- validate_codecheck_yml_orcid(
       yml_file = yml_file,
-      strict = FALSE  # Don't stop yet
+      strict = FALSE,  # Don't stop yet
+      skip_on_auth_error = skip_on_auth_error
     )
 
     if (!orcid_result$valid) {

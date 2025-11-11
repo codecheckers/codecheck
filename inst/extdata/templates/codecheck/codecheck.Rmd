@@ -89,9 +89,19 @@ manifest_df <- copy_manifest_files(root, metadata,
 ```{r validate_crossref, eval=TRUE, include=FALSE}
 ## Validate metadata against CrossRef and ORCID metadata - will fail rendering on mismatch
 ## Set strict = FALSE or remove this chunk if you want to skip validation
+##
+## ORCID validation requires authentication by default (set ORCID_TOKEN environment variable)
+## If you want to skip ORCID validation when authentication is not available,
+## add: skip_on_auth_error = TRUE
+##
+## To set up ORCID authentication:
+##   1. Run: rorcid::orcid_auth()
+##   2. Add ORCID_TOKEN to your .Renviron file
 validation_result <- validate_contents_references(
   yml_file = file.path(root, "codecheck.yml"),
   strict = TRUE
+  # Uncomment the line below to skip ORCID validation if authentication is unavailable:
+  # , skip_on_auth_error = TRUE
 )
 ```
 

@@ -614,7 +614,6 @@ if (!is.null(result$output_file) && file.exists(result$output_file)) {
   expect_true(grepl("2020-001|GigaScience", pdf_text),
               info = "JSON data values should appear")
 }
-}
 
 unlink(env$root, recursive = TRUE)
 

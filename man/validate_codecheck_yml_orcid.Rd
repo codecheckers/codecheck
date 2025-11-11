@@ -8,7 +8,8 @@ validate_codecheck_yml_orcid(
   yml_file = "codecheck.yml",
   strict = FALSE,
   validate_authors = TRUE,
-  validate_codecheckers = TRUE
+  validate_codecheckers = TRUE,
+  skip_on_auth_error = TRUE
 )
 }
 \arguments{
@@ -20,12 +21,18 @@ If \code{FALSE} (default), only issue warnings.}
 \item{validate_authors}{Logical. If \code{TRUE} (default), validate author ORCIDs.}
 
 \item{validate_codecheckers}{Logical. If \code{TRUE} (default), validate codechecker ORCIDs.}
+
+\item{skip_on_auth_error}{Logical. If \code{TRUE}, skip validation when ORCID
+authentication fails instead of throwing an error. Default is \code{TRUE}.
+This allows the function to work gracefully in environments without ORCID
+authentication (e.g., CI/CD pipelines, test environments).}
 }
 \value{
 Invisibly returns a list with validation results:
   \describe{
     \item{valid}{Logical indicating if all checks passed}
     \item{issues}{Character vector of any issues found}
+    \item{skipped}{Logical indicating if validation was skipped due to auth issues}
   }
 }
 \description{
@@ -35,6 +42,14 @@ Validate codecheck.yml metadata against ORCID
 Validates author and codechecker information against the ORCID API.
 For each person with an ORCID, retrieves their ORCID record and compares
 the name in the ORCID record with the name in the local codecheck.yml file.
+
+Note: This function requires access to the ORCID API. If you encounter
+authentication issues, you can either:
+\itemize{
+  \item Set the \code{ORCID_TOKEN} environment variable with your ORCID token
+  \item Run \code{rorcid::orcid_auth()} to authenticate interactively
+  \item Set \code{skip_on_auth_error = TRUE} to skip validation if authentication fails
+}
 }
 \examples{
 \dontrun{
@@ -46,6 +61,9 @@ the name in the ORCID record with the name in the local codecheck.yml file.
 
   # Validate only codecheckers
   validate_codecheck_yml_orcid(validate_authors = FALSE)
+
+  # Fail if authentication is not available
+  validate_codecheck_yml_orcid(skip_on_auth_error = FALSE)
 }
 }
 \author{

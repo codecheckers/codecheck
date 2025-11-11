@@ -1,5 +1,14 @@
 # codecheck (development version)
 
+## ORCID Validation Improvements
+
+* **Graceful authentication handling**: ORCID validation functions now handle authentication failures gracefully instead of requiring interactive login
+* **New `skip_on_auth_error` parameter**: Added to `validate_codecheck_yml_orcid()` and `validate_contents_references()` to control behavior when ORCID authentication is unavailable (defaults to `TRUE` for non-interactive environments)
+* **Enhanced error messages**: Clear guidance provided when ORCID authentication is needed, with instructions for setting `ORCID_TOKEN` environment variable
+* **Test and CI/CD compatibility**: Certificate template and all validation functions now work seamlessly in test and CI/CD environments without requiring ORCID authentication
+* **Backward compatibility**: Existing code continues to work without modification; validation automatically skips when authentication is unavailable
+* **Better feedback**: Functions now return a `skipped` field indicating whether validation was skipped due to authentication issues
+
 ## Manifest Rendering Enhancements
 
 * **Expanded format support**: Certificates can now render additional file formats in the manifest section:

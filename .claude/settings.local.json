@@ -28,7 +28,8 @@
       "Bash(for file in R/github.R R/lifecycle.R R/validation.R R/zenodo.R)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
-      "Bash(1)"
+      "Bash(1)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
