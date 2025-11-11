@@ -1,0 +1,35 @@
+[
+  {
+    "Certificate ID": "2020-001",
+    "Certificate Link": "https://codecheck.org.uk/register/certs/2020-001/",
+    "Repository Link": "https://github.com/codecheckers/Piccolo-2020",
+    "Type": "journal",
+    "Venue": "GigaScience",
+    "Report": "http://doi.org/10.5281/zenodo.3674056",
+    "Title": "ShinyLearner: A containerized benchmarking tool for machine-learning classification of tabular data.",
+    "Paper reference": "https://doi.org/10.1093/gigascience/giaa026",
+    "Check date": "2019-02-14"
+  },
+  {
+    "Certificate ID": "2020-002",
+    "Certificate Link": "https://codecheck.org.uk/register/certs/2020-002/",
+    "Repository Link": "https://github.com/codecheckers/Reproduction-Hancock",
+    "Type": "community",
+    "Venue": "codecheck",
+    "Report": "http://doi.org/10.5281/zenodo.3750741",
+    "Title": "The principal components of natural images",
+    "Paper reference": "https://doi.org/10.1088/0954-898X_3_1_008",
+    "Check date": "2020-04-13"
+  },
+  {
+    "Certificate ID": "2020-003",
+    "Certificate Link": "https://codecheck.org.uk/register/certs/2020-003/",
+    "Repository Link": "https://github.com/codecheckers/Hopfield-1982",
+    "Type": "community",
+    "Venue": "codecheck",
+    "Report": "https://doi.org/10.5281/zenodo.3741797",
+    "Title": "Neural networks and physical systems with emergent collective computational abilities",
+    "Paper reference": "https://doi.org/10.1073/pnas.79.8.2554",
+    "Check date": "2020-04-06"
+  }
+]

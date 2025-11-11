@@ -1,0 +1,6 @@
+name,value,category
+Sample A,42.5,Type1
+Sample B,invalid_number,Type1
+Sample C,51.0
+Missing columns here
+Sample E,39.1,Type1,ExtraColumn

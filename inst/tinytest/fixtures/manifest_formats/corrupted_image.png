@@ -1,0 +1,3 @@
+This is not a valid PNG file, just plain text pretending to be an image.
+The PNG header should be: \x89PNG\r\n\x1a\n but this is just garbage data.
+Image rendering should fail gracefully.

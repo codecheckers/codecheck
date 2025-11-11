@@ -1,0 +1,2 @@
+Not a real Excel file - just text content
+This will cause readxl to fail when trying to read it

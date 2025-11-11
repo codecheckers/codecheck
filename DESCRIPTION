@@ -27,7 +27,7 @@ Description: This contains helper functions for codecheckers for conducting CODE
 License: MIT
 License_is_FOSS: yes
 Depends: R (>= 4.0.0), gh, R.cache, parsedate
-Imports: 
+Imports:
     dplyr,
     tidyr,
     yaml,
@@ -42,12 +42,14 @@ Imports:
     httr,
     zen4R,
     whisker,
-    pdftools
+    pdftools,
+    readxl,
+    rsvg
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Suggests: 
+Suggests:
     tinytest,
     ttdo,
     skimr

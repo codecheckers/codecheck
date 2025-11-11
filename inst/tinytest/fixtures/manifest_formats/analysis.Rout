@@ -1,0 +1,18 @@
+
+R version 4.5.0 (2024-04-24) -- "Frisbee Sailing"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
+
+> # CODECHECK Analysis Script
+> data <- data.frame(
++   name = c("Sample A", "Sample B", "Sample C", "Sample D", "Sample E"),
++   value = c(42.5, 38.2, 51.0, 45.8, 39.1)
++ )
+> 
+> summary(data$value)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  38.20   39.10   42.50   43.32   45.80   51.00 
+> 
+> sd(data$value)
+[1] 5.118594
+> 

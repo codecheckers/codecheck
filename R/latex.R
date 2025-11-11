@@ -175,3 +175,318 @@ cite_certificate <- function(metadata) {
                      names, year, metadata$certificate, metadata$report)
   cat(citation)
 }
+
+##' Render single-page image for certificate output
+##'
+##' Internal helper function to render PNG, JPG, JPEG, TIF, TIFF images.
+##'
+##' @param path - Path to the image file
+##' @param comment - Comment/caption for the image
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_manifest_image <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+  cat(paste0("![", comment, "](", path, ")\n"))
+}
+
+##' Render EPS image for certificate output
+##'
+##' Internal helper function to render EPS files (LaTeX handles conversion).
+##'
+##' @param path - Path to the EPS file
+##' @param comment - Comment/caption for the image
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_manifest_eps <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+  cat(paste0("![", comment, "](", path, ")\n"))
+}
+
+##' Render SVG image for certificate output
+##'
+##' Internal helper function to render SVG files (converts to PDF first).
+##'
+##' @param path - Path to the SVG file
+##' @param comment - Comment/caption for the image
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @importFrom rsvg rsvg_pdf
+##' @keywords internal
+render_manifest_svg <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  # Convert SVG to PDF using rsvg package
+  pdf_path <- sub("\\.svg$", "_converted.pdf", path)
+
+  tryCatch({
+    rsvg::rsvg_pdf(path, pdf_path)
+    cat(paste0("![", comment, "](", pdf_path, ")\n"))
+  }, error = function(e) {
+    cat("Cannot include SVG file. Error: ", e$message, "\n\n")
+  })
+}
+
+##' Render PDF file for certificate output
+##'
+##' Internal helper function to render PDF files (handles multi-page PDFs).
+##'
+##' @param path - Path to the PDF file
+##' @param comment - Comment/caption for the PDF
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @importFrom pdftools pdf_info
+##' @keywords internal
+render_manifest_pdf <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  # Check if PDF has multiple pages using pdftools
+  tryCatch({
+    pdf_info <- pdftools::pdf_info(path)
+    num_pages <- pdf_info$pages
+
+    if (!is.na(num_pages) && num_pages > 1) {
+      # Multi-page PDF - include all pages
+      cat(paste0("\\includepdf[pages={-}]{", path, "}\n\n"))
+      cat("End of ", basename(path), " (", num_pages, " pages).\n\n")
+    } else {
+      # Single-page PDF - include as image
+      cat(paste0("![", comment, "](", path, ")\n"))
+    }
+  }, error = function(e) {
+    # Fallback: try to include as image, but show error if that's not possible
+    cat("Cannot read PDF info. Error: ", e$message, "\n\n")
+    cat(paste0("![", comment, "](", path, ")\n"))
+  })
+}
+
+##' Render text file for certificate output
+##'
+##' Internal helper function to render TXT and Rout files.
+##'
+##' @param path - Path to the text file
+##' @param comment - Comment describing the file
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_manifest_text <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  tryCatch({
+    cat("\\scriptsize \n\n", "```txt\n")
+    cat(readLines(path, warn = FALSE), sep = "\n")
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
+  }, error = function(e) {
+    cat("Cannot include text file. Error: ", e$message, "\n\n")
+  })
+}
+
+##' Render CSV file for certificate output
+##'
+##' Internal helper function to render CSV files with skimr statistics.
+##'
+##' @param path - Path to the CSV file
+##' @param comment - Comment describing the file
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_manifest_csv <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  tryCatch({
+    data <- read.csv(path)
+    cat("Summary statistics of tabular data:", "\n\n")
+    cat("\\scriptsize \n\n", "```txt\n")
+    print(skimr::skim(data))
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
+  }, error = function(e) {
+    cat("Cannot include CSV file. Error: ", e$message, "\n\n")
+  })
+}
+
+##' Render TSV file for certificate output
+##'
+##' Internal helper function to render TSV files with skimr statistics.
+##'
+##' @param path - Path to the TSV file
+##' @param comment - Comment describing the file
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @importFrom utils read.delim
+##' @keywords internal
+render_manifest_tsv <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  tryCatch({
+    data <- read.delim(path)
+    cat("Summary statistics of tabular data:", "\n\n")
+    cat("\\scriptsize \n\n", "```txt\n")
+    print(skimr::skim(data))
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
+  }, error = function(e) {
+    cat("Cannot include TSV file. Error: ", e$message, "\n\n")
+  })
+}
+
+##' Render Excel file for certificate output
+##'
+##' Internal helper function to render XLS/XLSX files.
+##'
+##' @param path - Path to the Excel file
+##' @param comment - Comment describing the file
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @importFrom readxl read_excel
+##' @keywords internal
+render_manifest_excel <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  tryCatch({
+    data <- readxl::read_excel(path)
+    cat("Partial content of tabular data:", "\n\n")
+    cat("\\scriptsize \n\n", "```txt\n")
+    print(data)
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
+  }, error = function(e) {
+    cat("Cannot include Excel file. Error: ", e$message, "\n\n")
+  })
+}
+
+##' Render JSON file for certificate output
+##'
+##' Internal helper function to render JSON files with pretty-printing.
+##'
+##' @param path - Path to the JSON file
+##' @param comment - Comment describing the file
+##' @param max_lines - Maximum number of lines to display (default: 50)
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @importFrom jsonlite prettify fromJSON
+##' @importFrom utils head
+##' @keywords internal
+render_manifest_json <- function(path, comment, max_lines = 50) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  tryCatch({
+    # Read and prettify JSON
+    json_content <- readLines(path, warn = FALSE)
+    json_text <- paste(json_content, collapse = "\n")
+    pretty_json <- jsonlite::prettify(json_text)
+
+    cat("JSON content (pretty-printed):", "\n\n")
+    cat("\\scriptsize \n\n", "```json\n")
+
+    # Split into lines and limit if needed
+    json_lines <- strsplit(pretty_json, "\n")[[1]]
+
+    if (length(json_lines) > max_lines) {
+      cat(head(json_lines, max_lines), sep = "\n")
+      cat("\n... (", length(json_lines) - max_lines, " more lines omitted)\n", sep = "")
+    } else {
+      cat(json_lines, sep = "\n")
+    }
+
+    cat("\n\n``` \n\n", "\\normalsize \n\n")
+  }, error = function(e) {
+    cat("Cannot include JSON file. Error: ", e$message, "\n\n")
+  })
+}
+
+##' Render HTML file for certificate output
+##'
+##' Internal helper function to render HTML files (converts to PDF via wkhtmltopdf).
+##'
+##' @param path - Path to the HTML file
+##' @param comment - Comment describing the file
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_manifest_html <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  if (Sys.which("wkhtmltopdf") != "") {
+    tryCatch({
+      cat("Content of HTML file (starts on next page):", "\n\n")
+      out_file <- paste0(path, ".pdf")
+      result <- system2("wkhtmltopdf", c(shQuote(path), shQuote(out_file)),
+                       stdout = FALSE, stderr = FALSE)
+      if (result == 0 && file.exists(out_file)) {
+        cat(paste0("\\includepdf[pages={-}]{", out_file, "}"))
+        cat("\n\n End of ", basename(path), " on previous page.", "\n\n")
+      } else {
+        cat("Cannot include HTML file (conversion failed).\n\n")
+      }
+    }, error = function(e) {
+      cat("Cannot include HTML file. Error: ", e$message, "\n\n")
+    })
+  } else {
+    cat("Cannot include HTML file (wkhtmltopdf not available).\n\n")
+  }
+}
+
+##' Render unsupported file type for certificate output
+##'
+##' Internal helper function to handle unsupported file types.
+##'
+##' @param path - Path to the file
+##' @param comment - Comment describing the file
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_manifest_unsupported <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("Cannot include output file as figure (unsupported format).")
+}
+
+##' Render manifest files for certificate output
+##'
+##' Renders each file in the manifest appropriately based on its file type.
+##' Supported formats include images (PNG, JPG, JPEG, PDF, TIF, TIFF, EPS, SVG),
+##' text files (TXT, Rout), tabular data (CSV, TSV) with skimr statistics, Excel files
+##' (XLS, XLSX), JSON files (pretty-printed), and HTML files (converted to PDF via wkhtmltopdf).
+##'
+##' For PDF files that contain multiple pages, all pages are included using
+##' \\includepdf[pages=\{-\}]. Page count is determined using the pdftools package.
+##' SVG files are converted to PDF using the rsvg package. EPS files are included
+##' directly (LaTeX handles the conversion with epstopdf package). JSON files are
+##' pretty-printed with a configurable line limit.
+##'
+##' @title Render manifest files for certificate output
+##' @param manifest_df - data frame with manifest file information (from copy_manifest_files)
+##' @param json_max_lines - Maximum number of lines to display for JSON files (default: 50)
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @author Daniel Nuest
+##' @importFrom stringr str_ends
+##' @export
+render_manifest_files <- function(manifest_df, json_max_lines = 50) {
+  for (i in seq_len(nrow(manifest_df))) {
+    path <- manifest_df[i, "dest"]
+    comment <- manifest_df[i, "comment"]
+
+    if (stringr::str_ends(path, "(png|jpg|jpeg|tif|tiff)")) {
+      render_manifest_image(path, comment)
+    } else if (stringr::str_ends(path, "svg")) {
+      render_manifest_svg(path, comment)
+    } else if (stringr::str_ends(path, "eps")) {
+      render_manifest_eps(path, comment)
+    } else if (stringr::str_ends(path, "pdf")) {
+      render_manifest_pdf(path, comment)
+    } else if (stringr::str_ends(path, "(Rout|txt)")) {
+      render_manifest_text(path, comment)
+    } else if (stringr::str_ends(path, "csv")) {
+      render_manifest_csv(path, comment)
+    } else if (stringr::str_ends(path, "tsv")) {
+      render_manifest_tsv(path, comment)
+    } else if (stringr::str_ends(path, "json")) {
+      render_manifest_json(path, comment, json_max_lines)
+    } else if (stringr::str_ends(path, "(xls|xlsx)")) {
+      render_manifest_excel(path, comment)
+    } else if (stringr::str_ends(path, "(htm|html)")) {
+      render_manifest_html(path, comment)
+    } else {
+      render_manifest_unsupported(path, comment)
+    }
+
+    cat("\\clearpage \n\n")
+  }
+}

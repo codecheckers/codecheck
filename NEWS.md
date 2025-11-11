@@ -1,133 +1,44 @@
 # codecheck (development version)
 
+## Manifest Rendering Enhancements
+
+* **Expanded format support**: Certificates can now render additional file formats in the manifest section:
+  - Image formats: TIF, TIFF, EPS, and SVG (with automatic PDF conversion)
+  - Data formats: JSON (with pretty-printing and configurable line limits) and TSV (tab-separated values)
+  - Multi-page PDFs are now fully supported with automatic page detection
+* **Improved maintainability**: Manifest rendering code refactored into modular, testable components
+* **Comprehensive testing**: Added extensive test suite covering all supported formats with manual inspection output
+
 # codecheck 0.22.0
 
 ## Certificate Automation and Validation
 
-* **New feature**: Automatic certificate ID retrieval from GitHub issues
-  - `get_certificate_from_github_issue()`: Searches codecheckers/register issues by author names
-  - `is_placeholder_certificate()`: Detects placeholder certificate IDs and report DOIs
-  - `update_certificate_from_github()`: Auto-updates certificate IDs from matching GitHub issues
-  - `validate_certificate_for_rendering()`: Displays visual warnings in PDF for placeholder values
-  - Certificate template now automatically attempts to retrieve certificate IDs during rendering
-* **New feature**: YAML validation and field completion
-  - `validate_yaml_syntax()`: Validates YAML syntax before parsing
-  - `complete_codecheck_yml()`: Analyzes and adds missing mandatory/optional fields
-  - Both functions integrated into certificate template
-* **New feature**: External metadata validation via CrossRef and ORCID APIs
-  - `validate_codecheck_yml_crossref()`: Validates paper metadata against CrossRef
-  - `validate_codecheck_yml_orcid()`: Validates author/codechecker names against ORCID records
-  - `validate_contents_references()`: Unified wrapper combining both validations
-  - Integrated into certificate template with strict mode to fail rendering on mismatches
+* **Automatic certificate ID retrieval**: Certificate IDs can now be automatically retrieved from GitHub issues by searching the codecheckers/register repository by author names. The certificate template attempts this automatically during rendering.
+* **YAML validation and field completion**: The codecheck.yml file can now be validated for syntax errors and automatically completed with missing mandatory/optional fields.
+* **External metadata validation**: Paper metadata can be validated against CrossRef, and author/codechecker names can be validated against ORCID records. Strict mode fails rendering on mismatches.
+* **Placeholder detection**: Placeholder certificate IDs and report DOIs are automatically detected and display visual warnings in rendered PDFs.
 
 ## Lifecycle Journal Integration
 
-* **New feature**: Automatic metadata population from Lifecycle Journal (addresses #82)
-  - `get_lifecycle_metadata()`: Retrieves article metadata via CrossRef API
-  - `update_codecheck_yml_from_lifecycle()`: Auto-populates codecheck.yml with paper metadata
-  - Smart field updates with preview mode and diff view before applying changes
+* **Automatic metadata population**: Article metadata from Lifecycle Journal can be automatically retrieved and used to populate codecheck.yml fields (addresses #82). Smart field updates with preview mode and diff view before applying changes.
 
 ## Bug Fixes
 
-* **Critical fix**: Fixed `set_zenodo_certificate()` to use correct zen4R API signatures
-  - `deleteFile()` now uses `deleteFile(recordId, filename)` instead of `deleteFile(fileId, recordId)`
-  - `uploadFile()` now uses `uploadFile(path, record)` with record object instead of record ID
-  - Fixes "cannot coerce type 'environment' to vector of type 'character'" error
-* Fixed ORCID icon hyperlinks in PDF certificates using academicons package
-  - Replaced complex tikz/svg implementation with simple `\aiOrcid` from academicons
-  - Moved `\usepackage{hyperref}` to load after other packages to avoid conflicts
-  - ORCID icons are now clickable links that work reliably across PDF viewers
-* Fixed `latex_summary_of_metadata()` and `latex_summary_of_manifest()` to handle NULL/empty fields
-* Fixed `get_or_create_zenodo_record()` to call correct function (`get_zenodo_id()`)
-* **Critical fix**: Fixed `upload_zenodo_metadata()` to properly set alternate identifiers per Zenodo curation policy
-  - Certificate ID now correctly added as **alternate identifiers** (not related identifiers)
-  - Two alternate identifier entries as required by policy:
-    - URL schema: `http://cdchck.science/register/certs/<CERT ID>`
-    - Other schema: `cdchck.science/register/certs/<CERT ID>` (without protocol)
-  - Sets `metadata$alternate_identifiers` directly with proper structure
-  - Related identifiers now only include paper (reviews) and repository (isSupplementedBy)
-  - Paper DOI uses scheme="doi" and relation_type="reviews"
-  - Repository URL uses scheme="url" and relation_type="issupplementedby"
-* **Code quality**: Refactored DOI placeholder detection to eliminate code duplication
-  - Created internal `is_doi_placeholder()` helper function
-  - Now used by both `is_placeholder_certificate()` and `get_or_create_zenodo_record()`
-  - Centralized placeholder detection logic for easier maintenance
-* **Code quality**: Fixed R CMD check warnings
-  - Added `utils::globalVariables()` declaration for NSE variables used in dplyr/data.table operations
-  - Fixed incorrect parameter name in `update_certificate_from_github()` call (state vs issue_state)
-  - Resolved all "no visible binding for global variable" warnings
-* **Code quality**: Reorganized package structure for better maintainability
-  - Split monolithic R/codecheck.R (2365 lines) into 7 focused files:
-    - R/workspace.R (73 lines): Workspace creation and initialization
-    - R/manifest.R (74 lines): File operations and manifest handling
-    - R/latex.R (177 lines): LaTeX rendering utilities
-    - R/zenodo.R (530 lines): Zenodo integration
-    - R/lifecycle.R (238 lines): Lifecycle Journal integration
-    - R/validation.R (1103 lines): Validation functions
-    - R/github.R (162 lines): GitHub integration
-  - All roxygen documentation, imports, and exports preserved
-  - All 604 tests pass after refactoring
+* **Critical fix**: Fixed Zenodo certificate upload to use correct zen4R API signatures (fixes "cannot coerce type 'environment' to vector of type 'character'" error)
+* Fixed ORCID icon hyperlinks in PDF certificates - icons are now clickable links that work reliably across PDF viewers
+* Fixed handling of NULL/empty fields in certificate rendering
+* **Critical fix**: Fixed Zenodo metadata upload to properly set alternate identifiers per Zenodo curation policy (certificate ID now correctly added as alternate identifiers with proper URL and Other schemas)
+* Fixed R CMD check warnings related to variable bindings
+* Reorganized package structure into focused files for better maintainability
 
 ## Enhancements
 
-* **Refactored Zenodo certificate upload**: `set_zenodo_certificate()` renamed to `upload_zenodo_certificate()`
-  - **New feature**: Can now upload additional files alongside the certificate via `additional_files` parameter
-  - **New feature**: Automatically uploads certificate source file (.Rmd or .qmd) by default
-    - Detects source file by looking for same base name as certificate PDF with .Rmd or .qmd extension
-    - Tries .Rmd first, then .qmd if .Rmd not found (supports both R Markdown and Quarto)
-    - Can be disabled with `upload_source = FALSE` parameter
-    - Provides informative messages when source file is found/not found
-    - **Smart source file replacement**: Checks for existing source files on Zenodo record
-      - Prompts user before deleting existing .Rmd or .qmd files (when warn=TRUE)
-      - Auto-deletes existing source files when warn=FALSE
-      - Handles multiple existing source files (deletes all before uploading new one)
-      - Case-insensitive detection (.Rmd, .rmd, .qmd, .QMD all detected)
-  - Certificate is always uploaded first to ensure it becomes the preview file for the Zenodo record
-  - Source file uploaded second (if found and enabled), followed by any additional files
-  - `set_zenodo_certificate()` retained as an alias for backward compatibility
-  - Returns list with certificate result, source result, and additional_files results
-  - **Improved API**: Parameter renamed from `zen` to `zenodo` for clarity
-  - **Flexible record input**: Now accepts either a record ID (string/numeric) or a Zenodo record object
-  - When a record object is provided, skips unnecessary API fetch for better performance
-* **Smart certificate upload**: `upload_zenodo_certificate()` checks for existing certificate files before uploading
-  - Automatically detects existing PDF files on Zenodo record
-  - Prompts user whether to delete existing files and upload new one, or abort operation
-  - New warn parameter (default TRUE) for interactive prompting; set FALSE for automated/non-interactive contexts
-  - Shows file details (name, size) before deletion
-  - Handles multiple PDF files and provides clear feedback during deletion/upload
-  - Comprehensive error handling with graceful degradation
-  - Comprehensive test suite with 52 tests covering all scenarios including source file upload and replacement
-* **Automatic YAML updating**: `get_or_create_zenodo_record()` now automatically updates codecheck.yml with Zenodo DOI
-  - When creating a new Zenodo record, automatically updates the report field in codecheck.yml
-  - Detects empty or placeholder values (FIXME, TODO, placeholder, XXXXX, etc.) and updates automatically
-  - For non-placeholder values, asks user confirmation before overwriting (when warn=TRUE)
-  - Handles NULL report field gracefully
-  - Preserves all other fields in codecheck.yml during update
-  - New yml_file parameter allows specifying alternate YAML file location
-  - Comprehensive test suite with 31 tests using mocked Zenodo API
-* **Automatic CODECHECK community submission**: `get_or_create_zenodo_record()` now automatically submits new records to the CODECHECK community
-  - Newly created Zenodo records are automatically submitted to https://zenodo.org/communities/codecheck/
-  - Uses zen4R's `createReviewRequest()` and `submitRecordForReview()` methods
-  - Record will be added to the community after publication
-  - Graceful error handling if community submission fails - provides warning with manual instructions
-  - Ensures all CODECHECK certificates are discoverable in the central community
-* **Zenodo curation policy compliance**: `upload_zenodo_metadata()` now fully complies with CODECHECK Zenodo community curation policy
-  - Publisher set to "CODECHECK Community on Zenodo" (was "CODECHECK")
-  - Resource type set to "publication-report" (was "publication-preprint")
-  - Description includes certificate summary as required by policy
-  - Adds related identifier for original paper with "reviews" relation (scheme="doi", relation_type="reviews", resource_type="publication-article")
-  - Adds related identifier for code repository with "isSupplementedBy" relation (scheme="url", relation_type="issupplementedby", resource_type=auto-detected)
-  - Adds **two alternate identifiers** for certificate ID (URL and Other schemas) - correctly uses alternate_identifiers field per curation policy
-  - **Smart repository type detection**: Automatically detects if repository is software (GitHub, GitLab, Codeberg, etc.) or dataset (DataCite DOI)
-  - **Configurable resource types**: New `resource_types` parameter allows overriding defaults via named list (paper, repository)
-  - Prints confidence level messages for low/medium confidence detections to allow user verification
-  - Validates required fields (certificate ID, warns for missing summary)
-  - Handles NULL/empty repository gracefully
-  - Extracts clean DOI from doi.org URLs
-  - Comprehensive test suite with 38 tests including auto-detection and override scenarios
+* **Enhanced Zenodo certificate upload**: Can now upload additional files alongside the certificate, including automatic upload of certificate source files (.Rmd or .qmd). Smart detection of existing files with user prompts before replacement. Backward compatible via alias.
+* **Automatic YAML updating**: When creating new Zenodo records, the codecheck.yml file is automatically updated with the Zenodo DOI. Detects and replaces placeholder values, asks for confirmation on non-placeholder updates.
+* **Automatic CODECHECK community submission**: Newly created Zenodo records are automatically submitted to the CODECHECK community (https://zenodo.org/communities/codecheck/) ensuring discoverability.
+* **Zenodo curation policy compliance**: Metadata uploads now fully comply with CODECHECK Zenodo community curation policy (correct publisher, resource type, alternate identifiers, and related identifiers with automatic repository type detection).
 * Zenodo functions now load metadata from codecheck.yml by default
 * DOI validation is now platform-agnostic (Zenodo, OSF, ResearchEquals, etc.)
-* Removed pifont package dependency; now uses UTF-8 emoji ⚠ for warnings
 * Enhanced error messages with clearer guidance
 * Added ~230 new tests across all features
   
@@ -135,12 +46,12 @@
 
 * Added pkgdown configuration and workflow for documentation site
 * Added CLAUDE.md with comprehensive guidance for AI-assisted development
-* Fixed typo in `get_abstract_text_crossref()` (`referenc` → `reference`)
+* Fixed typo in abstract text retrieval
 * Fixed test file error handling for missing config files
-* Fixed variable scoping issues in tinytest suite
+* Fixed variable scoping issues in test suite
 * Added launch pad link to documentation
 * Added clarifying comments in core functions
-* **Bug fix**: Fixed `validate_codecheck_yml()` repository URL validation - now correctly calls `http_error()` on response objects instead of URL strings
+* **Bug fix**: Fixed repository URL validation to properly check HTTP responses
 
 # codecheck 0.20.0
 
