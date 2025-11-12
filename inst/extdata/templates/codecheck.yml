@@ -12,20 +12,8 @@ paper:
   reference: http://pdfs.semanticscholar.org/7dcf/a42cfe3b59becb441844b72558b361693608.pdf
 
 manifest:
-  - file: Figure2.png
-    comment: manuscript Figure 2
-  - file: Figure3.png
-    comment: manuscript Figure 3
-  - file: Figure4.png
-    comment: manuscript Figure 4
-  - file: Figure5.png
-    comment: manuscript Figure 5
-  - file: Figure6.png
-    comment: manuscript Figure 6
-  - file: Figure7.png
-    comment: manuscript Figure 7
-  - file: Figure8.png
-    comment: manuscript Figure 8
+  - file: codecheck/placeholder_output.txt
+    comment: Placeholder output file - replace with actual reproduced outputs (figures, data files, tables, etc.)
 
 codechecker:
   - name: Stephen J. Eglen

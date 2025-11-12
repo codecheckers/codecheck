@@ -1,0 +1,17 @@
+PLACEHOLDER OUTPUT FILE
+
+This is a placeholder file for the CODECHECK template.
+
+When you conduct your actual CODECHECK, replace this file reference in the
+codecheck.yml manifest section with the actual output files from the
+computational analysis you are reproducing.
+
+For example:
+- figures (*.png, *.pdf, *.jpg)
+- data files (*.csv, *.rds, *.mat)
+- tables (*.csv, *.xlsx)
+- any other computational outputs
+
+Each manifest entry should specify:
+  - file: path/to/output/file.ext
+    comment: Brief description of what this output represents

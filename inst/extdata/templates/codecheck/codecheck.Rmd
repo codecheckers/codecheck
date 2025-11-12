@@ -128,10 +128,7 @@ This code was (not) straightforward to codecheck.
 # CODECHECKER notes
 
 ```{r git_sha, echo=FALSE}
-gitInfo <- ""
-if(git2r::in_repository(root)) {
-  gitInfo <- paste0("This check is based on the commit `", git2r::last_commit()$sha, "`.")
-}
+gitInfo <- get_git_info(root)
 ```
 
 The GitHub repo ...

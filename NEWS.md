@@ -17,7 +17,17 @@
 * **GIF format support**: GIF images are now automatically converted to PNG during certificate rendering. pdflatex does not natively support GIF format, so conversion is required.
 * **TIF/TIFF format support**: TIF and TIFF images are now automatically converted to PNG during certificate rendering.
 * **New dependency**: Added `magick` package as a required dependency for image format conversion (TIF/TIFF/GIF to PNG). Previously this was optional, but is now mandatory for proper image format support.
-* **Graceful error handling**: Missing, corrupted, or unsupported files no longer fail the entire certificate rendering. Instead, a formatted error box is displayed in the PDF for each problematic file, allowing codecheckers to identify and fix issues without blocking certificate generation.
+* **Graceful error handling**: Missing, corrupted, or unsupported manifest files no longer fail the entire certificate rendering:
+  - `copy_manifest_files()` now warns about missing files instead of stopping execution, allowing the certificate to render with available files
+  - Each problematic file displays a formatted error message in the PDF output, helping codecheckers identify and fix issues
+  - File-level error handling prevents individual file failures from blocking the entire certificate generation
+  - Error messages include the filename and specific error reason for easier debugging
+
+## Git Integration
+
+* **New function**: Added `get_git_info()` to retrieve git commit information from a repository path
+* **Proper dependency handling**: git2r dependency is now properly handled through the package function rather than inline template code
+* **Template simplification**: Certificate templates now use `get_git_info()` instead of inline git2r calls, improving maintainability and error handling
 * **File existence checks**: All manifest rendering functions now check for file existence before processing and display helpful error messages.
 * **Improved error messages**: Error messages are now displayed as formatted LaTeX boxes in the rendered PDF with specific information about what went wrong (e.g., "File not found", "Failed to convert GIF image", "Unsupported file format (.xyz)").
 * **Improved maintainability**: Manifest rendering code refactored into modular, testable components

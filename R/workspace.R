@@ -71,3 +71,43 @@ codecheck_metadata <- function(root = getwd()) {
 
   yaml::read_yaml(yml_path)
 }
+
+##' Get git repository information
+##'
+##' Returns a formatted string with git commit information if the path is
+##' in a git repository, otherwise returns an empty string. This is used
+##' in certificate templates to document which commit was checked.
+##'
+##' @title Get git repository information
+##' @param path Path to check for git repository (defaults to current working directory)
+##' @return A character string with commit information, or empty string if not in a git repo
+##' @author Daniel Nuest
+##' @importFrom git2r in_repository repository last_commit
+##' @export
+##' @examples
+##' \dontrun{
+##'   # In a git repository
+##'   get_git_info(".")
+##'   # Returns: "This check is based on the commit `abc123...`."
+##'
+##'   # Not in a git repository
+##'   get_git_info("/tmp")
+##'   # Returns: ""
+##' }
+get_git_info <- function(path = getwd()) {
+  gitInfo <- ""
+
+  tryCatch({
+    if (git2r::in_repository(path)) {
+      repo <- git2r::repository(path, discover = TRUE)
+      commit <- git2r::last_commit(repo)
+      gitInfo <- paste0("This check is based on the commit `", commit$sha, "`.")
+    }
+  }, error = function(e) {
+    # If git2r fails for any reason, just return empty string
+    # This ensures certificate rendering doesn't fail due to git issues
+    gitInfo <<- ""
+  })
+
+  return(gitInfo)
+}
