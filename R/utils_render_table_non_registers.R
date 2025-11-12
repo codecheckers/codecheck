@@ -22,9 +22,16 @@ create_non_register_files <- function(register_table, filter_by){
       table_details <- generate_table_details_non_reg(table, filter, subcat)
 
       render_html(table, table_details, filter)
-      
+
       # Removing the unnecessary columns before creating html and json
       if (filter == "venues"){
+        # Rename venue_label to its display name before output
+        col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
+        if ("venue_label" %in% colnames(table)) {
+          table <- table %>%
+            rename(!!sym(col_names[["venue_label"]]) := venue_label)
+        }
+        # Remove slug column
         table <- table %>% select(-`venue_slug`)
       }
 

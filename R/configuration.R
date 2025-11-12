@@ -458,3 +458,48 @@ validate_codecheck_yml <- function(configuration) {
   
   return(TRUE)
 }
+
+#' Load venues configuration from CSV file
+#'
+#' Reads a venues.csv file and constructs the CONFIG$DICT_VENUE_NAMES dictionary
+#' and stores full venue information including labels.
+#'
+#' @param venues_file Path to the venues.csv file. If NULL, defaults to
+#'   "venues.csv" in the current working directory.
+#' @return A data frame with columns: name, longname, label
+#' @author Daniel Nüst
+#' @importFrom utils read.csv
+#' @export
+load_venues_config <- function(venues_file = NULL) {
+  if (is.null(venues_file)) {
+    venues_file <- "venues.csv"
+  }
+
+  if (!file.exists(venues_file)) {
+    stop("Venues configuration file not found: ", venues_file,
+         "\nPlease provide a valid path to venues.csv")
+  }
+
+  # Read the venues CSV
+  venues_data <- read.csv(venues_file, stringsAsFactors = FALSE)
+
+  # Validate required columns
+  required_cols <- c("name", "longname", "label")
+  missing_cols <- setdiff(required_cols, names(venues_data))
+  if (length(missing_cols) > 0) {
+    stop("Venues CSV missing required columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  # Construct the venue names dictionary
+  venue_dict <- as.list(setNames(venues_data$longname, venues_data$name))
+
+  # Store in CONFIG
+  CONFIG$DICT_VENUE_NAMES <- venue_dict
+
+  # Also store the full venue data including labels for later use
+  CONFIG$VENUE_DATA <- venues_data
+
+  message("Loaded ", nrow(venues_data), " venues from ", venues_file)
+
+  return(venues_data)
+}

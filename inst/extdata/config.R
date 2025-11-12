@@ -166,7 +166,8 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
   "venues" = c(
     "Venue" = "Venue name",
     "Type" = "Venue type",
-    "no_codechecks" = "No. of codechecks"
+    "no_codechecks" = "No. of codechecks",
+    "venue_label" = "Issue label"
   )
 )
 
@@ -234,20 +235,9 @@ CONFIG$TEMPLATE_DIR<- list(
 )
 
 # DICT OF VENUE NAMES
-CONFIG$DICT_VENUE_NAMES <- list(
-  "GigaScience" = "GigaScience",
-  "J Geogr Syst" = "Journal of Geographical Systems",
-  "J Archaeol Sci" = "Journal of Archaeological Science",
-  "GigaByte" = "GigaByte",
-  "AGILEGIS" = "AGILE Conference on Geographic Information Science",
-  "codecheck" = "CODECHECK",
-  "codecheck NL" = "CODECHECK NL",
-  "in press" = "In press",
-  "preprint" = "Preprint",
-  "AUMC" = "Amsterdam UMC",
-  "Lifecycle Journal" = "Lifecycle Journal",
-  "TU Delft DCC" = "TU Delft Digital Competence Centre"
-)
+# This is loaded dynamically from venues.csv by load_venues_config()
+# Initialize as empty list for compatibility
+CONFIG$DICT_VENUE_NAMES <- list()
 
 # JSON FILE INFORMATION
 # List specifying the columns to keep for JSON files

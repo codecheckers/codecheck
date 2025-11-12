@@ -9,6 +9,7 @@
 #' @param filter_by The filter or list o filters (if applicable)
 #' @param outputs The output formats to create
 #' @param config A list of configuration files to be sourced at the beginning of the rending process
+#' @param venues_file Path to the venues.csv file containing venue names and labels
 #' @param from The first register entry to check
 #' @param to The last register entry to check
 #'
@@ -27,15 +28,19 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             filter_by = c("venues", "codecheckers"),
                             outputs = c("html", "md", "json"),
                             config = c(system.file("extdata", "config.R", package = "codecheck")),
+                            venues_file = "venues.csv",
                             from = 1,
                             to = nrow(register)) {
   message("Rendering register using codecheck version ", utils::packageVersion("codecheck"), " from ", from, " to ", to)
-  
+
   # Loading config.R files
   for (i in seq(length(config))) {
     source(config[i])
   }
-  
+
+  # Load venues configuration
+  load_venues_config(venues_file)
+
   message("Using cache path ", R.cache::getCacheRootPath())
   
   register <- register[(from:to),]

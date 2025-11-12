@@ -31,7 +31,9 @@
       "Bash(1)",
       "Bash(tee:*)",
       "Bash(xelatex:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "WebFetch(domain:yihui.org)",
+      "Bash(R --quiet --no-save -e:*)"
     ],
     "deny": [],
     "ask": []

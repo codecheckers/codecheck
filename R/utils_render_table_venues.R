@@ -52,11 +52,33 @@ create_all_venues_table <- function(register_table){
     group_by(Venue) %>%
     mutate(no_codechecks = sum(register_table$Venue == Venue))
 
-  # Adding slug name column. This is needed for the hyperlinks 
+  # Adding slug name column. This is needed for the hyperlinks
   new_table <- new_table %>%
     group_by(Venue) %>%
     mutate(`venue_slug` = gsub(" ", "_", stringr::str_to_lower(Venue)))
-  
+
+  # Ungroup before adding venue label column
+  new_table <- new_table %>%
+    ungroup()
+
+  # Adding venue label column by looking up in CONFIG$VENUE_DATA
+  if (exists("VENUE_DATA", envir = CONFIG) && !is.null(CONFIG$VENUE_DATA)) {
+    new_table <- new_table %>%
+      mutate(`venue_label` = {
+        labels <- character(nrow(new_table))
+        for (i in seq_len(nrow(new_table))) {
+          venue_name <- Venue[i]
+          match_idx <- which(CONFIG$VENUE_DATA$name == venue_name)
+          if (length(match_idx) > 0) {
+            labels[i] <- CONFIG$VENUE_DATA$label[match_idx[1]]
+          } else {
+            labels[i] <- NA_character_
+          }
+        }
+        labels
+      })
+  }
+
   # Updating each venue name with the names in CONFIG$DICT_VENUE_NAMES
   # Recode maps each Venue values to the corresponding Venue value in the dict
   new_table <- new_table %>%
@@ -83,7 +105,7 @@ add_all_venues_hyperlinks_non_reg <- function(table){
   # Extracting column names from CONFIG
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
 
-  # !!sym is used to refer to column names defined in the CONFIG$NON_REG_TABLE_COL_NAMES 
+  # !!sym is used to refer to column names defined in the CONFIG$NON_REG_TABLE_COL_NAMES
   # dynamically
   table <- table %>%
 
@@ -93,26 +115,49 @@ add_all_venues_hyperlinks_non_reg <- function(table){
       # Generate venue name hyperlink
       !!col_names[["Venue"]] := paste0(
         "[", !!sym(col_names[["Venue"]]), "](",
-        CONFIG$HYPERLINKS[["venues"]], 
+        CONFIG$HYPERLINKS[["venues"]],
         # Retrieving the plural venue types
         CONFIG$VENUE_SUBCAT_PLURAL[[!!sym(col_names[["Type"]])]], "/",
         venue_slug, "/)"
       ),
 
-      # Generate no. of codechecks hyperlink
-      !!col_names[["no_codechecks"]] := paste0(
-        !!sym(col_names[["no_codechecks"]]), 
-        " [(see all checks)](",
-        CONFIG$HYPERLINKS[["venues"]], 
-        # Retrieving the plural venue types
-        CONFIG$VENUE_SUBCAT_PLURAL[[!!sym(col_names[["Type"]])]], "/",
-        venue_slug, "/)"
-      ),
+      # Generate no. of codechecks hyperlink with "Open checks" link
+      !!col_names[["no_codechecks"]] := {
+        no_checks_links <- character(nrow(table))
+        for (i in seq_len(nrow(table))) {
+          no_checks <- !!sym(col_names[["no_codechecks"]])[i]
+          venue_type <- !!sym(col_names[["Type"]])[i]
+          slug <- venue_slug[i]
+          label <- venue_label[i]
+
+          # Base link to see all checks for this venue
+          base_link <- paste0(
+            no_checks,
+            " [(see all checks)](",
+            CONFIG$HYPERLINKS[["venues"]],
+            CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]], "/",
+            slug, "/)"
+          )
+
+          # Add "Open checks" link if label is available
+          if (!is.na(label) && nchar(label) > 0) {
+            open_checks_link <- paste0(
+              " [(open checks)](https://github.com/codecheckers/register/issues?q=is%3Aissue+label%3A%22",
+              utils::URLencode(label, reserved = TRUE),
+              "%22+is%3Aopen)"
+            )
+            no_checks_links[i] <- paste0(base_link, open_checks_link)
+          } else {
+            no_checks_links[i] <- base_link
+          }
+        }
+        no_checks_links
+      },
 
       # Generate venue type hyperlink
       !!col_names[["Type"]] := paste0(
-        "[", stringr::str_to_title(!!sym(col_names[["Type"]])), 
-        "](", CONFIG$HYPERLINKS[["venues"]], 
+        "[", stringr::str_to_title(!!sym(col_names[["Type"]])),
+        "](", CONFIG$HYPERLINKS[["venues"]],
         # Retrieving the plural venue types
         CONFIG$VENUE_SUBCAT_PLURAL[[!!sym(col_names[["Type"]])]], "/)"
       )
@@ -140,14 +185,30 @@ create_venue_type_tables <- function(register_table){
   for (venue_type in venue_types){
     # For each venue type we filter all venues of that type
     # We use distinct so there is one row for each venue name
-    filtered_table <- register_table %>% 
-      filter(Type == venue_type) %>% 
+    filtered_table <- register_table %>%
+      filter(Type == venue_type) %>%
       select(Venue) %>%
       distinct()
 
     # Adding the column venue_slug which is used to generate the hyperlinks
     filtered_table <- filtered_table %>%
       mutate(`venue_slug` = gsub(" ", "_", stringr::str_to_lower(Venue)))
+
+    # Adding venue label column by looking up in CONFIG$VENUE_DATA
+    filtered_table <- filtered_table %>%
+      mutate(`venue_label` = {
+        labels <- character(nrow(filtered_table))
+        for (i in seq_len(nrow(filtered_table))) {
+          venue_name <- Venue[i]
+          match_idx <- which(CONFIG$VENUE_DATA$name == venue_name)
+          if (length(match_idx) > 0) {
+            labels[i] <- CONFIG$VENUE_DATA$label[match_idx[1]]
+          } else {
+            labels[i] <- NA_character_
+          }
+        }
+        labels
+      })
 
     # Adding no. of codechecks column
     CONFIG$NO_CODECHECKS_VENUE_TYPE[[venue_type]] <- sum(register_table$Type == venue_type)
@@ -164,7 +225,7 @@ create_venue_type_tables <- function(register_table){
     # Renaming the "Venue" column to "{Type} name"
     venue_type_col_name <- paste(stringr::str_to_title(venue_type), "name")
     filtered_table <- filtered_table %>%
-      rename(!!sym(venue_type_col_name) := Venue)   
+      rename(!!sym(venue_type_col_name) := Venue)
 
     list_venue_type_tables[[venue_type]] <- filtered_table
   }
@@ -183,7 +244,7 @@ create_venue_type_tables <- function(register_table){
 #' @return The data frame with hyperlinks added to the appropriate columns.
 add_venue_type_hyperlinks_non_reg <- function(table, venue_type) {
   table_col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
-  
+
   venue_col_name <- paste(stringr::str_to_title(venue_type), "name")
 
   # Making the venue type plural for consistency in URL
@@ -205,14 +266,37 @@ add_venue_type_hyperlinks_non_reg <- function(table, venue_type) {
         venue_slug, "/)"
       ),
 
-      # Generate no. of codechecks hyperlink
-      !!sym(table_col_names[["no_codechecks"]]) := paste0(
-        !!sym(table_col_names[["no_codechecks"]]),
-        " [(see all checks)](",
-        CONFIG$HYPERLINKS[["venues"]],
-        venue_type, "/",
-        venue_slug, "/)"
-      )
+      # Generate no. of codechecks hyperlink with "Open checks" link
+      !!sym(table_col_names[["no_codechecks"]]) := {
+        no_checks_links <- character(nrow(table))
+        for (i in seq_len(nrow(table))) {
+          no_checks <- !!sym(table_col_names[["no_codechecks"]])[i]
+          slug <- venue_slug[i]
+          label <- venue_label[i]
+
+          # Base link to see all checks for this venue
+          base_link <- paste0(
+            no_checks,
+            " [(see all checks)](",
+            CONFIG$HYPERLINKS[["venues"]],
+            venue_type, "/",
+            slug, "/)"
+          )
+
+          # Add "Open checks" link if label is available
+          if (!is.na(label) && nchar(label) > 0) {
+            open_checks_link <- paste0(
+              " [(open checks)](https://github.com/codecheckers/register/issues?q=is%3Aissue+label%3A%22",
+              utils::URLencode(label, reserved = TRUE),
+              "%22+is%3Aopen)"
+            )
+            no_checks_links[i] <- paste0(base_link, open_checks_link)
+          } else {
+            no_checks_links[i] <- base_link
+          }
+        }
+        no_checks_links
+      }
     )
 
   # Removing the venue slug column
