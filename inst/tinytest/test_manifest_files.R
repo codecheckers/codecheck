@@ -91,14 +91,20 @@ expect_silent({
 })
 expect_true(all(result$size > 0))
 
-# Test 5: copy_manifest_files() - error on missing file ----
-expect_error({
+# Test 5: copy_manifest_files() - warning on missing file ----
+# Note: Changed from error to warning to allow graceful handling of missing files
+expect_warning({
   env <- setup_test_env()
   # Add a non-existent file to manifest
   metadata <- codecheck::codecheck_metadata(env$root)
   metadata$manifest[[4]] <- list(file = "missing.txt", comment = "Missing")
-  codecheck::copy_manifest_files(env$root, metadata, env$dest_dir)
+  result <- codecheck::copy_manifest_files(env$root, metadata, env$dest_dir)
 }, pattern = "Manifest files missing")
+
+# Verify that the function still returns a data frame with the missing file marked
+expect_true(is.data.frame(result))
+expect_equal(nrow(result), 4)  # Should include all 4 files (3 existing + 1 missing)
+expect_true(is.na(result$size[4]))  # Missing file should have NA size
 
 # Test 6: copy_manifest_files() - keep_full_path = TRUE ----
 expect_silent({

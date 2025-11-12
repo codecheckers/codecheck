@@ -133,11 +133,18 @@ test_metadata <- list(
   )
 )
 
-expect_error({
+# Changed from expect_error to expect_warning - graceful handling now warns instead of stopping
+expect_warning({
   dest_dir <- file.path(test_dir, "outputs")
   dir.create(dest_dir, recursive = TRUE)
-  codecheck::copy_manifest_files(test_dir, test_metadata, dest_dir)
+  result <- codecheck::copy_manifest_files(test_dir, test_metadata, dest_dir)
 }, pattern = "Manifest files missing")
+
+# Verify that function returns data frame with missing files marked
+expect_true(is.data.frame(result))
+expect_equal(nrow(result), 2)
+expect_true(all(is.na(result$size)))  # Both files should have NA size
+
 unlink(test_dir, recursive = TRUE)
 
 # Test 22: codecheck_metadata() - missing codecheck.yml ----

@@ -80,6 +80,7 @@ When bumping the version in `DESCRIPTION`, add a new section to `NEWS.md` with t
 - `validate_codecheck_yml_crossref()` - Validates paper metadata against CrossRef API; compares title and author information with CrossRef data
 - `validate_codecheck_yml_orcid()` - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata; requires ORCID authentication by default (set `skip_on_auth_error = TRUE` to skip validation when authentication is unavailable)
 - `validate_contents_references()` - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering; requires ORCID authentication by default (users can opt-in to skipping via `skip_on_auth_error = TRUE`)
+- `validate_certificate_github_issue()` - Validates certificate identifier exists in GitHub register issues; checks issue state (warns if closed) and assignment (warns if unassigned); stops with error if no matching issue found; supports strict mode where warnings become errors; automatically skips validation for placeholder certificates (R/validation.R:1204)
 
 **Zenodo integration**: Functions for uploading certificates to Zenodo:
 

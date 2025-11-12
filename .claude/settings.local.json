@@ -29,7 +29,9 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
       "Bash(1)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(xelatex:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

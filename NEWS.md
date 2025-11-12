@@ -1,5 +1,15 @@
 # codecheck (development version)
 
+## GitHub Issue Validation
+
+* **New validation function**: Added `validate_certificate_github_issue()` to verify that certificate identifiers exist in the codecheckers/register GitHub repository
+* **Issue state checking**: Warns if the certificate's GitHub issue is closed (indicating the CODECHECK is already complete and published)
+* **Assignment validation**: Warns if the certificate's GitHub issue is unassigned (no codechecker assigned yet)
+* **Strict mode**: Optional strict mode (`strict = TRUE`) treats warnings as errors, stopping certificate processing if issues are found
+* **Placeholder handling**: Automatically skips validation for placeholder certificate identifiers
+* **Comprehensive error handling**: Provides clear error messages for missing issues, API rate limits, and authentication problems
+* **GitHub Actions integration**: Updated R-CMD-check workflow to include GITHUB_PAT token for API access during testing
+
 ## ORCID Validation Improvements
 
 * **Graceful authentication handling**: ORCID validation functions now handle authentication failures gracefully with clear error messages instead of requiring interactive login

@@ -185,14 +185,11 @@ cite_certificate <- function(metadata) {
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
 render_error_box <- function(filename, error_msg) {
-  cat("\\begin{center}\n")
-  cat("\\fcolorbox{red}{yellow!20}{\\parbox{0.9\\textwidth}{\n")
-  cat("\\textbf{\\textcolor{red}{\\Large \\ding{56}} Cannot include file: \\texttt{",
-      filename, "}}\\\\\n", sep = "")
-  cat("\\vspace{0.2cm}\n")
-  cat("\\textbf{Error:} ", gsub("_", "\\\\_", error_msg, fixed = TRUE), "\n", sep = "")
-  cat("}}\n")
-  cat("\\end{center}\n\n")
+  # Use simple markdown formatting that will be reliably converted by pandoc
+  # Avoid complex LaTeX to prevent compilation errors
+  cat("**ERROR: Cannot include file:** `", filename, "`\n\n", sep = "")
+  cat("**Reason:** ", error_msg, "\n\n", sep = "")
+  cat("---\n\n")
 }
 
 ##' Render single-page image for certificate output
@@ -235,12 +232,17 @@ render_manifest_image <- function(path, comment) {
                       paste("Failed to convert", format_name, "image:", e$message))
     })
   } else {
-    # PNG, JPG, JPEG - include directly
+    # PNG, JPG, JPEG - validate image before including
     tryCatch({
+      # Validate that the file is actually a valid image using magick
+      # This prevents LaTeX compilation errors from corrupted image files
+      img <- magick::image_read(path)
+
+      # If validation succeeds, include the image
       cat(paste0("![", comment, "](", path, ")\n"))
     }, error = function(e) {
       render_error_box(basename(path),
-                      paste("Failed to include image:", e$message))
+                      paste("Failed to read image file (possibly corrupted):", e$message))
     })
   }
 }

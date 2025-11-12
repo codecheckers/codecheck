@@ -1158,3 +1158,205 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
 
   return(invisible(TRUE))
 }
+
+#' Validate certificate identifier exists in GitHub register issues
+#'
+#' Checks if the certificate identifier from a codecheck.yml file has a corresponding
+#' issue in the codecheckers/register GitHub repository. This function validates that:
+#' \itemize{
+#'   \item A matching issue exists for the certificate identifier
+#'   \item Warns if the issue is closed (certificate already completed)
+#'   \item Warns if the issue is unassigned (no codechecker assigned yet)
+#'   \item Stops with error if no matching issue is found
+#' }
+#'
+#' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
+#' @param metadata Optional. Pre-loaded metadata list. If NULL, will be loaded from yml_file
+#' @param repo GitHub repository in format "owner/repo". Defaults to "codecheckers/register"
+#' @param strict Logical. If TRUE, treats warnings as errors. Default is FALSE
+#'
+#' @return Invisibly returns a list with the validation result:
+#'   \describe{
+#'     \item{valid}{Logical indicating if validation passed}
+#'     \item{certificate}{The certificate identifier checked}
+#'     \item{issue_number}{GitHub issue number if found, otherwise NULL}
+#'     \item{issue_state}{Issue state ("open" or "closed") if found}
+#'     \item{issue_assignees}{List of assignees if found}
+#'     \item{warnings}{Character vector of warning messages}
+#'     \item{errors}{Character vector of error messages}
+#'   }
+#'
+#' @examples
+#' \dontrun{
+#' # Validate certificate in current directory
+#' validate_certificate_github_issue()
+#'
+#' # Validate with strict mode (warnings become errors)
+#' validate_certificate_github_issue(strict = TRUE)
+#'
+#' # Validate specific file
+#' validate_certificate_github_issue("path/to/codecheck.yml")
+#' }
+#'
+#' @author Daniel Nüst
+#' @importFrom gh gh
+#' @export
+validate_certificate_github_issue <- function(yml_file = "codecheck.yml",
+                                               metadata = NULL,
+                                               repo = "codecheckers/register",
+                                               strict = FALSE) {
+
+  # Load metadata if not provided
+  if (is.null(metadata)) {
+    if (!file.exists(yml_file)) {
+      stop("codecheck.yml file not found at: ", yml_file)
+    }
+    metadata <- yaml::read_yaml(yml_file)
+  }
+
+  # Get certificate identifier
+  certificate <- metadata$certificate
+
+  if (is.null(certificate) || certificate == "") {
+    stop("Certificate identifier not found in codecheck.yml",
+         call. = FALSE)
+  }
+
+  # Check if certificate is a placeholder
+  if (is_placeholder_certificate(yml_file = yml_file,
+                                  metadata = metadata,
+                                  strict = FALSE)) {
+    message("Certificate identifier '", certificate, "' appears to be a placeholder. ",
+            "Skipping GitHub issue validation.")
+    return(invisible(list(
+      valid = TRUE,
+      certificate = certificate,
+      issue_number = NULL,
+      issue_state = NULL,
+      issue_assignees = NULL,
+      warnings = character(0),
+      errors = character(0),
+      skipped = TRUE
+    )))
+  }
+
+  # Split repo into owner and name
+  repo_parts <- strsplit(repo, "/")[[1]]
+  if (length(repo_parts) != 2) {
+    stop("repo must be in format 'owner/repo'", call. = FALSE)
+  }
+
+  # Certificate pattern in issue titles: YYYY-NNN
+  cert_pattern <- paste0("\\b", gsub("-", "-", certificate), "\\b")
+
+  # Search for issues with the certificate ID (search all states)
+  tryCatch({
+    # Search in all issues (open + closed)
+    all_issues <- gh::gh("GET /repos/:owner/:repo/issues",
+                         owner = repo_parts[1],
+                         repo = repo_parts[2],
+                         state = "all",
+                         per_page = 100)
+
+    # Find matching issue
+    matching_issue <- NULL
+    for (issue in all_issues) {
+      if (grepl(cert_pattern, issue$title)) {
+        matching_issue <- issue
+        break
+      }
+    }
+
+    # Initialize result
+    warnings <- character(0)
+    errors <- character(0)
+    valid <- TRUE
+
+    # Check if issue was found
+    if (is.null(matching_issue)) {
+      error_msg <- paste0(
+        "No GitHub issue found for certificate '", certificate, "' ",
+        "in repository '", repo, "'. ",
+        "Please ensure an issue exists in the register before proceeding."
+      )
+      errors <- c(errors, error_msg)
+      stop(error_msg, call. = FALSE)
+    }
+
+    issue_number <- matching_issue$number
+    issue_state <- matching_issue$state
+    issue_assignees <- matching_issue$assignees
+
+    # Check if issue is closed
+    if (issue_state == "closed") {
+      warning_msg <- paste0(
+        "GitHub issue #", issue_number, " for certificate '", certificate, "' ",
+        "is already CLOSED. This usually means the CODECHECK has been completed and published. ",
+        "If you are still working on it, consider reopening the issue."
+      )
+      warnings <- c(warnings, warning_msg)
+      warning(warning_msg, call. = FALSE)
+
+      if (strict) {
+        valid <- FALSE
+      }
+    }
+
+    # Check if issue is unassigned
+    if (length(issue_assignees) == 0) {
+      warning_msg <- paste0(
+        "GitHub issue #", issue_number, " for certificate '", certificate, "' ",
+        "is UNASSIGNED. Please assign a codechecker to this issue."
+      )
+      warnings <- c(warnings, warning_msg)
+      warning(warning_msg, call. = FALSE)
+
+      if (strict) {
+        valid <- FALSE
+      }
+    }
+
+    # If strict mode and we have warnings, stop
+    if (strict && !valid) {
+      stop("Certificate validation failed in strict mode: ",
+           paste(warnings, collapse = "; "),
+           call. = FALSE)
+    }
+
+    # Success message
+    if (valid && length(warnings) == 0) {
+      message("Certificate '", certificate, "' validated: ",
+              "Found in GitHub issue #", issue_number, " (", issue_state, ")")
+    }
+
+    return(invisible(list(
+      valid = valid,
+      certificate = certificate,
+      issue_number = issue_number,
+      issue_state = issue_state,
+      issue_assignees = issue_assignees,
+      issue_title = matching_issue$title,
+      warnings = warnings,
+      errors = errors,
+      skipped = FALSE
+    )))
+
+  }, error = function(e) {
+    # Handle GitHub API errors
+    if (grepl("HTTP 404", e$message) || grepl("Not Found", e$message)) {
+      stop("GitHub repository '", repo, "' not found or not accessible. ",
+           "Please check the repository name and your access permissions.",
+           call. = FALSE)
+    } else if (grepl("API rate limit", e$message) || grepl("403", e$message)) {
+      stop("GitHub API rate limit exceeded. ",
+           "Please set a GITHUB_PAT environment variable with a valid GitHub token.",
+           call. = FALSE)
+    } else {
+      # Re-throw if already our custom error
+      if (grepl("No GitHub issue found", e$message)) {
+        stop(e)
+      }
+      stop("Error accessing GitHub API: ", e$message, call. = FALSE)
+    }
+  })
+}

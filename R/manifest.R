@@ -23,10 +23,12 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   outputs = sapply(manifest, function(x) x$file)
   src_files = file.path(root, outputs)
   missing = !file.exists(src_files)
+
+  # Warn about missing files but continue processing
   if (any(missing)) {
-    err = paste("Manifest files missing:\n",
-                paste(src_files[missing], sep='\n'))
-    stop(err)
+    warning("Manifest files missing:\n",
+            paste(src_files[missing], collapse='\n'),
+            "\nThese files will be marked as missing in the certificate.")
   }
 
   dest_files = file.path(dest_dir,
@@ -41,13 +43,23 @@ copy_manifest_files <- function(root, metadata, dest_dir,
     }
   }
 
-  if (overwrite) message("Overwriting output files: ", toString(dest_files))
-  file.copy(src_files, dest_files, overwrite = overwrite)
+  # Only copy files that exist
+  existing_files = !missing
+  if (any(existing_files)) {
+    if (overwrite && any(file.exists(dest_files[existing_files]))) {
+      message("Overwriting output files: ", toString(dest_files[existing_files]))
+    }
+    file.copy(src_files[existing_files], dest_files[existing_files], overwrite = overwrite)
+  }
+
+  # Get file sizes, using NA for missing files
+  file_sizes = rep(NA_real_, length(dest_files))
+  file_sizes[existing_files] = file.size(dest_files[existing_files])
 
   manifest_df = data.frame(output=outputs,
                            comment=sapply(manifest, function(x) x$comment),
                            dest=dest_files,
-                           size=file.size(dest_files),
+                           size=file_sizes,
                            stringsAsFactors = FALSE)
   manifest_df
 }
