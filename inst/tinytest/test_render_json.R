@@ -2,10 +2,12 @@ tinytest::using(ttdo)
 
 test_path <- "register/short.csv"
 test_register <- read.csv(test_path)
+venues_path <- "register/venues.csv"
 
 expect_silent({ capture.output(
-  { 
-    table <- register_render(register = test_register, filter_by = c(), outputs = c("json"))
+  {
+    table <- register_render(register = test_register, filter_by = c(), outputs = c("json"),
+                            venues_file = venues_path)
   },
   type = "message"
   )

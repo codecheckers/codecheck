@@ -53,12 +53,16 @@ dir.create(test_dir, recursive = TRUE)
 dir.create(file.path(test_dir, "docs"), recursive = TRUE)
 setwd(test_dir)
 
+# Create venues.csv for this test
+writeLines("name,longname,label\ntest,Test Venue,community", "venues.csv")
+
 suppressMessages({
   result <- codecheck::register_render(
     register = single_register,
     outputs = c("json"),
     from = 1,
-    to = 1
+    to = 1,
+    venues_file = "venues.csv"
   )
 })
 
@@ -83,12 +87,16 @@ expect_silent({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\ntest venue,Test Venue,community", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = test_register,
       outputs = c("json"),
       from = 1,
-      to = 1
+      to = 1,
+      venues_file = "venues.csv"
     )
   })
 
@@ -119,12 +127,16 @@ expect_silent({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\nCafé Scïence Tëst,Café Science Test,conference", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = utf8_register,
       outputs = c("json"),
       from = 1,
-      to = 1
+      to = 1,
+      venues_file = "venues.csv"
     )
   })
 
@@ -149,12 +161,16 @@ expect_silent({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\nTest & Demo,Test and Demo,community", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = special_char_register,
       outputs = c("json"),
       from = 1,
-      to = 1
+      to = 1,
+      venues_file = "venues.csv"
     )
   })
 
@@ -182,12 +198,16 @@ expect_warning({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\nAGILEGIS,AGILE Conference,conference\nGigaByte,GigaByte,journal\ncodecheck NL,CODECHECK NL,check-nl\ncodecheck,CODECHECK,community", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = multi_platform_register,
       outputs = c("json"),
       from = 1,
-      to = 4
+      to = 4,
+      venues_file = "venues.csv"
     )
   })
 
@@ -213,12 +233,16 @@ expect_silent({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\ntest,Test Venue,community", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = na_issue_register,
       outputs = c("json"),
       from = 1,
-      to = 2
+      to = 2,
+      venues_file = "venues.csv"
     )
   })
 
@@ -243,12 +267,16 @@ expect_silent({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\ntest,Test Venue,community", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = mixed_issue_register,
       outputs = c("json"),
       from = 1,
-      to = 3
+      to = 3,
+      venues_file = "venues.csv"
     )
   })
 
@@ -274,13 +302,17 @@ expect_silent({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\ntest,Test Venue,community", "venues.csv")
+
   suppressMessages({
     # Only process entries 3-5
     result <- codecheck::register_render(
       register = large_register,
       outputs = c("json"),
       from = 3,
-      to = 5
+      to = 5,
+      venues_file = "venues.csv"
     )
   })
 
@@ -309,12 +341,16 @@ expect_silent({
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
 
+  # Create venues.csv for this test
+  writeLines("name,longname,label\nTestJournal,Test Journal,journal\nTestConf,Test Conference,conference\nTestComm,Test Community,community\nTestInst,Test Institution,institution", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = venue_types_register,
       outputs = c("json"),
       from = 1,
-      to = 4
+      to = 4,
+      venues_file = "venues.csv"
     )
   })
 

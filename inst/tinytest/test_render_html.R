@@ -2,10 +2,12 @@ tinytest::using(ttdo)
 
 test_path <- "register/short.csv"
 test_register <- read.csv(test_path)
+venues_path <- "register/venues.csv"
 
 register_render(register = test_register, filter_by = c(), outputs = c("html"),
                 config = c(system.file("extdata", "config.R", package = "codecheck"),
-                           "config/render_html.R")
+                           "config/render_html.R"),
+                venues_file = venues_path
                 )
 
 # file generation ----

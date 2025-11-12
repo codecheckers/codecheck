@@ -33,7 +33,12 @@
       "Bash(xelatex:*)",
       "Bash(echo:*)",
       "WebFetch(domain:yihui.org)",
-      "Bash(R --quiet --no-save -e:*)"
+      "Bash(R --quiet --no-save -e:*)",
+      "WebFetch(domain:www.epfl.ch)",
+      "Bash(R -q -e:*)",
+      "WebFetch(domain:info.orcid.org)",
+      "WebFetch(domain:orcid.org)",
+      "WebFetch(domain:jpswalsh.github.io)"
     ],
     "deny": [],
     "ask": []
