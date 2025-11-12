@@ -21,8 +21,8 @@ generate_html_document_yml <- function(output_dir) {
   writeLines(yaml_content, paste0(output_dir, "html_document.yml"))
 }
 
-#' Dynamically generates the index_postfix.html from a template file 
-#' 
+#' Dynamically generates the index_postfix.html from a template file
+#'
 #' @param output_dir The output directory
 #' @param filter The filter name
 #' @param table_details List containing details such as the table name, subcat name.
@@ -41,6 +41,15 @@ create_index_postfix_html <- function(output_dir, filter, table_details){
     hrefs <- generate_html_postfix_hrefs_non_reg(filter, table_details)
   }
 
+  # Generate footer build info from build metadata
+  build_info <- ""
+  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
+    build_info <- generate_footer_build_info(CONFIG$BUILD_METADATA)
+  }
+
+  # Add build_info to hrefs for rendering
+  hrefs$build_info <- build_info
+
   output <- whisker.render(postfix_template, hrefs)
   writeLines(output, paste0(output_dir, "index_postfix.html"))
 }
@@ -54,14 +63,24 @@ create_index_prefix_html <- function(output_dir){
   writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
 }
 
-#' Dynamically generates the index_header.html from a template file 
-#' 
+#' Dynamically generates the index_header.html from a template file
+#'
 #' @param output_dir The output directory
+#' @importFrom whisker whisker.render
 create_index_header_html <- function(output_dir){
   # Using the index_header_template
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["header"]], warn = FALSE)
 
-  writeLines(header_template, paste0(output_dir, "index_header.html"))
+  # Generate meta generator tag from build metadata
+  meta_generator <- ""
+  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
+    meta_generator <- generate_meta_generator_tag(CONFIG$BUILD_METADATA)
+  }
+
+  # Render the template with meta generator tag
+  output <- whisker.render(paste(header_template, collapse = "\n"), list(meta_generator = meta_generator))
+
+  writeLines(output, paste0(output_dir, "index_header.html"))
 }
 
 #' Generates the hrefs to set in the postfix.html file for the rendering of register tables.

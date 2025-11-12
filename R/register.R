@@ -42,7 +42,11 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   load_venues_config(venues_file)
 
   message("Using cache path ", R.cache::getCacheRootPath())
-  
+
+  # Get build metadata for footer and meta tags
+  build_metadata <- get_build_metadata(".")
+  CONFIG$BUILD_METADATA <- build_metadata
+
   register <- register[(from:to),]
 
   register_table <- preprocess_register(register, filter_by)
@@ -57,6 +61,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   create_filtered_reg_csvs(register, filter_by)
   create_register_files(register_table, filter_by, outputs)
   create_non_register_files(register_table, filter_by)
+
+  # Write build metadata JSON file
+  write_meta_json(build_metadata, "docs")
 
   return(register_table)
 }

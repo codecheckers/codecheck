@@ -111,17 +111,34 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status){
 #' Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.
 #'
 #' @param output_dir A character string specifying the directory where the section files will be saved.
+#' @importFrom whisker whisker.render
 create_cert_page_section_files <- function(output_dir){
 
-  # Create prefix 
+  # Create prefix
   prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["prefix"]], warn = FALSE)
   writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
 
-  # Create postfix
+  # Create postfix with build metadata
   postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["postfix"]], warn = FALSE)
-  writeLines(postfix_template, paste0(output_dir, "index_postfix.html"))
 
-  # Create header
+  # Generate footer build info from build metadata
+  build_info <- ""
+  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
+    build_info <- generate_footer_build_info(CONFIG$BUILD_METADATA)
+  }
+
+  output <- whisker.render(paste(postfix_template, collapse = "\n"), list(build_info = build_info))
+  writeLines(output, paste0(output_dir, "index_postfix.html"))
+
+  # Create header with meta generator tag
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["header"]], warn = FALSE)
-  writeLines(header_template, paste0(output_dir, "index_header.html"))
+
+  # Generate meta generator tag from build metadata
+  meta_generator <- ""
+  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
+    meta_generator <- generate_meta_generator_tag(CONFIG$BUILD_METADATA)
+  }
+
+  output <- whisker.render(paste(header_template, collapse = "\n"), list(meta_generator = meta_generator))
+  writeLines(output, paste0(output_dir, "index_header.html"))
 }
