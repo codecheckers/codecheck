@@ -2,6 +2,26 @@
 
 ## codecheck (development version)
 
+### GitHub Issue Validation
+
+- **New validation function**: Added
+  [`validate_certificate_github_issue()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_github_issue.md)
+  to verify that certificate identifiers exist in the
+  codecheckers/register GitHub repository
+- **Issue state checking**: Warns if the certificate’s GitHub issue is
+  closed (indicating the CODECHECK is already complete and published)
+- **Assignment validation**: Warns if the certificate’s GitHub issue is
+  unassigned (no codechecker assigned yet)
+- **Strict mode**: Optional strict mode (`strict = TRUE`) treats
+  warnings as errors, stopping certificate processing if issues are
+  found
+- **Placeholder handling**: Automatically skips validation for
+  placeholder certificate identifiers
+- **Comprehensive error handling**: Provides clear error messages for
+  missing issues, API rate limits, and authentication problems
+- **GitHub Actions integration**: Updated R-CMD-check workflow to
+  include GITHUB_PAT token for API access during testing
+
 ### ORCID Validation Improvements
 
 - **Graceful authentication handling**: ORCID validation functions now
@@ -43,11 +63,29 @@
 - **New dependency**: Added `magick` package as a required dependency
   for image format conversion (TIF/TIFF/GIF to PNG). Previously this was
   optional, but is now mandatory for proper image format support.
-- **Graceful error handling**: Missing, corrupted, or unsupported files
-  no longer fail the entire certificate rendering. Instead, a formatted
-  error box is displayed in the PDF for each problematic file, allowing
-  codecheckers to identify and fix issues without blocking certificate
-  generation.
+- **Graceful error handling**: Missing, corrupted, or unsupported
+  manifest files no longer fail the entire certificate rendering:
+  - [`copy_manifest_files()`](http://codecheck.org.uk/codecheck/reference/copy_manifest_files.md)
+    now warns about missing files instead of stopping execution,
+    allowing the certificate to render with available files
+  - Each problematic file displays a formatted error message in the PDF
+    output, helping codecheckers identify and fix issues
+  - File-level error handling prevents individual file failures from
+    blocking the entire certificate generation
+  - Error messages include the filename and specific error reason for
+    easier debugging
+
+### Git Integration
+
+- **New function**: Added
+  [`get_git_info()`](http://codecheck.org.uk/codecheck/reference/get_git_info.md)
+  to retrieve git commit information from a repository path
+- **Proper dependency handling**: git2r dependency is now properly
+  handled through the package function rather than inline template code
+- **Template simplification**: Certificate templates now use
+  [`get_git_info()`](http://codecheck.org.uk/codecheck/reference/get_git_info.md)
+  instead of inline git2r calls, improving maintainability and error
+  handling
 - **File existence checks**: All manifest rendering functions now check
   for file existence before processing and display helpful error
   messages.

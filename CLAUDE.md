@@ -135,6 +135,12 @@ metadata and ORCID records:
   validations; provides unified summary; supports strict mode for
   certificate rendering; requires ORCID authentication by default (users
   can opt-in to skipping via `skip_on_auth_error = TRUE`)
+- [`validate_certificate_github_issue()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_github_issue.md) -
+  Validates certificate identifier exists in GitHub register issues;
+  checks issue state (warns if closed) and assignment (warns if
+  unassigned); stops with error if no matching issue found; supports
+  strict mode where warnings become errors; automatically skips
+  validation for placeholder certificates (R/validation.R:1204)
 
 **Zenodo integration**: Functions for uploading certificates to Zenodo:
 

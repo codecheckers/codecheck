@@ -40,6 +40,23 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
 <div class="section level3">
+<h3 id="github-issue-validation-development-version">GitHub Issue Validation<a class="anchor" aria-label="anchor" href="#github-issue-validation-development-version"></a></h3>
+<ul><li>
+<strong>New validation function</strong>: Added <code><a href="../reference/validate_certificate_github_issue.html">validate_certificate_github_issue()</a></code> to verify that certificate identifiers exist in the codecheckers/register GitHub repository</li>
+<li>
+<strong>Issue state checking</strong>: Warns if the certificate’s GitHub issue is closed (indicating the CODECHECK is already complete and published)</li>
+<li>
+<strong>Assignment validation</strong>: Warns if the certificate’s GitHub issue is unassigned (no codechecker assigned yet)</li>
+<li>
+<strong>Strict mode</strong>: Optional strict mode (<code>strict = TRUE</code>) treats warnings as errors, stopping certificate processing if issues are found</li>
+<li>
+<strong>Placeholder handling</strong>: Automatically skips validation for placeholder certificate identifiers</li>
+<li>
+<strong>Comprehensive error handling</strong>: Provides clear error messages for missing issues, API rate limits, and authentication problems</li>
+<li>
+<strong>GitHub Actions integration</strong>: Updated R-CMD-check workflow to include GITHUB_PAT token for API access during testing</li>
+</ul></div>
+<div class="section level3">
 <h3 id="orcid-validation-improvements-development-version">ORCID Validation Improvements<a class="anchor" aria-label="anchor" href="#orcid-validation-improvements-development-version"></a></h3>
 <ul><li>
 <strong>Graceful authentication handling</strong>: ORCID validation functions now handle authentication failures gracefully with clear error messages instead of requiring interactive login</li>
@@ -68,7 +85,22 @@
 <li>
 <strong>New dependency</strong>: Added <code>magick</code> package as a required dependency for image format conversion (TIF/TIFF/GIF to PNG). Previously this was optional, but is now mandatory for proper image format support.</li>
 <li>
-<strong>Graceful error handling</strong>: Missing, corrupted, or unsupported files no longer fail the entire certificate rendering. Instead, a formatted error box is displayed in the PDF for each problematic file, allowing codecheckers to identify and fix issues without blocking certificate generation.</li>
+<strong>Graceful error handling</strong>: Missing, corrupted, or unsupported manifest files no longer fail the entire certificate rendering:
+<ul><li>
+<code><a href="../reference/copy_manifest_files.html">copy_manifest_files()</a></code> now warns about missing files instead of stopping execution, allowing the certificate to render with available files</li>
+<li>Each problematic file displays a formatted error message in the PDF output, helping codecheckers identify and fix issues</li>
+<li>File-level error handling prevents individual file failures from blocking the entire certificate generation</li>
+<li>Error messages include the filename and specific error reason for easier debugging</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="git-integration-development-version">Git Integration<a class="anchor" aria-label="anchor" href="#git-integration-development-version"></a></h3>
+<ul><li>
+<strong>New function</strong>: Added <code><a href="../reference/get_git_info.html">get_git_info()</a></code> to retrieve git commit information from a repository path</li>
+<li>
+<strong>Proper dependency handling</strong>: git2r dependency is now properly handled through the package function rather than inline template code</li>
+<li>
+<strong>Template simplification</strong>: Certificate templates now use <code><a href="../reference/get_git_info.html">get_git_info()</a></code> instead of inline git2r calls, improving maintainability and error handling</li>
 <li>
 <strong>File existence checks</strong>: All manifest rendering functions now check for file existence before processing and display helpful error messages.</li>
 <li>

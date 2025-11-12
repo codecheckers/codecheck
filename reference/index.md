@@ -183,6 +183,8 @@
   : Retrieve a codecheck.yml file from a remote repository
 - [`get_codecheck_yml_zenodo()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_zenodo.md)
   : Retrieve a codecheck.yml file from a Zenodo record
+- [`get_git_info()`](http://codecheck.org.uk/codecheck/reference/get_git_info.md)
+  : Get git repository information
 - [`get_lifecycle_metadata()`](http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.md)
   : Retrieve metadata from Lifecycle Journal
 - [`get_or_create_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/get_or_create_zenodo_record.md)
@@ -261,6 +263,8 @@
   : Upload metadata to Zenodo
 - [`validate_certificate_for_rendering()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_for_rendering.md)
   : Validate certificate for rendering with visual warning
+- [`validate_certificate_github_issue()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_github_issue.md)
+  : Validate certificate identifier exists in GitHub register issues
 - [`validate_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.md)
   : Validate a CODECHECK configuration
 - [`validate_codecheck_yml_crossref()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_crossref.md)

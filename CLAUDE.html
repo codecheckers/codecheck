@@ -113,6 +113,8 @@
 <code><a href="reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata; requires ORCID authentication by default (set <code>skip_on_auth_error = TRUE</code> to skip validation when authentication is unavailable)</li>
 <li>
 <code><a href="reference/validate_contents_references.html">validate_contents_references()</a></code> - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering; requires ORCID authentication by default (users can opt-in to skipping via <code>skip_on_auth_error = TRUE</code>)</li>
+<li>
+<code><a href="reference/validate_certificate_github_issue.html">validate_certificate_github_issue()</a></code> - Validates certificate identifier exists in GitHub register issues; checks issue state (warns if closed) and assignment (warns if unassigned); stops with error if no matching issue found; supports strict mode where warnings become errors; automatically skips validation for placeholder certificates (R/validation.R:1204)</li>
 </ul><p><strong>Zenodo integration</strong>: Functions for uploading certificates to Zenodo:</p>
 <ul><li>
 <code><a href="reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> - Create or retrieve a Zenodo record; defaults to loading metadata from codecheck.yml in current directory</li>

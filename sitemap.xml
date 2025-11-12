@@ -79,6 +79,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_osf.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_uncached.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_zenodo.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_git_info.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_or_create_zenodo_record.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_osf_cert_link.html</loc></url>
@@ -123,6 +124,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/upload_zenodo_certificate.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/upload_zenodo_metadata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/validate_certificate_for_rendering.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/validate_certificate_github_issue.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_crossref.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_orcid.html</loc></url>
