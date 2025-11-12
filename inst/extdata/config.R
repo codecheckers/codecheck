@@ -82,6 +82,7 @@ CONFIG$HYPERLINKS <- list(
   doi = "https://doi.org/",
   codecheck_issue = "https://github.com/codecheckers/register/issues/",
   zenodo_deposit = "https://zenodo.org/deposit/",
+  zenodo_community = "https://zenodo.org/communities/codecheck/",
   CrossRef = "https://www.crossref.org",
   OpenAlex = "https://openalex.org",
   zenodo = "https://zenodo.org/records/"
