@@ -41,6 +41,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   # Load venues configuration
   load_venues_config(venues_file)
 
+  # Setup external libraries locally (CSS, JS)
+  setup_external_libraries()
+
   message("Using cache path ", R.cache::getCacheRootPath())
 
   # Get build metadata for footer and meta tags
@@ -53,11 +56,11 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
   # done by multiple authors.
   CONFIG$NO_CODECHECKS <- nrow(register_table)
-  
+
   if("html" %in% outputs) {
     render_cert_htmls(register_table, force_download = FALSE)
   }
-  
+
   create_filtered_reg_csvs(register, filter_by)
   create_register_files(register_table, filter_by, outputs)
   create_non_register_files(register_table, filter_by)
