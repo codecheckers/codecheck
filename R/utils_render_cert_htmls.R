@@ -46,7 +46,11 @@ render_cert_htmls <- function(register_table, force_download = FALSE){
       download_cert_status <- 0
     }
     
-    render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status)
+    # Extract Type and Venue for the certificate
+    cert_type <- register_table[i, ]$Type
+    cert_venue <- register_table[i, ]$Venue
+
+    render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status, cert_type, cert_venue)
   }
 }
 
@@ -75,14 +79,16 @@ convert_cert_pdf_to_png <- function(cert_id){
 #' @param cert_id A character string representing the unique identifier of the certificate.
 #' @param repo_link A character string containing the repository link associated with the certificate.
 #' @param download_cert_status An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).
-render_cert_html <- function(cert_id, repo_link, download_cert_status){
-  create_cert_md(cert_id, repo_link, download_cert_status)
+#' @param cert_type A character string containing the venue type (journal, conference, community, institution).
+#' @param cert_venue A character string containing the venue name.
+render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type, cert_venue){
+  create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue)
 
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")
-  
-  # Creating html document yml
-  create_cert_page_section_files(paste0(output_dir, "/"))
+
+  # Creating html document yml with breadcrumbs
+  create_cert_page_section_files(paste0(output_dir, "/"), cert_id, cert_type, cert_venue)
   generate_html_document_yml(paste0(output_dir, "/"))
 
   yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml")))
@@ -111,12 +117,41 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status){
 #' Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.
 #'
 #' @param output_dir A character string specifying the directory where the section files will be saved.
+#' @param cert_id The certificate identifier for breadcrumb generation
+#' @param cert_type The venue type (journal, conference, community, institution) for breadcrumb generation
+#' @param cert_venue The venue name for breadcrumb generation
 #' @importFrom whisker whisker.render
-create_cert_page_section_files <- function(output_dir){
+create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type = NULL, cert_venue = NULL){
 
-  # Create prefix
-  prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["prefix"]], warn = FALSE)
-  writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
+  # Create prefix with navigation header and breadcrumbs
+  if (!is.null(cert_id) && !is.null(cert_type) && !is.null(cert_venue)) {
+    # Generate breadcrumbs for certificate page with venue context
+    table_details <- list(
+      name = cert_venue,
+      subcat = cert_type,
+      cert_id = cert_id,
+      is_reg_table = TRUE
+    )
+    base_path <- "../.."  # Certificate pages are always at docs/certs/ID/
+
+    # Generate navigation header (no menu on certificate pages)
+    nav_header_html <- generate_navigation_header(filter = "certs", base_path = base_path, table_details = table_details)
+
+    # Generate breadcrumbs
+    breadcrumb_html <- generate_breadcrumb(filter = "venues", table_details = table_details, base_path = base_path)
+
+    prefix_content <- paste0(
+      nav_header_html,
+      '<div style="max-width: 1200px; margin: 1rem auto; padding: 0 1rem;">\n',
+      breadcrumb_html,
+      '\n</div>\n'
+    )
+    writeLines(prefix_content, paste0(output_dir, "index_prefix.html"))
+  } else {
+    # Fallback to template if information not provided
+    prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["prefix"]], warn = FALSE)
+    writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
+  }
 
   # Create postfix with build metadata
   postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["postfix"]], warn = FALSE)
@@ -130,15 +165,30 @@ create_cert_page_section_files <- function(output_dir){
   output <- whisker.render(paste(postfix_template, collapse = "\n"), list(build_info = build_info))
   writeLines(output, paste0(output_dir, "index_postfix.html"))
 
-  # Create header with meta generator tag
+  # Create header with meta generator content
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["header"]], warn = FALSE)
 
-  # Generate meta generator tag from build metadata
+  # Generate meta generator content from build metadata
   meta_generator <- ""
   if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
-    meta_generator <- generate_meta_generator_tag(CONFIG$BUILD_METADATA)
+    meta_generator <- generate_meta_generator_content(CONFIG$BUILD_METADATA)
   }
 
-  output <- whisker.render(paste(header_template, collapse = "\n"), list(meta_generator = meta_generator))
+  # Calculate relative path to docs root (cert pages are always 2 levels deep: docs/certs/ID/)
+  # Count directory levels from docs/
+  path_components <- strsplit(output_dir, "/")[[1]]
+  path_components <- path_components[path_components != "" & path_components != "docs"]
+  depth <- length(path_components)
+
+  # Generate relative path
+  if (depth == 0) {
+    base_path <- ""
+  } else {
+    base_path <- paste(rep("../", depth), collapse = "")
+  }
+
+  output <- whisker.render(paste(header_template, collapse = "\n"),
+                          list(meta_generator = meta_generator,
+                               base_path = base_path))
   writeLines(output, paste0(output_dir, "index_header.html"))
 }

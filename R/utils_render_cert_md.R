@@ -199,13 +199,15 @@ add_abstract <- function(repo_link, md_content){
   return(md_content)
 }
 
-#' Generates a Markdown file for a certificate based on a specified template, filling in details about the 
+#' Generates a Markdown file for a certificate based on a specified template, filling in details about the
 #' paper, authors, codecheck information, and the certificate images if available. The resulting Markdown file is later rendered to HTML.
 #'
 #' @param cert_id A character string representing the unique identifier of the certificate.
 #' @param repo_link A character string containing the repository link associated with the certificate.
 #' @param download_cert_status An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).
-create_cert_md <- function(cert_id, repo_link, download_cert_status){
+#' @param cert_type A character string containing the venue type (journal, conference, community, institution).
+#' @param cert_venue A character string containing the venue name.
+create_cert_md <- function(cert_id, repo_link, download_cert_status, cert_type, cert_venue){
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   
   # Create the directory if it does not exist (e.g., because no PDFs are downloaded)
@@ -236,7 +238,7 @@ create_cert_md <- function(cert_id, repo_link, download_cert_status){
   }
 
   md_content <- add_paper_details_md(md_content, repo_link)
-  md_content <- add_codecheck_details_md(md_content, repo_link)
+  md_content <- add_codecheck_details_md(md_content, repo_link, cert_type, cert_venue)
 
   # Inserting the cert 
   if (download_cert_status == 1){
@@ -308,17 +310,19 @@ add_paper_details_md <- function(md_content, repo_link, download_cert_status){
 #'
 #' @param md_content A character string containing the Markdown template content with placeholders.
 #' @param repo_link A character string containing the repository link associated with the certificate.
+#' @param cert_type A character string containing the venue type (journal, conference, community, institution).
+#' @param cert_venue A character string containing the venue name.
 #' @return The markdown content, with CODECHECK details placeholders filled.
-add_codecheck_details_md <- function(md_content, repo_link){
+add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venue){
   config_yml <- get_codecheck_yml(repo_link)
 
   # Adding the codechecker name
   codechecker_names <- c()
 
   for (checker in config_yml$codechecker){
-    # Creating a hyperlink if the ORCID ID available
+    # Creating a hyperlink to codechecker landing page if ORCID ID available
     if ("ORCID" %in% names(checker)){
-      codechecker <- paste0("[", checker$name, "](", CONFIG$HYPERLINKS["orcid"], checker$ORCID, ")")
+      codechecker <- paste0("[", checker$name, "](", CONFIG$HYPERLINKS["codecheckers"], checker$ORCID, "/)")
     }
 
     else{
@@ -357,6 +361,21 @@ add_codecheck_details_md <- function(md_content, repo_link){
   # Adjusting the repo and report links
   md_content <- add_repository_hyperlink(md_content, repo_link)
   md_content <- gsub("\\$codecheck_full_certificate\\$", config_yml$report, md_content)
+
+  # Adding Type and Venue links
+  # Create venue slug (lowercase and replace spaces with underscores)
+  venue_slug <- gsub(" ", "_", tolower(cert_venue))
+
+  # Get plural form of type from CONFIG
+  type_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[cert_type]]
+
+  # Create links
+  type_link <- paste0("[", cert_type, "](", CONFIG$HYPERLINKS[["venues"]], type_plural, "/)")
+  venue_link <- paste0("[", cert_venue, "](", CONFIG$HYPERLINKS[["venues"]], type_plural, "/", venue_slug, "/)")
+
+  # Replace placeholders
+  md_content <- gsub("\\$codecheck_type\\$", type_link, md_content)
+  md_content <- gsub("\\$codecheck_venue\\$", venue_link, md_content)
 
   return(md_content)
 }
