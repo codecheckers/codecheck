@@ -114,7 +114,7 @@ generate_html_postfix_hrefs_non_reg <- function(filter, table_details){
 
 #' Render Non-Register Markdown Table
 #'
-#' Renders the table in Markdown format, including adding hyperlinks to the relevant 
+#' Renders the table in Markdown format, including adding hyperlinks to the relevant
 #' columns. It adjusts column widths and saves the output as a Markdown file.
 #'
 #' @param table The data frame containing the filtered table.
@@ -134,6 +134,9 @@ render_non_register_md <- function(table, table_details, filter){
   md_table <- gsub("\\$subtitle\\$", table_details[["subtext"]], md_table)
   md_table <- gsub("\\$content\\$", paste(table, collapse = "\n"), md_table)
   md_table <- gsub("\\$extra_text\\$", table_details[["extra_text"]], md_table)
+
+  # Add profile links (empty for non-register summary pages)
+  md_table <- gsub("\\$profile_links\\$", "", md_table)
 
   # Adjusting the column widths
   md_table <- unlist(strsplit(md_table, "\n", fixed = TRUE))

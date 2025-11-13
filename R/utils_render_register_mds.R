@@ -27,7 +27,7 @@ add_markdown_title <- function(table_details, md_table, filter){
 }
 
 #' Renders register md for a single register_table
-#' 
+#'
 #' @param register_table The register table
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
@@ -37,6 +37,15 @@ render_register_md <- function(register_table, table_details, filter) {
 
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)
+
+  # Add profile links for codechecker pages
+  profile_links <- ""
+  if (filter == "codecheckers" && !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+    orcid <- table_details[["name"]]
+    profile_links <- generate_codechecker_profile_links(orcid)
+  }
+  md_table <- gsub("\\$profile_links\\$", profile_links, md_table)
+
   output_dir <- table_details[["output_dir"]]
 
   # Saving the md file

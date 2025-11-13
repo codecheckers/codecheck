@@ -1,0 +1,9 @@
+<p style="margin-bottom: 1.5em;">
+{{#has_orcid}}
+<a href="https://orcid.org/{{orcid}}" title="ORCID iD"><i class="ai ai-orcid" style="font-size: 1.2em; color: #A6CE39;"></i> https://orcid.org/{{orcid}}</a>
+{{/has_orcid}}
+{{#has_both}} | {{/has_both}}
+{{#has_github}}
+<a href="https://github.com/{{github_handle}}" title="GitHub profile"><i class="fa fa-github"></i> GitHub</a>
+{{/has_github}}
+</p>
