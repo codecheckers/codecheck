@@ -5,7 +5,7 @@ title: $title$
 The certificate can be found at this $codecheck_report_subtext$
 </p>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="../../libs/bootstrap/bootstrap.min.css" rel="stylesheet">
 
 
 <style>
@@ -77,6 +77,8 @@ The certificate can be found at this $codecheck_report_subtext$
   <p><strong>Time of check</strong>: $codecheck_time$</p>
   <p><strong>Repository</strong>: $codecheck_repo$</p>
   <p><strong>Full certificate</strong>: $codecheck_full_certificate$</p>
+  <p><strong>Type</strong>: $codecheck_type$</p>
+  <p><strong>Venue</strong>: $codecheck_venue$</p>
 
   <!-- Summary -->
   <div class="scrollable-container" id="summary-section">
