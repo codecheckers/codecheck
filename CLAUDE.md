@@ -49,6 +49,63 @@ The package uses GitHub Actions for CI/CD. Check `.github/workflows/R-CMD-check.
 
 When bumping the version in `DESCRIPTION`, add a new section to `NEWS.md` with the version number and date. Follow the existing format with `# codecheck X.Y.Z` headers.
 
+## Design Principles
+
+### Separation of Concerns: Data vs. Presentation
+
+**CRITICAL PRINCIPLE**: R functions should focus on data preparation and logic, NOT HTML generation.
+
+**✅ DO**:
+- Prepare data in R functions (e.g., extract metadata, create data structures)
+- Store HTML structure in template files (`.html`, `.md` with Mustache/Whisker placeholders)
+- Use R to populate template placeholders with data values
+- Return data objects (lists, data frames, strings) from R functions
+
+**❌ DON'T**:
+- Generate HTML tags directly in R functions (e.g., `sprintf('<a href="%s">...</a>')`)
+- Build complex HTML structures using string concatenation in R
+- Mix presentation logic with data processing logic
+
+**Example of correct approach**:
+
+```r
+# R function - prepares data only
+generate_profile_data <- function(orcid) {
+  profile <- get_profile(orcid)
+  return(list(
+    has_orcid = !is.null(profile$orcid),
+    orcid = profile$orcid,
+    has_github = !is.null(profile$github_handle),
+    github_handle = profile$github_handle
+  ))
+}
+
+# Template file (profile.html) - contains HTML structure
+# <a href="https://orcid.org/{{orcid}}">
+#   <i class="ai ai-orcid"></i> {{orcid}}
+# </a>
+
+# Rendering function - combines data with template
+render_profile <- function(orcid) {
+  data <- generate_profile_data(orcid)
+  template <- readLines("profile.html")
+  whisker::render(template, data)
+}
+```
+
+**Why this matters**:
+- **Maintainability**: HTML changes don't require R code changes
+- **Testability**: R functions can be tested without parsing HTML
+- **Readability**: Templates are easier to understand than R strings with escaped HTML
+- **Collaboration**: Designers can work on templates without touching R code
+- **Consistency**: CSS classes and HTML structure remain consistent across the codebase
+
+**Current implementation**:
+- Template files in `inst/extdata/templates/` contain HTML structure
+- R functions use `whisker::render()` or `sprintf()` to fill placeholders
+- Functions like `generate_codechecker_profile_links()`, `generate_footer_build_info()`, and `generate_meta_generator_content()` return content strings without HTML wrapper tags
+- HTML wrapper tags (`<p>`, `<meta>`, etc.) are in template files
+
 ### Version Management
 
 The package follows [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
@@ -254,7 +311,7 @@ The rendering process follows this sequence:
 - `render_register()` - Dispatches to format-specific renderer (MD, HTML, or JSON)
 - `generate_output_dir()` - Creates output directory path based on filter and subcategory
 - `generate_table_details()` - Creates metadata dict with name, slug, subcat, output_dir
-- `filter_and_drop_register_columns()` - Keeps only relevant columns per format (uses `CONFIG$REGISTER_COLUMNS`)
+- `filter_and_drop_register_columns()` - Selects and orders columns per filter and format (uses hierarchical `CONFIG$REGISTER_COLUMNS`)
 - `add_venue_hyperlinks_reg()` - Adds markdown links to venue pages
 - `add_venue_type_hyperlinks_reg()` - Adds markdown links to venue type pages
 
@@ -315,13 +372,16 @@ The rendering process follows this sequence:
 The CONFIG environment stores all configuration as lists/vectors. Key elements:
 
 **Table structure:**
-- `CONFIG$REGISTER_COLUMNS` - Columns to keep per output format (html, md, csv, json)
+- `CONFIG$REGISTER_COLUMNS` - Hierarchical column configuration: filter → file_type → columns
+  - Special filter "default" used for main register and as fallback
+  - Filter-specific configs (e.g., "venues", "codecheckers") can override defaults
+  - Supports different column orders and selections per view
+  - Example: `CONFIG$REGISTER_COLUMNS$default$html` or `CONFIG$REGISTER_COLUMNS$venues$json`
 - `CONFIG$MD_TABLE_COLUMN_WIDTHS` - Markdown column width specifications for register and non-register tables
-- `CONFIG$JSON_COLUMNS` - Column order for JSON output
+- `CONFIG$JSON_COLUMNS` - Column order for JSON output (featured.json and main register.json)
 
 **Filtering:**
 - `CONFIG$FILTER_COLUMN_NAMES` - Maps filter name to register column (venues→Venue, codecheckers→Codechecker)
-- `CONFIG$FILTER_COLUMN_NAMES_TO_DROP` - Columns to drop for specific filters
 - `CONFIG$FILTER_SUBCAT_COLUMNS` - Maps filter to subcat column (venues→Type)
 - `CONFIG$FILTER_SUBCATEGORIES` - Lists subcats per filter (venues→[community, journal, conference, institution])
 

@@ -14,4 +14,5 @@ HTML string with profile links, or empty string if no profile found
 }
 \description{
 Creates a horizontal list of profile links (ORCID, GitHub) for a codechecker page.
+Uses a template file to generate the HTML.
 }

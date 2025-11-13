@@ -9,6 +9,8 @@ register_render(
   filter_by = c("venues", "codecheckers"),
   outputs = c("html", "md", "json"),
   config = c(system.file("extdata", "config.R", package = "codecheck")),
+  venues_file = "venues.csv",
+  codecheck_repo_path = NULL,
   from = 1,
   to = nrow(register)
 )
@@ -21,6 +23,8 @@ register_render(
 \item{outputs}{The output formats to create}
 
 \item{config}{A list of configuration files to be sourced at the beginning of the rending process}
+
+\item{venues_file}{Path to the venues.csv file containing venue names and labels}
 
 \item{from}{The first register entry to check}
 

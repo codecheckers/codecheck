@@ -4,15 +4,17 @@
 \alias{get_build_metadata}
 \title{Get Build Metadata}
 \usage{
-get_build_metadata(register_repo_path = ".")
+get_build_metadata(register_repo_path = ".", codecheck_repo_path = NULL)
 }
 \arguments{
 \item{register_repo_path}{Path to the register repository (default: current directory)}
+
+\item{codecheck_repo_path}{Optional path to the codecheck package repository (default: NULL, will attempt to find it)}
 }
 \value{
-A list with build metadata (timestamp, package_version, git_commit, git_commit_short, git_commit_url)
+A list with build metadata including commits from both repositories
 }
 \description{
 Retrieves metadata about the current build including timestamp, package version,
-and git commit information from the register repository.
+and git commit information from both the register and codecheck package repositories.
 }

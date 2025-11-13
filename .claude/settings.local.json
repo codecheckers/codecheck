@@ -38,7 +38,8 @@
       "Bash(R -q -e:*)",
       "WebFetch(domain:info.orcid.org)",
       "WebFetch(domain:orcid.org)",
-      "WebFetch(domain:jpswalsh.github.io)"
+      "WebFetch(domain:jpswalsh.github.io)",
+      "WebFetch(domain:fontawesome.com)"
     ],
     "deny": [],
     "ask": []

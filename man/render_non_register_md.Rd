@@ -14,6 +14,6 @@ render_non_register_md(table, table_details, filter)
 \item{filter}{A string specifying the filter applied (e.g., "venues", "codecheckers").}
 }
 \description{
-Renders the table in Markdown format, including adding hyperlinks to the relevant 
+Renders the table in Markdown format, including adding hyperlinks to the relevant
 columns. It adjusts column widths and saves the output as a Markdown file.
 }
