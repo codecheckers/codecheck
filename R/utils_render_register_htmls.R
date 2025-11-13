@@ -214,7 +214,12 @@ render_html <- function(table, table_details, filter){
     output_yaml = yaml_path
   )
 
+  # Remove temporary files (content already embedded in index.html)
   file.remove(temp_md_file_path)
+  file.remove(paste0(output_dir, "index_header.html"))
+  file.remove(paste0(output_dir, "index_prefix.html"))
+  file.remove(paste0(output_dir, "index_postfix.html"))
+  file.remove(paste0(output_dir, "html_document.yml"))
 
   # For all registered tables besides the original we change the html
   # file so that the path to the libs folder refers to the libs folder "docs/libs".

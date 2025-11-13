@@ -101,15 +101,19 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
     output_yaml = yaml_path
   )
 
-  # Removing the temporary md file
+  # Remove temporary files (content already embedded in index.html)
   file.remove(temp_md_path)
+  file.remove(file.path(output_dir, "index_header.html"))
+  file.remove(file.path(output_dir, "index_prefix.html"))
+  file.remove(file.path(output_dir, "index_postfix.html"))
+  file.remove(file.path(output_dir, "html_document.yml"))
 
   # Adjusting the path to the libs folder in the html itself
   # so that the path to the libs folder refers to the libs folder "docs/libs".
   # This is done to remove duplicates of "libs" folders.
   html_file_path <- file.path(output_dir, "index.html")
   edit_html_lib_paths(html_file_path)
-  
+
   # Deleting the libs folder after changing the html lib path
   unlink(file.path(output_dir, "libs"), recursive = TRUE)
 }

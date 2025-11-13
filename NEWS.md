@@ -64,6 +64,8 @@
 
 ## Infrastructure Improvements
 
+* **Cleaner output directories**: Temporary HTML section files (index_header.html, index_prefix.html, index_postfix.html, html_document.yml) are now automatically removed after rendering, as their content is already embedded in the final index.html file
+* **Separated CSS styles**: Moved all register-specific CSS styles from inline `<style>` tags to a dedicated `codecheck-register.css` file in `docs/assets/`, improving maintainability and reducing HTML file sizes. The CSS file is automatically copied from package templates during register rendering.
 * **Local library management**: Removed all external CDN dependencies (Bootstrap, Font Awesome, Academicons) and implemented local library management system
 * **New function**: Added `setup_external_libraries()` to download and install CSS/JS libraries locally in `docs/libs/`, ensuring reproducibility and offline capability
 * **Provenance tracking**: All external libraries now include comprehensive provenance information (version, license, date configured) stored in `docs/libs/PROVENANCE.csv`

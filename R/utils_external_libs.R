@@ -124,6 +124,24 @@ setup_external_libraries <- function(libs_dir = "docs/libs", force = FALSE) {
     ))
   }
 
+  # Copy codecheck-register.css from package templates to docs/assets
+  message("\nCopying CODECHECK register CSS...")
+  assets_dir <- "docs/assets"
+  if (!dir.exists(assets_dir)) {
+    dir.create(assets_dir, recursive = TRUE)
+    message("Created assets directory: ", assets_dir)
+  }
+
+  css_source <- system.file("extdata", "templates/assets/codecheck-register.css", package = "codecheck")
+  css_dest <- file.path(assets_dir, "codecheck-register.css")
+
+  if (file.exists(css_source)) {
+    file.copy(css_source, css_dest, overwrite = TRUE)
+    message("  ✓ Copied codecheck-register.css to ", css_dest)
+  } else {
+    warning("  ✗ Could not find codecheck-register.css in package templates")
+  }
+
   # Write provenance information
   provenance_file <- file.path(libs_dir, "PROVENANCE.csv")
   write.csv(provenance, provenance_file, row.names = FALSE)

@@ -1,0 +1,102 @@
+/* CODECHECK Register Styles */
+
+/* Build info styling */
+.build-info {
+    font-size: 0.85em;
+    color: #999;
+    margin-top: 1em;
+}
+
+/* Navigation header styling */
+.codecheck-navbar {
+    background-color: #ffffff;
+    border-bottom: 2px solid #008033;
+    padding: 0.75rem 0;
+    margin-bottom: 0;
+}
+
+.navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.navbar-logo {
+    height: 50px;
+    width: auto;
+}
+
+.navbar-menu {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.navbar-menu .nav-link {
+    color: #008033;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.navbar-menu .nav-link:hover {
+    background-color: #f0f0f0;
+    color: #005522;
+}
+
+/* Responsive navigation */
+@media (max-width: 768px) {
+    .navbar-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .navbar-menu {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .navbar-logo {
+        height: 40px;
+    }
+}
+
+/* Breadcrumb styling */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0.75rem 0;
+    border-radius: 0;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: #6c757d;
+    padding: 0 0.5rem;
+}
+
+.breadcrumb-item a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+}
