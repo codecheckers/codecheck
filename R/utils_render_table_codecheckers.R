@@ -12,9 +12,12 @@ create_all_codecheckers_table <- function(register_table){
   register_table <- register_table %>% tidyr::unnest(Codechecker)
   register_table$Codechecker <- unlist(register_table$Codechecker)
 
+  # Filter out NA codecheckers
+  register_table <- register_table %>% filter(!is.na(Codechecker) & Codechecker != "NA")
+
   # Only keeping the Codechecker column and distinct values
-  new_table <- register_table %>% 
-    select(Codechecker) %>% 
+  new_table <- register_table %>%
+    select(Codechecker) %>%
     distinct()
 
   # Adding the codechecker name column

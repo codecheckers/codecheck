@@ -20,10 +20,13 @@ create_filtered_reg_csvs <- function(register, filter_by){
 
       # Splitting the comma-separated strings into lists
       register$Codechecker <- strsplit(register$Codechecker, ",")
-      
+
       # Unnesting the files
       register <- register %>% tidyr::unnest(Codechecker)
       register$Codechecker <- unlist(register$Codechecker)
+
+      # Filter out NA codecheckers
+      register <- register %>% filter(!is.na(Codechecker) & Codechecker != "NA")
     }
 
     filter_col_name <- CONFIG$FILTER_COLUMN_NAMES[[filter]]

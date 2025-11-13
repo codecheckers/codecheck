@@ -54,13 +54,30 @@ create_index_postfix_html <- function(output_dir, filter, table_details){
   writeLines(output, paste0(output_dir, "index_postfix.html"))
 }
 
-#' Dynamically generates the index_prefix.html from a template file 
-#' 
+#' Dynamically generates the index_prefix.html with navigation header and breadcrumbs
+#'
 #' @param output_dir The output directory
-create_index_prefix_html <- function(output_dir){
-  # Using the index_prefix_template
-  prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["prefix"]], warn = FALSE)
-  writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
+#' @param filter The filter name
+#' @param table_details List containing details such as the table name, subcat name.
+create_index_prefix_html <- function(output_dir, filter = NA, table_details = list()){
+  # Calculate base path for links
+  base_path <- calculate_breadcrumb_base_path(filter, table_details)
+
+  # Generate navigation header (with logo and conditional menu)
+  nav_header_html <- generate_navigation_header(filter, base_path, table_details)
+
+  # Generate breadcrumb HTML
+  breadcrumb_html <- generate_breadcrumb(filter, table_details, base_path)
+
+  # Combine navigation header and breadcrumbs
+  prefix_content <- paste0(
+    nav_header_html,
+    '<div style="max-width: 1200px; margin: 1rem auto; padding: 0 1rem;">\n',
+    breadcrumb_html,
+    '\n</div>\n'
+  )
+
+  writeLines(prefix_content, paste0(output_dir, "index_prefix.html"))
 }
 
 #' Dynamically generates the index_header.html from a template file
@@ -71,14 +88,30 @@ create_index_header_html <- function(output_dir){
   # Using the index_header_template
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["header"]], warn = FALSE)
 
-  # Generate meta generator tag from build metadata
+  # Generate meta generator content from build metadata
   meta_generator <- ""
   if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
-    meta_generator <- generate_meta_generator_tag(CONFIG$BUILD_METADATA)
+    meta_generator <- generate_meta_generator_content(CONFIG$BUILD_METADATA)
   }
 
-  # Render the template with meta generator tag
-  output <- whisker.render(paste(header_template, collapse = "\n"), list(meta_generator = meta_generator))
+  # Calculate relative path to docs root based on output_dir depth
+  # Count directory levels from docs/ (output_dir includes trailing slash)
+  path_components <- strsplit(output_dir, "/")[[1]]
+  # Remove empty strings and "docs"
+  path_components <- path_components[path_components != "" & path_components != "docs"]
+  depth <- length(path_components)
+
+  # Generate relative path (e.g., "../" for depth 1, "../../" for depth 2)
+  if (depth == 0) {
+    base_path <- ""
+  } else {
+    base_path <- paste(rep("../", depth), collapse = "")
+  }
+
+  # Render the template with meta generator tag and base path
+  output <- whisker.render(paste(header_template, collapse = "\n"),
+                          list(meta_generator = meta_generator,
+                               base_path = base_path))
 
   writeLines(output, paste0(output_dir, "index_header.html"))
 }
@@ -135,14 +168,14 @@ generate_href <- function(filter, table_details, href_type) {
   return(paste0(base_url, filter, "/", table_details[["slug_name"]], "/register", href_details$ext))
 }
 
-#' Creates index postfix, prefix and the header 
+#' Creates index postfix, prefix and the header
 #'
 #' @param output_dir The output directory of the section files
-#' @param filter The filter name 
+#' @param filter The filter name
 #' @param table_details List containing details such as the table name, subcat name.
 create_index_section_files <- function(output_dir, filter, table_details) {
   create_index_postfix_html(output_dir, filter, table_details)
-  create_index_prefix_html(output_dir)
+  create_index_prefix_html(output_dir, filter, table_details)
   create_index_header_html(output_dir)
 }
 

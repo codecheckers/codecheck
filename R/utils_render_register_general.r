@@ -101,6 +101,9 @@ create_register_files <- function(register_table, filter_by, outputs){
     if (filter == "codecheckers"){
       register_table <- register_table %>% tidyr::unnest(Codechecker)
       register_table$Codechecker <- unlist(register_table$Codechecker)
+
+      # Filter out NA codecheckers
+      register_table <- register_table %>% filter(!is.na(Codechecker) & Codechecker != "NA")
     }
 
     # Group the register_table by the filter column and nest the resulting groups
@@ -130,34 +133,58 @@ create_register_files <- function(register_table, filter_by, outputs){
 
 #' Filter and Drop Columns from Register Table
 #'
-#' This function filters and drops columns from the register table based on the 
-#' specified filter type. Removes any columns that are flagged for dropping 
-#' based on the filter and CONFIG$FILTER_COLUMN_NAMES_TO_DROP
+#' This function filters and drops columns from the register table based on the
+#' specified filter type. Uses hierarchical column configuration from
+#' CONFIG$REGISTER_COLUMNS with filter-specific overrides.
 #'
 #' @param register_table The register table
 #' @param filter A string specifying the filter to apply (e.g., "venues", "codecheckers").
-#' @param file_type The type of file we need to render the register for. 
-#'        The columns to keep depend on the file type
+#'        Use NA for the default/main register.
+#' @param file_type The type of file we need to render the register for.
+#'        The columns to keep depend on the file type and filter
 #'
-#' @return The filtered register table with only the necessary columns retained.
+#' @return The filtered register table with only the necessary columns retained and ordered.
 filter_and_drop_register_columns <- function(register_table, filter, file_type) {
-  
-  # Step 1: Columns that we want to keep
-  columns_to_keep <- CONFIG$REGISTER_COLUMNS[[file_type]]
-  
-  # Initialize final columns to columns_to_keep in case no filter is applied
-  final_columns <- intersect(columns_to_keep, names(register_table))
-  
-  # Step 2: Check if the filter exists in CONFIG and drop columns if necessary
-  if (filter %in% names(CONFIG$FILTER_COLUMN_NAMES_TO_DROP)) {
-    columns_to_drop <- CONFIG$FILTER_COLUMN_NAMES_TO_DROP[[filter]]
-    
-    # Ensure we only keep valid columns that aren't in columns_to_drop
-    final_columns <- setdiff(final_columns, columns_to_drop)
-  }
-  final_columns <- as.character(final_columns) 
 
-  # Step 3: Subset the register table to keep only the final columns
+  # Step 1: Determine which filter configuration to use
+  # If filter is NA or not configured, use "default"
+  filter_key <- if (is.na(filter) || !(filter %in% names(CONFIG$REGISTER_COLUMNS))) {
+    "default"
+  } else {
+    filter
+  }
+
+  # Step 2: Get columns for this filter and file type
+  # Try filter-specific config first, fall back to default if not found
+  columns_to_keep <- NULL
+
+  if (filter_key %in% names(CONFIG$REGISTER_COLUMNS)) {
+    filter_config <- CONFIG$REGISTER_COLUMNS[[filter_key]]
+    if (file_type %in% names(filter_config)) {
+      columns_to_keep <- filter_config[[file_type]]
+    }
+  }
+
+  # Fall back to default if filter-specific config not found
+  if (is.null(columns_to_keep)) {
+    if ("default" %in% names(CONFIG$REGISTER_COLUMNS)) {
+      default_config <- CONFIG$REGISTER_COLUMNS[["default"]]
+      if (file_type %in% names(default_config)) {
+        columns_to_keep <- default_config[[file_type]]
+      }
+    }
+  }
+
+  # If still no config found, return table as-is with warning
+  if (is.null(columns_to_keep)) {
+    warning("No column configuration found for filter '", filter_key, "' and file type '", file_type, "'")
+    return(register_table)
+  }
+
+  # Step 3: Keep only columns that exist in the table (in the specified order)
+  final_columns <- intersect(columns_to_keep, names(register_table))
+
+  # Step 4: Subset and reorder the register table
   register_table <- register_table[, final_columns, drop = FALSE]
   return(register_table)
 }

@@ -20,12 +20,35 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
   )
 )
 
-# These are the columns to keep in the register table
+# Column configuration for register tables
+# Hierarchical structure: filter -> file_type -> columns
+# Special filter "default" is used for the main register and as fallback
+# Per-filter configurations can override default for specific views
 CONFIG$REGISTER_COLUMNS <- list(
-  html = c("Certificate", "Paper Title", "Type", "Venue", "Issue", "Report", "Check date"),
-  md = c("Certificate", "Paper Title", "Type", "Venue", "Issue", "Report", "Check date"),
-  csv =   c("Certificate", "Repository", "Type", "Venue", "Issue", "Report", "Check date"),
-  json =  c("Certificate ID", "Certificate Link", "Repository", "Type", "Venue", "Issue", "Report", "Check date")
+  # Default configuration (main register, unfiltered)
+  # Order per issue #101: Certificate, Report, Title, Venue, Type, Check date
+  default = list(
+    html = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date"),
+    md = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date"),
+    csv = c("Certificate", "Repository", "Report", "Type", "Venue", "Check date"),
+    json = c("Certificate ID", "Certificate Link", "Repository", "Report", "Type", "Venue", "Check date")
+  ),
+
+  # Venue-specific views (venue and type are redundant in page context)
+  venues = list(
+    html = c("Certificate", "Report", "Paper Title", "Check date"),
+    md = c("Certificate", "Report", "Paper Title", "Check date"),
+    csv = c("Certificate", "Repository", "Report", "Check date"),
+    json = c("Certificate ID", "Certificate Link", "Repository", "Report", "Check date")
+  ),
+
+  # Codechecker-specific views (codechecker is redundant in page context)
+  codecheckers = list(
+    html = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date"),
+    md = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date"),
+    csv = c("Certificate", "Repository", "Report", "Venue", "Type", "Check date"),
+    json = c("Certificate ID", "Certificate Link", "Repository", "Report", "Venue", "Type", "Check date")
+  )
 )
 
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
@@ -36,12 +59,6 @@ CONFIG$FILTER_COLUMN_NAMES <- list(
 
 CONFIG$NO_CODECHECKS_VENUE_TYPE <- list()
 
-# Column names to drop for each reg table
-CONFIG$FILTER_COLUMN_NAMES_TO_DROP <- list(
-  "venues" = list("Venue", "Type"),
-  "codecheckers" = "Codechecker"
-)
-
 CONFIG$MD_TITLES <- list(
   "default" = function(table_details){
     "CODECHECK Register"
@@ -50,7 +67,7 @@ CONFIG$MD_TITLES <- list(
   "codecheckers" = function(table_details){
     orcid_id <- table_details[["name"]]
     auth_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid_id]]
-    paste0("Codechecks by ", auth_name, " (", orcid_id, ")")
+    paste0("Codechecks by ", auth_name)
   },
 
   "venues" = function(table_details) {
@@ -100,12 +117,12 @@ CONFIG$VENUE_SUBCAT_PLURAL <- list(
 CONFIG$NON_REG_TITLE_BASE <- "CODECHECK List of"
 CONFIG$NON_REG_TITLE_FNS <- list(
   codecheckers = function(subcat=NULL){
-    return("CODECHECK List of codecheckers")
+    return("All codecheckers")
   },
 
   venues = function(subcat){
     if (is.null(subcat)){
-      return("CODECHECK List of venues")
+      return("All CODECHECK venues")
     }
 
     else{
