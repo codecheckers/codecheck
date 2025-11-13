@@ -69,6 +69,10 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   # Write build metadata JSON file
   write_meta_json(build_metadata, "docs")
 
+  # Generate SEO files (sitemap.xml and robots.txt)
+  generate_sitemap(register_table, filter_by, output_dir = "docs")
+  generate_robots_txt(output_dir = "docs")
+
   return(register_table)
 }
 

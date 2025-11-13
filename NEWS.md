@@ -9,6 +9,7 @@
 * **Context-aware field filtering**: Filtered views automatically exclude redundant fields (e.g., venue/type columns hidden on venue-specific pages, codechecker column hidden on codechecker pages)
 * **Hierarchical column configuration**: New `CONFIG$REGISTER_COLUMNS` structure with filter-specific overrides and automatic fallback to defaults for maximum flexibility
 * **Enhanced CSV file fields**: CSV files now include all available fields matching JSON output (Certificate ID, Certificate Link, Repository, Repository Link, Report, Title, Paper reference, Type, Venue, Check date). Previously CSV files only contained Certificate and Repository columns. This provides more complete data for programmatic access and analysis
+* **SEO support with sitemap.xml and robots.txt**: Register rendering now automatically generates sitemap.xml and robots.txt files for improved search engine optimization and discoverability. Sitemap includes all generated pages (main register, venue pages, codechecker pages, certificate pages) with appropriate priorities and change frequencies. Robots.txt allows all search engines to crawl the register (addresses codecheckers/register#126)
 * **Relative asset links**: Favicon and CSS stylesheet links in HTML headers now use relative paths calculated based on each page's depth, eliminating hard-coded absolute URLs and improving portability
 * **Build metadata in footer**: All register pages now display build information in muted text at the bottom of the footer, including timestamp, package version, codecheck package commit, and register commit with GitHub links (addresses #105)
 * **Dual commit tracking**: Footer now displays both codecheck package commit and register repository commit as clickable links to respective GitHub commits
@@ -41,6 +42,8 @@
 * **`generate_codechecker_profile_links()`**: Generates HTML for horizontal list of profile links with icons
 * **`add_repository_links_csv()`**: Adds "Repository Link" column to register table for CSV export, converting platform specs (e.g., "github::org/repo") to full URLs
 * **`set_paper_title_references_csv()`**: Extracts plain text "Title" and "Paper reference" columns from hyperlinked "Paper Title" for CSV export
+* **`generate_sitemap()`**: Generates sitemap.xml file listing all register pages with priorities and change frequencies for search engine optimization
+* **`generate_robots_txt()`**: Generates robots.txt file allowing all search engines to crawl the register and referencing the sitemap
 * **`generate_cert_json()`**: Generates index.json file for certificate landing pages containing all metadata in machine-readable format (certificate, paper, CODECHECK details including abstract, summary, and manifest)
 
 ## Documentation
