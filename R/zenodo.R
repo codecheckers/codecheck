@@ -535,10 +535,12 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
 
     # Try .Rmd first, then .qmd
     source_file <- NULL
-    if (file.exists(paste0(cert_base, ".Rmd"))) {
-      source_file <- paste0(cert_base, ".Rmd")
-    } else if (file.exists(paste0(cert_base, ".qmd"))) {
-      source_file <- paste0(cert_base, ".qmd")
+    rmd_path <- paste0(cert_base, ".Rmd")
+    qmd_path <- paste0(cert_base, ".qmd")
+    if (file.exists(rmd_path)) {
+      source_file <- rmd_path
+    } else if (file.exists(qmd_path)) {
+      source_file <- qmd_path
     }
 
     if (!is.null(source_file)) {

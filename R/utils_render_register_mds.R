@@ -50,11 +50,11 @@ render_register_md <- function(register_table, table_details, filter) {
 
   # Saving the md file
   if ("for_html_file" %in% names(table_details)){
-    output_dir <- paste0(output_dir, "temp.md")
+    output_dir <- file.path(output_dir, "temp.md")
   }
 
   else{
-    output_dir <- paste0(output_dir, "register.md")
+    output_dir <- file.path(output_dir, "register.md")
   }
   writeLines(md_table, output_dir)
 }

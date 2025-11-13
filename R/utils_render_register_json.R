@@ -69,13 +69,13 @@ render_register_json <- function(register_table, table_details, filter) {
 
   jsonlite::write_json(
     register_table_json[, columns_to_keep],
-    path = paste0(output_dir, "register.json"),
+    path = file.path(output_dir, "register.json"),
     pretty = TRUE
   )
 
   jsonlite::write_json(
     utils::tail(register_table_json, CONFIG$FEATURED_COUNT)[, columns_to_keep],
-    path = paste0(output_dir, "featured.json"),
+    path = file.path(output_dir, "featured.json"),
     pretty = TRUE
   )
 
@@ -87,7 +87,7 @@ render_register_json <- function(register_table, table_details, filter) {
       # journals, etc.
     ),
     auto_unbox = TRUE,
-    path = paste0(output_dir, "/stats.json"),
+    path = file.path(output_dir, "stats.json"),
     pretty = TRUE
   )
 }

@@ -88,8 +88,8 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
   temp_md_path <- file.path(output_dir, "temp.md")
 
   # Creating html document yml with breadcrumbs
-  create_cert_page_section_files(paste0(output_dir, "/"), cert_id, cert_type, cert_venue)
-  generate_html_document_yml(paste0(output_dir, "/"))
+  create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue)
+  generate_html_document_yml(output_dir)
 
   yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml")))
 
@@ -150,11 +150,11 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
       breadcrumb_html,
       '\n</div>\n'
     )
-    writeLines(prefix_content, paste0(output_dir, "index_prefix.html"))
+    writeLines(prefix_content, file.path(output_dir, "index_prefix.html"))
   } else {
     # Fallback to template if information not provided
     prefix_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["prefix"]], warn = FALSE)
-    writeLines(prefix_template, paste0(output_dir, "index_prefix.html"))
+    writeLines(prefix_template, file.path(output_dir, "index_prefix.html"))
   }
 
   # Create postfix with build metadata
@@ -167,7 +167,7 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
   }
 
   output <- whisker.render(paste(postfix_template, collapse = "\n"), list(build_info = build_info))
-  writeLines(output, paste0(output_dir, "index_postfix.html"))
+  writeLines(output, file.path(output_dir, "index_postfix.html"))
 
   # Create header with meta generator content
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["header"]], warn = FALSE)
@@ -194,5 +194,5 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
   output <- whisker.render(paste(header_template, collapse = "\n"),
                           list(meta_generator = meta_generator,
                                base_path = base_path))
-  writeLines(output, paste0(output_dir, "index_header.html"))
+  writeLines(output, file.path(output_dir, "index_header.html"))
 }

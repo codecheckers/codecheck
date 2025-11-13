@@ -7,6 +7,7 @@
 * **Configurable field ordering**: Register views now support per-filter column configuration, allowing different field orders and selections for main register vs. filtered views (venues, codecheckers). Main register now displays columns in the order: Certificate, Report, Title, Venue, Type, Check date (addresses #101)
 * **Context-aware field filtering**: Filtered views automatically exclude redundant fields (e.g., venue/type columns hidden on venue-specific pages, codechecker column hidden on codechecker pages)
 * **Hierarchical column configuration**: New `CONFIG$REGISTER_COLUMNS` structure with filter-specific overrides and automatic fallback to defaults for maximum flexibility
+* **Enhanced CSV file fields**: CSV files now include all available fields matching JSON output (Certificate ID, Certificate Link, Repository, Repository Link, Report, Title, Paper reference, Type, Venue, Check date). Previously CSV files only contained Certificate and Repository columns. This provides more complete data for programmatic access and analysis
 * **Relative asset links**: Favicon and CSS stylesheet links in HTML headers now use relative paths calculated based on each page's depth, eliminating hard-coded absolute URLs and improving portability
 * **Build metadata in footer**: All register pages now display build information in muted text at the bottom of the footer, including timestamp, package version, codecheck package commit, and register commit with GitHub links (addresses #105)
 * **Dual commit tracking**: Footer now displays both codecheck package commit and register repository commit as clickable links to respective GitHub commits
@@ -68,6 +69,7 @@
 
 * **Cleaner output directories**: Temporary HTML section files (index_header.html, index_prefix.html, index_postfix.html, html_document.yml) are now automatically removed after rendering, as their content is already embedded in the final index.html file
 * **Separated CSS styles**: Moved all register-specific CSS styles from inline `<style>` tags to a dedicated `codecheck-register.css` file in `docs/assets/`, improving maintainability and reducing HTML file sizes. The CSS file is automatically copied from package templates during register rendering.
+* **Improved path construction**: Replaced string concatenation (`paste0`) with `file.path()` for all file system path construction throughout the codebase, ensuring cross-platform compatibility and following R best practices (addresses codecheckers/register#70)
 * **Local library management**: Removed all external CDN dependencies (Bootstrap, Font Awesome, Academicons) and implemented local library management system
 * **New function**: Added `setup_external_libraries()` to download and install CSS/JS libraries locally in `docs/libs/`, ensuring reproducibility and offline capability
 * **Provenance tracking**: All external libraries now include comprehensive provenance information (version, license, date configured) stored in `docs/libs/PROVENANCE.csv`

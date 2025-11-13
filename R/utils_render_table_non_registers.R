@@ -38,7 +38,7 @@ create_non_register_files <- function(register_table, filter_by){
       # Saving the json file
       jsonlite::write_json(
         table,
-        path = paste0(table_details[["output_dir"]], "index.json"),
+        path = file.path(table_details[["output_dir"]], "index.json"),
         pretty = TRUE
       )
     }
@@ -155,7 +155,7 @@ render_non_register_md <- function(table, table_details, filter){
   }
 
   # Saving the table to a temp md file
-  temp_md_path <- paste0(table_details[["output_dir"]], "temp.md")
+  temp_md_path <- file.path(table_details[["output_dir"]], "temp.md")
   writeLines(md_table, temp_md_path)
 }
 
