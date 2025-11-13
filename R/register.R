@@ -29,6 +29,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             outputs = c("html", "md", "json"),
                             config = c(system.file("extdata", "config.R", package = "codecheck")),
                             venues_file = "venues.csv",
+                            codecheck_repo_path = NULL,
                             from = 1,
                             to = nrow(register)) {
   message("Rendering register using codecheck version ", utils::packageVersion("codecheck"), " from ", from, " to ", to)
@@ -47,7 +48,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   message("Using cache path ", R.cache::getCacheRootPath())
 
   # Get build metadata for footer and meta tags
-  build_metadata <- get_build_metadata(".")
+  build_metadata <- get_build_metadata(".", codecheck_repo_path)
   CONFIG$BUILD_METADATA <- build_metadata
 
   register <- register[(from:to),]
