@@ -12,6 +12,8 @@ register_render(
   filter_by = c("venues", "codecheckers"),
   outputs = c("html", "md", "json"),
   config = c(system.file("extdata", "config.R", package = "codecheck")),
+  venues_file = "venues.csv",
+  codecheck_repo_path = NULL,
   from = 1,
   to = nrow(register)
 )
@@ -35,6 +37,10 @@ register_render(
 
   A list of configuration files to be sourced at the beginning of the
   rending process
+
+- venues_file:
+
+  Path to the venues.csv file containing venue names and labels
 
 - from:
 

@@ -46,6 +46,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_index_postfix_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_index_prefix_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_index_section_files.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/create_libs_readme.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_md_table.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_non_register_files.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_original_register_files.html</loc></url>
@@ -54,10 +55,14 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_temp_register_with_codechecker.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_venue_type_tables.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_venues_tables.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/download_academicons_fonts.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/download_cert_pdf.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/download_font_awesome_fonts.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/edit_html_lib_paths.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_cert_pdf_from_zip.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/generate_codechecker_profile_links.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/generate_footer_build_info.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_href.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_html_document_yml.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_html_extra_text_non_register.html</loc></url>
@@ -65,12 +70,14 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_html_postfix_hrefs_reg.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_html_subtext_non_register.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_html_title_non_registers.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/generate_meta_generator_content.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_output_dir.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_table_details.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_table_details_non_reg.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_abstract.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_abstract_text_crossref.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_abstract_text_openalex.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_build_metadata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_cert_link.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_certificate_from_github_issue.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheck_yml.html</loc></url>
@@ -79,6 +86,8 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_osf.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_uncached.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_zenodo.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_codechecker_profile.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheckers_data.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_git_info.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_or_create_zenodo_record.html</loc></url>
@@ -93,6 +102,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/latex_summary_of_manifest.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/latex_summary_of_metadata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/list_manifest_files.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/load_venues_config.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/parse_repository_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/preprocess_register.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_check.html</loc></url>
@@ -119,6 +129,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_register_json.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_register_md.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/set_paper_title_references.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/setup_external_libraries.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/update_certificate_from_github.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/update_codecheck_yml_from_lifecycle.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/upload_zenodo_certificate.html</loc></url>
@@ -130,5 +141,6 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_orcid.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/validate_contents_references.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/validate_yaml_syntax.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/write_meta_json.html</loc></url>
 </urlset>
 

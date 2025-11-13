@@ -238,6 +238,10 @@ under the MIT license, see file `LICENSE`.
   saves it in the specified directory.
 - [`filter_and_drop_register_columns()`](http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.md)
   : Filter and Drop Columns from Register Table
+- [`generate_codechecker_profile_links()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_profile_links.md)
+  : Generate HTML for codechecker profile links
+- [`generate_footer_build_info()`](http://codecheck.org.uk/codecheck/reference/generate_footer_build_info.md)
+  : Generate Footer Build Information HTML
 - [`generate_href()`](http://codecheck.org.uk/codecheck/reference/generate_href.md)
   : Generate full href for for different href types.
 - [`generate_html_document_yml()`](http://codecheck.org.uk/codecheck/reference/generate_html_document_yml.md)
@@ -259,6 +263,8 @@ under the MIT license, see file `LICENSE`.
   etc.
 - [`generate_html_title_non_registers()`](http://codecheck.org.uk/codecheck/reference/generate_html_title_non_registers.md)
   : Generate HTML Title for Non-Register Pages
+- [`generate_meta_generator_content()`](http://codecheck.org.uk/codecheck/reference/generate_meta_generator_content.md)
+  : Generate Meta Generator Content
 - [`generate_output_dir()`](http://codecheck.org.uk/codecheck/reference/generate_output_dir.md)
   : Generate Output Directory Path
 - [`generate_table_details()`](http://codecheck.org.uk/codecheck/reference/generate_table_details.md)
@@ -273,6 +279,8 @@ under the MIT license, see file `LICENSE`.
   a CrossRef API request, and returns the abstract text if available.
 - [`get_abstract_text_openalex()`](http://codecheck.org.uk/codecheck/reference/get_abstract_text_openalex.md)
   : Retrieves the abstract of a research paper using the OpenAlex API.
+- [`get_build_metadata()`](http://codecheck.org.uk/codecheck/reference/get_build_metadata.md)
+  : Get Build Metadata
 - [`get_cert_link()`](http://codecheck.org.uk/codecheck/reference/get_cert_link.md)
   : Retrieves the download link for a certificate file from Zenodo, OSF,
   or ResearchEquals.
@@ -291,6 +299,10 @@ under the MIT license, see file `LICENSE`.
   : Retrieve a codecheck.yml file from a remote repository
 - [`get_codecheck_yml_zenodo()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_zenodo.md)
   : Retrieve a codecheck.yml file from a Zenodo record
+- [`get_codechecker_profile()`](http://codecheck.org.uk/codecheck/reference/get_codechecker_profile.md)
+  : Get codechecker profile information by ORCID
+- [`get_codecheckers_data()`](http://codecheck.org.uk/codecheck/reference/get_codecheckers_data.md)
+  : Fetch and cache codecheckers.csv data from GitHub
 - [`get_git_info()`](http://codecheck.org.uk/codecheck/reference/get_git_info.md)
   : Get git repository information
 - [`get_lifecycle_metadata()`](http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.md)
@@ -325,6 +337,8 @@ under the MIT license, see file `LICENSE`.
   : Print a latex table to summarise CODECHECK metadata
 - [`list_manifest_files()`](http://codecheck.org.uk/codecheck/reference/list_manifest_files.md)
   : Summarise manifest files.
+- [`load_venues_config()`](http://codecheck.org.uk/codecheck/reference/load_venues_config.md)
+  : Load venues configuration from CSV file
 - [`parse_repository_spec()`](http://codecheck.org.uk/codecheck/reference/parse_repository_spec.md)
   : Parse the repository specification in the column "Repo" in the
   register CSV file
@@ -360,6 +374,8 @@ under the MIT license, see file `LICENSE`.
 - [`set_paper_title_references()`](http://codecheck.org.uk/codecheck/reference/set_paper_title_references.md)
   : Set "Title" and "Paper reference" columns and values to the
   register_table
+- [`setup_external_libraries()`](http://codecheck.org.uk/codecheck/reference/setup_external_libraries.md)
+  : Download and Setup External Libraries Locally
 - [`update_certificate_from_github()`](http://codecheck.org.uk/codecheck/reference/update_certificate_from_github.md)
   : Update certificate ID from GitHub issue
 - [`update_codecheck_yml_from_lifecycle()`](http://codecheck.org.uk/codecheck/reference/update_codecheck_yml_from_lifecycle.md)
@@ -383,6 +399,8 @@ under the MIT license, see file `LICENSE`.
   : Validate codecheck.yml metadata against external references
 - [`validate_yaml_syntax()`](http://codecheck.org.uk/codecheck/reference/validate_yaml_syntax.md)
   : Validate YAML syntax of a codecheck.yml file
+- [`write_meta_json()`](http://codecheck.org.uk/codecheck/reference/write_meta_json.md)
+  : Write Build Metadata to JSON File
 
 # Articles
 

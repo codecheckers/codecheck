@@ -1,6 +1,205 @@
 # Changelog
 
+## codecheck 0.23.0 (2025-11-12)
+
+### Register Enhancements
+
+- **Navigation header with logo**: All register pages now feature a
+  navigation header with the CODECHECK logo in the top left, which
+  serves as a home link back to the main register. Overview pages (main
+  register, all venues, all codecheckers) include a menu in the top
+  right with links to “All Venues”, “All Codecheckers”, and “About”
+  (linking to the main CODECHECK website) for quick navigation
+- **Breadcrumb navigation**: All register pages now include breadcrumb
+  navigation at the top, enabling easy navigation from detail pages back
+  to overview pages. Breadcrumbs show hierarchical paths (e.g.,
+  CODECHECK Register \> Venues \> Journals \> GigaScience) with
+  clickable links to parent pages (addresses codecheckers/register#108)
+- **Configurable field ordering**: Register views now support per-filter
+  column configuration, allowing different field orders and selections
+  for main register vs. filtered views (venues, codecheckers). Main
+  register now displays columns in the order: Certificate, Report,
+  Title, Venue, Type, Check date (addresses
+  [\#101](https://github.com/codecheckers/codecheck/issues/101))
+- **Context-aware field filtering**: Filtered views automatically
+  exclude redundant fields (e.g., venue/type columns hidden on
+  venue-specific pages, codechecker column hidden on codechecker pages)
+- **Hierarchical column configuration**: New `CONFIG$REGISTER_COLUMNS`
+  structure with filter-specific overrides and automatic fallback to
+  defaults for maximum flexibility
+- **Relative asset links**: Favicon and CSS stylesheet links in HTML
+  headers now use relative paths calculated based on each page’s depth,
+  eliminating hard-coded absolute URLs and improving portability
+- **Build metadata in footer**: All register pages now display build
+  information in muted text at the bottom of the footer, including
+  timestamp, package version, codecheck package commit, and register
+  commit with GitHub links (addresses
+  [\#105](https://github.com/codecheckers/codecheck/issues/105))
+- **Dual commit tracking**: Footer now displays both codecheck package
+  commit and register repository commit as clickable links to respective
+  GitHub commits
+- **Meta generator tag**: HTML pages now include a properly formatted
+  `<meta name="generator">` tag with package version and commit
+  information (fixed display issue)
+- **Build metadata JSON**: A `.meta.json` file is now generated at the
+  root of the docs directory containing build metadata for both
+  repositories
+- **Icon font usage**: Replaced inline SVG logos with academicons and
+  Font Awesome icon fonts for ORCID, GitHub, and Zenodo for cleaner HTML
+  and easier maintenance
+- **Template-based HTML generation**: Moved HTML structure from R
+  functions to template files, keeping R code focused on data
+  preparation
+- **Codechecker profile links**: Individual codechecker pages now
+  display ORCID and GitHub profile links above the table, pulling data
+  from the codecheckers/codecheckers repository (addresses
+  [\#73](https://github.com/codecheckers/codecheck/issues/73))
+- **ORCID branding compliance**: Codechecker pages now use the official
+  ORCID iD logo and display full ORCID URLs (<https://orcid.org/>…) as
+  required by ORCID brand guidelines
+- **Simplified codechecker titles**: Removed ORCID identifier from
+  codechecker page titles for cleaner display (titles now show just
+  “Codechecks by \[Name\]”)
+- **Zenodo community link**: Added link to CODECHECK Zenodo Community in
+  footer of all register pages alongside the GitHub organization link
+
+### Bug Fixes
+
+- **Fixed venue label error**: Resolved “venue_label must be size 1, not
+  12” error by ungrouping data frame before venue_label mutation in
+  [`create_all_venues_table()`](http://codecheck.org.uk/codecheck/reference/create_all_venues_table.md)
+- **Fixed NA codechecker handling**: Codecheckers without ORCID
+  identifiers are now properly filtered out during register rendering,
+  preventing creation of invalid “NA” directories
+
+### New Functions
+
+- **`generate_navigation_header()`**: Generates navigation header HTML
+  with CODECHECK logo and conditional menu (menu shown only on main
+  register page)
+- **`generate_breadcrumb()`**: Generates Bootstrap-styled breadcrumb
+  navigation HTML based on page context (filter type, table details, and
+  relative path)
+- **`calculate_breadcrumb_base_path()`**: Calculates relative path to
+  register root based on page depth for breadcrumb links
+- **[`get_build_metadata()`](http://codecheck.org.uk/codecheck/reference/get_build_metadata.md)**:
+  Retrieves build metadata including timestamp, package version, and git
+  commit information from both register and codecheck package
+  repositories
+- **[`generate_meta_generator_content()`](http://codecheck.org.uk/codecheck/reference/generate_meta_generator_content.md)**:
+  Creates meta generator content value (replaces
+  `generate_meta_generator_tag()` to separate content from HTML
+  structure)
+- **[`generate_footer_build_info()`](http://codecheck.org.uk/codecheck/reference/generate_footer_build_info.md)**:
+  Generates HTML for displaying build information in page footers
+  including both codecheck and register commits with GitHub links
+- **[`write_meta_json()`](http://codecheck.org.uk/codecheck/reference/write_meta_json.md)**:
+  Writes build metadata to .meta.json file in specified directory
+- **[`get_codecheckers_data()`](http://codecheck.org.uk/codecheck/reference/get_codecheckers_data.md)**:
+  Fetches and caches codecheckers registry from
+  codecheckers/codecheckers repository
+- **[`get_codechecker_profile()`](http://codecheck.org.uk/codecheck/reference/get_codechecker_profile.md)**:
+  Retrieves profile information (name, GitHub handle, ORCID, fields,
+  languages) by ORCID
+- **[`generate_codechecker_profile_links()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_profile_links.md)**:
+  Generates HTML for horizontal list of profile links with icons
+
+### Documentation
+
+- **Comprehensive register rendering documentation**: Expanded CLAUDE.md
+  with detailed documentation of the register rendering system,
+  including:
+  - Complete rendering pipeline flow
+  - Detailed descriptions of all 13 utility files
+  - Configuration system documentation
+  - Template system details
+  - Output directory structure
+  - Important implementation details
+- **Version management guide**: Added version management section to
+  CLAUDE.md with procedures for bumping versions and release workflow
+
 ## codecheck (development version)
+
+### Certificate Page Improvements
+
+- **Fixed codechecker links**: Codechecker names on certificate pages
+  now link to their register landing pages (e.g.,
+  `/register/codecheckers/0000-0001-2345-6789/`) instead of ORCID
+  profiles, making it easier to see all codechecks by that person (fixes
+  [\#141](https://github.com/codecheckers/codecheck/issues/141))
+- **Added Type and Venue links**: Certificate pages now display
+  clickable links for both the venue type and venue name in the
+  CODECHECK Details section, enabling easier navigation to filtered
+  register views (e.g., `/register/venues/journals/` and
+  `/register/venues/journals/gigascience/`) (fixes
+  [\#142](https://github.com/codecheckers/codecheck/issues/142))
+- **Venue-based breadcrumb navigation**: Certificate pages now include
+  breadcrumb navigation showing the venue hierarchy (e.g., CODECHECK
+  Register \> Venues \> Journals \> GigaScience \> 2024-001), enabling
+  easy navigation to the venue’s register page with a single click
+
+### Visual Improvements
+
+- **ORCID brand color**: ORCID icons on codechecker profile pages now
+  display in the official ORCID green (#A6CE39) for proper brand
+  compliance
+- **Updated Zenodo icon**: Replaced the Zenodo icon with the official
+  blue “Z” SVG from EPFL, providing a more recognizable and polished
+  appearance in register page footers
+- **Improved icon alignment**: Applied vertical alignment adjustments
+  (`-5px`) to Zenodo, GitHub, and ORCID icons across all register pages
+  for better alignment with adjacent text
+
+### Infrastructure Improvements
+
+- **Local library management**: Removed all external CDN dependencies
+  (Bootstrap, Font Awesome, Academicons) and implemented local library
+  management system
+- **New function**: Added
+  [`setup_external_libraries()`](http://codecheck.org.uk/codecheck/reference/setup_external_libraries.md)
+  to download and install CSS/JS libraries locally in `docs/libs/`,
+  ensuring reproducibility and offline capability
+- **Provenance tracking**: All external libraries now include
+  comprehensive provenance information (version, license, date
+  configured) stored in `docs/libs/PROVENANCE.csv`
+- **Automatic setup**: Libraries are automatically downloaded during
+  register rendering if not already present
+- **Documentation**: Generated README.md in `docs/libs/` documenting all
+  installed libraries and their licenses
+
+### Bug Fixes
+
+- **Fixed register rendering error**: Fixed “missing value where
+  TRUE/FALSE needed” error when rendering register pages by adding
+  proper NULL check for table_details\[\[“name”\]\]
+- **Fixed venue type hyperlinks**: Fixed venue type links in venue lists
+  that were rendering as Markdown syntax instead of proper HTML links
+  due to missing closing parenthesis
+
+### Venue Configuration and Label Integration
+
+- **Dynamic venue configuration**: Venue information is now loaded from
+  a `venues.csv` file instead of being hardcoded in `config.R`, making
+  it easier to add and manage venues
+- **GitHub label integration**: Venue lists now include GitHub issue
+  labels for each venue, enabling direct links to open checks
+- **Enhanced JSON output**: The venues JSON at
+  `/register/venues/index.json` now includes an “Issue label” field for
+  each venue
+- **Open checks links**: Venue HTML pages now display links to view open
+  GitHub issues for each venue using their corresponding label
+- **New function**: Added
+  [`load_venues_config()`](http://codecheck.org.uk/codecheck/reference/load_venues_config.md)
+  to load venue configuration from CSV files with columns: `name`,
+  `longname`, and `label`
+- **Register repository**: Created `venues.csv` in the register
+  repository to store venue metadata and GitHub labels
+- **Test updates**: All tests updated to work with the new venue
+  configuration system using test fixtures
+- **Breaking change**:
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  now requires a `venues_file` parameter (defaults to “venues.csv” in
+  the working directory)
 
 ### GitHub Issue Validation
 
