@@ -8,7 +8,8 @@ create_cert_page_section_files(
   output_dir,
   cert_id = NULL,
   cert_type = NULL,
-  cert_venue = NULL
+  cert_venue = NULL,
+  repo_link = NULL
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ create_cert_page_section_files(
 \item{cert_type}{The venue type (journal, conference, community, institution) for breadcrumb generation}
 
 \item{cert_venue}{The venue name for breadcrumb generation}
+
+\item{repo_link}{Repository link to fetch codecheck.yml for Schema.org metadata generation (default: NULL)}
 }
 \description{
 Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.

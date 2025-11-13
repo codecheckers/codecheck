@@ -4,15 +4,15 @@
 \alias{generate_codechecker_profile_links}
 \title{Generate HTML for codechecker profile links}
 \usage{
-generate_codechecker_profile_links(orcid)
+generate_codechecker_profile_links(identifier)
 }
 \arguments{
-\item{orcid}{The ORCID identifier}
+\item{identifier}{The codechecker identifier (ORCID or "handle:username")}
 }
 \value{
 HTML string with profile links, or empty string if no profile found
 }
 \description{
 Creates a horizontal list of profile links (ORCID, GitHub) for a codechecker page.
-Uses a template file to generate the HTML.
+Uses a template file to generate the HTML. Supports both ORCID and handle-based identifiers.
 }

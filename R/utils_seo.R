@@ -100,12 +100,29 @@ generate_sitemap <- function(register_table,
 
       for (codechecker in codecheckers) {
         if (!is.na(codechecker) && codechecker != "NA" && codechecker != "") {
+          # Check if it's an ORCID (format: NNNN-NNNN-NNNN-NNNX) or GitHub username
+          is_orcid <- grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", codechecker)
+
+          # Add main page URL (either ORCID or GitHub username)
           urls[[length(urls) + 1]] <- list(
             loc = paste0(base_url, "/codecheckers/", codechecker, "/"),
             lastmod = lastmod,
             changefreq = "monthly",
             priority = "0.7"
           )
+
+          # For ORCID-based codecheckers, also add redirect page if they have GitHub username
+          if (is_orcid) {
+            profile <- get_codechecker_profile(codechecker)
+            if (!is.null(profile) && !is.null(profile$github_handle)) {
+              urls[[length(urls) + 1]] <- list(
+                loc = paste0(base_url, "/codecheckers/", profile$github_handle, "/"),
+                lastmod = lastmod,
+                changefreq = "yearly",  # Redirects change less frequently
+                priority = "0.5"
+              )
+            }
+          }
         }
       }
     }

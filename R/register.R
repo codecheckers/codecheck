@@ -10,6 +10,7 @@
 #' @param outputs The output formats to create
 #' @param config A list of configuration files to be sourced at the beginning of the rending process
 #' @param venues_file Path to the venues.csv file containing venue names and labels
+#' @param codecheck_repo_path Optional path to the codecheck package repository for build metadata (default: NULL)
 #' @param from The first register entry to check
 #' @param to The last register entry to check
 #'
@@ -65,6 +66,11 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   create_filtered_reg_csvs(register_table, filter_by)
   create_register_files(register_table, filter_by, outputs)
   create_non_register_files(register_table, filter_by)
+
+  # Generate redirect pages for codecheckers with ORCID
+  if ("codecheckers" %in% filter_by) {
+    generate_codechecker_redirects(register_table)
+  }
 
   # Write build metadata JSON file
   write_meta_json(build_metadata, "docs")

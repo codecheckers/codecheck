@@ -7,10 +7,13 @@ utils::globalVariables(c("CONFIG"))
 # Specifying the register table column widths
 # The names in the list are the filter type
 # For filters other than venues we use the general column widths
+# Column widths increased to use full table width, with Paper Title column significantly expanded
 CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
   reg = list(
-    general = "|:-------|:---------------------------------------------|:------------------|:------------------|:---|:--------------------------|:------------------|",
-    venues = "|:-------|:--------------------------------|:---|:--------------------------|:----------|"
+    # Main register and codecheckers: Certificate | Report | Paper Title | Venue | Type | Check date
+    general = "|:-------|:-----------------------------------------------------------------------------------|:------------------|:------------------|:---|:--------------------------|",
+    # Venues filter: Certificate | Report | Paper Title | Type | Check date
+    venues = "|:-------|:-----------------------------------------------------------------------------------|:---|:--------------------------|"
   ),
 
   non_reg = list(
@@ -65,8 +68,15 @@ CONFIG$MD_TITLES <- list(
   },
 
   "codecheckers" = function(table_details){
-    orcid_id <- table_details[["name"]]
-    auth_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid_id]]
+    identifier <- table_details[["name"]]
+    # Check if it's an ORCID (format: NNNN-NNNN-NNNN-NNNX) or GitHub username
+    if (grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", identifier)) {
+      # ORCID format
+      auth_name <- CONFIG$DICT_ORCID_ID_NAME[[identifier]]
+    } else {
+      # GitHub username
+      auth_name <- CONFIG$DICT_GITHUB_USERNAME_NAME[[identifier]]
+    }
     paste0("Codechecks by ", auth_name)
   },
 
@@ -203,6 +213,7 @@ CONFIG$FILTER_SUBCAT_COLUMNS <- list(
 
 # OTHERS
 CONFIG$DICT_ORCID_ID_NAME <- list()
+CONFIG$DICT_GITHUB_USERNAME_NAME <- list()  # Maps GitHub usernames to codechecker names
 
 # Delaying requests by 1 second to adhere to the rate limit of 60 requests/minute for Zenodo
 CONFIG$CERT_REQUEST_DELAY <- 1

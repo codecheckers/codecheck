@@ -93,8 +93,9 @@ create_index_prefix_html <- function(output_dir, filter = NA, table_details = li
 #' Dynamically generates the index_header.html from a template file
 #'
 #' @param output_dir The output directory
+#' @param schema_org_jsonld Optional Schema.org JSON-LD string to include in header (default: "")
 #' @importFrom whisker whisker.render
-create_index_header_html <- function(output_dir){
+create_index_header_html <- function(output_dir, schema_org_jsonld = ""){
   # Using the index_header_template
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["header"]], warn = FALSE)
 
@@ -118,10 +119,12 @@ create_index_header_html <- function(output_dir){
     base_path <- paste(rep("../", depth), collapse = "")
   }
 
-  # Render the template with meta generator tag and base path
+  # Render the template with meta generator tag, base path, and optional schema.org
+  # If schema_org_jsonld is empty string, template will use generic fallback
   output <- whisker.render(paste(header_template, collapse = "\n"),
                           list(meta_generator = meta_generator,
-                               base_path = base_path))
+                               base_path = base_path,
+                               schema_org_jsonld = schema_org_jsonld))
 
   writeLines(output, file.path(output_dir, "index_header.html"))
 }
@@ -183,10 +186,11 @@ generate_href <- function(filter, table_details, href_type) {
 #' @param output_dir The output directory of the section files
 #' @param filter The filter name
 #' @param table_details List containing details such as the table name, subcat name.
-create_index_section_files <- function(output_dir, filter, table_details) {
+#' @param schema_org_jsonld Optional Schema.org JSON-LD string to include in header (default: "")
+create_index_section_files <- function(output_dir, filter, table_details, schema_org_jsonld = "") {
   create_index_postfix_html(output_dir, filter, table_details)
   create_index_prefix_html(output_dir, filter, table_details)
-  create_index_header_html(output_dir)
+  create_index_header_html(output_dir, schema_org_jsonld = schema_org_jsonld)
 }
 
 #' Renders html for a single table
@@ -210,8 +214,24 @@ render_html <- function(table, table_details, filter){
   output_dir <- table_details[["output_dir"]]
   temp_md_file_path <- file.path(output_dir, "temp.md")
 
+  # Generate Schema.org metadata for codechecker pages
+  schema_org_jsonld <- ""
+  if (!is.na(filter) && filter == "codecheckers" && table_details[["is_reg_table"]]) {
+    codechecker_orcid <- table_details[["name"]]
+    codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[[codechecker_orcid]]
+    if (is.null(codechecker_name)) codechecker_name <- codechecker_orcid
+
+    # Generate Schema.org JSON-LD for this codechecker
+    schema_org_jsonld <- generate_codechecker_schema_org(
+      codechecker_orcid = codechecker_orcid,
+      codechecker_name = codechecker_name,
+      codechecker_github = NULL,  # GitHub handles not currently in register
+      register_table = table
+    )
+  }
+
   # Creating the index section files and yml document
-  create_index_section_files(output_dir, filter, table_details)
+  create_index_section_files(output_dir, filter, table_details, schema_org_jsonld = schema_org_jsonld)
   generate_html_document_yml(output_dir)
 
   yaml_path <- normalizePath(file.path(getwd(), output_dir, "html_document.yml"))

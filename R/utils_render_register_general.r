@@ -208,8 +208,16 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
 
   # Setting the table name
   table_details[["name"]] <- table_key
-  table_details[["slug_name"]] <- tolower(gsub(" ", "_", table_details[["name"]]))
-  
+  # Check if identifier is an ORCID (format: NNNN-NNNN-NNNN-NNNX) or GitHub username
+  is_orcid <- grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", table_key)
+  if (is_orcid) {
+    table_details[["slug_name"]] <- table_key  # Use ORCID as-is for directory
+    table_details[["is_github_username"]] <- FALSE
+  } else {
+    table_details[["slug_name"]] <- table_key  # Use GitHub username as-is for directory
+    table_details[["is_github_username"]] <- TRUE
+  }
+
   # Checking if the filter has a subcategory
   if (filter %in% names(CONFIG$FILTER_SUBCAT_COLUMNS)){
     subcat_col <- CONFIG$FILTER_SUBCAT_COLUMNS[[filter]]

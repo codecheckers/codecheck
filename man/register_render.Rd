@@ -26,6 +26,8 @@ register_render(
 
 \item{venues_file}{Path to the venues.csv file containing venue names and labels}
 
+\item{codecheck_repo_path}{Optional path to the codecheck package repository for build metadata (default: NULL)}
+
 \item{from}{The first register entry to check}
 
 \item{to}{The last register entry to check}

@@ -10,7 +10,14 @@
 <meta property="og:site_name" content="CODECHECK Register">
 <meta property="og:description" content="CODECHECK is a process for independent execution of computations underlying scholarly research articles.">
 
+{{#schema_org_jsonld}}
+<!-- Schema.org metadata for CODECHECK certificate -->
+<script type="application/ld+json">{{{schema_org_jsonld}}}</script>
+{{/schema_org_jsonld}}
+{{^schema_org_jsonld}}
+<!-- Generic Schema.org metadata for CODECHECK website -->
 <script type="application/ld+json"> {"description":"CODECHECK is a process for independent execution of computations underlying scholarly research articles.","headline":"CODECHECK","@type":"WebSite","url":"https://codecheck.org.uk/","name":"CODECHECK","author":{"@type":"Person","name":"Stephen Eglen & Daniel Nüst"},"@context":"https://schema.org"}</script>
+{{/schema_org_jsonld}}
 
 <!-- Icon fonts -->
 <link rel="stylesheet" href="{{base_path}}libs/academicons/css/academicons.min.css">

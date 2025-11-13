@@ -39,7 +39,10 @@
       "WebFetch(domain:info.orcid.org)",
       "WebFetch(domain:orcid.org)",
       "WebFetch(domain:jpswalsh.github.io)",
-      "WebFetch(domain:fontawesome.com)"
+      "WebFetch(domain:fontawesome.com)",
+      "WebFetch(domain:schema.org)",
+      "Bash(R -e:*)",
+      "WebFetch(domain:stackoverflow.com)"
     ],
     "deny": [],
     "ask": []

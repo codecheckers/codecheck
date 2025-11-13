@@ -1,5 +1,24 @@
 /* CODECHECK Register Styles */
 
+/* ====================
+   General Utilities
+   ==================== */
+
+/* Base container for consistent max-width and centering */
+.container,
+.navbar-container,
+.redirect-container,
+.redirect-footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Additional container variations */
+.redirect-container {
+    margin: 2rem auto;
+}
+
 /* Build info styling */
 .build-info {
     font-size: 0.85em;
@@ -7,18 +26,41 @@
     margin-top: 1em;
 }
 
-/* Navigation header styling */
+/* ====================
+   CODECHECK Branding
+   ==================== */
+
+/* Primary brand color - use throughout for consistency */
+.codecheck-green,
+.navbar-menu .nav-link,
+.redirect-title,
+.redirect-link,
+.redirect-footer-link {
+    color: #008033;
+}
+
+.codecheck-green-bg {
+    background-color: #008033;
+}
+
+/* Border color for branding elements */
+.codecheck-navbar,
+.footer-separator {
+    border-color: #008033;
+}
+
+/* ====================
+   Navigation Header
+   ==================== */
+
 .codecheck-navbar {
     background-color: #ffffff;
-    border-bottom: 2px solid #008033;
+    border-bottom: 2px solid;
     padding: 0.75rem 0;
     margin-bottom: 0;
 }
 
 .navbar-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -42,7 +84,6 @@
 }
 
 .navbar-menu .nav-link {
-    color: #008033;
     text-decoration: none;
     font-weight: 500;
     font-size: 1rem;
@@ -73,7 +114,10 @@
     }
 }
 
-/* Breadcrumb styling */
+/* ====================
+   Breadcrumbs
+   ==================== */
+
 .breadcrumb {
     background-color: transparent;
     padding: 0.75rem 0;
@@ -99,4 +143,84 @@
 
 .breadcrumb-item.active {
     color: #6c757d;
+}
+
+/* ====================
+   Footer
+   ==================== */
+
+.footer-links {
+    margin-bottom: 2em;
+}
+
+.footer-separator {
+    border: 2px solid;
+    margin-top: 2em;
+}
+
+.footer-content {
+    color: #6c757d !important;
+}
+
+.footer-description {
+    font-style: italic;
+}
+
+/* ====================
+   Codechecker Profiles
+   ==================== */
+
+.codechecker-profile-links {
+    margin-bottom: 1.5em;
+}
+
+.orcid-icon-large {
+    font-size: 1.2em;
+    color: #A6CE39;
+}
+
+/* ====================
+   Redirect Pages
+   ==================== */
+
+.redirect-message {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.redirect-title {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.redirect-text {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.redirect-text-small {
+    font-size: 1rem;
+}
+
+.redirect-link {
+    font-weight: 500;
+}
+
+.redirect-footer {
+    margin-top: 3rem;
+    padding: 2rem 0;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.redirect-footer-container {
+    text-align: center;
+}
+
+.redirect-footer-text {
+    margin-bottom: 0.5rem;
+}
+
+.redirect-footer-link {
+    margin: 0 1rem;
 }

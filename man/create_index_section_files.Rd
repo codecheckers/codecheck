@@ -4,7 +4,12 @@
 \alias{create_index_section_files}
 \title{Creates index postfix, prefix and the header}
 \usage{
-create_index_section_files(output_dir, filter, table_details)
+create_index_section_files(
+  output_dir,
+  filter,
+  table_details,
+  schema_org_jsonld = ""
+)
 }
 \arguments{
 \item{output_dir}{The output directory of the section files}
@@ -12,6 +17,8 @@ create_index_section_files(output_dir, filter, table_details)
 \item{filter}{The filter name}
 
 \item{table_details}{List containing details such as the table name, subcat name.}
+
+\item{schema_org_jsonld}{Optional Schema.org JSON-LD string to include in header (default: "")}
 }
 \description{
 Creates index postfix, prefix and the header

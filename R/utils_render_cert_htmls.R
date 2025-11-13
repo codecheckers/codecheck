@@ -87,8 +87,8 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")
 
-  # Creating html document yml with breadcrumbs
-  create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue)
+  # Creating html document yml with breadcrumbs and schema.org metadata
+  create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue, repo_link)
   generate_html_document_yml(output_dir)
 
   yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml")))
@@ -209,8 +209,9 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue) {
 #' @param cert_id The certificate identifier for breadcrumb generation
 #' @param cert_type The venue type (journal, conference, community, institution) for breadcrumb generation
 #' @param cert_venue The venue name for breadcrumb generation
+#' @param repo_link Repository link to fetch codecheck.yml for Schema.org metadata generation (default: NULL)
 #' @importFrom whisker whisker.render
-create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type = NULL, cert_venue = NULL){
+create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type = NULL, cert_venue = NULL, repo_link = NULL){
 
   # Create prefix with navigation header and breadcrumbs
   if (!is.null(cert_id) && !is.null(cert_type) && !is.null(cert_venue)) {
@@ -253,13 +254,26 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
   output <- whisker.render(paste(postfix_template, collapse = "\n"), list(build_info = build_info))
   writeLines(output, file.path(output_dir, "index_postfix.html"))
 
-  # Create header with meta generator content
+  # Create header with meta generator content and schema.org JSON-LD
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["header"]], warn = FALSE)
 
   # Generate meta generator content from build metadata
   meta_generator <- ""
   if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
     meta_generator <- generate_meta_generator_content(CONFIG$BUILD_METADATA)
+  }
+
+  # Generate Schema.org JSON-LD if repo_link is provided
+  schema_org_jsonld <- ""
+  if (!is.null(repo_link) && repo_link != "") {
+    tryCatch({
+      config_yml <- get_codecheck_yml(repo_link)
+      abstract_data <- get_abstract(repo_link)
+      schema_org_jsonld <- generate_cert_schema_org(cert_id, config_yml, abstract_data)
+    }, error = function(e) {
+      warning("Failed to generate Schema.org metadata: ", e$message)
+      schema_org_jsonld <- ""
+    })
   }
 
   # Calculate relative path to docs root (cert pages are always 2 levels deep: docs/certs/ID/)
@@ -277,6 +291,7 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
 
   output <- whisker.render(paste(header_template, collapse = "\n"),
                           list(meta_generator = meta_generator,
-                               base_path = base_path))
+                               base_path = base_path,
+                               schema_org_jsonld = schema_org_jsonld))
   writeLines(output, file.path(output_dir, "index_header.html"))
 }

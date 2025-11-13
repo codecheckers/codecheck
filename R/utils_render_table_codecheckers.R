@@ -21,8 +21,10 @@ create_all_codecheckers_table <- function(register_table){
     distinct()
 
   # Adding the codechecker name column
+  # Merge both ORCID and GitHub username dictionaries
+  all_codecheckers_dict <- c(CONFIG$DICT_ORCID_ID_NAME, CONFIG$DICT_GITHUB_USERNAME_NAME)
   new_table <- new_table %>%
-    mutate(`codechecker_name` = recode(Codechecker, !!!CONFIG$DICT_ORCID_ID_NAME))
+    mutate(`codechecker_name` = recode(Codechecker, !!!all_codecheckers_dict))
 
   # Adding no. of codechecks column
   # Count no. codechecks per Codechecker
@@ -58,7 +60,7 @@ add_all_codecheckers_hyperlink <- function(table){
   # Extracting column names from CONFIG
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["codecheckers"]]
 
-  # !!sym is used to refer to column names defined in the CONFIG$NON_REG_TABLE_COL_NAMES 
+  # !!sym is used to refer to column names defined in the CONFIG$NON_REG_TABLE_COL_NAMES
   # dynamically
   table <- table %>%
 
@@ -68,7 +70,7 @@ add_all_codecheckers_hyperlink <- function(table){
     mutate(
       # Generate codechecker table hyperlink
       !!col_names[["codechecker_name"]] := paste0(
-        "[", !!sym(col_names[["codechecker_name"]]), 
+        "[", !!sym(col_names[["codechecker_name"]]),
         "](", CONFIG$HYPERLINKS[["codecheckers"]],
         !!sym(col_names[["Codechecker"]]), "/)"
       ),
@@ -76,17 +78,23 @@ add_all_codecheckers_hyperlink <- function(table){
 
       # Generate no. of codechecks hyperlink
       !!col_names[["no_codechecks"]] := paste0(
-        !!sym(col_names[["no_codechecks"]]), 
-        " [(see all checks)](", CONFIG$HYPERLINKS[["codecheckers"]], 
+        !!sym(col_names[["no_codechecks"]]),
+        " [(see all checks)](", CONFIG$HYPERLINKS[["codecheckers"]],
         !!sym(col_names[["Codechecker"]]), "/)"
       ),
 
-      # Generate ORCID ID hyperlink
-      !!col_names[["Codechecker"]] := paste0(
-        "[", !!sym(col_names[["Codechecker"]]), "](",
-        CONFIG$HYPERLINKS[["orcid"]], 
-        !!sym(col_names[["Codechecker"]]), ")"
-      )
+      # Generate identifier hyperlink (ORCID or GitHub)
+      # Check if identifier is ORCID (format: NNNN-NNNN-NNNN-NNNX) or GitHub username
+      !!col_names[["Codechecker"]] := sapply(!!sym(col_names[["Codechecker"]]), function(id) {
+        is_orcid <- grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", id)
+        if (is_orcid) {
+          # ORCID: link to ORCID profile
+          paste0("[", id, "](", CONFIG$HYPERLINKS[["orcid"]], id, ")")
+        } else {
+          # GitHub username: link to GitHub profile
+          paste0("[@", id, "](https://github.com/", id, ")")
+        }
+      })
     )
 
   # Only keeping columns specified in the CONFIG

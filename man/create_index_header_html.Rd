@@ -4,10 +4,12 @@
 \alias{create_index_header_html}
 \title{Dynamically generates the index_header.html from a template file}
 \usage{
-create_index_header_html(output_dir)
+create_index_header_html(output_dir, schema_org_jsonld = "")
 }
 \arguments{
 \item{output_dir}{The output directory}
+
+\item{schema_org_jsonld}{Optional Schema.org JSON-LD string to include in header (default: "")}
 }
 \description{
 Dynamically generates the index_header.html from a template file

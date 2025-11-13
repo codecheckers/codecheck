@@ -142,33 +142,41 @@ add_codechecker <- function(register_table, register) {
   for (i in seq_len(nrow(register))) {
     config_yml <- get_codecheck_yml(register[i, ]$Repo)
 
-    codechecker_orcids <- c()
+    codechecker_ids <- c()
     if (!is.null(config_yml)  && !is.null(config_yml$codechecker)) {
-      
+
       for (codechecker in config_yml$codechecker) {
         if(is.null(codechecker$name)) {
           stop("Codechecker name is missing in ", config_yml$certificate)
         }
-        
-        if (!((codechecker$name) %in% CONFIG$DICT_ORCID_ID_NAME) && !is.null(codechecker$name) && !is.null(codechecker$ORCID)){
-          CONFIG$DICT_ORCID_ID_NAME[codechecker$ORCID] <- codechecker$name
-        } else if (!(codechecker$name) %in% CONFIG$DICT_ORCID_ID_NAME){
-          CONFIG$DICT_ORCID_ID_NAME["0000-0000-0000-0000"] <- codechecker$name
-        }
-        
-        if (!is.null(codechecker$ORCID)){
-          # stop here when new spec version is released
-          codechecker_orcids <- c(codechecker_orcids, codechecker$ORCID)
+
+        # Use ORCID as identifier if available
+        if (!is.null(codechecker$ORCID) && codechecker$ORCID != "") {
+          if (!(codechecker$ORCID %in% names(CONFIG$DICT_ORCID_ID_NAME))) {
+            CONFIG$DICT_ORCID_ID_NAME[codechecker$ORCID] <- codechecker$name
+          }
+          codechecker_ids <- c(codechecker_ids, codechecker$ORCID)
         } else {
-          codechecker_orcids <- c(codechecker_orcids, NA)
-          warning("codechecker ORCID missing for ", toString(codechecker), " in ", config_yml$certificate)
+          # Fall back to GitHub username for codecheckers without ORCID
+          github_username <- get_github_handle_by_name(codechecker$name)
+
+          if (!is.null(github_username)) {
+            # Use GitHub username directly as identifier
+            if (!(github_username %in% names(CONFIG$DICT_GITHUB_USERNAME_NAME))) {
+              CONFIG$DICT_GITHUB_USERNAME_NAME[github_username] <- codechecker$name
+            }
+            codechecker_ids <- c(codechecker_ids, github_username)
+          } else {
+            # Skip codecheckers without ORCID or GitHub username
+            warning("codechecker ORCID and GitHub username missing for ", codechecker$name, " in ", config_yml$certificate)
+          }
         }
       }
     } else {
       warning("codechecker not found in record ", toString(register[i, ]))
     }
-    
-    codecheckers[[i]] <- codechecker_orcids
+
+    codecheckers[[i]] <- codechecker_ids
   }
   register_table$`Codechecker` <- codecheckers
   return(register_table)
