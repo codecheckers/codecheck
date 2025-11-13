@@ -24,6 +24,7 @@
 
 * **Fixed venue label error**: Resolved "venue_label must be size 1, not 12" error by ungrouping data frame before venue_label mutation in `create_all_venues_table()`
 * **Fixed NA codechecker handling**: Codecheckers without ORCID identifiers are now properly filtered out during register rendering, preventing creation of invalid "NA" directories
+* **Fixed NULL paper title handling**: Added NULL check in `set_paper_title_references_csv()` to prevent "missing value where TRUE/FALSE needed" error when paper titles are NULL during CSV generation
 
 ## New Functions
 

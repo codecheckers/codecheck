@@ -25,29 +25,45 @@ add_repository_links_csv <- function(register_table) {
 
 #' Set "Title" and "Paper reference" columns for CSV files
 #'
-#' Extracts plain text title and paper reference URL from the preprocessed register table
-#' which contains hyperlinked "Paper Title" column.
+#' Extracts plain text title and paper reference URL from the preprocessed register table.
+#' If the table has a "Paper Title" column (hyperlinked), extracts from that.
+#' Otherwise, fetches from codecheck.yml files.
 #'
-#' @param register_table The register table (preprocessed with Paper Title column)
+#' @param register_table The register table
 #' @return Updated register table including "Title" and "Paper reference" columns
 set_paper_title_references_csv <- function(register_table){
   titles <- c()
   references <- c()
 
-  for (i in seq_len(nrow(register_table))) {
-    paper_title <- register_table[i, ]$`Paper Title`
+  # Check if Paper Title column exists
+  has_paper_title <- "Paper Title" %in% names(register_table)
 
-    # Extract plain text and URL from markdown link [Title](URL)
-    # Pattern: [text](url)
-    if (!is.na(paper_title) && grepl("\\[.*\\]\\(.*\\)", paper_title)) {
-      # Extract title: everything between [ and ]
-      title <- sub("\\[(.*)\\]\\(.*\\)", "\\1", paper_title)
-      # Extract reference: everything between ( and )
-      reference <- sub("\\[.*\\]\\((.*)\\)", "\\1", paper_title)
+  for (i in seq_len(nrow(register_table))) {
+    if (has_paper_title) {
+      paper_title <- register_table[i, ]$`Paper Title`
+
+      # Extract plain text and URL from markdown link [Title](URL)
+      # Pattern: [text](url)
+      if (!is.null(paper_title) && !is.na(paper_title) && grepl("\\[.*\\]\\(.*\\)", paper_title)) {
+        # Extract title: everything between [ and ]
+        title <- sub("\\[(.*)\\]\\(.*\\)", "\\1", paper_title)
+        # Extract reference: everything between ( and )
+        reference <- sub("\\[.*\\]\\((.*)\\)", "\\1", paper_title)
+      } else {
+        # No hyperlink, use as-is for title and NA for reference
+        title <- paper_title
+        reference <- NA
+      }
     } else {
-      # No hyperlink, use as-is for title and NA for reference
-      title <- paper_title
+      # Fetch from codecheck.yml
+      config_yml <- get_codecheck_yml(register_table[i, ]$Repository)
+
+      title <- NA
       reference <- NA
+      if (!is.null(config_yml)) {
+        title <- config_yml$paper$title
+        reference <- config_yml$paper$reference
+      }
     }
 
     titles <- c(titles, title)
