@@ -2,13 +2,17 @@
 % Please edit documentation in R/utils_render_register_htmls.R
 \name{create_index_prefix_html}
 \alias{create_index_prefix_html}
-\title{Dynamically generates the index_prefix.html from a template file}
+\title{Dynamically generates the index_prefix.html with navigation header and breadcrumbs}
 \usage{
-create_index_prefix_html(output_dir)
+create_index_prefix_html(output_dir, filter = NA, table_details = list())
 }
 \arguments{
 \item{output_dir}{The output directory}
+
+\item{filter}{The filter name}
+
+\item{table_details}{List containing details such as the table name, subcat name.}
 }
 \description{
-Dynamically generates the index_prefix.html from a template file
+Dynamically generates the index_prefix.html with navigation header and breadcrumbs
 }

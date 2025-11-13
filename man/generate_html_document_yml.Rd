@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_render_register_htmls.R
 \name{generate_html_document_yml}
 \alias{generate_html_document_yml}
-\title{Dynamically generates a html_document.yml with the full paths to the index header, prefix 
+\title{Dynamically generates a html_document.yml with the full paths to the index header, prefix
 and postfix.html files.}
 \usage{
 generate_html_document_yml(output_dir)
@@ -11,6 +11,6 @@ generate_html_document_yml(output_dir)
 \item{output_dir}{The output directory where the html_document needs to be saved.}
 }
 \description{
-Dynamically generates a html_document.yml with the full paths to the index header, prefix 
+Dynamically generates a html_document.yml with the full paths to the index header, prefix
 and postfix.html files.
 }

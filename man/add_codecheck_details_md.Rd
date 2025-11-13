@@ -4,12 +4,16 @@
 \alias{add_codecheck_details_md}
 \title{Populates an existing markdown content template with details about the CODECHECK details.}
 \usage{
-add_codecheck_details_md(md_content, repo_link)
+add_codecheck_details_md(md_content, repo_link, cert_type, cert_venue)
 }
 \arguments{
 \item{md_content}{A character string containing the Markdown template content with placeholders.}
 
 \item{repo_link}{A character string containing the repository link associated with the certificate.}
+
+\item{cert_type}{A character string containing the venue type (journal, conference, community, institution).}
+
+\item{cert_venue}{A character string containing the venue name.}
 }
 \value{
 The markdown content, with CODECHECK details placeholders filled.

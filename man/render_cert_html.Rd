@@ -4,7 +4,13 @@
 \alias{render_cert_html}
 \title{Renders an HTML certificate file from a Markdown template for a specific certificate.}
 \usage{
-render_cert_html(cert_id, repo_link, download_cert_status)
+render_cert_html(
+  cert_id,
+  repo_link,
+  download_cert_status,
+  cert_type,
+  cert_venue
+)
 }
 \arguments{
 \item{cert_id}{A character string representing the unique identifier of the certificate.}
@@ -12,6 +18,10 @@ render_cert_html(cert_id, repo_link, download_cert_status)
 \item{repo_link}{A character string containing the repository link associated with the certificate.}
 
 \item{download_cert_status}{An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).}
+
+\item{cert_type}{A character string containing the venue type (journal, conference, community, institution).}
+
+\item{cert_venue}{A character string containing the venue name.}
 }
 \description{
 Renders an HTML certificate file from a Markdown template for a specific certificate.

@@ -4,10 +4,21 @@
 \alias{create_cert_page_section_files}
 \title{Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.}
 \usage{
-create_cert_page_section_files(output_dir)
+create_cert_page_section_files(
+  output_dir,
+  cert_id = NULL,
+  cert_type = NULL,
+  cert_venue = NULL
+)
 }
 \arguments{
 \item{output_dir}{A character string specifying the directory where the section files will be saved.}
+
+\item{cert_id}{The certificate identifier for breadcrumb generation}
+
+\item{cert_type}{The venue type (journal, conference, community, institution) for breadcrumb generation}
+
+\item{cert_venue}{The venue name for breadcrumb generation}
 }
 \description{
 Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.

@@ -2,10 +2,10 @@
 % Please edit documentation in R/utils_render_cert_md.R
 \name{create_cert_md}
 \alias{create_cert_md}
-\title{Generates a Markdown file for a certificate based on a specified template, filling in details about the 
+\title{Generates a Markdown file for a certificate based on a specified template, filling in details about the
 paper, authors, codecheck information, and the certificate images if available. The resulting Markdown file is later rendered to HTML.}
 \usage{
-create_cert_md(cert_id, repo_link, download_cert_status)
+create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue)
 }
 \arguments{
 \item{cert_id}{A character string representing the unique identifier of the certificate.}
@@ -13,8 +13,12 @@ create_cert_md(cert_id, repo_link, download_cert_status)
 \item{repo_link}{A character string containing the repository link associated with the certificate.}
 
 \item{download_cert_status}{An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).}
+
+\item{cert_type}{A character string containing the venue type (journal, conference, community, institution).}
+
+\item{cert_venue}{A character string containing the venue name.}
 }
 \description{
-Generates a Markdown file for a certificate based on a specified template, filling in details about the 
+Generates a Markdown file for a certificate based on a specified template, filling in details about the
 paper, authors, codecheck information, and the certificate images if available. The resulting Markdown file is later rendered to HTML.
 }
