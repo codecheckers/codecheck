@@ -47,8 +47,13 @@ create_index_postfix_html <- function(output_dir, filter, table_details){
   }
 
   # Generate footer build info from build metadata
+  # Only show build info on:
+  # - Main register page (filter is NA)
+  # - Listing pages (is_reg_table is FALSE, e.g., all venues, all codecheckers)
+  # Do NOT show on individual venue/codechecker pages (filtered register tables)
   build_info <- ""
-  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
+  if ((is.na(filter) || !table_details[["is_reg_table"]]) &&
+      exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
     build_info <- generate_footer_build_info(CONFIG$BUILD_METADATA)
   }
 
@@ -244,8 +249,11 @@ render_html <- function(table, table_details, filter){
 edit_html_lib_paths <- function(html_file_path) {
 
   path_components <- strsplit(html_file_path, "/")[[1]]
+  # Filter out empty components (caused by double slashes like "docs//index.html")
+  path_components <- path_components[path_components != ""]
+
   # The count of dirs one needs to move up to reach "docs" folder. "-2" is used because both "docs"
-  # "index.html" are elements in path_components. 
+  # and "index.html" are elements in path_components.
   count_dir_up <- length(path_components) - 2
   up_dirs_string <- rep("../", count_dir_up)
 
@@ -255,10 +263,11 @@ edit_html_lib_paths <- function(html_file_path) {
 
   # Read the HTML file lines into a vector
   html_lines <- readLines(html_file_path)
-  
-  # Replace lines containing "=libs/" with the appropriate relative path to "docs/libs"
-  edited_lines <- gsub('="libs/', paste0('="', relative_libs_dir), html_lines)
-  
+
+  # Replace lines containing any relative path to libs/ (libs/, ../libs/, ../../libs/, etc.)
+  # with the correct relative path to "docs/libs"
+  edited_lines <- gsub('="(\\.\\./)*libs/', paste0('="', relative_libs_dir), html_lines)
+
   # Write the edited lines back to the file
   writeLines(edited_lines, html_file_path)
 }

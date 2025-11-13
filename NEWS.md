@@ -11,7 +11,7 @@
 * **Enhanced CSV file fields**: CSV files now include all available fields matching JSON output (Certificate ID, Certificate Link, Repository, Repository Link, Report, Title, Paper reference, Type, Venue, Check date). Previously CSV files only contained Certificate and Repository columns. This provides more complete data for programmatic access and analysis
 * **SEO support with sitemap.xml and robots.txt**: Register rendering now automatically generates sitemap.xml and robots.txt files for improved search engine optimization and discoverability. Sitemap includes all generated pages (main register, venue pages, codechecker pages, certificate pages) with appropriate priorities and change frequencies. Robots.txt allows all search engines to crawl the register (addresses codecheckers/register#126)
 * **Relative asset links**: Favicon and CSS stylesheet links in HTML headers now use relative paths calculated based on each page's depth, eliminating hard-coded absolute URLs and improving portability
-* **Build metadata in footer**: All register pages now display build information in muted text at the bottom of the footer, including timestamp, package version, codecheck package commit, and register commit with GitHub links (addresses #105)
+* **Build metadata in footer**: Overview/listing pages (main register, all venues list, all codecheckers list) now display build information in muted text at the bottom of the footer, including timestamp, package version, codecheck package commit, and register commit with GitHub links. Build info is intentionally omitted from individual certificate, venue, and codechecker pages to avoid confusion about page freshness (addresses #105)
 * **Dual commit tracking**: Footer now displays both codecheck package commit and register repository commit as clickable links to respective GitHub commits
 * **Meta generator tag**: HTML pages now include a properly formatted `<meta name="generator">` tag with package version and commit information (fixed display issue)
 * **Build metadata JSON**: A `.meta.json` file is now generated at the root of the docs directory containing build metadata for both repositories
@@ -27,6 +27,11 @@
 * **Fixed venue label error**: Resolved "venue_label must be size 1, not 12" error by ungrouping data frame before venue_label mutation in `create_all_venues_table()`
 * **Fixed NA codechecker handling**: Codecheckers without ORCID identifiers are now properly filtered out during register rendering, preventing creation of invalid "NA" directories
 * **Fixed NULL paper title handling**: Added NULL check in `set_paper_title_references_csv()` to prevent "missing value where TRUE/FALSE needed" error when paper titles are NULL during CSV generation
+* **Fixed icon font paths**: Icon font CSS links (academicons, font-awesome) in HTML header now use `{{base_path}}` variable for correct relative paths on all pages (root, venue, codechecker pages). Previously hardcoded `libs/` path only worked on root index page
+* **Fixed JavaScript/CSS loading**: Fixed two critical bugs in `edit_html_lib_paths()`:
+  1. Updated regex pattern to match any relative path to libs folder (libs/, ../libs/, ../../libs/, etc.) instead of only matching exact "libs/"
+  2. Added filtering of empty path components caused by double slashes (e.g., "docs/codecheckers/ID//index.html") which caused incorrect relative path calculation (../../../ instead of ../../)
+  These fixes resolve "$ is not defined" errors and broken CSS styling on venue, codechecker, and certificate pages
 
 ## New Functions
 

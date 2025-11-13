@@ -46,11 +46,18 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
     </nav>')
   }
 
+  # Calculate logo path (avoid "./" prefix for root page)
+  if (base_path == ".") {
+    logo_path <- "codecheck_logo.svg"
+  } else {
+    logo_path <- paste0(base_path, "/codecheck_logo.svg")
+  }
+
   html <- paste0(
     '<div class="codecheck-navbar">\n',
     '  <div class="navbar-container">\n',
     '    <a href="', logo_link, '" class="navbar-brand">\n',
-    '      <img src="', base_path, '/codecheck_logo.svg" alt="CODECHECK" class="navbar-logo">\n',
+    '      <img src="', logo_path, '" alt="CODECHECK" class="navbar-logo">\n',
     '    </a>\n',
     menu_html, '\n',
     '  </div>\n',

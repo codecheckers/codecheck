@@ -242,14 +242,13 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
     writeLines(prefix_template, file.path(output_dir, "index_prefix.html"))
   }
 
-  # Create postfix with build metadata
+  # Create postfix without build metadata
+  # Certificate pages should not show build info as it's confusing that all certificate
+  # pages show as updated every time the register is re-rendered
   postfix_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["postfix"]], warn = FALSE)
 
-  # Generate footer build info from build metadata
+  # Always use empty build_info for certificate pages
   build_info <- ""
-  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
-    build_info <- generate_footer_build_info(CONFIG$BUILD_METADATA)
-  }
 
   output <- whisker.render(paste(postfix_template, collapse = "\n"), list(build_info = build_info))
   writeLines(output, file.path(output_dir, "index_postfix.html"))
