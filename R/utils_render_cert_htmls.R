@@ -116,6 +116,91 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
 
   # Deleting the libs folder after changing the html lib path
   unlink(file.path(output_dir, "libs"), recursive = TRUE)
+
+  # Generate JSON file with certificate metadata
+  generate_cert_json(cert_id, repo_link, cert_type, cert_venue)
+}
+
+#' Generates a JSON file with all certificate metadata
+#'
+#' Creates an index.json file containing all information displayed on the
+#' certificate landing page for programmatic access.
+#'
+#' @param cert_id A character string representing the unique identifier of the certificate.
+#' @param repo_link A character string containing the repository link associated with the certificate.
+#' @param cert_type A character string containing the venue type (journal, conference, community, institution).
+#' @param cert_venue A character string containing the venue name.
+#' @importFrom jsonlite write_json
+generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue) {
+  # Get codecheck.yml metadata
+  config_yml <- get_codecheck_yml(repo_link)
+
+  # Get abstract
+  abstract_data <- get_abstract(repo_link)
+
+  # Build JSON structure matching the certificate landing page
+  cert_json <- list(
+    certificate = list(
+      id = config_yml$certificate,
+      url = paste0("https://codecheck.org.uk/register/certs/", cert_id, "/")
+    ),
+    paper = list(
+      title = config_yml$paper$title,
+      authors = lapply(config_yml$paper$authors, function(author) {
+        author_obj <- list(name = author$name)
+        if (!is.null(author$ORCID) && author$ORCID != "") {
+          author_obj$orcid = author$ORCID
+        }
+        author_obj
+      }),
+      reference = config_yml$paper$reference
+    ),
+    codecheck = list(
+      codecheckers = lapply(config_yml$codechecker, function(checker) {
+        checker_obj <- list(name = checker$name)
+        if (!is.null(checker$ORCID) && checker$ORCID != "") {
+          checker_obj$orcid = checker$ORCID
+        }
+        checker_obj
+      }),
+      check_time = config_yml$check_time,
+      repository = repo_link,
+      report = config_yml$report,
+      type = cert_type,
+      venue = cert_venue
+    )
+  )
+
+  # Add summary if it exists
+  if ("summary" %in% names(config_yml) && !is.null(config_yml$summary)) {
+    cert_json$codecheck$summary <- config_yml$summary
+  }
+
+  # Add abstract if available
+  if (!is.null(abstract_data$text)) {
+    cert_json$paper$abstract <- list(
+      text = abstract_data$text,
+      source = abstract_data$source
+    )
+  }
+
+  # Add manifest if it exists
+  if ("manifest" %in% names(config_yml) && !is.null(config_yml$manifest)) {
+    cert_json$codecheck$manifest <- config_yml$manifest
+  }
+
+  # Write JSON file
+  output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
+  json_path <- file.path(output_dir, "index.json")
+
+  jsonlite::write_json(
+    cert_json,
+    path = json_path,
+    pretty = TRUE,
+    auto_unbox = TRUE
+  )
+
+  message("Generated JSON for certificate ", cert_id, " at ", json_path)
 }
 
 #' Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.

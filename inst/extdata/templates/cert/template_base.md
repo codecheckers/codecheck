@@ -120,6 +120,10 @@ title: $title$
   </div>
 
   <script src="../../libs/bootstrap/bootstrap.bundle.min.js"></script>
+
+  <p class="text-muted" style="margin-top: 2rem; font-size: 0.9em;">
+    <a href="index.json">View certificate data as JSON</a>
+  </p>
 </div>
 
 <script>

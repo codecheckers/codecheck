@@ -4,6 +4,7 @@
 
 * **Navigation header with logo**: All register pages now feature a navigation header with the CODECHECK logo in the top left, which serves as a home link back to the main register. Overview pages (main register, all venues, all codecheckers) include a menu in the top right with links to "All Venues", "All Codecheckers", and "About" (linking to the main CODECHECK website) for quick navigation
 * **Breadcrumb navigation**: All register pages now include breadcrumb navigation at the top, enabling easy navigation from detail pages back to overview pages. Breadcrumbs show hierarchical paths (e.g., CODECHECK Register > Venues > Journals > GigaScience) with clickable links to parent pages (addresses codecheckers/register#108)
+* **JSON data export for certificates**: Certificate landing pages now include an `index.json` file containing all metadata displayed on the page in machine-readable format. The JSON structure includes certificate details, paper information (title, authors with ORCID, reference, abstract), and CODECHECK details (codecheckers with ORCID, check time, repository, report, type, venue, summary, manifest). A link to the JSON file is displayed at the bottom of each certificate page for programmatic access (addresses codecheckers/register#143)
 * **Configurable field ordering**: Register views now support per-filter column configuration, allowing different field orders and selections for main register vs. filtered views (venues, codecheckers). Main register now displays columns in the order: Certificate, Report, Title, Venue, Type, Check date (addresses #101)
 * **Context-aware field filtering**: Filtered views automatically exclude redundant fields (e.g., venue/type columns hidden on venue-specific pages, codechecker column hidden on codechecker pages)
 * **Hierarchical column configuration**: New `CONFIG$REGISTER_COLUMNS` structure with filter-specific overrides and automatic fallback to defaults for maximum flexibility
@@ -40,6 +41,7 @@
 * **`generate_codechecker_profile_links()`**: Generates HTML for horizontal list of profile links with icons
 * **`add_repository_links_csv()`**: Adds "Repository Link" column to register table for CSV export, converting platform specs (e.g., "github::org/repo") to full URLs
 * **`set_paper_title_references_csv()`**: Extracts plain text "Title" and "Paper reference" columns from hyperlinked "Paper Title" for CSV export
+* **`generate_cert_json()`**: Generates index.json file for certificate landing pages containing all metadata in machine-readable format (certificate, paper, CODECHECK details including abstract, summary, and manifest)
 
 ## Documentation
 

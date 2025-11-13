@@ -91,6 +91,10 @@ The certificate can be found at this $codecheck_report_subtext$
   </div>
   </div>
   </div>
+
+  <p class="text-muted" style="margin-top: 2rem; font-size: 0.9em;">
+    <a href="index.json">View certificate data as JSON</a>
+  </p>
 </div>
 
 <script>
