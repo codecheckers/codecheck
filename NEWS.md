@@ -36,6 +36,8 @@
 * **`get_codecheckers_data()`**: Fetches and caches codecheckers registry from codecheckers/codecheckers repository
 * **`get_codechecker_profile()`**: Retrieves profile information (name, GitHub handle, ORCID, fields, languages) by ORCID
 * **`generate_codechecker_profile_links()`**: Generates HTML for horizontal list of profile links with icons
+* **`add_repository_links_csv()`**: Adds "Repository Link" column to register table for CSV export, converting platform specs (e.g., "github::org/repo") to full URLs
+* **`set_paper_title_references_csv()`**: Extracts plain text "Title" and "Paper reference" columns from hyperlinked "Paper Title" for CSV export
 
 ## Documentation
 

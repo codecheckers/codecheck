@@ -62,7 +62,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
     render_cert_htmls(register_table, force_download = FALSE)
   }
 
-  create_filtered_reg_csvs(register, filter_by)
+  create_filtered_reg_csvs(register_table, filter_by)
   create_register_files(register_table, filter_by, outputs)
   create_non_register_files(register_table, filter_by)
 

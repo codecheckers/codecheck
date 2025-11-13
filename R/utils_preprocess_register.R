@@ -231,14 +231,18 @@ preprocess_register <- function(register, filter_by) {
     if ("codecheckers" %in% filter_by){
       # Adding the codechecker column which is needed for filtering by codechecker later
       register_table <- add_codechecker(register_table, register)
-      # Creating a temp register.csv file with a codechecker column which is needed to 
-      # filter the registers by codecheckers
-      create_temp_register_with_codechecker(register_table)
     }
     register_table <- add_cert_links(register_table)
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)
     register_table <- add_check_time(register_table, register)
     register_table <- add_paper_links(register_table, register)
+
+    # Create temp register CSV after all enrichment is complete
+    # This ensures the CSV has all enriched columns for codechecker filtering
+    if ("codecheckers" %in% filter_by){
+      create_temp_register_with_codechecker(register_table)
+    }
+
     return(register_table)
 }
