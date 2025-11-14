@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.23.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -125,10 +125,17 @@
 
         <dt>
 
+          <code><a href="add_report_hyperlinks_reg.html">add_report_hyperlinks_reg()</a></code>
+
+        </dt>
+        <dd>Format Report column for display by creating markdown links with shortened text</dd>
+
+        <dt>
+
           <code><a href="add_report_links.html">add_report_links()</a></code>
 
         </dt>
-        <dd>Function for adding clickable links to the report for each entry in the register table.</dd>
+        <dd>Function for adding report URLs for each entry in the register table.</dd>
 
         <dt>
 
@@ -136,6 +143,13 @@
 
         </dt>
         <dd>Replaces a placeholder in Markdown content with a hyperlink to the repository, based on the repository type (e.g., GitHub, OSF, GitLab).</dd>
+
+        <dt>
+
+          <code><a href="add_repository_links_csv.html">add_repository_links_csv()</a></code>
+
+        </dt>
+        <dd>Function for adding repository links in the register table for CSV files.</dd>
 
         <dt>
 
@@ -149,7 +163,7 @@
           <code><a href="add_venue_hyperlinks_reg.html">add_venue_hyperlinks_reg()</a></code>
 
         </dt>
-        <dd>Function for adding clickable links to the codecheck venue pages for each entry in the register table.</dd>
+        <dd>Function for adding clickable links to the codecheck venue pages for each entry in the register table. Uses relative paths for HTML display (absolute URLs used in JSON/CSV).</dd>
 
         <dt>
 
@@ -163,7 +177,7 @@
           <code><a href="add_venue_type_hyperlinks_reg.html">add_venue_type_hyperlinks_reg()</a></code>
 
         </dt>
-        <dd>Function for adding clickable links to the codecheck venue type pages for each entry in the register table.</dd>
+        <dd>Function for adding clickable links to the codecheck venue type pages for each entry in the register table. Uses relative paths for HTML display (absolute URLs used in JSON/CSV).</dd>
 
         <dt>
 
@@ -174,10 +188,24 @@
 
         <dt>
 
+          <code><a href="adjust_cert_links_relative.html">adjust_cert_links_relative()</a></code>
+
+        </dt>
+        <dd>Convert certificate links from absolute to relative paths based on page depth</dd>
+
+        <dt>
+
           <code><a href="as_latex_url.html">as_latex_url()</a></code>
 
         </dt>
         <dd>Wrap URL for LaTeX</dd>
+
+        <dt>
+
+          <code><a href="calculate_breadcrumb_base_path.html">calculate_breadcrumb_base_path()</a></code>
+
+        </dt>
+        <dd>Calculate base path for breadcrumb links</dd>
 
         <dt>
 
@@ -227,6 +255,13 @@
 
         </dt>
         <dd>Copy files from manifest into the codecheck folder and summarise.</dd>
+
+        <dt>
+
+          <code><a href="copy_package_javascript.html">copy_package_javascript()</a></code>
+
+        </dt>
+        <dd>Copy Package JavaScript Files to Output Directory</dd>
 
         <dt>
 
@@ -289,7 +324,7 @@
           <code><a href="create_index_prefix_html.html">create_index_prefix_html()</a></code>
 
         </dt>
-        <dd>Dynamically generates the index_prefix.html from a template file</dd>
+        <dd>Dynamically generates the index_prefix.html with navigation header and breadcrumbs</dd>
 
         <dt>
 
@@ -384,10 +419,52 @@
 
         <dt>
 
+          <code><a href="generate_breadcrumb.html">generate_breadcrumb()</a></code>
+
+        </dt>
+        <dd>Generate breadcrumb navigation HTML</dd>
+
+        <dt>
+
+          <code><a href="generate_cert_json.html">generate_cert_json()</a></code>
+
+        </dt>
+        <dd>Generates a JSON file with all certificate metadata</dd>
+
+        <dt>
+
+          <code><a href="generate_cert_schema_org.html">generate_cert_schema_org()</a></code>
+
+        </dt>
+        <dd>Generate Schema.org JSON-LD for Certificate Page</dd>
+
+        <dt>
+
           <code><a href="generate_codechecker_profile_links.html">generate_codechecker_profile_links()</a></code>
 
         </dt>
         <dd>Generate HTML for codechecker profile links</dd>
+
+        <dt>
+
+          <code><a href="generate_codechecker_redirect.html">generate_codechecker_redirect()</a></code>
+
+        </dt>
+        <dd>Generate HTML redirect page for codechecker</dd>
+
+        <dt>
+
+          <code><a href="generate_codechecker_redirects.html">generate_codechecker_redirects()</a></code>
+
+        </dt>
+        <dd>Generate redirect pages for all codecheckers with ORCID</dd>
+
+        <dt>
+
+          <code><a href="generate_codechecker_schema_org.html">generate_codechecker_schema_org()</a></code>
+
+        </dt>
+        <dd>Generate Schema.org JSON-LD for codechecker pages</dd>
 
         <dt>
 
@@ -454,10 +531,31 @@
 
         <dt>
 
+          <code><a href="generate_navigation_header.html">generate_navigation_header()</a></code>
+
+        </dt>
+        <dd>Generate navigation header with logo and menu</dd>
+
+        <dt>
+
           <code><a href="generate_output_dir.html">generate_output_dir()</a></code>
 
         </dt>
         <dd>Generate Output Directory Path</dd>
+
+        <dt>
+
+          <code><a href="generate_robots_txt.html">generate_robots_txt()</a></code>
+
+        </dt>
+        <dd>Generate robots.txt for the register</dd>
+
+        <dt>
+
+          <code><a href="generate_sitemap.html">generate_sitemap()</a></code>
+
+        </dt>
+        <dd>Generate sitemap.xml for the register</dd>
 
         <dt>
 
@@ -566,6 +664,13 @@
 
         <dt>
 
+          <code><a href="get_codechecker_profile_by_handle.html">get_codechecker_profile_by_handle()</a></code>
+
+        </dt>
+        <dd>Get codechecker profile information by GitHub handle</dd>
+
+        <dt>
+
           <code><a href="get_codecheckers_data.html">get_codecheckers_data()</a></code>
 
         </dt>
@@ -577,6 +682,13 @@
 
         </dt>
         <dd>Get git repository information</dd>
+
+        <dt>
+
+          <code><a href="get_github_handle_by_name.html">get_github_handle_by_name()</a></code>
+
+        </dt>
+        <dd>Get GitHub handle for a codechecker by name</dd>
 
         <dt>
 
@@ -766,6 +878,13 @@
 
         </dt>
         <dd>Set "Title" and "Paper reference" columns and values to the register_table</dd>
+
+        <dt>
+
+          <code><a href="set_paper_title_references_csv.html">set_paper_title_references_csv()</a></code>
+
+        </dt>
+        <dd>Set "Title" and "Paper reference" columns for CSV files</dd>
 
         <dt>
 

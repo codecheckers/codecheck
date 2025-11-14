@@ -6,7 +6,13 @@ certificate.
 ## Usage
 
 ``` r
-render_cert_html(cert_id, repo_link, download_cert_status)
+render_cert_html(
+  cert_id,
+  repo_link,
+  download_cert_status,
+  cert_type,
+  cert_venue
+)
 ```
 
 ## Arguments
@@ -25,3 +31,12 @@ render_cert_html(cert_id, repo_link, download_cert_status)
 
   An integer (0 or 1) indicating whether the certificate PDF was
   downloaded (1) or not (0).
+
+- cert_type:
+
+  A character string containing the venue type (journal, conference,
+  community, institution).
+
+- cert_venue:
+
+  A character string containing the venue name.

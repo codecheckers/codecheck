@@ -1,8 +1,8 @@
 # Filter and Drop Columns from Register Table
 
 This function filters and drops columns from the register table based on
-the specified filter type. Removes any columns that are flagged for
-dropping based on the filter and CONFIG\$FILTER_COLUMN_NAMES_TO_DROP
+the specified filter type. Uses hierarchical column configuration from
+CONFIG\$REGISTER_COLUMNS with filter-specific overrides.
 
 ## Usage
 
@@ -19,13 +19,14 @@ filter_and_drop_register_columns(register_table, filter, file_type)
 - filter:
 
   A string specifying the filter to apply (e.g., "venues",
-  "codecheckers").
+  "codecheckers"). Use NA for the default/main register.
 
 - file_type:
 
   The type of file we need to render the register for. The columns to
-  keep depend on the file type
+  keep depend on the file type and filter
 
 ## Value
 
-The filtered register table with only the necessary columns retained.
+The filtered register table with only the necessary columns retained and
+ordered.

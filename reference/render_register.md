@@ -2,7 +2,8 @@
 
 This function renders the register table into different output formats
 based on the specified type. It supports rendering the table as
-Markdown, HTML, or JSON.
+Markdown, HTML, or JSON. All outputs are sorted by certificate
+identifier for consistency.
 
 ## Usage
 

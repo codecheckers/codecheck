@@ -7,7 +7,7 @@ generates links based on venue types.
 ## Usage
 
 ``` r
-add_venues_hyperlinks_non_reg(table, subcat)
+add_venues_hyperlinks_non_reg(table, subcat, table_details = NULL)
 ```
 
 ## Arguments
@@ -20,6 +20,11 @@ add_venues_hyperlinks_non_reg(table, subcat)
 
   An optional string specifying the subcategory (venue type) for the
   venues.
+
+- table_details:
+
+  A list containing metadata including output_dir for relative path
+  calculation.
 
 ## Value
 

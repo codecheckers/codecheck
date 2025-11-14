@@ -1,19 +1,20 @@
 # Generate HTML for codechecker profile links
 
 Creates a horizontal list of profile links (ORCID, GitHub) for a
-codechecker page. Uses a template file to generate the HTML.
+codechecker page. Uses a template file to generate the HTML. Supports
+both ORCID and handle-based identifiers.
 
 ## Usage
 
 ``` r
-generate_codechecker_profile_links(orcid)
+generate_codechecker_profile_links(identifier)
 ```
 
 ## Arguments
 
-- orcid:
+- identifier:
 
-  The ORCID identifier
+  The codechecker identifier (ORCID or "handle:username")
 
 ## Value
 

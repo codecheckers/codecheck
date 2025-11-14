@@ -5,7 +5,12 @@ Creates index postfix, prefix and the header
 ## Usage
 
 ``` r
-create_index_section_files(output_dir, filter, table_details)
+create_index_section_files(
+  output_dir,
+  filter,
+  table_details,
+  schema_org_jsonld = ""
+)
 ```
 
 ## Arguments
@@ -21,3 +26,7 @@ create_index_section_files(output_dir, filter, table_details)
 - table_details:
 
   List containing details such as the table name, subcat name.
+
+- schema_org_jsonld:
+
+  Optional Schema.org JSON-LD string to include in header (default: "")

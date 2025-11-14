@@ -34,27 +34,40 @@
 - [`add_paper_links()`](http://codecheck.org.uk/codecheck/reference/add_paper_links.md)
   : Function for adding clickable links to the paper for each entry in
   the register table.
+- [`add_report_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_report_hyperlinks_reg.md)
+  : Format Report column for display by creating markdown links with
+  shortened text
 - [`add_report_links()`](http://codecheck.org.uk/codecheck/reference/add_report_links.md)
-  : Function for adding clickable links to the report for each entry in
-  the register table.
+  : Function for adding report URLs for each entry in the register
+  table.
 - [`add_repository_hyperlink()`](http://codecheck.org.uk/codecheck/reference/add_repository_hyperlink.md)
   : Replaces a placeholder in Markdown content with a hyperlink to the
   repository, based on the repository type (e.g., GitHub, OSF, GitLab).
+- [`add_repository_links_csv()`](http://codecheck.org.uk/codecheck/reference/add_repository_links_csv.md)
+  : Function for adding repository links in the register table for CSV
+  files.
 - [`add_repository_links_json()`](http://codecheck.org.uk/codecheck/reference/add_repository_links_json.md)
   : Function for adding repository links in the register table for the
   creation of the json file.
 - [`add_venue_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_hyperlinks_reg.md)
   : Function for adding clickable links to the codecheck venue pages for
-  each entry in the register table.
+  each entry in the register table. Uses relative paths for HTML display
+  (absolute URLs used in JSON/CSV).
 - [`add_venue_type_hyperlinks_non_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_type_hyperlinks_non_reg.md)
   : Add Hyperlinks to Venue Type-Specific Table
 - [`add_venue_type_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_type_hyperlinks_reg.md)
   : Function for adding clickable links to the codecheck venue type
-  pages for each entry in the register table.
+  pages for each entry in the register table. Uses relative paths for
+  HTML display (absolute URLs used in JSON/CSV).
 - [`add_venues_hyperlinks_non_reg()`](http://codecheck.org.uk/codecheck/reference/add_venues_hyperlinks_non_reg.md)
   : Add Hyperlinks to Venues Table
+- [`adjust_cert_links_relative()`](http://codecheck.org.uk/codecheck/reference/adjust_cert_links_relative.md)
+  : Convert certificate links from absolute to relative paths based on
+  page depth
 - [`as_latex_url()`](http://codecheck.org.uk/codecheck/reference/as_latex_url.md)
   : Wrap URL for LaTeX
+- [`calculate_breadcrumb_base_path()`](http://codecheck.org.uk/codecheck/reference/calculate_breadcrumb_base_path.md)
+  : Calculate base path for breadcrumb links
 - [`check_certificate_id()`](http://codecheck.org.uk/codecheck/reference/check_certificate_id.md)
   : Function for checking ceritificate id if there is a codecheck_yaml.
   If there is a mismatch a stop is sent. Else a warning is thrown.
@@ -73,6 +86,8 @@
   saving them in the specified certificate directory.
 - [`copy_manifest_files()`](http://codecheck.org.uk/codecheck/reference/copy_manifest_files.md)
   : Copy files from manifest into the codecheck folder and summarise.
+- [`copy_package_javascript()`](http://codecheck.org.uk/codecheck/reference/copy_package_javascript.md)
+  : Copy Package JavaScript Files to Output Directory
 - [`create_all_codecheckers_table()`](http://codecheck.org.uk/codecheck/reference/create_all_codecheckers_table.md)
   : Create Codecheckers Table
 - [`create_all_venues_table()`](http://codecheck.org.uk/codecheck/reference/create_all_venues_table.md)
@@ -95,7 +110,8 @@
 - [`create_index_postfix_html()`](http://codecheck.org.uk/codecheck/reference/create_index_postfix_html.md)
   : Dynamically generates the index_postfix.html from a template file
 - [`create_index_prefix_html()`](http://codecheck.org.uk/codecheck/reference/create_index_prefix_html.md)
-  : Dynamically generates the index_prefix.html from a template file
+  : Dynamically generates the index_prefix.html with navigation header
+  and breadcrumbs
 - [`create_index_section_files()`](http://codecheck.org.uk/codecheck/reference/create_index_section_files.md)
   : Creates index postfix, prefix and the header
 - [`create_md_table()`](http://codecheck.org.uk/codecheck/reference/create_md_table.md)
@@ -130,8 +146,20 @@
   saves it in the specified directory.
 - [`filter_and_drop_register_columns()`](http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.md)
   : Filter and Drop Columns from Register Table
+- [`generate_breadcrumb()`](http://codecheck.org.uk/codecheck/reference/generate_breadcrumb.md)
+  : Generate breadcrumb navigation HTML
+- [`generate_cert_json()`](http://codecheck.org.uk/codecheck/reference/generate_cert_json.md)
+  : Generates a JSON file with all certificate metadata
+- [`generate_cert_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_cert_schema_org.md)
+  : Generate Schema.org JSON-LD for Certificate Page
 - [`generate_codechecker_profile_links()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_profile_links.md)
   : Generate HTML for codechecker profile links
+- [`generate_codechecker_redirect()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_redirect.md)
+  : Generate HTML redirect page for codechecker
+- [`generate_codechecker_redirects()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_redirects.md)
+  : Generate redirect pages for all codecheckers with ORCID
+- [`generate_codechecker_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_schema_org.md)
+  : Generate Schema.org JSON-LD for codechecker pages
 - [`generate_footer_build_info()`](http://codecheck.org.uk/codecheck/reference/generate_footer_build_info.md)
   : Generate Footer Build Information HTML
 - [`generate_href()`](http://codecheck.org.uk/codecheck/reference/generate_href.md)
@@ -157,8 +185,14 @@
   : Generate HTML Title for Non-Register Pages
 - [`generate_meta_generator_content()`](http://codecheck.org.uk/codecheck/reference/generate_meta_generator_content.md)
   : Generate Meta Generator Content
+- [`generate_navigation_header()`](http://codecheck.org.uk/codecheck/reference/generate_navigation_header.md)
+  : Generate navigation header with logo and menu
 - [`generate_output_dir()`](http://codecheck.org.uk/codecheck/reference/generate_output_dir.md)
   : Generate Output Directory Path
+- [`generate_robots_txt()`](http://codecheck.org.uk/codecheck/reference/generate_robots_txt.md)
+  : Generate robots.txt for the register
+- [`generate_sitemap()`](http://codecheck.org.uk/codecheck/reference/generate_sitemap.md)
+  : Generate sitemap.xml for the register
 - [`generate_table_details()`](http://codecheck.org.uk/codecheck/reference/generate_table_details.md)
   : Generate Table Details
 - [`generate_table_details_non_reg()`](http://codecheck.org.uk/codecheck/reference/generate_table_details_non_reg.md)
@@ -193,10 +227,14 @@
   : Retrieve a codecheck.yml file from a Zenodo record
 - [`get_codechecker_profile()`](http://codecheck.org.uk/codecheck/reference/get_codechecker_profile.md)
   : Get codechecker profile information by ORCID
+- [`get_codechecker_profile_by_handle()`](http://codecheck.org.uk/codecheck/reference/get_codechecker_profile_by_handle.md)
+  : Get codechecker profile information by GitHub handle
 - [`get_codecheckers_data()`](http://codecheck.org.uk/codecheck/reference/get_codecheckers_data.md)
   : Fetch and cache codecheckers.csv data from GitHub
 - [`get_git_info()`](http://codecheck.org.uk/codecheck/reference/get_git_info.md)
   : Get git repository information
+- [`get_github_handle_by_name()`](http://codecheck.org.uk/codecheck/reference/get_github_handle_by_name.md)
+  : Get GitHub handle for a codechecker by name
 - [`get_lifecycle_metadata()`](http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.md)
   : Retrieve metadata from Lifecycle Journal
 - [`get_or_create_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/get_or_create_zenodo_record.md)
@@ -266,6 +304,8 @@
 - [`set_paper_title_references()`](http://codecheck.org.uk/codecheck/reference/set_paper_title_references.md)
   : Set "Title" and "Paper reference" columns and values to the
   register_table
+- [`set_paper_title_references_csv()`](http://codecheck.org.uk/codecheck/reference/set_paper_title_references_csv.md)
+  : Set "Title" and "Paper reference" columns for CSV files
 - [`setup_external_libraries()`](http://codecheck.org.uk/codecheck/reference/setup_external_libraries.md)
   : Download and Setup External Libraries Locally
 - [`update_certificate_from_github()`](http://codecheck.org.uk/codecheck/reference/update_certificate_from_github.md)

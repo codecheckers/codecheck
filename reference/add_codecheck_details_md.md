@@ -6,7 +6,7 @@ CODECHECK details.
 ## Usage
 
 ``` r
-add_codecheck_details_md(md_content, repo_link)
+add_codecheck_details_md(md_content, repo_link, cert_type, cert_venue)
 ```
 
 ## Arguments
@@ -20,6 +20,15 @@ add_codecheck_details_md(md_content, repo_link)
 
   A character string containing the repository link associated with the
   certificate.
+
+- cert_type:
+
+  A character string containing the venue type (journal, conference,
+  community, institution).
+
+- cert_venue:
+
+  A character string containing the venue name.
 
 ## Value
 

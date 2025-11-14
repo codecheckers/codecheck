@@ -2,12 +2,13 @@
 
 Adds hyperlinks to the venue names and the number of codechecks in the
 venue type-specific table. The links point to the venue's page for each
-venue type.
+venue type. Uses relative paths for HTML display (absolute URLs used in
+JSON/CSV).
 
 ## Usage
 
 ``` r
-add_venue_type_hyperlinks_non_reg(table, venue_type)
+add_venue_type_hyperlinks_non_reg(table, venue_type, table_details = NULL)
 ```
 
 ## Arguments
@@ -19,6 +20,11 @@ add_venue_type_hyperlinks_non_reg(table, venue_type)
 - venue_type:
 
   A string specifying the venue type.
+
+- table_details:
+
+  A list containing metadata including output_dir for relative path
+  calculation.
 
 ## Value
 

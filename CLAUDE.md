@@ -291,7 +291,9 @@ process: - Parameters: - `register`: Data frame from `register.csv`
 e.g., `c("venues", "codecheckers")` - `outputs`: Output formats to
 generate, e.g., `c("html", "md", "json")` - `config`: Path(s) to config
 file(s) to source - `from`, `to`: Range of register entries to process
-(useful for incremental rendering)
+(useful for incremental rendering) - `parallel`: Logical; if TRUE,
+renders certificates in parallel (default: FALSE) - `ncores`: Integer;
+number of CPU cores for parallel rendering (default: NULL = auto-detect)
 
 **[`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)**
 (R/register.R:78) - Validates all register entries: - Checks certificate
@@ -417,7 +419,7 @@ Creates CSV files for each venue/codechecker - For codecheckers: Reads
 temporary CSV (register has lists in Codechecker column), unnests, then
 groups - Uses `CONFIG$FILTER_COLUMN_NAMES` to determine grouping column
 
-**R/utils_render_register_general.r** - Core register rendering: -
+**R/utils_render_register_general.R** - Core register rendering: -
 [`create_register_files()`](http://codecheck.org.uk/codecheck/reference/create_register_files.md) -
 Orchestrates creation of all register views (original + filtered) -
 [`create_original_register_files()`](http://codecheck.org.uk/codecheck/reference/create_original_register_files.md) -
@@ -431,14 +433,31 @@ Creates metadata dict with name, slug, subcat, output_dir -
 [`filter_and_drop_register_columns()`](http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.md) -
 Selects and orders columns per filter and format (uses hierarchical
 `CONFIG$REGISTER_COLUMNS`) -
+[`adjust_cert_links_relative()`](http://codecheck.org.uk/codecheck/reference/adjust_cert_links_relative.md) -
+Converts absolute certificate URLs to relative paths based on page depth
+for HTML/Markdown display (JSON/CSV retain absolute URLs) -
+[`add_report_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_report_hyperlinks_reg.md) -
+Formats Report column as markdown links with shortened URLs (removes
+“<http://>” and “<https://>” prefixes from display text) -
 [`add_venue_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_hyperlinks_reg.md) -
-Adds markdown links to venue pages -
+Adds markdown links to venue pages with relative paths for HTML
+display -
 [`add_venue_type_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_type_hyperlinks_reg.md) -
-Adds markdown links to venue type pages
+Adds markdown links to venue type pages with relative paths for HTML
+display
 
 **R/utils_render_register_mds.R** - Markdown table generation: -
 [`render_register_md()`](http://codecheck.org.uk/codecheck/reference/render_register_md.md) -
-Creates markdown table with title and hyperlinks -
+Creates markdown table with title and hyperlinks. Applies
+transformations in this order: 1.
+[`adjust_cert_links_relative()`](http://codecheck.org.uk/codecheck/reference/adjust_cert_links_relative.md) -
+Convert certificate links to relative paths 2.
+[`add_report_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_report_hyperlinks_reg.md) -
+Format Report column (shorten URLs) 3.
+[`add_venue_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_hyperlinks_reg.md) -
+Make venue links relative 4.
+[`add_venue_type_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_type_hyperlinks_reg.md) -
+Make venue type links relative -
 [`create_md_table()`](http://codecheck.org.uk/codecheck/reference/create_md_table.md) -
 Uses [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) to
 create markdown table, adjusts column widths using
@@ -514,6 +533,16 @@ Generates summary text (e.g., “In total, 100 codechecks…”) -
 [`generate_html_extra_text_non_register()`](http://codecheck.org.uk/codecheck/reference/generate_html_extra_text_non_register.md) -
 Adds explanatory text (used for codechecker page)
 
+**R/utils_breadcrumbs.R** - Navigation and breadcrumb generation: -
+[`generate_navigation_header()`](http://codecheck.org.uk/codecheck/reference/generate_navigation_header.md) -
+Creates navigation header with CODECHECK logo and menu (shown on main
+register and overview pages) -
+[`generate_breadcrumb()`](http://codecheck.org.uk/codecheck/reference/generate_breadcrumb.md) -
+Generates breadcrumb navigation showing hierarchical page path -
+[`calculate_breadcrumb_base_path()`](http://codecheck.org.uk/codecheck/reference/calculate_breadcrumb_base_path.md) -
+Calculates relative path to register root based on page depth (handles
+register tables, non-register tables, and venue type pages)
+
 **R/utils_register_check.R** - Validation functions: -
 [`check_certificate_id()`](http://codecheck.org.uk/codecheck/reference/check_certificate_id.md) -
 Compares certificate ID in register.csv vs codecheck.yml -
@@ -538,8 +567,11 @@ column orders and selections per view - Example:
 `CONFIG$REGISTER_COLUMNS$default$html` or
 `CONFIG$REGISTER_COLUMNS$venues$json` -
 `CONFIG$MD_TABLE_COLUMN_WIDTHS` - Markdown column width specifications
-for register and non-register tables - `CONFIG$JSON_COLUMNS` - Column
-order for JSON output (featured.json and main register.json)
+for register and non-register tables - Optimized for readability: Paper
+Title column is doubled in width, Report column significantly reduced -
+Different widths for main register vs venue-filtered tables (venues
+tables omit venue/type columns) - `CONFIG$JSON_COLUMNS` - Column order
+for JSON output (featured.json and main register.json)
 
 **Filtering:** - `CONFIG$FILTER_COLUMN_NAMES` - Maps filter name to
 register column (venues→Venue, codecheckers→Codechecker) -
@@ -662,7 +694,53 @@ The rendering process creates this directory structure in `docs/`:
         │   └── register.json
         └── ...
 
-#### 2.7. Relationship with ../register Repository
+#### 2.7. JavaScript Library Management
+
+Certificate pages use JavaScript libraries for interactive features like
+citation generation. All libraries are stored locally in
+`inst/extdata/js/` to avoid dependencies on external CDNs.
+
+**Current libraries:**
+
+**Citation.js** - Generates formatted citations from DOIs - Files:
+`citation.min.js` (2.7 MB) + `citation-wrapper.js` (2 KB) - Version:
+0.7.21 - Source: <https://www.npmjs.com/package/citation-js> - Note: The
+npm distribution is a browserify bundle that requires
+`citation-wrapper.js` to expose `Cite` as a global object
+
+**Library management:**
+
+Download all libraries:
+
+``` bash
+bash inst/extdata/scripts/download-js-libraries.sh
+```
+
+Or from R:
+
+``` r
+system("bash inst/extdata/scripts/download-js-libraries.sh")
+```
+
+**Documentation:** - `inst/extdata/scripts/JAVASCRIPT_LIBRARIES.md` -
+Complete documentation on library management, updating, and
+troubleshooting - `inst/extdata/scripts/download-js-libraries.sh` -
+Script to download all required libraries
+
+**Key points:** - Libraries are NOT loaded from CDNs - all files are
+stored locally - Citation.js requires a two-script setup: 1.
+`citation.min.js` - The browserify bundle 2. `citation-wrapper.js` -
+Exposes `Cite` globally (must load immediately after) - Template usage:
+`html <script src="../../libs/codecheck/citation.min.js"></script> <script src="../../libs/codecheck/citation-wrapper.js"></script>` -
+After loading, `Cite` is available globally for citation formatting
+
+**Troubleshooting:** - If citations show “Loading citation…”
+indefinitely, verify both `citation.min.js` and `citation-wrapper.js`
+are present and loaded in the correct order - See
+`inst/extdata/scripts/JAVASCRIPT_LIBRARIES.md` for detailed
+troubleshooting steps
+
+#### 2.8. Relationship with ../register Repository
 
 The `../register` repository is the **data and deployment repository**
 that contains: - `register.csv` - The master list of all codechecks -
@@ -696,7 +774,7 @@ register <- read.csv('register.csv', as.is = TRUE, comment.char = '#')
 codecheck::register_render(from = nrow(register) - 5, to = nrow(register))
 ```
 
-#### 2.8. Important Implementation Details
+#### 2.9. Important Implementation Details
 
 **Caching**: All remote `codecheck.yml` files are cached using
 [`R.cache::addMemoization()`](https://rdrr.io/pkg/R.cache/man/addMemoization.html)
@@ -733,6 +811,15 @@ Geogr Syst”) are mapped to full display names (e.g., “Journal of
 Geographical Systems”) via `CONFIG$DICT_VENUE_NAMES`. URLs use slugified
 versions (`j_geogr_syst`).
 
+**Venue label column**: The “venue label” column (containing GitHub
+issue labels) is only displayed on the “all venues” page where it helps
+distinguish between different venue types. It is removed from venue
+type-specific pages (institutions, journals, conferences, communities)
+as it provides no useful information when all venues are of the same
+type. This is handled in
+[`create_non_register_files()`](http://codecheck.org.uk/codecheck/reference/create_non_register_files.md)
+which removes the column before rendering HTML for venue type pages.
+
 **Abstract retrieval**: Abstracts are fetched in this order: 1. CrossRef
 API (primary source) 2. OpenAlex API (fallback, uses inverted index
 format) 3. If both fail, no abstract is shown
@@ -741,6 +828,51 @@ format) 3. If both fail, no abstract is shown
 [`rmarkdown::render()`](https://pkgs.rstudio.com/rmarkdown/reference/render.html)
 with custom YAML config files that specify HTML includes (header,
 prefix, postfix). Pandoc processes the markdown with Bootstrap styling.
+
+**Relative paths for localhost development**: All internal navigation
+links (certificate links, venue links, venue type links, codechecker
+links) use relative paths in HTML/Markdown for localhost development,
+while JSON and CSV exports retain absolute URLs for external
+consumption. The depth of relative paths is calculated based on the
+output directory structure: - Root level (`docs/index.html`):
+`./certs/2020-001/` - One level deep (`docs/venues/index.html`):
+`../certs/2020-001/` - Two levels deep
+(`docs/venues/communities/index.html`): `../../certs/2020-001/` - Three
+levels deep (`docs/venues/journals/gigascience/index.html`):
+`../../../certs/2020-001/`
+
+Key functions: -
+[`adjust_cert_links_relative()`](http://codecheck.org.uk/codecheck/reference/adjust_cert_links_relative.md) -
+Converts certificate URLs (replaces `CONFIG$HYPERLINKS[["certs"]]` with
+relative path) -
+[`add_report_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_report_hyperlinks_reg.md) -
+Formats Report column (removes http/https from display text) -
+[`add_venue_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_hyperlinks_reg.md) -
+Makes venue links relative -
+[`add_venue_type_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_type_hyperlinks_reg.md) -
+Makes venue type links relative -
+[`calculate_breadcrumb_base_path()`](http://codecheck.org.uk/codecheck/reference/calculate_breadcrumb_base_path.md) -
+Calculates depth for breadcrumbs and navigation
+
+**Navigation header and breadcrumbs**: All pages include a navigation
+header with the CODECHECK logo linking to register home. Overview pages
+(main register, all venues, all codecheckers) also show a menu with “All
+Venues”, “All Codecheckers”, and “About” links. Venue type pages (e.g.,
+`/venues/communities/`) require special handling: - “All Venues” link:
+`../index.html` (one level up within venues directory) - “All
+Codecheckers” link: `../../codecheckers/index.html` (up two levels, then
+into codecheckers)
+
+Breadcrumbs show the hierarchical path (e.g., CODECHECK Register \>
+Venues \> Journals \> GigaScience) with clickable links to parent pages.
+
+**Logging for parallel execution**: All certificate rendering operations
+include the certificate identifier as a prefix in log messages (e.g.,
+“2020-001 \| Downloaded successfully”). This makes logs easier to
+understand when rendering is executed in parallel, as messages from
+different certificates can be easily distinguished and tracked. All
+warning and message calls in certificate rendering functions include the
+`cert_id` prefix.
 
 ### 3. Remote Configuration Retrieval (R/configuration.R)
 
@@ -801,6 +933,70 @@ templating. Templates are located in `inst/extdata/templates/`:
 - `reg_tables/` - Register table templates
 - `non_reg_tables/` - Venue/codechecker list templates
 - `general/` - Shared HTML headers/footers
+
+## Performance & Parallelization
+
+### Timing Instrumentation
+
+All major rendering functions include comprehensive timing
+instrumentation with millisecond precision:
+
+- **[`render_cert_htmls()`](http://codecheck.org.uk/codecheck/reference/render_cert_htmls.md)** -
+  Logs each certificate rendering time and summary statistics
+- **[`create_register_files()`](http://codecheck.org.uk/codecheck/reference/create_register_files.md)** -
+  Logs each register page rendering time
+- **[`create_non_register_files()`](http://codecheck.org.uk/codecheck/reference/create_non_register_files.md)** -
+  Logs each summary page rendering time
+
+Log messages use ISO 8601 format with millisecond precision:
+`[YYYY-MM-DD HH:MM:SS.mmm]`
+
+Certificate rendering logs include the certificate identifier as a
+prefix for easy tracking in parallel execution:
+
+    [2025-11-14 14:29:40.586] 2020-001 | Completed (1/114) in 1.50 seconds
+
+### Parallel Certificate Rendering
+
+Certificate rendering supports parallelization using R’s `parallel`
+package for significant performance improvements:
+
+**Usage**:
+
+``` r
+# Sequential rendering (default, backward compatible)
+register_render()
+
+# Parallel rendering with auto-detected cores (detectCores() - 1)
+register_render(parallel = TRUE)
+
+# Parallel rendering with specific core count
+register_render(parallel = TRUE, ncores = 4)
+```
+
+**Implementation Details**: - Platform-specific: Uses `mclapply()` on
+Unix/Mac (memory-efficient forking), `parLapply()` on Windows
+(cluster-based) - Auto-core detection: Defaults to `detectCores() - 1`
+to leave one core available for system - Enhanced error handling:
+Individual certificate failures don’t stop the entire render - Timing
+statistics: Reports theoretical speedup and parallel efficiency metrics
+
+**Performance Characteristics** (based on 114-certificate register): -
+**Sequential**: ~131 seconds for certificates (avg: 1.15 sec/cert) -
+**Parallel (8 cores)**: ~22 seconds for certificates (~6x speedup) -
+**Overall speedup**: ~3.7x for full render (certificates are 87.5% of
+total time) - **Typical efficiency**: 90-95% parallel efficiency on 2-8
+cores
+
+**Best Practices**: - Use parallel rendering for 50+ certificates - Test
+with small subsets first:
+`register_render(from = 1, to = 10, parallel = TRUE)` - Monitor with
+`htop` or `top` to verify core utilization - Adjust `ncores` if system
+becomes unresponsive
+
+**Dependencies**: - Requires `parallel` package (included in DESCRIPTION
+Imports) - Uses explicit `parallel::` notation throughout code (no
+@importFrom needed)
 
 ## Important Notes
 
