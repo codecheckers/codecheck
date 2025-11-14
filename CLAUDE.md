@@ -208,6 +208,8 @@ The register management system transforms a simple CSV file (`register.csv`) int
   - `outputs`: Output formats to generate, e.g., `c("html", "md", "json")`
   - `config`: Path(s) to config file(s) to source
   - `from`, `to`: Range of register entries to process (useful for incremental rendering)
+  - `parallel`: Logical; if TRUE, renders certificates in parallel (default: FALSE)
+  - `ncores`: Integer; number of CPU cores for parallel rendering (default: NULL = auto-detect)
 
 **`register_check()`** (R/register.R:78) - Validates all register entries:
 - Checks certificate IDs match between register.csv and codecheck.yml
@@ -312,11 +314,17 @@ The rendering process follows this sequence:
 - `generate_output_dir()` - Creates output directory path based on filter and subcategory
 - `generate_table_details()` - Creates metadata dict with name, slug, subcat, output_dir
 - `filter_and_drop_register_columns()` - Selects and orders columns per filter and format (uses hierarchical `CONFIG$REGISTER_COLUMNS`)
-- `add_venue_hyperlinks_reg()` - Adds markdown links to venue pages
-- `add_venue_type_hyperlinks_reg()` - Adds markdown links to venue type pages
+- `adjust_cert_links_relative()` - Converts absolute certificate URLs to relative paths based on page depth for HTML/Markdown display (JSON/CSV retain absolute URLs)
+- `add_report_hyperlinks_reg()` - Formats Report column as markdown links with shortened URLs (removes "http://" and "https://" prefixes from display text)
+- `add_venue_hyperlinks_reg()` - Adds markdown links to venue pages with relative paths for HTML display
+- `add_venue_type_hyperlinks_reg()` - Adds markdown links to venue type pages with relative paths for HTML display
 
 **R/utils_render_register_mds.R** - Markdown table generation:
-- `render_register_md()` - Creates markdown table with title and hyperlinks
+- `render_register_md()` - Creates markdown table with title and hyperlinks. Applies transformations in this order:
+  1. `adjust_cert_links_relative()` - Convert certificate links to relative paths
+  2. `add_report_hyperlinks_reg()` - Format Report column (shorten URLs)
+  3. `add_venue_hyperlinks_reg()` - Make venue links relative
+  4. `add_venue_type_hyperlinks_reg()` - Make venue type links relative
 - `create_md_table()` - Uses `knitr::kable()` to create markdown table, adjusts column widths using `CONFIG$MD_TABLE_COLUMN_WIDTHS`
 - `add_markdown_title()` - Adds title using functions from `CONFIG$MD_TITLES`
 
@@ -359,6 +367,11 @@ The rendering process follows this sequence:
 - `generate_html_subtext_non_register()` - Generates summary text (e.g., "In total, 100 codechecks...")
 - `generate_html_extra_text_non_register()` - Adds explanatory text (used for codechecker page)
 
+**R/utils_breadcrumbs.R** - Navigation and breadcrumb generation:
+- `generate_navigation_header()` - Creates navigation header with CODECHECK logo and menu (shown on main register and overview pages)
+- `generate_breadcrumb()` - Generates breadcrumb navigation showing hierarchical page path
+- `calculate_breadcrumb_base_path()` - Calculates relative path to register root based on page depth (handles register tables, non-register tables, and venue type pages)
+
 **R/utils_register_check.R** - Validation functions:
 - `check_certificate_id()` - Compares certificate ID in register.csv vs codecheck.yml
 - `check_issue_status()` - Verifies GitHub issue exists and checks its state
@@ -378,6 +391,8 @@ The CONFIG environment stores all configuration as lists/vectors. Key elements:
   - Supports different column orders and selections per view
   - Example: `CONFIG$REGISTER_COLUMNS$default$html` or `CONFIG$REGISTER_COLUMNS$venues$json`
 - `CONFIG$MD_TABLE_COLUMN_WIDTHS` - Markdown column width specifications for register and non-register tables
+  - Optimized for readability: Paper Title column is doubled in width, Report column significantly reduced
+  - Different widths for main register vs venue-filtered tables (venues tables omit venue/type columns)
 - `CONFIG$JSON_COLUMNS` - Column order for JSON output (featured.json and main register.json)
 
 **Filtering:**
@@ -583,12 +598,35 @@ codecheck::register_render(from = nrow(register) - 5, to = nrow(register))
 
 **Venue name standardization**: Short names in `register.csv` (e.g., "J Geogr Syst") are mapped to full display names (e.g., "Journal of Geographical Systems") via `CONFIG$DICT_VENUE_NAMES`. URLs use slugified versions (`j_geogr_syst`).
 
+**Venue label column**: The "venue label" column (containing GitHub issue labels) is only displayed on the "all venues" page where it helps distinguish between different venue types. It is removed from venue type-specific pages (institutions, journals, conferences, communities) as it provides no useful information when all venues are of the same type. This is handled in `create_non_register_files()` which removes the column before rendering HTML for venue type pages.
+
 **Abstract retrieval**: Abstracts are fetched in this order:
 1. CrossRef API (primary source)
 2. OpenAlex API (fallback, uses inverted index format)
 3. If both fail, no abstract is shown
 
 **Markdown to HTML rendering**: Uses `rmarkdown::render()` with custom YAML config files that specify HTML includes (header, prefix, postfix). Pandoc processes the markdown with Bootstrap styling.
+
+**Relative paths for localhost development**: All internal navigation links (certificate links, venue links, venue type links, codechecker links) use relative paths in HTML/Markdown for localhost development, while JSON and CSV exports retain absolute URLs for external consumption. The depth of relative paths is calculated based on the output directory structure:
+- Root level (`docs/index.html`): `./certs/2020-001/`
+- One level deep (`docs/venues/index.html`): `../certs/2020-001/`
+- Two levels deep (`docs/venues/communities/index.html`): `../../certs/2020-001/`
+- Three levels deep (`docs/venues/journals/gigascience/index.html`): `../../../certs/2020-001/`
+
+Key functions:
+- `adjust_cert_links_relative()` - Converts certificate URLs (replaces `CONFIG$HYPERLINKS[["certs"]]` with relative path)
+- `add_report_hyperlinks_reg()` - Formats Report column (removes http/https from display text)
+- `add_venue_hyperlinks_reg()` - Makes venue links relative
+- `add_venue_type_hyperlinks_reg()` - Makes venue type links relative
+- `calculate_breadcrumb_base_path()` - Calculates depth for breadcrumbs and navigation
+
+**Navigation header and breadcrumbs**: All pages include a navigation header with the CODECHECK logo linking to register home. Overview pages (main register, all venues, all codecheckers) also show a menu with "All Venues", "All Codecheckers", and "About" links. Venue type pages (e.g., `/venues/communities/`) require special handling:
+- "All Venues" link: `../index.html` (one level up within venues directory)
+- "All Codecheckers" link: `../../codecheckers/index.html` (up two levels, then into codecheckers)
+
+Breadcrumbs show the hierarchical path (e.g., CODECHECK Register > Venues > Journals > GigaScience) with clickable links to parent pages.
+
+**Logging for parallel execution**: All certificate rendering operations include the certificate identifier as a prefix in log messages (e.g., "2020-001 | Downloaded successfully"). This makes logs easier to understand when rendering is executed in parallel, as messages from different certificates can be easily distinguished and tracked. All warning and message calls in certificate rendering functions include the `cert_id` prefix.
 
 ### 3. Remote Configuration Retrieval (R/configuration.R)
 
@@ -641,6 +679,61 @@ Templates are located in `inst/extdata/templates/`:
 - `reg_tables/` - Register table templates
 - `non_reg_tables/` - Venue/codechecker list templates
 - `general/` - Shared HTML headers/footers
+
+## Performance & Parallelization
+
+### Timing Instrumentation
+
+All major rendering functions include comprehensive timing instrumentation with millisecond precision:
+
+- **`render_cert_htmls()`** - Logs each certificate rendering time and summary statistics
+- **`create_register_files()`** - Logs each register page rendering time
+- **`create_non_register_files()`** - Logs each summary page rendering time
+
+Log messages use ISO 8601 format with millisecond precision: `[YYYY-MM-DD HH:MM:SS.mmm]`
+
+Certificate rendering logs include the certificate identifier as a prefix for easy tracking in parallel execution:
+```
+[2025-11-14 14:29:40.586] 2020-001 | Completed (1/114) in 1.50 seconds
+```
+
+### Parallel Certificate Rendering
+
+Certificate rendering supports parallelization using R's `parallel` package for significant performance improvements:
+
+**Usage**:
+```r
+# Sequential rendering (default, backward compatible)
+register_render()
+
+# Parallel rendering with auto-detected cores (detectCores() - 1)
+register_render(parallel = TRUE)
+
+# Parallel rendering with specific core count
+register_render(parallel = TRUE, ncores = 4)
+```
+
+**Implementation Details**:
+- Platform-specific: Uses `mclapply()` on Unix/Mac (memory-efficient forking), `parLapply()` on Windows (cluster-based)
+- Auto-core detection: Defaults to `detectCores() - 1` to leave one core available for system
+- Enhanced error handling: Individual certificate failures don't stop the entire render
+- Timing statistics: Reports theoretical speedup and parallel efficiency metrics
+
+**Performance Characteristics** (based on 114-certificate register):
+- **Sequential**: ~131 seconds for certificates (avg: 1.15 sec/cert)
+- **Parallel (8 cores)**: ~22 seconds for certificates (~6x speedup)
+- **Overall speedup**: ~3.7x for full render (certificates are 87.5% of total time)
+- **Typical efficiency**: 90-95% parallel efficiency on 2-8 cores
+
+**Best Practices**:
+- Use parallel rendering for 50+ certificates
+- Test with small subsets first: `register_render(from = 1, to = 10, parallel = TRUE)`
+- Monitor with `htop` or `top` to verify core utilization
+- Adjust `ncores` if system becomes unresponsive
+
+**Dependencies**:
+- Requires `parallel` package (included in DESCRIPTION Imports)
+- Uses explicit `parallel::` notation throughout code (no @importFrom needed)
 
 ## Important Notes
 
