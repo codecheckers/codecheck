@@ -43,8 +43,11 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   # Load venues configuration
   load_venues_config(venues_file)
 
-  # Setup external libraries locally (CSS, JS)
+  # Setup external libraries locally (Bootstrap, Font Awesome, Academicons, etc.)
   setup_external_libraries()
+
+  # Copy package JavaScript files (citation.js, cert-utils.js, etc.)
+  copy_package_javascript()
 
   message("Using cache path ", R.cache::getCacheRootPath())
 

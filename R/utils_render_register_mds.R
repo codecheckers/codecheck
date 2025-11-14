@@ -32,8 +32,15 @@ add_markdown_title <- function(table_details, md_table, filter){
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
 render_register_md <- function(register_table, table_details, filter) {
-  register_table <- add_venue_hyperlinks_reg(register_table)
-  register_table <- add_venue_type_hyperlinks_reg(register_table)
+  # Convert certificate links to relative paths for HTML display
+  # (JSON and CSV keep absolute URLs)
+  register_table <- adjust_cert_links_relative(register_table, table_details)
+
+  # Format Report column for display (removes "https://" from text)
+  register_table <- add_report_hyperlinks_reg(register_table)
+
+  register_table <- add_venue_hyperlinks_reg(register_table, table_details)
+  register_table <- add_venue_type_hyperlinks_reg(register_table, table_details)
 
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)

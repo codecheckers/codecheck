@@ -3,6 +3,10 @@
 # Setup
 library(codecheck)
 
+# Load CONFIG
+config_path <- system.file("extdata", "config.R", package = "codecheck")
+source(config_path)
+
 # Create temporary directory for test output
 test_output_dir <- file.path(tempdir(), "codecheck_test_cert_json")
 if (dir.exists(test_output_dir)) {

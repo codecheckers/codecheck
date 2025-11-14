@@ -104,8 +104,14 @@ create_filtered_reg_csvs <- function(register_table, filter_by){
       register_table <- register_table %>% tidyr::unnest(Codechecker)
       register_table$Codechecker <- unlist(register_table$Codechecker)
 
-      # Filter out NA codecheckers
-      register_table <- register_table %>% filter(!is.na(Codechecker) & Codechecker != "NA")
+      # Deduplicate NA codecheckers: if a certificate has multiple codecheckers
+      # without ORCID (all marked as NA), it should only appear once in the NA list
+      # We keep one row per unique combination of Certificate ID and Codechecker
+      # This ensures each certificate appears only once in the NA codechecker page
+      # even if multiple codecheckers lack ORCID (fixes codecheckers/register#153)
+      # Note: We use Certificate column here (not Certificate ID) as it may not exist yet
+      register_table <- register_table %>%
+        distinct(Certificate, Codechecker, .keep_all = TRUE)
     }
 
     # Enrich register with additional fields (matching JSON output)

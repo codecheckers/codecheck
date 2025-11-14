@@ -4,12 +4,19 @@
 \alias{create_index_header_html}
 \title{Dynamically generates the index_header.html from a template file}
 \usage{
-create_index_header_html(output_dir, schema_org_jsonld = "")
+create_index_header_html(
+  output_dir,
+  schema_org_jsonld = "",
+  include_version_in_meta = TRUE
+)
 }
 \arguments{
 \item{output_dir}{The output directory}
 
 \item{schema_org_jsonld}{Optional Schema.org JSON-LD string to include in header (default: "")}
+
+\item{include_version_in_meta}{Whether to include version info in meta generator tag (default: TRUE).
+Set to FALSE for individual detail pages (will use "codecheck" only).}
 }
 \description{
 Dynamically generates the index_header.html from a template file

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_preprocess_register.R
 \name{add_report_links}
 \alias{add_report_links}
-\title{Function for adding clickable links to the report for each entry in the register table.}
+\title{Function for adding report URLs for each entry in the register table.}
 \usage{
 add_report_links(register_table, register)
 }
@@ -12,8 +12,8 @@ add_report_links(register_table, register)
 \item{register}{The register from the register.csv file}
 }
 \value{
-The adjusted register table
+The adjusted register table with Report column containing plain URLs
 }
 \description{
-Function for adding clickable links to the report for each entry in the register table.
+Function for adding report URLs for each entry in the register table.
 }

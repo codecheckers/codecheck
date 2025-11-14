@@ -131,6 +131,7 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
 #' @param cert_type A character string containing the venue type (journal, conference, community, institution).
 #' @param cert_venue A character string containing the venue name.
 #' @importFrom jsonlite write_json
+#' @export
 generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue) {
   # Get codecheck.yml metadata
   config_yml <- get_codecheck_yml(repo_link)
@@ -232,7 +233,7 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
 
     prefix_content <- paste0(
       nav_header_html,
-      '<div style="max-width: 1200px; margin: 1rem auto; padding: 0 1rem;">\n',
+      '<div class="breadcrumb-container">\n',
       breadcrumb_html,
       '\n</div>\n'
     )
@@ -254,14 +255,13 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
   output <- whisker.render(paste(postfix_template, collapse = "\n"), list(build_info = build_info))
   writeLines(output, file.path(output_dir, "index_postfix.html"))
 
-  # Create header with meta generator content and schema.org JSON-LD
+  # Create header with schema.org JSON-LD
+  # Note: meta generator on certificate pages uses "codecheck" without version info
+  # (similar to how build info is omitted) to avoid confusion about page freshness
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["cert"]][["header"]], warn = FALSE)
 
-  # Generate meta generator content from build metadata
-  meta_generator <- ""
-  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
-    meta_generator <- generate_meta_generator_content(CONFIG$BUILD_METADATA)
-  }
+  # Use "codecheck" only without version info on individual certificate pages
+  meta_generator <- "codecheck"
 
   # Generate Schema.org JSON-LD if repo_link is provided
   schema_org_jsonld <- ""

@@ -82,7 +82,7 @@ create_index_prefix_html <- function(output_dir, filter = NA, table_details = li
   # Combine navigation header and breadcrumbs
   prefix_content <- paste0(
     nav_header_html,
-    '<div style="max-width: 1200px; margin: 1rem auto; padding: 0 1rem;">\n',
+    '<div class="breadcrumb-container">\n',
     breadcrumb_html,
     '\n</div>\n'
   )
@@ -94,15 +94,20 @@ create_index_prefix_html <- function(output_dir, filter = NA, table_details = li
 #'
 #' @param output_dir The output directory
 #' @param schema_org_jsonld Optional Schema.org JSON-LD string to include in header (default: "")
+#' @param include_version_in_meta Whether to include version info in meta generator tag (default: TRUE).
+#'        Set to FALSE for individual detail pages (will use "codecheck" only).
 #' @importFrom whisker whisker.render
-create_index_header_html <- function(output_dir, schema_org_jsonld = ""){
+create_index_header_html <- function(output_dir, schema_org_jsonld = "", include_version_in_meta = TRUE){
   # Using the index_header_template
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["header"]], warn = FALSE)
 
-  # Generate meta generator content from build metadata
-  meta_generator <- ""
-  if (exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
+  # Generate meta generator content
+  # On listing/overview pages: include full version and commit info
+  # On individual pages: just use "codecheck" without version
+  if (include_version_in_meta && exists("BUILD_METADATA", envir = CONFIG) && !is.null(CONFIG$BUILD_METADATA)) {
     meta_generator <- generate_meta_generator_content(CONFIG$BUILD_METADATA)
+  } else {
+    meta_generator <- "codecheck"
   }
 
   # Calculate relative path to docs root based on output_dir depth
@@ -190,7 +195,18 @@ generate_href <- function(filter, table_details, href_type) {
 create_index_section_files <- function(output_dir, filter, table_details, schema_org_jsonld = "") {
   create_index_postfix_html(output_dir, filter, table_details)
   create_index_prefix_html(output_dir, filter, table_details)
-  create_index_header_html(output_dir, schema_org_jsonld = schema_org_jsonld)
+
+  # Determine whether to include version in meta generator
+  # Include version on overview/list pages (main register, all venues, all codecheckers)
+  # Exclude version from individual pages (specific venue, specific codechecker) - use "codecheck" only
+  include_version_in_meta <- TRUE
+  if (!is.na(filter) && table_details[["is_reg_table"]]) {
+    # This is an individual filtered page (specific venue or codechecker)
+    # Use "codecheck" only without version info
+    include_version_in_meta <- FALSE
+  }
+
+  create_index_header_html(output_dir, schema_org_jsonld = schema_org_jsonld, include_version_in_meta = include_version_in_meta)
 }
 
 #' Renders html for a single table

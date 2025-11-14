@@ -64,12 +64,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding-left: 0;
 }
 
 .navbar-brand {
     display: inline-flex;
     align-items: center;
     text-decoration: none;
+    padding: 0;
+    margin: 0;
 }
 
 .navbar-logo {
@@ -86,7 +89,7 @@
 .navbar-menu .nav-link {
     text-decoration: none;
     font-weight: 500;
-    font-size: 1rem;
+    font-size: 2rem;
     padding: 0.5rem 1rem;
     border-radius: 0.25rem;
     transition: background-color 0.2s, color 0.2s;
@@ -95,6 +98,10 @@
 .navbar-menu .nav-link:hover {
     background-color: #f0f0f0;
     color: #005522;
+}
+
+.navbar-menu .nav-link.active {
+    font-weight: 700;
 }
 
 /* Responsive navigation */
@@ -118,11 +125,26 @@
    Breadcrumbs
    ==================== */
 
+/* Container for breadcrumb navigation with consistent max-width */
+.breadcrumb-container {
+    max-width: 1200px;
+    margin: 1rem auto;
+}
+
+/* Left-align breadcrumbs with logo and other page elements */
+nav[aria-label="breadcrumb"] {
+    padding-left: 0;
+    margin-left: 0;
+    margin-bottom: 1.5rem;
+}
+
 .breadcrumb {
     background-color: transparent;
     padding: 0.75rem 0;
+    padding-left: 0;
+    margin-left: 0;
     border-radius: 0;
-    font-size: 0.9rem;
+    font-size: 1.08rem;
 }
 
 .breadcrumb-item + .breadcrumb-item::before {
@@ -223,4 +245,126 @@
 
 .redirect-footer-link {
     margin: 0 1rem;
+}
+
+/* ====================
+   Certificate Pages
+   ==================== */
+
+/* Certificate page container - wider than standard container */
+.cert-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+    padding-left: 0;
+}
+
+/* Base typography for certificate pages */
+body {
+    font-family: "PT Sans", Helvetica, Arial, sans-serif;
+}
+
+h1 {
+    margin-top: 2rem;
+}
+
+/* Card styling for certificate pages */
+.cert-card-title {
+    color: darkgreen;
+    margin-top: 0;
+}
+
+/* Responsive card heights */
+@media (max-width: 768px) {
+    .card {
+        min-height: 270px;
+    }
+}
+
+/* Certificate image display */
+.img-background {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    height: 100%;
+}
+
+.wrapper {
+    height: 80vh;
+    padding: 0;
+}
+
+.row {
+    margin: 0;
+}
+
+/* Certificate image slider */
+#image-slider {
+    cursor: pointer;
+}
+
+/* Text content containers */
+.text-container {
+    margin-top: 0.5rem;
+}
+
+.text-box {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+/* Citation generator */
+.citation-preview-wrapper {
+    position: relative;
+}
+
+.citation-preview {
+    background-color: #f8f9fa;
+    font-family: monospace;
+    font-size: 0.9em;
+    min-height: 80px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    padding-right: 3rem; /* Make room for the copy button */
+}
+
+.citation-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    padding: 0.4rem 0.6rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.citation-copy-btn:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.citation-copy-btn i {
+    margin: 0;
+    line-height: 1;
+}
+
+.citation-copy-feedback {
+    position: absolute;
+    top: 0.5rem;
+    right: 3.5rem;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+/* Certificate page footer link */
+.cert-footer-link {
+    margin-top: 2rem;
+    margin-left: 0;
+    padding-left: 0;
+    font-size: 0.9em;
 }

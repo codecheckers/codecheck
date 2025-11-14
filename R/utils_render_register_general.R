@@ -1,14 +1,124 @@
+#' Convert certificate links from absolute to relative paths based on page depth
+#'
+#' Transforms absolute certificate URLs to relative paths for HTML/Markdown display.
+#' The depth of the relative path is calculated based on the output directory structure.
+#' JSON and CSV exports retain absolute URLs as they don't call this function.
+#'
+#' @param register_table The register table with Certificate column containing absolute URLs
+#' @param table_details List containing output directory and other metadata
+#' @return The adjusted register table with relative certificate links
+#'
+#' @examples
+#' \dontrun{
+#' # For root level (docs/index.html):
+#' #   https://codecheck.org.uk/register/certs/2020-001/ -> ./certs/2020-001/
+#' # For nested level (docs/venues/journals/gigascience/index.html):
+#' #   https://codecheck.org.uk/register/certs/2020-001/ -> ../../../certs/2020-001/
+#' }
+adjust_cert_links_relative <- function(register_table, table_details){
+  if (!("Certificate" %in% names(register_table))) {
+    return(register_table)
+  }
+
+  # Calculate depth based on output directory
+  output_dir <- table_details[["output_dir"]]
+
+  # Count directory separators to determine depth
+  # Remove leading "docs/" if present
+  rel_path <- gsub("^docs/", "", output_dir)
+
+  # Count slashes to determine how many "../" we need
+  depth <- stringr::str_count(rel_path, "/")
+
+  # Build relative path prefix
+  if (depth == 0) {
+    # At root level (docs/index.html)
+    path_prefix <- "./certs/"
+  } else {
+    # In subdirectory - need to go up
+    path_prefix <- paste0(paste(rep("../", depth), collapse = ""), "certs/")
+  }
+
+  # Replace absolute URLs with relative paths in Certificate column
+  register_table$Certificate <- gsub(
+    CONFIG$HYPERLINKS[["certs"]],
+    path_prefix,
+    register_table$Certificate,
+    fixed = TRUE
+  )
+
+  # Also update Certificate Link column if it exists
+  if ("Certificate Link" %in% names(register_table)) {
+    register_table$`Certificate Link` <- gsub(
+      CONFIG$HYPERLINKS[["certs"]],
+      path_prefix,
+      register_table$`Certificate Link`,
+      fixed = TRUE
+    )
+  }
+
+  return(register_table)
+}
+
+#' Format Report column for display by creating markdown links with shortened text
+#'
+#' Removes "https://" from the display text to save space while keeping full URLs in links.
+#' This is only called during rendering; the Report column remains as plain URLs in the data.
+#'
+#' @param register_table The register table with Report column containing plain URLs
+#' @return The register table with Report column formatted as markdown links
+#' @export
+add_report_hyperlinks_reg <- function(register_table){
+  if (!("Report" %in% names(register_table))) {
+    return(register_table)
+  }
+
+  formatted_reports <- sapply(register_table$Report, function(report_url) {
+    if (is.na(report_url) || is.null(report_url) || report_url == "") {
+      return(report_url)
+    }
+
+    # Create display text by removing "https://" or "http://" prefix
+    display_text <- gsub("^https?://", "", report_url)
+
+    # Create markdown link: [display_text](full_url)
+    paste0("[", display_text, "](", report_url, ")")
+  }, USE.NAMES = FALSE)
+
+  register_table$Report <- formatted_reports
+  return(register_table)
+}
+
 #' Function for adding clickable links to the codecheck venue pages for each entry in the register table.
-#' 
+#' Uses relative paths for HTML display (absolute URLs used in JSON/CSV).
+#'
 #' @param register_table The register table
+#' @param table_details List containing output directory for relative path calculation
 #' @return The adjusted register table
-add_venue_hyperlinks_reg <- function(register_table){
+add_venue_hyperlinks_reg <- function(register_table, table_details = NULL){
   if (!("Venue" %in% names(register_table))) {
     return(register_table)
   }
 
+  # Calculate relative path prefix based on output directory depth
+  if (!is.null(table_details) && "output_dir" %in% names(table_details)) {
+    output_dir <- table_details[["output_dir"]]
+    rel_path <- gsub("^docs/", "", output_dir)
+    depth <- stringr::str_count(rel_path, "/")
+
+    if (depth == 0) {
+      # At root level (docs/index.html)
+      venue_hyperlink_base <- "./venues/"
+    } else {
+      # In subdirectory - need to go up
+      venue_hyperlink_base <- paste0(paste(rep("../", depth), collapse = ""), "venues/")
+    }
+  } else {
+    # Fallback to absolute URLs
+    venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
+  }
+
   list_hyperlinks <- c()
-  venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
 
   # Looping over the entries in the register
   for (i in seq_len(nrow(register_table))) {
@@ -17,7 +127,7 @@ add_venue_hyperlinks_reg <- function(register_table){
     # Retrieving the venue type which is needed for url construction
     venue_type <- register_table[i, ]$Type
     venue_type_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]]
-    
+
     # Generating the venue slug for the hyperlink
     venue_slug <- gsub(" ", "_", stringr::str_to_lower(venue_name))
     venue_hyperlink <- paste0("[", venue_name,"](",venue_hyperlink_base, venue_type_plural, "/", venue_slug, ")")
@@ -30,22 +140,41 @@ add_venue_hyperlinks_reg <- function(register_table){
 }
 
 #' Function for adding clickable links to the codecheck venue type pages for each entry in the register table.
-#' 
+#' Uses relative paths for HTML display (absolute URLs used in JSON/CSV).
+#'
 #' @param register_table The register table
+#' @param table_details List containing output directory for relative path calculation
 #' @return The adjusted register table
-add_venue_type_hyperlinks_reg <- function(register_table){
+add_venue_type_hyperlinks_reg <- function(register_table, table_details = NULL){
   if (!("Type" %in% names(register_table))) {
     return(register_table)
   }
 
+  # Calculate relative path prefix based on output directory depth
+  if (!is.null(table_details) && "output_dir" %in% names(table_details)) {
+    output_dir <- table_details[["output_dir"]]
+    rel_path <- gsub("^docs/", "", output_dir)
+    depth <- stringr::str_count(rel_path, "/")
+
+    if (depth == 0) {
+      # At root level (docs/index.html)
+      venue_hyperlink_base <- "./venues/"
+    } else {
+      # In subdirectory - need to go up
+      venue_hyperlink_base <- paste0(paste(rep("../", depth), collapse = ""), "venues/")
+    }
+  } else {
+    # Fallback to absolute URLs
+    venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
+  }
+
   list_hyperlinks <- c()
-  venue_hyperlink_base <- CONFIG$HYPERLINKS[["venues"]]
 
   # Looping over the entries in the register
   for (i in seq_len(nrow(register_table))) {
     venue_type <- register_table[i, ]$Type
     venue_type_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]]
-    
+
     venue_type_hyperlink <- paste0("[", stringr::str_to_title(venue_type), "](", venue_hyperlink_base, venue_type_plural, ")")
     list_hyperlinks <- c(list_hyperlinks, venue_type_hyperlink)
   }
@@ -102,8 +231,13 @@ create_register_files <- function(register_table, filter_by, outputs){
       register_table <- register_table %>% tidyr::unnest(Codechecker)
       register_table$Codechecker <- unlist(register_table$Codechecker)
 
-      # Filter out NA codecheckers
-      register_table <- register_table %>% filter(!is.na(Codechecker) & Codechecker != "NA")
+      # Deduplicate NA codecheckers: if a certificate has multiple codecheckers
+      # without ORCID (all marked as NA), it should only appear once in the NA list
+      # We keep one row per unique combination of Certificate ID and Codechecker
+      # This ensures each certificate appears only once in the NA codechecker page
+      # even if multiple codecheckers lack ORCID (fixes codecheckers/register#153)
+      register_table <- register_table %>%
+        distinct(`Certificate ID`, Codechecker, .keep_all = TRUE)
     }
 
     # Group the register_table by the filter column and nest the resulting groups
@@ -234,17 +368,24 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
 #'
 #' This function renders the register table into different output formats based on the specified type.
 #' It supports rendering the table as Markdown, HTML, or JSON.
+#' All outputs are sorted by certificate identifier for consistency.
 #'
 #' @param register_table The register table that needs to be rendered into different files.
 #' @param table_details A list of details related to the table (e.g., output directory, metadata).
 #' @param filter A string specifying the filter applied to the register data.
-#' @param output_type A string specifying the desired output format "json" for JSON, 
+#' @param output_type A string specifying the desired output format "json" for JSON,
 #'        "csv" for CSVs, "md" for MD and "html" for HTMLs.
 #'
 #' @return None. The function generates a file in the specified format.
 render_register <- function(register_table, table_details, filter = NA, output_type){
+  # Sort by certificate identifier for consistent ordering across all outputs
+  # (addresses codecheckers/register#160)
+  if ("Certificate" %in% names(register_table)) {
+    register_table <- register_table %>% arrange(Certificate)
+  }
+
   register_table <- filter_and_drop_register_columns(register_table, filter, output_type)
-  
+
   switch(output_type,
     "md" = render_register_md(register_table, table_details, filter),
     "html" = render_html(register_table, table_details, filter),

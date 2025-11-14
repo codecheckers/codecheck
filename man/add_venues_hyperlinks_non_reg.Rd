@@ -4,17 +4,19 @@
 \alias{add_venues_hyperlinks_non_reg}
 \title{Add Hyperlinks to Venues Table}
 \usage{
-add_venues_hyperlinks_non_reg(table, subcat)
+add_venues_hyperlinks_non_reg(table, subcat, table_details = NULL)
 }
 \arguments{
 \item{table}{The data frame containing the venues data.}
 
 \item{subcat}{An optional string specifying the subcategory (venue type) for the venues.}
+
+\item{table_details}{A list containing metadata including output_dir for relative path calculation.}
 }
 \value{
 The data frame with hyperlinks added to the appropriate columns.
 }
 \description{
-Adds hyperlinks to the venue names, venue types, and the number of codechecks 
+Adds hyperlinks to the venue names, venue types, and the number of codechecks
 in the venues table. If a subcategory is provided, it generates links based on venue types.
 }

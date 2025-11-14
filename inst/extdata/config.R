@@ -7,13 +7,13 @@ utils::globalVariables(c("CONFIG"))
 # Specifying the register table column widths
 # The names in the list are the filter type
 # For filters other than venues we use the general column widths
-# Column widths increased to use full table width, with Paper Title column significantly expanded
+# Column widths: Paper Title doubled, Report reduced significantly
 CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
   reg = list(
     # Main register and codecheckers: Certificate | Report | Paper Title | Venue | Type | Check date
-    general = "|:-------|:-----------------------------------------------------------------------------------|:------------------|:------------------|:---|:--------------------------|",
-    # Venues filter: Certificate | Report | Paper Title | Type | Check date
-    venues = "|:-------|:-----------------------------------------------------------------------------------|:---|:--------------------------|"
+    general = "|:-------|:--------------------------------------------------|:----------------------------------|:---------------|:---|:--------------------------|",
+    # Venues filter: Certificate | Report | Paper Title | Check date
+    venues = "|:-------|:--------------------------------------------------|:------|:--------------------------|"
   ),
 
   non_reg = list(

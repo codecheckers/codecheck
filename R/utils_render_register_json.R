@@ -51,7 +51,7 @@ set_paper_title_references <- function(register_table){
 }
 
 #' Renders register json for a single register_table
-#' 
+#'
 #' @param register_table The register table
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
@@ -63,18 +63,25 @@ render_register_json <- function(register_table, table_details, filter) {
 
   output_dir <- table_details[["output_dir"]]
 
-  # Keeping only those columns that are mentioned in the json columns and those that 
+  # Keeping only those columns that are mentioned in the json columns and those that
   # register table already has
   columns_to_keep <- intersect(CONFIG$JSON_COLUMNS, names(register_table_json))
 
+  # Main register.json: sorted by certificate identifier (done in render_register())
   jsonlite::write_json(
     register_table_json[, columns_to_keep],
     path = file.path(output_dir, "register.json"),
     pretty = TRUE
   )
 
+  # featured.json: sorted by check date (most recent first)
+  # (addresses codecheckers/register#160)
+  featured_table <- register_table_json
+  if ("Check date" %in% names(featured_table)) {
+    featured_table <- featured_table %>% arrange(desc(`Check date`))
+  }
   jsonlite::write_json(
-    utils::tail(register_table_json, CONFIG$FEATURED_COUNT)[, columns_to_keep],
+    utils::head(featured_table, CONFIG$FEATURED_COUNT)[, columns_to_keep],
     path = file.path(output_dir, "featured.json"),
     pretty = TRUE
   )

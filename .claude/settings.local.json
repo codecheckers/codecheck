@@ -42,7 +42,14 @@
       "WebFetch(domain:fontawesome.com)",
       "WebFetch(domain:schema.org)",
       "Bash(R -e:*)",
-      "WebFetch(domain:stackoverflow.com)"
+      "WebFetch(domain:stackoverflow.com)",
+      "Bash(git log:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git mv:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && grep -A 5 \"\"\"\"^codechecker:\"\"\"\" {}')",
+      "WebFetch(domain:citation.js.org)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

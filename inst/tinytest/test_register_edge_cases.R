@@ -211,7 +211,7 @@ expect_warning({
     )
   })
 
-}, "codechecker ORCID missing")
+}, "codechecker ORCID and GitHub username missing")
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 4)
 unlink(test_dir, recursive = TRUE)

@@ -57,11 +57,11 @@ add_paper_links <- function(register_table, register){
   return(register_table)
 }
 
-#' Function for adding clickable links to the report for each entry in the register table.
-#' 
+#' Function for adding report URLs for each entry in the register table.
+#'
 #' @param register_table The register table
 #' @param register The register from the register.csv file
-#' @return The adjusted register table
+#' @return The adjusted register table with Report column containing plain URLs
 add_report_links <- function(register_table, register) {
 
   reports <- c()
@@ -167,7 +167,8 @@ add_codechecker <- function(register_table, register) {
             }
             codechecker_ids <- c(codechecker_ids, github_username)
           } else {
-            # Skip codecheckers without ORCID or GitHub username
+            # Use "NA" as identifier for codecheckers without ORCID or GitHub username
+            codechecker_ids <- c(codechecker_ids, "NA")
             warning("codechecker ORCID and GitHub username missing for ", codechecker$name, " in ", config_yml$certificate)
           }
         }

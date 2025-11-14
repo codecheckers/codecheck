@@ -18,19 +18,20 @@ create_venues_tables <- function(register_table){
 
 #' Add Hyperlinks to Venues Table
 #'
-#' Adds hyperlinks to the venue names, venue types, and the number of codechecks 
+#' Adds hyperlinks to the venue names, venue types, and the number of codechecks
 #' in the venues table. If a subcategory is provided, it generates links based on venue types.
 #'
 #' @param table The data frame containing the venues data.
 #' @param subcat An optional string specifying the subcategory (venue type) for the venues.
+#' @param table_details A list containing metadata including output_dir for relative path calculation.
 #'
 #' @return The data frame with hyperlinks added to the appropriate columns.
-add_venues_hyperlinks_non_reg <- function(table, subcat){
+add_venues_hyperlinks_non_reg <- function(table, subcat, table_details = NULL){
   if (is.null(subcat)){
-    return(add_all_venues_hyperlinks_non_reg(table))
+    return(add_all_venues_hyperlinks_non_reg(table, table_details))
   }
 
-  return(add_venue_type_hyperlinks_non_reg(table, venue_type = subcat))
+  return(add_venue_type_hyperlinks_non_reg(table, venue_type = subcat, table_details))
 }
 
 #' Create All Venues Table
@@ -92,13 +93,18 @@ create_all_venues_table <- function(register_table){
 
 #' Add Hyperlinks to All Venues Table
 #'
-#' Adds hyperlinks to the venue names, venue types, and the number of codechecks 
+#' Adds hyperlinks to the venue names, venue types, and the number of codechecks
 #' in the all venues table. The links point to the venue's page and the venue type's page.
+#' Uses relative paths for HTML display (absolute URLs used in JSON/CSV).
 #'
 #' @param table The data frame containing data on all venues.
+#' @param table_details A list containing metadata including output_dir for relative path calculation.
 #'
 #' @return The data frame with hyperlinks added to the appropriate columns.
-add_all_venues_hyperlinks_non_reg <- function(table){
+add_all_venues_hyperlinks_non_reg <- function(table, table_details = NULL){
+  # Calculate relative path prefix
+  # All venues page is at docs/venues/index.html, so use ./ for venue links
+  venues_base <- "./"
   # Extracting column names from CONFIG
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
 
@@ -114,12 +120,12 @@ add_all_venues_hyperlinks_non_reg <- function(table){
     # NOTE: The order of these mutation must be kept in this order because of
     # dependencies on the links on the column values
     mutate(
-      # Generate venue name hyperlink
+      # Generate venue name hyperlink with relative path
       !!col_names[["Venue"]] := mapply(
         function(venue_name, venue_type, slug) {
           paste0(
             "[", venue_name, "](",
-            CONFIG$HYPERLINKS[["venues"]],
+            venues_base,
             CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]], "/",
             slug, ")"
           )
@@ -134,11 +140,11 @@ add_all_venues_hyperlinks_non_reg <- function(table){
       # Generate no. of codechecks hyperlink with "Open checks" link
       !!col_names[["no_codechecks"]] := mapply(
         function(no_checks, venue_type, slug, label) {
-          # Base link to see all checks for this venue
+          # Base link to see all checks for this venue (relative path)
           base_link <- paste0(
             no_checks,
             " [(see all checks)](",
-            CONFIG$HYPERLINKS[["venues"]],
+            venues_base,
             CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]], "/",
             slug, "/)"
           )
@@ -163,11 +169,11 @@ add_all_venues_hyperlinks_non_reg <- function(table){
         USE.NAMES = FALSE
       ),
 
-      # Generate venue type hyperlink
+      # Generate venue type hyperlink with relative path
       !!col_names[["Type"]] := sapply(!!sym(col_names[["Type"]]), function(venue_type) {
         paste0(
           "[", stringr::str_to_title(venue_type),
-          "](", CONFIG$HYPERLINKS[["venues"]],
+          "](", venues_base,
           CONFIG$VENUE_SUBCAT_PLURAL[[venue_type]], "/)"
         )
       })
@@ -243,14 +249,19 @@ create_venue_type_tables <- function(register_table){
 
 #' Add Hyperlinks to Venue Type-Specific Table
 #'
-#' Adds hyperlinks to the venue names and the number of codechecks 
+#' Adds hyperlinks to the venue names and the number of codechecks
 #' in the venue type-specific table. The links point to the venue's page for each venue type.
+#' Uses relative paths for HTML display (absolute URLs used in JSON/CSV).
 #'
 #' @param table The data frame containing the venue type-specific data.
 #' @param venue_type A string specifying the venue type.
+#' @param table_details A list containing metadata including output_dir for relative path calculation.
 #'
 #' @return The data frame with hyperlinks added to the appropriate columns.
-add_venue_type_hyperlinks_non_reg <- function(table, venue_type) {
+add_venue_type_hyperlinks_non_reg <- function(table, venue_type, table_details = NULL) {
+  # Calculate relative path prefix
+  # Venue type pages are at docs/venues/journals/index.html, so use ./ for venue links
+  venues_base <- "./"
   table_col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
 
   venue_col_name <- paste(stringr::str_to_title(venue_type), "name")
@@ -269,25 +280,23 @@ add_venue_type_hyperlinks_non_reg <- function(table, venue_type) {
     table$venue_label <- NA_character_
   }
 
-  # Add hyperlinks to "{Type} name" and "No. of codechecks" column
+  # Add hyperlinks to "{Type} name" and "No. of codechecks" column with relative paths
   table <- table %>%
     mutate(
       !!sym(venue_col_name) := paste0(
         "[", !!sym(venue_col_name), "](",
-        CONFIG$HYPERLINKS[["venues"]],
-        venue_type, "/",
+        venues_base,
         venue_slug, "/)"
       ),
 
       # Generate no. of codechecks hyperlink with "Open checks" link
       !!sym(table_col_names[["no_codechecks"]]) := mapply(
         function(no_checks, slug, label) {
-          # Base link to see all checks for this venue
+          # Base link to see all checks for this venue (relative path)
           base_link <- paste0(
             no_checks,
             " [(see all checks)](",
-            CONFIG$HYPERLINKS[["venues"]],
-            venue_type, "/",
+            venues_base,
             slug, "/)"
           )
 

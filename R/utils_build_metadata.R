@@ -336,6 +336,7 @@ generate_codechecker_schema_org <- function(codechecker_orcid, codechecker_name,
     # Add check date if available
     if ("Check date" %in% names(register_table) &&
         !is.null(register_table$`Check date`[i]) &&
+        !is.na(register_table$`Check date`[i]) &&
         register_table$`Check date`[i] != "") {
       parsed_date <- parsedate::parse_date(register_table$`Check date`[i])
       if (!is.na(parsed_date)) {

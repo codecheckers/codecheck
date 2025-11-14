@@ -38,10 +38,21 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
       codecheckers_path <- paste0(base_path, "/codecheckers/index.html")
     }
 
+    # Determine which page is active based on filter
+    venues_active <- ""
+    codecheckers_active <- ""
+    if (!is.na(filter)) {
+      if (filter == "venues") {
+        venues_active <- " active"
+      } else if (filter == "codecheckers") {
+        codecheckers_active <- " active"
+      }
+    }
+
     menu_html <- paste0('
     <nav class="navbar-menu">
-      <a href="', venues_path, '" class="nav-link">All Venues</a>
-      <a href="', codecheckers_path, '" class="nav-link">All Codecheckers</a>
+      <a href="', venues_path, '" class="nav-link', venues_active, '">All Venues</a>
+      <a href="', codecheckers_path, '" class="nav-link', codecheckers_active, '">All Codecheckers</a>
       <a href="https://codecheck.org.uk/" class="nav-link">About</a>
     </nav>')
   }
@@ -165,7 +176,7 @@ generate_breadcrumb <- function(filter = NA, table_details = list(), base_path =
   }
 
   # Generate Bootstrap breadcrumb HTML
-  html <- '<nav aria-label="breadcrumb" style="margin-bottom: 1.5rem;">\n'
+  html <- '<nav aria-label="breadcrumb">\n'
   html <- paste0(html, '  <ol class="breadcrumb">\n')
 
   for (item in items) {

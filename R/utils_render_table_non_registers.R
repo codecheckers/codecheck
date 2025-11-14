@@ -123,8 +123,8 @@ generate_html_postfix_hrefs_non_reg <- function(filter, table_details){
 render_non_register_md <- function(table, table_details, filter){
   # Add hyperlinks
   table <- switch(filter,
-    "venues" = add_venues_hyperlinks_non_reg(table, table_details[["subcat"]]),
-    "codecheckers" = add_all_codecheckers_hyperlink(table)
+    "venues" = add_venues_hyperlinks_non_reg(table, table_details[["subcat"]], table_details),
+    "codecheckers" = add_all_codecheckers_hyperlink(table, table_details)
   )
 
   table <- kable(table)

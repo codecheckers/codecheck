@@ -322,7 +322,9 @@ add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venu
   for (checker in config_yml$codechecker){
     # Creating a hyperlink to codechecker landing page if ORCID ID available
     if ("ORCID" %in% names(checker)){
-      codechecker <- paste0("[", checker$name, "](", CONFIG$HYPERLINKS["codecheckers"], checker$ORCID, "/)")
+      # Use relative path: certificate pages are at docs/certs/YYYY-NNN/
+      # so we need to go up 2 levels to reach codecheckers/
+      codechecker <- paste0("[", checker$name, "](../../codecheckers/", checker$ORCID, "/)")
     }
 
     else{
@@ -369,9 +371,10 @@ add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venu
   # Get plural form of type from CONFIG
   type_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[cert_type]]
 
-  # Create links
-  type_link <- paste0("[", cert_type, "](", CONFIG$HYPERLINKS[["venues"]], type_plural, "/)")
-  venue_link <- paste0("[", cert_venue, "](", CONFIG$HYPERLINKS[["venues"]], type_plural, "/", venue_slug, "/)")
+  # Create relative links: certificate pages are at docs/certs/YYYY-NNN/
+  # so we need to go up 2 levels to reach venues/
+  type_link <- paste0("[", cert_type, "](../../venues/", type_plural, "/)")
+  venue_link <- paste0("[", cert_venue, "](../../venues/", type_plural, "/", venue_slug, "/)")
 
   # Replace placeholders
   md_content <- gsub("\\$codecheck_type\\$", type_link, md_content)

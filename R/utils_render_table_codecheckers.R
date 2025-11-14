@@ -12,8 +12,8 @@ create_all_codecheckers_table <- function(register_table){
   register_table <- register_table %>% tidyr::unnest(Codechecker)
   register_table$Codechecker <- unlist(register_table$Codechecker)
 
-  # Filter out NA codecheckers
-  register_table <- register_table %>% filter(!is.na(Codechecker) & Codechecker != "NA")
+  # Filter out only R's NA (missing values), but keep "NA" string for codecheckers without ORCID
+  register_table <- register_table %>% filter(!is.na(Codechecker))
 
   # Only keeping the Codechecker column and distinct values
   new_table <- register_table %>%
@@ -24,7 +24,9 @@ create_all_codecheckers_table <- function(register_table){
   # Merge both ORCID and GitHub username dictionaries
   all_codecheckers_dict <- c(CONFIG$DICT_ORCID_ID_NAME, CONFIG$DICT_GITHUB_USERNAME_NAME)
   new_table <- new_table %>%
-    mutate(`codechecker_name` = recode(Codechecker, !!!all_codecheckers_dict))
+    mutate(`codechecker_name` = recode(Codechecker, !!!all_codecheckers_dict)) %>%
+    # Handle "NA" identifier by showing a descriptive name
+    mutate(`codechecker_name` = ifelse(Codechecker == "NA", "Codecheckers without ORCID", codechecker_name))
 
   # Adding no. of codechecks column
   # Count no. codechecks per Codechecker
@@ -50,13 +52,19 @@ create_all_codecheckers_table <- function(register_table){
 
 #' Add Hyperlinks to Codecheckers Table
 #'
-#' Adds hyperlinks to the codecheckers table by modifying the codechecker names, 
+#' Adds hyperlinks to the codecheckers table by modifying the codechecker names,
 #' number of codechecks, and ORCID IDs into clickable links.
+#' Uses relative paths for internal links (codecheckers pages) and absolute URLs for external links.
 #'
 #' @param table The codecheckers table
+#' @param table_details A list containing metadata including output_dir for relative path calculation.
 #'
 #' @return The data frame with added hyperlinks in the specified columns.
-add_all_codecheckers_hyperlink <- function(table){
+add_all_codecheckers_hyperlink <- function(table, table_details = NULL){
+  # Calculate relative path prefix
+  # Codecheckers page is at docs/codecheckers/index.html, so use ./ for codechecker links
+  codecheckers_base <- "./"
+
   # Extracting column names from CONFIG
   col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["codecheckers"]]
 
@@ -68,26 +76,29 @@ add_all_codecheckers_hyperlink <- function(table){
     # dependencies on the links on the column values
     # Using ':=' to generate names programmatically, see https://dplyr.tidyverse.org/articles/programming.html#name-injection
     mutate(
-      # Generate codechecker table hyperlink
+      # Generate codechecker table hyperlink with relative path
       !!col_names[["codechecker_name"]] := paste0(
         "[", !!sym(col_names[["codechecker_name"]]),
-        "](", CONFIG$HYPERLINKS[["codecheckers"]],
+        "](", codecheckers_base,
         !!sym(col_names[["Codechecker"]]), "/)"
       ),
 
 
-      # Generate no. of codechecks hyperlink
+      # Generate no. of codechecks hyperlink with relative path
       !!col_names[["no_codechecks"]] := paste0(
         !!sym(col_names[["no_codechecks"]]),
-        " [(see all checks)](", CONFIG$HYPERLINKS[["codecheckers"]],
+        " [(see all checks)](", codecheckers_base,
         !!sym(col_names[["Codechecker"]]), "/)"
       ),
 
       # Generate identifier hyperlink (ORCID or GitHub)
-      # Check if identifier is ORCID (format: NNNN-NNNN-NNNN-NNNX) or GitHub username
+      # Check if identifier is ORCID (format: NNNN-NNNN-NNNN-NNNX), GitHub username, or NA
       !!col_names[["Codechecker"]] := sapply(!!sym(col_names[["Codechecker"]]), function(id) {
         is_orcid <- grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", id)
-        if (is_orcid) {
+        if (id == "NA") {
+          # NA: no identifier available, leave empty
+          ""
+        } else if (is_orcid) {
           # ORCID: link to ORCID profile
           paste0("[", id, "](", CONFIG$HYPERLINKS[["orcid"]], id, ")")
         } else {
