@@ -1,5 +1,7 @@
 # codecheck (development version)
 
+# codecheck 0.24.0
+
 ## Register Enhancements
 
 * **Relative paths for localhost development**: All internal navigation links in register tables and certificate pages now use relative paths instead of absolute URLs pointing to codecheck.org.uk. This enables seamless development and testing on localhost. Includes certificate links, venue links, venue type links, and codechecker links throughout the register. JSON and CSV exports continue to use absolute URLs for external consumption
