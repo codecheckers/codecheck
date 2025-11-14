@@ -13,6 +13,8 @@
 #' @param codecheck_repo_path Optional path to the codecheck package repository for build metadata (default: NULL)
 #' @param from The first register entry to check
 #' @param to The last register entry to check
+#' @param parallel Logical; if TRUE, renders certificates in parallel using multiple cores. Defaults to FALSE.
+#' @param ncores Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #'
@@ -32,7 +34,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             venues_file = "venues.csv",
                             codecheck_repo_path = NULL,
                             from = 1,
-                            to = nrow(register)) {
+                            to = nrow(register),
+                            parallel = FALSE,
+                            ncores = NULL) {
   message("Rendering register using codecheck version ", utils::packageVersion("codecheck"), " from ", from, " to ", to)
 
   # Loading config.R files
@@ -63,7 +67,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   CONFIG$NO_CODECHECKS <- nrow(register_table)
 
   if("html" %in% outputs) {
-    render_cert_htmls(register_table, force_download = FALSE)
+    render_cert_htmls(register_table, force_download = FALSE, parallel = parallel, ncores = ncores)
   }
 
   create_filtered_reg_csvs(register_table, filter_by)

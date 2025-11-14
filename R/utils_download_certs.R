@@ -21,31 +21,29 @@ download_cert_pdf <- function(report_link, cert_id){
 
   # Could not find a cert download url
   if (is.null(cert_download_url)){
-    warning(paste("Failed to download the file. No link will be added to the cert", cert_id, ". No link will 
-    be added to this cert."))
+    warning(cert_id, " | Failed to download the file. No download link found")
     return(0)
   }
 
   # Found a cert download url
   else{
     if (grepl("zip", cert_download_url)){
-      pdf_cert_retrieval_status <- extract_cert_pdf_from_zip(cert_download_url, cert_sub_dir)
+      pdf_cert_retrieval_status <- extract_cert_pdf_from_zip(cert_download_url, cert_sub_dir, cert_id)
       return(pdf_cert_retrieval_status)
     }
 
     else {
       # Download the PDF file
-      pdf_path <- file.path(cert_sub_dir, "cert.pdf") 
+      pdf_path <- file.path(cert_sub_dir, "cert.pdf")
       download_response <- httr::GET(cert_download_url, httr::write_disk(pdf_path, overwrite = TRUE))
-      
+
       if (httr::status_code(download_response) == 200) {
-        message(paste("Cert", cert_id, "downloaded successfully"))
+        message(cert_id, " | Downloaded successfully")
         return(1)
-      } 
+      }
       # Failed to download file
       else{
-        warning(paste("Unsuccessful GET request to download certificate", cert_id, ". No link will 
-        be added to this cert."))
+        warning(cert_id, " | Unsuccessful GET request to download certificate")
         return(0)
       }
     }
@@ -118,7 +116,7 @@ get_osf_cert_link <- function(report_link, cert_id){
 
   # If no files were retrieved, warn and return NULL
   if (length(all_files) == 0) {
-    warning(paste("No files found for node", node_id))
+    warning(cert_id, " | No files found for OSF node ", node_id)
     return(NULL)
   }
 
@@ -135,10 +133,10 @@ get_osf_cert_link <- function(report_link, cert_id){
 
   # If multiple or no PDF files are found, return a warning
   if (length(pdf_files) > 1) {
-    warning(paste("Multiple PDF files found in the OSF node. Cannot determine the correct cert file to download for cert", cert_id))
+    warning(cert_id, " | Multiple PDF files found in OSF node. Cannot determine correct cert file")
     return(NULL)
   } else if (length(pdf_files) == 0) {
-    warning(paste("No PDF certs found for certificate with id", cert_id))
+    warning(cert_id, " | No PDF certs found in OSF node")
     return(NULL)
   }
 
@@ -192,30 +190,30 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
         }
 
         else{
-          warning(paste("Multiple PDF files found in the Zenodo node. Cannot determine the correct cert file to download for cert", cert_id))
+          warning(cert_id, " | Multiple PDF files found in Zenodo node. Cannot determine correct cert file")
           return(NULL)
         }
-      } 
+      }
       else if (nrow(pdf_files) == 0) {
         # Check for ZIP files if no PDF is found
         zip_files <- files_list[grepl("\\.zip$", files_list$key, ignore.case = TRUE), ]
-        
+
         if (nrow(zip_files) == 1) {
           # Download the ZIP file
           zip_file_url <- zip_files$links$content
           return(zip_file_url)
         }
 
-        warning(paste("No PDF certs found for certificate with id", cert_id))
+        warning(cert_id, " | No PDF certs found in Zenodo node")
         return(NULL)
       }
 
       cert_file <- pdf_files[1, ]
       return (cert_file$links$content)
-    } 
-  } 
+    }
+  }
   else {
-    warning(paste("Could not access the Zenodo API. Skipping retrieving cert", cert_id))
+    warning(cert_id, " | Could not access Zenodo API")
     return(NULL)
   }
 }
@@ -247,15 +245,16 @@ get_researchequals_cert_link <- function(report_link, cert_id) {
 
 
 #' Downloads a ZIP file from the given URL, searches for "codecheck.pdf" within its contents,
-#' renames it to "cert.pdf," and saves it in the specified directory. 
+#' renames it to "cert.pdf," and saves it in the specified directory.
 #'
 #' @param zip_download_url URL to download the ZIP file from.
 #' @param cert_sub_dir Directory to save the extracted certificate PDF.
-#' 
+#' @param cert_id ID of the certificate, used for logging and warnings.
+#'
 #' @importFrom utils download.file unzip
 #'
 #' @return 1 if "codecheck.pdf" is found and saved, otherwise 0.
-extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir){
+extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir, cert_id){
   zip_dir <- file.path(cert_sub_dir, "content.zip")
   
   # Download the ZIP file
@@ -274,15 +273,15 @@ extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir){
   # If "codecheck.pdf" exists, move it to the cert_sub_dir
     if (length(codecheck_path) == 1) {
       file.rename(codecheck_path, file.path(cert_sub_dir, "cert.pdf"))
-      
+
       # Delete the unzipped temporary directory and all its contents
       unlink(temp_unzip_dir, recursive = TRUE)
       unlink(zip_dir)
-      return(1) 
-    } 
+      return(1)
+    }
     else {
-      warning("'codecheck.pdf' not found in the ZIP file")
-      
+      warning(cert_id, " | 'codecheck.pdf' not found in ZIP file")
+
       # Cleanup: Delete the unzipped temporary directory and all its contents
       unlink(temp_unzip_dir, recursive = TRUE)
       unlink(zip_dir)

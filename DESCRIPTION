@@ -1,6 +1,6 @@
 Package: codecheck
 Title: Helper Functions for CODECHECK Project
-Version: 0.24.0
+Version: 0.24.0.9000
 Authors@R: 
     c(person(given = "Stephen",
             family = "Eglen",
@@ -46,7 +46,8 @@ Imports:
     readxl,
     rsvg,
     magick,
-    git2r
+    git2r,
+    parallel
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3

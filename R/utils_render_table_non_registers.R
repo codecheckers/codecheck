@@ -6,10 +6,17 @@
 #' @param register_table The original register data.
 #' @param filter_by A list specifying the filters to apply (e.g., "venues", "codecheckers").
 create_non_register_files <- function(register_table, filter_by){
+  message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Starting non-register file creation")
+  start_time_total <- Sys.time()
+
   for (filter in filter_by){
+    message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Creating non-register files for filter: ", filter)
+    start_time_filter <- Sys.time()
+
     list_tables <- create_tables_non_register(register_table, filter)
 
     for (table_name in names(list_tables)){
+      start_time_table <- Sys.time()
       table <- list_tables[[table_name]]
 
       # Table does not belong to a subcategory. Setting subcat to NULL
@@ -21,18 +28,28 @@ create_non_register_files <- function(register_table, filter_by){
       else{subcat <- table_name}
       table_details <- generate_table_details_non_reg(table, filter, subcat)
 
+      # For venue type-specific pages, remove venue_label column before rendering
+      # It's only useful on the "all venues" page where different types are mixed
+      if (filter == "venues" && !is.null(subcat)) {
+        if ("venue_label" %in% colnames(table)) {
+          table <- table %>% select(-venue_label)
+        }
+      }
+
       render_html(table, table_details, filter)
 
-      # Removing the unnecessary columns before creating html and json
+      # Removing the unnecessary columns before creating JSON
       if (filter == "venues"){
-        # Rename venue_label to its display name before output
+        # Rename venue_label to its display name for JSON (if still present)
         col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["venues"]]
         if ("venue_label" %in% colnames(table)) {
           table <- table %>%
             rename(!!sym(col_names[["venue_label"]]) := venue_label)
         }
         # Remove slug column
-        table <- table %>% select(-`venue_slug`)
+        if ("venue_slug" %in% colnames(table)) {
+          table <- table %>% select(-`venue_slug`)
+        }
       }
 
       # Saving the json file
@@ -41,8 +58,17 @@ create_non_register_files <- function(register_table, filter_by){
         path = file.path(table_details[["output_dir"]], "index.json"),
         pretty = TRUE
       )
+
+      elapsed_table <- as.numeric(difftime(Sys.time(), start_time_table, units = "secs"))
+      message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Completed non-register ", filter, " ", table_name, " in ", sprintf("%.2f", elapsed_table), " seconds")
     }
+
+    elapsed_filter <- as.numeric(difftime(Sys.time(), start_time_filter, units = "secs"))
+    message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Completed non-register filter ", filter, " (", length(list_tables), " tables) in ", sprintf("%.2f", elapsed_filter), " seconds")
   }
+
+  elapsed_total <- as.numeric(difftime(Sys.time(), start_time_total, units = "secs"))
+  message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Completed all non-register files in ", sprintf("%.2f", elapsed_total), " seconds")
 }
 
 #' Create Non-Register Tables

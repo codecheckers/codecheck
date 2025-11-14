@@ -1,56 +1,212 @@
-#' Generates HTML files for each certificate listed in the given register table. 
-#' It checks for the existence of the certificate PDF, downloads it if necessary, and 
-#' converts it to JPEG format for embedding. 
+#' Generates HTML files for each certificate listed in the given register table.
+#' It checks for the existence of the certificate PDF, downloads it if necessary, and
+#' converts it to JPEG format for embedding.
 #'
 #' @param register_table A data frame containing details of each certificate, including repository links and report links.
 #' @param force_download Logical; if TRUE, forces the download of certificate PDFs even if they already exist locally. Defaults to FALSE.
-render_cert_htmls <- function(register_table, force_download = FALSE){
+#' @param parallel Logical; if TRUE, renders certificates in parallel using multiple cores. Defaults to FALSE.
+#' @param ncores Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.
+render_cert_htmls <- function(register_table, force_download = FALSE, parallel = FALSE, ncores = NULL){
   # Read template
   html_template <- readLines(CONFIG$CERTS_DIR[["cert_page_template"]])
 
-  # Loop over each cert in the register table
-  for (i in 1:nrow(register_table)){
-    download_cert_status <- NA
-    
-    abstract <- get_abstract(register_table[i, ]$Repository)
+  # Auto-detect cores if not specified
+  if (is.null(ncores)) {
+    ncores <- max(1, parallel::detectCores() - 1)
+  }
 
-    # Retrieving report link and cert id
-    report_link <- register_table[i, ]$Report
-    cert_hyperlink <- register_table[i, ]$Certificate
+  # Disable parallel if only 1 core requested or only 1 certificate
+  if (ncores <= 1 || nrow(register_table) <= 1) {
+    parallel <- FALSE
+  }
+
+  message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Starting certificate HTML rendering for ", nrow(register_table), " certificates")
+  if (parallel) {
+    message("    Using parallel execution with ", ncores, " cores")
+  } else {
+    message("    Using sequential execution")
+  }
+  start_time_total <- Sys.time()
+
+  # Define the function to render one certificate
+  # This will be executed by each worker in parallel or sequentially
+  render_one_certificate <- function(i, register_table, force_download, verbose = TRUE) {
+    start_time_cert <- Sys.time()
+
+    # Extract certificate information
+    cert_row <- register_table[i, ]
+    cert_hyperlink <- cert_row$Certificate
     cert_id <- sub("\\[(.*)\\]\\(.*\\)", "\\1", cert_hyperlink)
+    report_link <- cert_row$Report
+    repo_link <- cert_row$Repository
+    cert_type <- cert_row$Type
+    cert_venue <- cert_row$Venue
 
-    if(CONFIG$CERT_DOWNLOAD_AND_CONVERT) {
-      # Define paths for the certificate PDF and JPEG
-      pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf")
-      pdf_exists <- file.exists(pdf_path)
-      
-      # Download the PDF if it doesn't exist or if force_download is TRUE
-      if (!pdf_exists || force_download) {
-        download_cert_status <- download_cert_pdf(report_link, cert_id)
-        # Successfully downloaded cert
-        # Proceeding to convert pdfs to jpegs
-        if (download_cert_status == 1){
-          convert_cert_pdf_to_png(cert_id)
+    tryCatch({
+      # Get abstract
+      abstract <- get_abstract(repo_link)
+
+      download_cert_status <- NA
+
+      # PDF download and conversion
+      if (CONFIG$CERT_DOWNLOAD_AND_CONVERT) {
+        pdf_path <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf")
+        pdf_exists <- file.exists(pdf_path)
+
+        if (!pdf_exists || force_download) {
+          # Download PDF (I/O-bound)
+          download_cert_status <- tryCatch(
+            download_cert_pdf(report_link, cert_id),
+            error = function(e) {
+              warning(cert_id, " | Error downloading PDF: ", e$message)
+              0
+            }
+          )
+
+          # Convert PDF to PNG (CPU/I/O-bound)
+          if (download_cert_status == 1) {
+            tryCatch(
+              convert_cert_pdf_to_png(cert_id),
+              error = function(e) {
+                warning(cert_id, " | Error converting PDF: ", e$message)
+              }
+            )
+          }
+
+          # Rate limiting - only in sequential mode
+          # In parallel mode, each worker handles its own requests without global delay
+          if (!parallel) {
+            Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
+          }
+        } else {
+          download_cert_status <- 1
         }
-        
-        # Delaying requests to adhere to request limits
-        Sys.sleep(CONFIG$CERT_REQUEST_DELAY)
+      } else {
+        download_cert_status <- 0
       }
-      
-      # The pdf exists and force download is False
-      else{
-        download_cert_status <- 1
-      }
-    } else {
-      # do not display a certificate
-      download_cert_status <- 0
-    }
-    
-    # Extract Type and Venue for the certificate
-    cert_type <- register_table[i, ]$Type
-    cert_venue <- register_table[i, ]$Venue
 
-    render_cert_html(cert_id, register_table[i, ]$Repository, download_cert_status, cert_type, cert_venue)
+      # Render HTML (CPU/I/O-bound)
+      tryCatch(
+        render_cert_html(cert_id, repo_link, download_cert_status, cert_type, cert_venue),
+        error = function(e) {
+          warning(cert_id, " | Error rendering HTML: ", e$message)
+        }
+      )
+
+      elapsed_cert <- as.numeric(difftime(Sys.time(), start_time_cert, units = "secs"))
+
+      # Return result
+      list(
+        cert_id = cert_id,
+        index = i,
+        elapsed = elapsed_cert,
+        success = TRUE,
+        error = NULL
+      )
+
+    }, error = function(e) {
+      elapsed_cert <- as.numeric(difftime(Sys.time(), start_time_cert, units = "secs"))
+      list(
+        cert_id = cert_id,
+        index = i,
+        elapsed = elapsed_cert,
+        success = FALSE,
+        error = conditionMessage(e)
+      )
+    })
+  }
+
+  # Execute rendering (parallel or sequential)
+  results <- if (parallel && ncores > 1) {
+    message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Launching ", ncores, " parallel workers...")
+
+    if (.Platform$OS.type == "windows") {
+      # Windows: use cluster (parLapply)
+      cl <- parallel::makeCluster(ncores)
+
+      # Export required objects and functions to cluster
+      # This ensures each worker has access to needed data and functions
+      parallel::clusterExport(cl,
+                            c("CONFIG", "register_table", "force_download", "parallel"),
+                            envir = environment())
+
+      # Load required packages on each worker
+      parallel::clusterEvalQ(cl, {
+        library(codecheck)
+      })
+
+      # Run in parallel
+      results <- tryCatch({
+        parallel::parLapply(cl, 1:nrow(register_table), function(i) {
+          render_one_certificate(i, register_table, force_download, verbose = FALSE)
+        })
+      }, finally = {
+        # Always stop cluster
+        parallel::stopCluster(cl)
+      })
+
+      results
+
+    } else {
+      # Unix/Mac: use forking (mclapply) - simpler and more efficient
+      # Forking shares memory, so no need to export objects
+      parallel::mclapply(1:nrow(register_table), function(i) {
+        render_one_certificate(i, register_table, force_download, verbose = FALSE)
+      }, mc.cores = ncores, mc.preschedule = TRUE)
+    }
+
+  } else {
+    # Sequential execution
+    message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Processing certificates sequentially...")
+
+    lapply(1:nrow(register_table), function(i) {
+      result <- render_one_certificate(i, register_table, force_download, verbose = FALSE)
+      # Log each completion in sequential mode
+      message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"),
+              "] ", result$cert_id, " | Completed",
+              " (", result$index, "/", nrow(register_table), ") in ",
+              sprintf("%.2f", result$elapsed), " seconds")
+      result
+    })
+  }
+
+  # Process and report results
+  elapsed_total <- as.numeric(difftime(Sys.time(), start_time_total, units = "secs"))
+
+  # Count successes and failures
+  successes <- sum(sapply(results, function(r) r$success))
+  failures <- length(results) - successes
+
+  # Calculate timing statistics
+  elapsed_times <- sapply(results, function(r) r$elapsed)
+  avg_time <- mean(elapsed_times)
+  median_time <- median(elapsed_times)
+  min_time <- min(elapsed_times)
+  max_time <- max(elapsed_times)
+
+  # Print summary
+  message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"),
+          "] Completed all ", nrow(register_table), " certificates")
+  message("    Total time: ", sprintf("%.2f", elapsed_total), " seconds")
+  message("    Avg time per cert: ", sprintf("%.2f", avg_time), " seconds")
+  message("    Median time: ", sprintf("%.2f", median_time), " seconds")
+  message("    Range: ", sprintf("%.2f", min_time), " - ", sprintf("%.2f", max_time), " seconds")
+  message("    Successes: ", successes, " / ", length(results))
+
+  if (failures > 0) {
+    message("    Failures: ", failures)
+    message("    Failed certificates:")
+    failed <- results[!sapply(results, function(r) r$success)]
+    for (f in failed) {
+      message("      - ", f$cert_id, ": ", f$error)
+    }
+  }
+
+  if (parallel && ncores > 1) {
+    theoretical_speedup <- nrow(register_table) * avg_time / elapsed_total
+    efficiency <- theoretical_speedup / ncores
+    message("    Theoretical speedup: ", sprintf("%.2fx", theoretical_speedup))
+    message("    Parallel efficiency: ", sprintf("%.1f%%", efficiency * 100))
   }
 }
 
@@ -201,7 +357,7 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue) {
     auto_unbox = TRUE
   )
 
-  message("Generated JSON for certificate ", cert_id, " at ", json_path)
+  message(cert_id, " | Generated JSON at ", json_path)
 }
 
 #' Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.
@@ -271,7 +427,7 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
       abstract_data <- get_abstract(repo_link)
       schema_org_jsonld <- generate_cert_schema_org(cert_id, config_yml, abstract_data)
     }, error = function(e) {
-      warning("Failed to generate Schema.org metadata: ", e$message)
+      warning(cert_id, " | Failed to generate Schema.org metadata: ", e$message)
       schema_org_jsonld <- ""
     })
   }

@@ -1,5 +1,15 @@
 # codecheck (development version)
 
+## Bug Fixes
+
+* **Fixed navigation links on venue type pages**: Corrected navigation menu links on venue type-specific pages (e.g., `/venues/institutions/`, `/venues/communities/`). The "All Venues" link now correctly points to `../index.html` (one level up), and "All Codecheckers" link points to `../../codecheckers/index.html` (up two levels then into codecheckers). Previously these links were broken because they were using the generic base_path calculation
+* **Fixed navigation and logo paths on venue type pages**: Corrected base path calculation for venue type-specific pages (e.g., `/venues/institutions/`, `/venues/journals/`). These pages are two levels deep, but were incorrectly treated as one level deep, causing broken logo and navigation links. The `calculate_breadcrumb_base_path()` function now correctly handles non-register table pages with subcategories
+* **Removed venue label column from venue type pages**: The "venue label" column (showing GitHub issue labels) is no longer displayed on venue type-specific pages (institutions, journals, conferences, communities) as it provides no useful information when all venues are of the same type. The column is still shown on the "all venues" page where it helps distinguish between different venue types
+
+## Performance & Scalability
+
+* **Certificate identifier prefixes in logs**: All log messages during certificate rendering operations now include the certificate identifier as a prefix (e.g., "2020-001 | Downloaded successfully"). This makes logs much easier to understand when rendering is executed in parallel, as messages from different certificates can be easily distinguished and tracked
+
 # codecheck 0.24.0
 
 ## Register Enhancements
@@ -16,6 +26,12 @@
 * **Centralized JavaScript libraries**: All JavaScript code is now centralized in dedicated files (`cert-utils.js`, `cert-citation.js`) loaded from `docs/libs/codecheck/`. This eliminates code duplication across certificate templates, improves maintainability, and ensures consistent behavior. The citation.js library is now bundled locally instead of loading from CDN, improving reliability and page load times
 * **Improved navigation visibility**: Top-right navigation menu font size doubled for better readability. Active page link (All Venues or All Codecheckers) is now highlighted with bold font. Breadcrumb navigation font size increased by 20% for improved visibility
 * **Centralized breadcrumb styling**: Breadcrumb container styling has been moved from inline styles to the central CSS file (`.breadcrumb-container` class). Left and right padding has been removed for cleaner alignment with page content
+
+## Performance & Scalability
+
+* **Parallel certificate rendering**: Certificate HTML pages can now be rendered in parallel using multiple CPU cores for significant performance improvements. The `register_render()` function accepts two new parameters: `parallel` (logical, defaults to FALSE) and `ncores` (integer, auto-detects available cores minus 1 if NULL). On an 8-core machine, parallel rendering provides approximately 5-6x speedup for certificate generation. Platform-specific implementation uses `parallel::mclapply()` on Unix/Mac (memory-efficient forking) and `parallel::parLapply()` on Windows (cluster-based). Enhanced error handling ensures individual certificate failures don't stop the entire render. Timing statistics now include theoretical speedup and parallel efficiency metrics. Usage: `register_render(parallel = TRUE)` or `register_render(parallel = TRUE, ncores = 4)`
+* **Timing instrumentation for performance analysis**: Added comprehensive timing instrumentation to all rendering functions (`render_cert_htmls()`, `create_register_files()`, `create_non_register_files()`). Each function now logs start/end times with millisecond precision, individual item rendering times, and summary statistics (total time, average time per item). This enables performance profiling and identification of bottlenecks. Log output includes timestamps in ISO 8601 format for easy parsing and analysis
+* **Parallelization analysis and implementation guide**: Created comprehensive documentation (`inst/extdata/docs/PARALLELIZATION_ANALYSIS.md`) analyzing parallelization opportunities for certificate and register page rendering. Includes detailed analysis of current architecture, timing analysis methodology, three prioritized parallelization strategies, implementation recommendations using R's `parallel` package, expected performance gains (6x speedup for certificates on 8-core machine), and complete working example (`inst/extdata/scripts/parallel_render_example.R`). Documentation guides through measuring current performance, implementing parallel execution, testing strategies, and tuning for optimal performance
 
 ## Bug Fixes
 

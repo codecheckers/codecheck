@@ -34,8 +34,15 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
       venues_path <- "venues/index.html"
       codecheckers_path <- "codecheckers/index.html"
     } else {
-      venues_path <- paste0(base_path, "/venues/index.html")
-      codecheckers_path <- paste0(base_path, "/codecheckers/index.html")
+      # Special handling for venue type pages (e.g., /venues/communities/)
+      # These are within the venues directory, so "All Venues" is just ../index.html
+      if (filter == "venues" && "subcat" %in% names(table_details)) {
+        venues_path <- "../index.html"
+        codecheckers_path <- "../../codecheckers/index.html"
+      } else {
+        venues_path <- paste0(base_path, "/venues/index.html")
+        codecheckers_path <- paste0(base_path, "/codecheckers/index.html")
+      }
     }
 
     # Determine which page is active based on filter
@@ -225,6 +232,14 @@ calculate_breadcrumb_base_path <- function(filter = NA, table_details = list()) 
       # Two levels deep: /codecheckers/0000-0001-2345-6789/
       depth <- 2
     }
+  } else {
+    # Non-register table pages (venue/codechecker lists)
+    # Check if this is a venue type page (e.g., /venues/institutions/, /venues/journals/)
+    if ("subcat" %in% names(table_details)) {
+      # Two levels deep: /venues/institutions/, /venues/journals/, etc.
+      depth <- 2
+    }
+    # Otherwise depth stays 1 for /venues/ or /codecheckers/
   }
 
   # Generate relative path

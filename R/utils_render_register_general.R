@@ -16,7 +16,14 @@
 #' #   https://codecheck.org.uk/register/certs/2020-001/ -> ../../../certs/2020-001/
 #' }
 adjust_cert_links_relative <- function(register_table, table_details){
+  # Early return if Certificate column doesn't exist
   if (!("Certificate" %in% names(register_table))) {
+    return(register_table)
+  }
+
+  # Early return if table_details or output_dir is missing
+  if (is.null(table_details) || !("output_dir" %in% names(table_details))) {
+    warning("table_details or output_dir missing in adjust_cert_links_relative, keeping absolute URLs")
     return(register_table)
   }
 
@@ -213,11 +220,17 @@ create_original_register_files <- function(register_table, outputs){
 #' @return None. The function generates files in the specified formats.
 create_register_files <- function(register_table, filter_by, outputs){
 
+  message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Starting register file creation")
+  start_time_total <- Sys.time()
+
   # Creating the original register file
   create_original_register_files(register_table, outputs)
+
   # Generating filtered register table files
   # For each filter type we created the nested register tables first
   for (filter in filter_by){
+    message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Processing filter: ", filter)
+    start_time_filter <- Sys.time()
 
     # Checking if the filter is of a known type
     if (!(filter %in% names(CONFIG$FILTER_COLUMN_NAMES))){
@@ -259,10 +272,19 @@ create_register_files <- function(register_table, filter_by, outputs){
 
         table_details <- generate_table_details(register_key, filtered_table, filter)
 
+        start_time_item <- Sys.time()
         render_register(filtered_table, table_details, filter, output_type)
+        elapsed_item <- as.numeric(difftime(Sys.time(), start_time_item, units = "secs"))
+        message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Rendered ", filter, " ", register_key, " (", output_type, ") in ", sprintf("%.2f", elapsed_item), " seconds")
       }
     }
+
+    elapsed_filter <- as.numeric(difftime(Sys.time(), start_time_filter, units = "secs"))
+    message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Completed filter ", filter, " (", length(filtered_register_list), " items x ", length(outputs), " outputs) in ", sprintf("%.2f", elapsed_filter), " seconds")
   }
+
+  elapsed_total <- as.numeric(difftime(Sys.time(), start_time_total, units = "secs"))
+  message("[", format(Sys.time(), "%Y-%m-%d %H:%M:%OS3"), "] Completed all register files in ", sprintf("%.2f", elapsed_total), " seconds")
 }
 
 #' Filter and Drop Columns from Register Table

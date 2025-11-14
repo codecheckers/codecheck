@@ -12,7 +12,9 @@ register_render(
   venues_file = "venues.csv",
   codecheck_repo_path = NULL,
   from = 1,
-  to = nrow(register)
+  to = nrow(register),
+  parallel = FALSE,
+  ncores = NULL
 )
 }
 \arguments{
@@ -31,6 +33,10 @@ register_render(
 \item{from}{The first register entry to check}
 
 \item{to}{The last register entry to check}
+
+\item{parallel}{Logical; if TRUE, renders certificates in parallel using multiple cores. Defaults to FALSE.}
+
+\item{ncores}{Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.}
 }
 \value{
 A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
