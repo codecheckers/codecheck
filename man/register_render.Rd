@@ -49,5 +49,5 @@ NOTE: You should put a GitHub API token in the environment variable `GITHUB_PAT`
 - `.md``
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

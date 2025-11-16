@@ -13,5 +13,5 @@ get_codecheck_yml_gitlab(x)
 It seems https://statnmap.github.io/gitlabr/ always requires authentication
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

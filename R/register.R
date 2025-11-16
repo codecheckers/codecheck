@@ -18,7 +18,7 @@
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #'
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom parsedate parse_date
 #' @importFrom rmarkdown render
 #' @importFrom knitr kable
@@ -103,7 +103,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
 #' @param from The first register entry to check
 #' @param to The last register entry to check
 #'
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom R.cache getCacheRootPath
 #' @importFrom utils packageVersion
 #' @importFrom gh gh

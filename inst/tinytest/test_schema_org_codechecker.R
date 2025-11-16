@@ -47,83 +47,96 @@ expect_false(
   info = "Generated JSON-LD should be valid JSON"
 )
 
-# Test 3: Top-level Person structure
+# Test 3: Top-level structure uses @graph
 expect_equal(
   json_ld$`@context`,
   "https://schema.org",
   info = "Should have correct @context"
 )
 
+expect_true(
+  !is.null(json_ld$`@graph`),
+  info = "Should have @graph array"
+)
+
+expect_true(
+  is.list(json_ld$`@graph`),
+  info = "@graph should be a list"
+)
+
+# Person is first entity in @graph
+person_entity <- json_ld$`@graph`[[1]]
+
 expect_equal(
-  json_ld$`@type`,
+  person_entity$`@type`,
   "Person",
-  info = "Codechecker should be represented as Person"
+  info = "First entity in @graph should be Person"
 )
 
 expect_equal(
-  json_ld$`@id`,
+  person_entity$`@id`,
   "https://orcid.org/0000-0001-2345-6789",
   info = "Should have ORCID URL as @id"
 )
 
 expect_equal(
-  json_ld$name,
+  person_entity$name,
   "Jane Codechecker",
   info = "Should have correct codechecker name"
 )
 
 # Test 4: GitHub sameAs link is absent when not provided
 expect_true(
-  is.null(json_ld$sameAs),
+  is.null(person_entity$sameAs),
   info = "Should not have sameAs when GitHub not provided"
 )
 
-# Test 5: Reviews array structure
-expect_true(
-  is.list(json_ld$review),
-  info = "Review should be a list"
-)
-
+# Test 5: Reviews are entities 2-4 in @graph
+# @graph has Person + 3 Reviews = 4 entities
 expect_equal(
-  length(json_ld$review),
-  3,
-  info = "Should have 3 reviews (codechecks)"
+  length(json_ld$`@graph`),
+  4,
+  info = "Should have 4 entities in @graph (1 Person + 3 Reviews)"
 )
 
 # Test 6: Review (CODECHECK certificate) structure
+# Reviews are entities 2, 3, 4 in @graph
+review1 <- json_ld$`@graph`[[2]]
+
 expect_equal(
-  json_ld$review[[1]]$`@type`,
+  review1$`@type`,
   "Review",
   info = "Each codecheck should be Review type"
 )
 
 expect_equal(
-  json_ld$review[[1]]$`@id`,
+  review1$`@id`,
   "https://codecheck.org.uk/register/certs/2025-001/",
   info = "Should have correct certificate URL as @id"
 )
 
 expect_equal(
-  json_ld$review[[1]]$name,
+  review1$name,
   "CODECHECK Certificate 2025-001",
   info = "Should have correct review name"
 )
 
 expect_equal(
-  json_ld$review[[1]]$url,
+  review1$url,
   "https://codecheck.org.uk/register/certs/2025-001/",
   info = "Should have correct review URL"
 )
 
 # Test 7: Date published in reviews
 expect_equal(
-  json_ld$review[[1]]$datePublished,
+  review1$datePublished,
   "2025-01-15",
   info = "Should have datePublished from check date"
 )
 
+review2 <- json_ld$`@graph`[[3]]
 expect_equal(
-  json_ld$review[[2]]$datePublished,
+  review2$datePublished,
   "2025-02-20",
   info = "Second review should have correct date"
 )
@@ -139,7 +152,7 @@ json_ld_with_github <- generate_codechecker_schema_org(
 parsed_with_github <- jsonlite::fromJSON(json_ld_with_github, simplifyVector = FALSE)
 
 expect_equal(
-  parsed_with_github$sameAs,
+  parsed_with_github$`@graph`[[1]]$sameAs,
   "https://github.com/janecoder",
   info = "Should include GitHub URL in sameAs when provided"
 )
@@ -155,7 +168,7 @@ json_ld_empty_github <- generate_codechecker_schema_org(
 parsed_empty_github <- jsonlite::fromJSON(json_ld_empty_github, simplifyVector = FALSE)
 
 expect_true(
-  is.null(parsed_empty_github$sameAs),
+  is.null(parsed_empty_github$`@graph`[[1]]$sameAs),
   info = "Empty GitHub handle should not create sameAs"
 )
 
@@ -170,7 +183,7 @@ json_ld_na_github <- generate_codechecker_schema_org(
 parsed_na_github <- jsonlite::fromJSON(json_ld_na_github, simplifyVector = FALSE)
 
 expect_true(
-  is.null(parsed_na_github$sameAs),
+  is.null(parsed_na_github$`@graph`[[1]]$sameAs),
   info = "NA GitHub handle should not create sameAs"
 )
 
@@ -193,13 +206,13 @@ json_ld_single <- generate_codechecker_schema_org(
 parsed_single <- jsonlite::fromJSON(json_ld_single, simplifyVector = FALSE)
 
 expect_equal(
-  length(parsed_single$review),
-  1,
-  info = "Should handle single codecheck"
+  length(parsed_single$`@graph`),
+  2,
+  info = "Should have 2 entities in @graph (1 Person + 1 Review)"
 )
 
 expect_equal(
-  parsed_single$review[[1]]$`@id`,
+  parsed_single$`@graph`[[2]]$`@id`,
   "https://codecheck.org.uk/register/certs/2025-100/",
   info = "Single review should have correct URL"
 )
@@ -221,7 +234,7 @@ json_ld_no_date <- generate_codechecker_schema_org(
 parsed_no_date <- jsonlite::fromJSON(json_ld_no_date, simplifyVector = FALSE)
 
 expect_true(
-  is.null(parsed_no_date$review[[1]]$datePublished),
+  is.null(parsed_no_date$`@graph`[[2]]$datePublished),
   info = "Should not have datePublished when Check date missing"
 )
 
@@ -244,12 +257,12 @@ json_ld_empty_dates <- generate_codechecker_schema_org(
 parsed_empty_dates <- jsonlite::fromJSON(json_ld_empty_dates, simplifyVector = FALSE)
 
 expect_true(
-  is.null(parsed_empty_dates$review[[1]]$datePublished),
+  is.null(parsed_empty_dates$`@graph`[[2]]$datePublished),
   info = "Should not have datePublished when date is empty"
 )
 
 expect_true(
-  is.null(parsed_empty_dates$review[[2]]$datePublished),
+  is.null(parsed_empty_dates$`@graph`[[3]]$datePublished),
   info = "Should not have datePublished when date is NA"
 )
 
@@ -265,8 +278,8 @@ expect_true(
 )
 
 expect_true(
-  grepl('"review"', json_ld_string, fixed = TRUE),
-  info = "JSON-LD should contain review array"
+  grepl('"@graph"', json_ld_string, fixed = TRUE),
+  info = "JSON-LD should contain @graph array"
 )
 
 # Test 15: Reviews include itemReviewed when paper data available
@@ -289,31 +302,34 @@ json_ld_plain_orcid <- generate_codechecker_schema_org(
 parsed_plain_orcid <- jsonlite::fromJSON(json_ld_plain_orcid, simplifyVector = FALSE)
 
 expect_equal(
-  parsed_plain_orcid$`@id`,
+  parsed_plain_orcid$`@graph`[[1]]$`@id`,
   "https://orcid.org/0000-0003-4567-8901",
   info = "Plain ORCID should be converted to URL format in @id"
 )
 
 # Test 17: All reviews have proper structure
+# Reviews are at indices 2, 3, 4 in @graph (index 1 is Person)
 for (i in 1:3) {
+  review <- json_ld$`@graph`[[i + 1]]  # +1 because Person is at index 1
+
   expect_equal(
-    json_ld$review[[i]]$`@type`,
+    review$`@type`,
     "Review",
     info = paste0("Review ", i, " should have @type Review")
   )
 
   expect_true(
-    !is.null(json_ld$review[[i]]$`@id`),
+    !is.null(review$`@id`),
     info = paste0("Review ", i, " should have @id")
   )
 
   expect_true(
-    !is.null(json_ld$review[[i]]$name),
+    !is.null(review$name),
     info = paste0("Review ", i, " should have name")
   )
 
   expect_true(
-    !is.null(json_ld$review[[i]]$url),
+    !is.null(review$url),
     info = paste0("Review ", i, " should have url")
   )
 }

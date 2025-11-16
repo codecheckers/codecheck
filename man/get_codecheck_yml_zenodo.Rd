@@ -15,5 +15,5 @@ get_codecheck_yml_zenodo(x, sandbox = FALSE)
 Retrieve a codecheck.yml file from a Zenodo record
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

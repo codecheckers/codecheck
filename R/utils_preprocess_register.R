@@ -2,7 +2,7 @@
 #'
 #' @return 0 for success, 1 for failure, invisibly (see `unlink`)
 #'
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom R.cache getCacheRootPath
 #' @export
 register_clear_cache <- function() {

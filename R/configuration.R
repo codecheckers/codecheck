@@ -1,6 +1,6 @@
 #' Retrieve a codecheck.yml file from a remote repository
 #' 
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @param x the repo specification
 get_codecheck_yml_uncached <- function(x) {
   spec <- parse_repository_spec(x)
@@ -18,7 +18,7 @@ get_codecheck_yml_uncached <- function(x) {
 
 #' Retrieve a codecheck.yml file from a GitHub repository
 #' 
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom gh gh
 #' @param x the org/repo to download the file from
 get_codecheck_yml_github <- function(x) {
@@ -59,7 +59,7 @@ get_codecheck_yml_github <- function(x) {
 
 #' Retrieve a codecheck.yml file from an OSF project
 #' 
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @param x the OSF id (5 characters)
 #' @importFrom osfr osf_retrieve_node osf_ls_files osf_download
 get_codecheck_yml_osf <- function(x) {
@@ -83,7 +83,7 @@ get_codecheck_yml_osf <- function(x) {
 #' 
 #' It seems https://statnmap.github.io/gitlabr/ always requires authentication
 #' 
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @param x the project name on GitLab.com
 #' @importFrom httr GET content
 #' @importFrom yaml yaml.load
@@ -103,7 +103,7 @@ get_codecheck_yml_gitlab <- function(x) {
 
 #' Retrieve a codecheck.yml file from a Zenodo record
 #' 
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @param x the record ID on Zenodo
 #' @param sandbox connect with the Zenodo Sandbox instead of the real service
 #' @importFrom httr GET content
@@ -145,7 +145,7 @@ get_codecheck_yml_zenodo <- function(x, sandbox = FALSE) {
 #' - `github::codecheckers/Piccolo-2020`
 #' - `gitlab::cdchck/Piccolo-2020`
 #' 
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @param x the repository specification to parse
 #' @return a named character vector with the items `type` and `repo`
 parse_repository_spec <- function(x) {
@@ -172,7 +172,7 @@ get_codecheck_yml_cached <- R.cache::addMemoization(get_codecheck_yml_uncached)
 #' 
 #' @param x Repository in the codecheckers organisation on GitHub
 #' 
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom R.cache addMemoization
 #' 
 #' @export
@@ -203,7 +203,7 @@ get_codecheck_yml <- function(x) {
 #' is_valid <- validate_yaml_syntax("codecheck.yml", stop_on_error = FALSE)
 #' }
 #'
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @export
 validate_yaml_syntax <- function(yml_file, stop_on_error = TRUE) {
   if (!file.exists(yml_file)) {
@@ -264,7 +264,7 @@ validate_yaml_syntax <- function(yml_file, stop_on_error = TRUE) {
 #' result <- get_certificate_from_github_issue(metadata)
 #' }
 #'
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom gh gh
 #' @export
 get_certificate_from_github_issue <- function(yml_file,
@@ -351,7 +351,7 @@ get_certificate_from_github_issue <- function(yml_file,
 #'
 #' @param configuration R object of class `list`, or a path to a file
 #' @return `TRUE` if the provided configuration is valid, otherwise the function stops with an error
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom rorcid check_dois
 #' @importFrom httr http_error http_status GET
 #'
@@ -467,7 +467,7 @@ validate_codecheck_yml <- function(configuration) {
 #' @param venues_file Path to the venues.csv file. If NULL, defaults to
 #'   "venues.csv" in the current working directory.
 #' @return A data frame with columns: name, longname, label
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom utils read.csv
 #' @export
 load_venues_config <- function(venues_file = NULL) {

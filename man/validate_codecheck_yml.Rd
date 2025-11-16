@@ -16,5 +16,5 @@ validate_codecheck_yml(configuration)
 This functions checks "MUST"-contents only, see https://codecheck.org.uk/spec/config/latest/
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

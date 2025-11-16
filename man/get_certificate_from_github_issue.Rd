@@ -56,5 +56,5 @@ result <- get_certificate_from_github_issue(metadata)
 
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

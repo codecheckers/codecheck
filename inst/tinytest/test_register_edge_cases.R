@@ -25,12 +25,17 @@ expect_error({
   dir.create(test_dir, recursive = TRUE)
   dir.create(file.path(test_dir, "docs"), recursive = TRUE)
   setwd(test_dir)
+
+  # Create minimal venues.csv for this test
+  writeLines("name,longname,label", "venues.csv")
+
   suppressMessages({
     result <- codecheck::register_render(
       register = empty_register,
       outputs = c("json"),
       from = 1,
-      to = 0
+      to = 0,
+      venues_file = "venues.csv"
     )
   })
   unlink(test_dir, recursive = TRUE)

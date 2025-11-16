@@ -13,5 +13,5 @@ get_codecheck_yml_osf(x)
 Retrieve a codecheck.yml file from an OSF project
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

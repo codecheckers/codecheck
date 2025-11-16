@@ -20,5 +20,5 @@ A dataframe containing one row per manifest file.
 List manifest.
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

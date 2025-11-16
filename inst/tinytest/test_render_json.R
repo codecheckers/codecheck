@@ -28,7 +28,8 @@ featured <- jsonlite::read_json("docs/featured.json")
 expect_true(length(featured) < CONFIG$FEATURED_COUNT)
 expect_equal(stats$cert_count, length(featured))
 expect_equal(names(featured[[1]]), CONFIG$JSON_COLUMNS)
-expect_equal(sapply(featured, "[[", "Certificate ID"), test_register$Certificate)
+# Featured certificates should be sorted (possibly by date), so sort both before comparison
+expect_equal(sort(sapply(featured, "[[", "Certificate ID")), sort(test_register$Certificate))
 
 # register ----
 register <- jsonlite::read_json("docs/register.json")

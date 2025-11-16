@@ -7,12 +7,12 @@
 
 ## Have also converted the unicode into \uxxxx escapes to keep
 ## devtools::check() happy
-## « -> \u00ab
-## » -> \u00bb
-## " -> \u201c
-## " -> \u201d
-## ' -> \u2018
-## ' -> \u2019
+## \u00ab (left-pointing double angle quotation mark) -> \u00ab
+## \u00bb (right-pointing double angle quotation mark) -> \u00bb
+## \u201c (left double quotation mark) -> \u201c
+## \u201d (right double quotation mark) -> \u201d
+## \u2018 (left single quotation mark) -> \u2018
+## \u2019 (right single quotation mark) -> \u2019
 
 .url_regexp = "(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?\u00ab\u00bb\u201c\u201d\u2018\u2019]))"
 

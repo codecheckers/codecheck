@@ -13,5 +13,5 @@ get_codecheck_yml_uncached(x)
 Retrieve a codecheck.yml file from a remote repository
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

@@ -93,15 +93,15 @@ setup_external_libraries <- function(libs_dir = "docs/libs", force = FALSE) {
         tryCatch({
           response <- httr::GET(url, httr::write_disk(dest_file, overwrite = TRUE), httr::progress())
           if (httr::status_code(response) == 200) {
-            message("    ✓ Downloaded successfully")
+            message("    \u2713 Downloaded successfully")
           } else {
-            warning("    ✗ Failed with status ", httr::status_code(response))
+            warning("    \u2717 Failed with status ", httr::status_code(response))
           }
         }, error = function(e) {
-          warning("    ✗ Error downloading: ", e$message)
+          warning("    \u2717 Error downloading: ", e$message)
         })
       } else {
-        message("  ✓ Already exists: ", basename(dest_file))
+        message("  \u2713 Already exists: ", basename(dest_file))
       }
     }
 
@@ -137,9 +137,9 @@ setup_external_libraries <- function(libs_dir = "docs/libs", force = FALSE) {
 
   if (file.exists(css_source)) {
     file.copy(css_source, css_dest, overwrite = TRUE)
-    message("  ✓ Copied codecheck-register.css to ", css_dest)
+    message("  \u2713 Copied codecheck-register.css to ", css_dest)
   } else {
-    warning("  ✗ Could not find codecheck-register.css in package templates")
+    warning("  \u2717 Could not find codecheck-register.css in package templates")
   }
 
   # Write provenance information
@@ -150,7 +150,7 @@ setup_external_libraries <- function(libs_dir = "docs/libs", force = FALSE) {
   # Create README
   create_libs_readme(libs_dir, provenance)
 
-  message("\n✓ All libraries installed successfully in: ", libs_dir)
+  message("\n\u2713 All libraries installed successfully in: ", libs_dir)
   invisible(provenance)
 }
 
@@ -181,9 +181,9 @@ download_font_awesome_fonts <- function(libs_dir, version) {
       message("  Downloading font: ", font_file, "...")
       tryCatch({
         httr::GET(url, httr::write_disk(dest_file, overwrite = TRUE))
-        message("    ✓ Downloaded")
+        message("    \u2713 Downloaded")
       }, error = function(e) {
-        warning("    ✗ Error: ", e$message)
+        warning("    \u2717 Error: ", e$message)
       })
     }
   }
@@ -215,9 +215,9 @@ download_academicons_fonts <- function(libs_dir, version) {
       message("  Downloading font: ", font_file, "...")
       tryCatch({
         httr::GET(url, httr::write_disk(dest_file, overwrite = TRUE))
-        message("    ✓ Downloaded")
+        message("    \u2713 Downloaded")
       }, error = function(e) {
-        warning("    ✗ Error: ", e$message)
+        warning("    \u2717 Error: ", e$message)
       })
     }
   }

@@ -13,5 +13,5 @@ get_codecheck_yml_github(x)
 Retrieve a codecheck.yml file from a GitHub repository
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

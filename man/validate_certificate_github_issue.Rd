@@ -56,5 +56,5 @@ validate_certificate_github_issue("path/to/codecheck.yml")
 
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

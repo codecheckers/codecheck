@@ -49,7 +49,8 @@
       "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && grep -A 5 \"\"\"\"^codechecker:\"\"\"\" {}')",
       "WebFetch(domain:citation.js.org)",
       "WebFetch(domain:cdn.jsdelivr.net)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(find R -name \"*.R\" -exec sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && R -q -e \"\"\"\"tools::showNonASCIIfile(\\\"\"\"\"{}\\\"\"\"\")\"\"\"\" 2>&1 | grep -v \"\"\"\"^>\"\"\"\" | grep -v \"\"\"\"^##\"\"\"\"')"
     ],
     "deny": [],
     "ask": []

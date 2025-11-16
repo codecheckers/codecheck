@@ -28,5 +28,5 @@ Further test ideas:
 - Does the repo have a LICENSE?
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

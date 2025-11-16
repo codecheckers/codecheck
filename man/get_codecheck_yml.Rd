@@ -13,5 +13,5 @@ get_codecheck_yml(x)
 Get the CODECHECK configuration file from a repository
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

@@ -23,5 +23,5 @@ Supported variants:
 - `gitlab::cdchck/Piccolo-2020`
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

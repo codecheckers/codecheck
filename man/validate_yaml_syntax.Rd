@@ -32,5 +32,5 @@ is_valid <- validate_yaml_syntax("codecheck.yml", stop_on_error = FALSE)
 
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

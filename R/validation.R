@@ -1198,7 +1198,7 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
 #' validate_certificate_github_issue("path/to/codecheck.yml")
 #' }
 #'
-#' @author Daniel Nüst
+#' @author Daniel Nuest
 #' @importFrom gh gh
 #' @export
 validate_certificate_github_issue <- function(yml_file = "codecheck.yml",

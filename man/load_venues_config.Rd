@@ -18,5 +18,5 @@ Reads a venues.csv file and constructs the CONFIG$DICT_VENUE_NAMES dictionary
 and stores full venue information including labels.
 }
 \author{
-Daniel Nüst
+Daniel Nuest
 }

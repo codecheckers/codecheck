@@ -71,7 +71,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 ##' @param metadata - the codecheck metadata list.
 ##' @param check_dir - folder where outputs have been copied to (codecheck/outputs)
 ##' @return A dataframe containing one row per manifest file.
-##' @author Daniel Nüst
+##' @author Daniel Nuest
 ##' @export
 list_manifest_files <- function(root, metadata, check_dir) {
   manifest = metadata$manifest
