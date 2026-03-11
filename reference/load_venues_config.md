@@ -22,4 +22,4 @@ A data frame with columns: name, longname, label
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

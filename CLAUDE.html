@@ -39,497 +39,107 @@
 
 <div id="claudemd" class="section level1">
 
-<p>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</p>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a></h2>
-<p>The <code>codecheck</code> package is an R package that assists in conducting <a href="https://codecheck.org.uk/" class="external-link">CODECHECKs</a> - independent verification of computational research. It provides two main functions:</p>
+<p>The <code>codecheck</code> R package assists in conducting <a href="https://codecheck.org.uk/" class="external-link">CODECHECKs</a> - independent verification of computational research. Two main subsystems:</p>
 <ol style="list-style-type: decimal"><li>
-<strong>Workspace creation tools</strong> - Help researchers prepare CODECHECK workspaces with proper metadata and structure</li>
+<strong>Workspace creation</strong> (<code>R/codecheck.R</code>, <code>R/configuration.R</code>, <code>R/validation.R</code>, <code>R/zenodo.R</code>) - Create CODECHECK workspaces, validate <code>codecheck.yml</code>, upload to Zenodo</li>
 <li>
-<strong>Register management tools</strong> - Render and maintain the <a href="https://codecheck.org.uk/register/" class="external-link">CODECHECK Register</a> which tracks all completed codechecks</li>
+<strong>Register management</strong> (<code>R/register.R</code>, <code>R/utils_*.R</code>) - Render the <a href="https://codecheck.org.uk/register/" class="external-link">CODECHECK Register</a> website from <code>register.csv</code>
+</li>
 </ol></div>
 <div class="section level2">
-<h2 id="installation--development">Installation &amp; Development<a class="anchor" aria-label="anchor" href="#installation--development"></a></h2>
-<p>Install the package:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"codecheckers/codecheck"</span><span class="op">)</span></span></code></pre></div>
-<p>Run tests using <code>tinytest</code>:</p>
-<p><strong>⚠️ CRITICAL: ALWAYS use <code>build_install_test()</code> for testing this package!</strong></p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># CORRECT: Build, install, and test in a fresh environment</span></span>
-<span><span class="fu">tinytest</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/build_install_test.html" class="external-link">build_install_test</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
-<p><strong>DO NOT use <code>test_all()</code> from the source directory</strong> - it will cause test failures because the package functions won’t be properly loaded. The error “could not find function X” indicates you’re using the wrong test method.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># WRONG - DO NOT USE: Will cause "could not find function" errors</span></span>
-<span><span class="fu">tinytest</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/run_test_dir.html" class="external-link">test_all</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span>  <span class="co"># ❌ DON'T DO THIS</span></span>
-<span></span>
-<span><span class="co"># For interactive testing of specific functions during development:</span></span>
-<span><span class="co"># 1. First install the package: devtools::install()</span></span>
-<span><span class="co"># 2. Then load it: library(codecheck)</span></span>
-<span><span class="co"># 3. Then test interactively or source specific test files</span></span></code></pre></div>
-<p>The package uses GitHub Actions for CI/CD. Check <code>.github/workflows/R-CMD-check.yaml</code> for the automated testing setup.</p>
-<div class="section level3">
-<h3 id="changelog-management">Changelog Management<a class="anchor" aria-label="anchor" href="#changelog-management"></a></h3>
-<p><strong>IMPORTANT</strong>: When making changes to the package, always update <code>NEWS.md</code> with: - A brief description of the change - For new features, document the user-facing functionality - For bug fixes, reference the issue or describe the problem solved - For breaking changes, clearly mark them as such</p>
-<p>When bumping the version in <code>DESCRIPTION</code>, add a new section to <code>NEWS.md</code> with the version number and date. Follow the existing format with <code># codecheck X.Y.Z</code> headers.</p>
+<h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
+<p><strong>CRITICAL: ALWAYS use <code>tinytest::build_install_test(".")</code> for testing.</strong></p>
+<p>DO NOT use <code>tinytest::test_all(".")</code> - it causes “could not find function” errors because the package isn’t properly loaded. Tests are in <code>inst/tinytest/</code>.</p>
+<p>For interactive development: <code>devtools::install()</code> then <code><a href="http://codecheck.org.uk/codecheck/">library(codecheck)</a></code>.</p>
 </div>
+<div class="section level2">
+<h2 id="changelog">Changelog<a class="anchor" aria-label="anchor" href="#changelog"></a></h2>
+<p>Always update <code>NEWS.md</code> when making changes. Follow the existing <code># codecheck X.Y.Z</code> header format.</p>
 </div>
 <div class="section level2">
 <h2 id="design-principles">Design Principles<a class="anchor" aria-label="anchor" href="#design-principles"></a></h2>
 <div class="section level3">
-<h3 id="separation-of-concerns-data-vs-presentation">Separation of Concerns: Data vs. Presentation<a class="anchor" aria-label="anchor" href="#separation-of-concerns-data-vs-presentation"></a></h3>
-<p><strong>CRITICAL PRINCIPLE</strong>: R functions should focus on data preparation and logic, NOT HTML generation.</p>
-<p><strong>✅ DO</strong>: - Prepare data in R functions (e.g., extract metadata, create data structures) - Store HTML structure in template files (<code>.html</code>, <code>.md</code> with Mustache/Whisker placeholders) - Use R to populate template placeholders with data values - Return data objects (lists, data frames, strings) from R functions</p>
-<p><strong>❌ DON’T</strong>: - Generate HTML tags directly in R functions (e.g., <code>sprintf('&lt;a href="%s"&gt;...&lt;/a&gt;')</code>) - Build complex HTML structures using string concatenation in R - Mix presentation logic with data processing logic</p>
-<p><strong>Example of correct approach</strong>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># R function - prepares data only</span></span>
-<span><span class="va">generate_profile_data</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">orcid</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">profile</span> <span class="op">&lt;-</span> <span class="fu">get_profile</span><span class="op">(</span><span class="va">orcid</span><span class="op">)</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    has_orcid <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">profile</span><span class="op">$</span><span class="va">orcid</span><span class="op">)</span>,</span>
-<span>    orcid <span class="op">=</span> <span class="va">profile</span><span class="op">$</span><span class="va">orcid</span>,</span>
-<span>    has_github <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">profile</span><span class="op">$</span><span class="va">github_handle</span><span class="op">)</span>,</span>
-<span>    github_handle <span class="op">=</span> <span class="va">profile</span><span class="op">$</span><span class="va">github_handle</span></span>
-<span>  <span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Template file (profile.html) - contains HTML structure</span></span>
-<span><span class="co"># &lt;a href="https://orcid.org/{{orcid}}"&gt;</span></span>
-<span><span class="co">#   &lt;i class="ai ai-orcid"&gt;&lt;/i&gt; {{orcid}}</span></span>
-<span><span class="co"># &lt;/a&gt;</span></span>
-<span></span>
-<span><span class="co"># Rendering function - combines data with template</span></span>
-<span><span class="va">render_profile</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">orcid</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">data</span> <span class="op">&lt;-</span> <span class="fu">generate_profile_data</span><span class="op">(</span><span class="va">orcid</span><span class="op">)</span></span>
-<span>  <span class="va">template</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"profile.html"</span><span class="op">)</span></span>
-<span>  <span class="fu">whisker</span><span class="fu">::</span><span class="fu">render</span><span class="op">(</span><span class="va">template</span>, <span class="va">data</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p><strong>Why this matters</strong>: - <strong>Maintainability</strong>: HTML changes don’t require R code changes - <strong>Testability</strong>: R functions can be tested without parsing HTML - <strong>Readability</strong>: Templates are easier to understand than R strings with escaped HTML - <strong>Collaboration</strong>: Designers can work on templates without touching R code - <strong>Consistency</strong>: CSS classes and HTML structure remain consistent across the codebase</p>
-<p><strong>Current implementation</strong>: - Template files in <code>inst/extdata/templates/</code> contain HTML structure - R functions use <code>whisker::render()</code> or <code><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf()</a></code> to fill placeholders - Functions like <code><a href="reference/generate_codechecker_profile_links.html">generate_codechecker_profile_links()</a></code>, <code><a href="reference/generate_footer_build_info.html">generate_footer_build_info()</a></code>, and <code><a href="reference/generate_meta_generator_content.html">generate_meta_generator_content()</a></code> return content strings without HTML wrapper tags - HTML wrapper tags (<code>&lt;p&gt;</code>, <code>&lt;meta&gt;</code>, etc.) are in template files</p>
+<h3 id="data-vs-presentation-separation">Data vs. Presentation Separation<a class="anchor" aria-label="anchor" href="#data-vs-presentation-separation"></a></h3>
+<p>R functions should prepare data, NOT generate HTML. HTML structure belongs in template files (<code>inst/extdata/templates/</code>) using Whisker/Mustache placeholders. R populates templates via <code>whisker::render()</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="version-management">Version Management<a class="anchor" aria-label="anchor" href="#version-management"></a></h3>
-<p>The package follows <a href="https://semver.org/" class="external-link">Semantic Versioning</a> (MAJOR.MINOR.PATCH): - <strong>MAJOR</strong> version: Incompatible API changes - <strong>MINOR</strong> version: New functionality in a backwards-compatible manner - <strong>PATCH</strong> version: Backwards-compatible bug fixes - <strong>Development</strong> version: Append <code>.9000</code> to the version number (e.g., <code>0.23.0.9000</code>)</p>
-<p><strong>Bumping versions using usethis</strong> (recommended method):</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Bump patch version (0.23.0 -&gt; 0.23.1)</span></span>
-<span><span class="fu">usethis</span><span class="fu">::</span><span class="fu">use_version</span><span class="op">(</span><span class="st">"patch"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Bump minor version (0.23.0 -&gt; 0.24.0)</span></span>
-<span><span class="fu">usethis</span><span class="fu">::</span><span class="fu">use_version</span><span class="op">(</span><span class="st">"minor"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Bump major version (0.23.0 -&gt; 1.0.0)</span></span>
-<span><span class="fu">usethis</span><span class="fu">::</span><span class="fu">use_version</span><span class="op">(</span><span class="st">"major"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Start development version (0.23.0 -&gt; 0.23.0.9000)</span></span>
-<span><span class="fu">usethis</span><span class="fu">::</span><span class="fu">use_version</span><span class="op">(</span><span class="st">"dev"</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Manual version bumping</strong>:</p>
-<p>If <code>usethis::use_version()</code> fails due to uncommitted changes or interactive session requirements:</p>
-<ol style="list-style-type: decimal"><li>Edit <code>DESCRIPTION</code> and update the <code>Version:</code> field</li>
-<li>Add a new section to <code>NEWS.md</code> with the version number and date</li>
-<li>Commit the changes with a message like “Bump version to X.Y.Z”</li>
-</ol><p><strong>Release procedure</strong>:</p>
-<ol style="list-style-type: decimal"><li>Ensure all changes are documented in <code>NEWS.md</code>
-</li>
-<li>Ensure all tests pass: <code>tinytest::build_install_test(".")</code>
-</li>
-<li>Bump version to release version (remove <code>.9000</code> suffix)</li>
-<li>Commit: <code>git commit -m "Release version X.Y.Z"</code>
-</li>
-<li>Tag the release: <code>git tag -a vX.Y.Z -m "Release version X.Y.Z"</code>
-</li>
-<li>Push with tags: <code>git push &amp;&amp; git push --tags</code>
-</li>
-<li>Immediately bump to development version: <code>usethis::use_version("dev")</code>
-</li>
-<li>Commit: <code>git commit -m "Start development version X.Y.Z.9000"</code>
-</li>
-</ol></div>
-</div>
-<div class="section level2">
-<h2 id="core-architecture">Core Architecture<a class="anchor" aria-label="anchor" href="#core-architecture"></a></h2>
-<div class="section level3">
-<h3 id="id_1-workspace-creation-rcodecheckr">1. Workspace Creation (R/codecheck.R)<a class="anchor" aria-label="anchor" href="#id_1-workspace-creation-rcodecheckr"></a></h3>
-<p><strong>Main entry point</strong>: <code><a href="reference/create_codecheck_files.html">create_codecheck_files()</a></code> creates the initial CODECHECK workspace including:</p>
-<ul><li>A <code>codecheck.yml</code> file with required metadata (certificate ID, authors, manifest, etc.)</li>
-<li>A <code>codecheck/</code> directory with report templates</li>
-</ul><p><strong>Key functions</strong>:</p>
-<ul><li>
-<code><a href="reference/codecheck_metadata.html">codecheck_metadata()</a></code> - Load and parse <code>codecheck.yml</code>
-</li>
-<li>
-<code><a href="reference/copy_manifest_files.html">copy_manifest_files()</a></code> - Copy output files specified in the manifest to the codecheck folder</li>
-<li>
-<code><a href="reference/validate_yaml_syntax.html">validate_yaml_syntax()</a></code> - Validate YAML syntax before parsing; checks if file is valid YAML; integrated into certificate template to prevent compilation with invalid YAML (R/configuration.R:184)</li>
-<li>
-<code><a href="reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> - Validate that a codecheck.yml file meets the specification (R/configuration.R:348)</li>
-<li>
-<code><a href="reference/complete_codecheck_yml.html">complete_codecheck_yml()</a></code> - Analyze and complete codecheck.yml with missing fields; validates against specification; can add placeholders for mandatory and optional fields</li>
-<li>
-<code><a href="reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> - Validate metadata against CrossRef; checks title, authors, and ORCID consistency; integrated into certificate template</li>
-<li>
-<code><a href="reference/get_certificate_from_github_issue.html">get_certificate_from_github_issue()</a></code> - Retrieve certificate identifier from GitHub issues by matching author names; searches codecheckers/register repository; supports open/closed/all issues (R/configuration.R:229)</li>
-<li>
-<code><a href="reference/is_placeholder_certificate.html">is_placeholder_certificate()</a></code> - Check if certificate ID is a placeholder; detects common placeholder patterns and template-like text</li>
-<li>
-<code><a href="reference/update_certificate_from_github.html">update_certificate_from_github()</a></code> - Automatically update certificate ID from GitHub; wraps <code><a href="reference/get_certificate_from_github_issue.html">get_certificate_from_github_issue()</a></code> with placeholder detection and file updating; integrated into certificate template</li>
-</ul><p><strong>Lifecycle Journal automation</strong>: Functions for auto-populating metadata from Lifecycle Journal articles:</p>
-<ul><li>
-<code><a href="reference/get_lifecycle_metadata.html">get_lifecycle_metadata()</a></code> - Retrieve article metadata from CrossRef API using submission ID or DOI (prefix: <code>10.71240/lcyc.</code>)</li>
-<li>
-<code><a href="reference/update_codecheck_yml_from_lifecycle.html">update_codecheck_yml_from_lifecycle()</a></code> - Update local <code>codecheck.yml</code> with metadata; shows diff before applying changes; supports preview mode and selective field updates</li>
-</ul><p><strong>External validation</strong>: Ensure consistency with published paper metadata and ORCID records:</p>
-<ul><li>
-<code><a href="reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> - Validates paper metadata against CrossRef API; compares title and author information with CrossRef data</li>
-<li>
-<code><a href="reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> - Validates author and codechecker names against ORCID API; queries ORCID records using rorcid package; compares names in ORCID records with local metadata; requires ORCID authentication by default (set <code>skip_on_auth_error = TRUE</code> to skip validation when authentication is unavailable)</li>
-<li>
-<code><a href="reference/validate_contents_references.html">validate_contents_references()</a></code> - Comprehensive validation wrapper; runs both CrossRef and ORCID validations; provides unified summary; supports strict mode for certificate rendering; requires ORCID authentication by default (users can opt-in to skipping via <code>skip_on_auth_error = TRUE</code>)</li>
-<li>
-<code><a href="reference/validate_certificate_github_issue.html">validate_certificate_github_issue()</a></code> - Validates certificate identifier exists in GitHub register issues; checks issue state (warns if closed) and assignment (warns if unassigned); stops with error if no matching issue found; supports strict mode where warnings become errors; automatically skips validation for placeholder certificates (R/validation.R:1204)</li>
-</ul><p><strong>Zenodo integration</strong>: Functions for uploading certificates to Zenodo:</p>
-<ul><li>
-<code><a href="reference/get_or_create_zenodo_record.html">get_or_create_zenodo_record()</a></code> - Create or retrieve a Zenodo record; defaults to loading metadata from codecheck.yml in current directory</li>
-<li>
-<code><a href="reference/get_zenodo_record.html">get_zenodo_record()</a></code> - Retrieve existing Zenodo record; defaults to loading metadata from codecheck.yml in current directory</li>
-<li>
-<code><a href="reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> - Upload metadata from codecheck.yml; defaults to loading from current directory</li>
-<li>
-<code><a href="reference/upload_zenodo_certificate.html">set_zenodo_certificate()</a></code> - Upload the PDF certificate</li>
-<li>
-<code><a href="reference/get_zenodo_id.html">get_zenodo_id()</a></code> - Extract Zenodo record number from DOI URL</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_2-register-management-rregisterr">2. Register Management (R/register.R)<a class="anchor" aria-label="anchor" href="#id_2-register-management-rregisterr"></a></h3>
-<p>The register management system transforms a simple CSV file (<code>register.csv</code>) into a rich, multi-format website at <a href="https://codecheck.org.uk/register/" class="external-link uri">https://codecheck.org.uk/register/</a>. The system generates:</p>
-<ul><li>
-<strong>Individual certificate pages</strong> - HTML pages with certificate details, abstracts, and embedded PDFs</li>
-<li>
-<strong>Register tables</strong> - Multiple views (HTML, Markdown, JSON, CSV) of all certificates</li>
-<li>
-<strong>Filtered views</strong> - Separate pages for each venue, venue type, and codechecker</li>
-<li>
-<strong>Summary pages</strong> - Lists of all venues and codecheckers with statistics</li>
-</ul><div class="section level4">
-<h4 id="id_21-main-entry-points">2.1. Main Entry Points<a class="anchor" aria-label="anchor" href="#id_21-main-entry-points"></a></h4>
-<p><strong><code><a href="reference/register_render.html">register_render()</a></code></strong> (R/register.R:26) - Main function that orchestrates the entire rendering process: - Parameters: - <code>register</code>: Data frame from <code>register.csv</code> (default: reads from file) - <code>filter_by</code>: Vector of filters to apply, e.g., <code>c("venues", "codecheckers")</code> - <code>outputs</code>: Output formats to generate, e.g., <code>c("html", "md", "json")</code> - <code>config</code>: Path(s) to config file(s) to source - <code>from</code>, <code>to</code>: Range of register entries to process (useful for incremental rendering) - <code>parallel</code>: Logical; if TRUE, renders certificates in parallel (default: FALSE) - <code>ncores</code>: Integer; number of CPU cores for parallel rendering (default: NULL = auto-detect)</p>
-<p><strong><code><a href="reference/register_check.html">register_check()</a></code></strong> (R/register.R:78) - Validates all register entries: - Checks certificate IDs match between register.csv and codecheck.yml - Verifies GitHub issue status - Does NOT validate codecheck.yml files (use <code><a href="reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> for that)</p>
-<p><strong><code><a href="reference/register_clear_cache.html">register_clear_cache()</a></code></strong> (R/utils_preprocess_register.R:8) - Clears the R.cache directory used for storing remote codecheck.yml files</p>
-</div>
-<div class="section level4">
-<h4 id="id_22-register-rendering-pipeline">2.2. Register Rendering Pipeline<a class="anchor" aria-label="anchor" href="#id_22-register-rendering-pipeline"></a></h4>
-<p>The rendering process follows this sequence:</p>
-<pre><code>1. Load register.csv and config.R
-   └─&gt; register_render()
-       ├─&gt; source(config.R)  # Loads CONFIG environment
-       └─&gt; subset register by from:to range
-
-2. Preprocess register (add metadata from remote codecheck.yml files)
-   └─&gt; preprocess_register()
-       ├─&gt; add_codechecker()       # Extract codechecker ORCIDs
-       ├─&gt; add_cert_links()        # Create certificate hyperlinks
-       ├─&gt; add_report_links()      # Extract Zenodo DOI from codecheck.yml
-       ├─&gt; add_issue_number_links()# Create GitHub issue links
-       ├─&gt; add_check_time()        # Extract check_time from codecheck.yml
-       └─&gt; add_paper_links()       # Extract paper title and reference
-
-3. Render individual certificate pages (if "html" in outputs)
-   └─&gt; render_cert_htmls()
-       └─&gt; For each certificate:
-           ├─&gt; download_cert_pdf()      # Download PDF from Zenodo
-           ├─&gt; convert_cert_pdf_to_png()# Convert PDF pages to PNG images
-           ├─&gt; create_cert_md()         # Create Markdown with metadata
-           │   ├─&gt; add_paper_details_md()   # Title, authors, abstract
-           │   └─&gt; add_codecheck_details_md()# Codechecker, dates, summary
-           └─&gt; render_cert_html()       # Render MD to HTML with Pandoc
-
-4. Create filtered CSV files
-   └─&gt; create_filtered_reg_csvs()
-       └─&gt; For each filter (venues, codecheckers):
-           ├─&gt; Group by filter column
-           └─&gt; Write CSV for each group
-
-5. Create register tables (original + filtered)
-   └─&gt; create_register_files()
-       ├─&gt; create_original_register_files()  # Main register
-       └─&gt; For each filter:
-           ├─&gt; Group by filter column
-           └─&gt; For each group:
-               ├─&gt; render_register_md()  # Markdown table
-               ├─&gt; render_html()         # HTML from markdown
-               └─&gt; render_register_json()# JSON + featured.json + stats.json
-
-6. Create non-register summary pages
-   └─&gt; create_non_register_files()
-       └─&gt; For each filter:
-           ├─&gt; create_venues_tables()       # All venues + by type
-           │   ├─&gt; create_all_venues_table()
-           │   └─&gt; create_venue_type_tables()
-           ├─&gt; create_all_codecheckers_table()
-           └─&gt; For each table:
-               ├─&gt; render_html()         # HTML page
-               └─&gt; write JSON            # JSON file</code></pre>
-</div>
-<div class="section level4">
-<h4 id="id_23-key-utility-files">2.3. Key Utility Files<a class="anchor" aria-label="anchor" href="#id_23-key-utility-files"></a></h4>
-<p><strong>R/utils_preprocess_register.R</strong> - Data enrichment functions: - <code><a href="reference/add_paper_links.html">add_paper_links()</a></code> - Creates markdown links to papers using title and reference from codecheck.yml - <code><a href="reference/add_report_links.html">add_report_links()</a></code> - Extracts Zenodo DOI from codecheck.yml - <code><a href="reference/add_issue_number_links.html">add_issue_number_links()</a></code> - Creates GitHub issue links - <code><a href="reference/add_check_time.html">add_check_time()</a></code> - Extracts and formats check_time using <code><a href="https://rdrr.io/pkg/parsedate/man/parse_date.html" class="external-link">parsedate::parse_date()</a></code> - <code><a href="reference/add_codechecker.html">add_codechecker()</a></code> - Extracts codechecker ORCIDs and builds ORCID→name dictionary in <code>CONFIG$DICT_ORCID_ID_NAME</code> - <code><a href="reference/add_cert_links.html">add_cert_links()</a></code> - Creates certificate page links and adds Certificate ID/Link columns</p>
-<p><strong>R/utils_render_cert_htmls.R</strong> - Certificate page generation: - <code><a href="reference/render_cert_htmls.html">render_cert_htmls()</a></code> - Orchestrates certificate page creation for all entries - <code><a href="reference/download_cert_pdf.html">download_cert_pdf()</a></code> - Downloads certificate PDF from Zenodo (R/utils_download_certs.R) - <code><a href="reference/convert_cert_pdf_to_png.html">convert_cert_pdf_to_png()</a></code> - Converts PDF pages to PNG images using <code><a href="https://docs.ropensci.org/pdftools//reference/pdf_render_page.html" class="external-link">pdftools::pdf_convert()</a></code> - <code><a href="reference/create_cert_md.html">create_cert_md()</a></code> - Creates Markdown content from templates - <code><a href="reference/render_cert_html.html">render_cert_html()</a></code> - Renders HTML using Pandoc via <code><a href="https://pkgs.rstudio.com/rmarkdown/reference/render.html" class="external-link">rmarkdown::render()</a></code> - <code><a href="reference/edit_html_lib_paths.html">edit_html_lib_paths()</a></code> - Adjusts relative paths to shared <code>docs/libs/</code> folder to avoid duplication</p>
-<p><strong>R/utils_render_cert_md.R</strong> - Certificate markdown creation: - <code><a href="reference/create_cert_md.html">create_cert_md()</a></code> - Main function for creating certificate markdown - <code><a href="reference/add_paper_details_md.html">add_paper_details_md()</a></code> - Adds paper title, authors (with ORCID links), reference - <code><a href="reference/add_codecheck_details_md.html">add_codecheck_details_md()</a></code> - Adds codechecker names, check time, summary, certificate ID - <code><a href="reference/add_abstract.html">add_abstract()</a></code> - Attempts to fetch abstract from CrossRef or OpenAlex - <code><a href="reference/get_abstract_text_crossref.html">get_abstract_text_crossref()</a></code> - Fetches abstract from CrossRef API - <code><a href="reference/get_abstract_text_openalex.html">get_abstract_text_openalex()</a></code> - Fetches abstract from OpenAlex API (handles inverted index format) - <code><a href="reference/add_repository_hyperlink.html">add_repository_hyperlink()</a></code> - Creates repository links based on platform (GitHub, OSF, GitLab, Zenodo)</p>
-<p><strong>R/utils_create_filtered_register_csvs.R</strong> - CSV generation: - <code><a href="reference/create_filtered_reg_csvs.html">create_filtered_reg_csvs()</a></code> - Creates CSV files for each venue/codechecker - For codecheckers: Reads temporary CSV (register has lists in Codechecker column), unnests, then groups - Uses <code>CONFIG$FILTER_COLUMN_NAMES</code> to determine grouping column</p>
-<p><strong>R/utils_render_register_general.R</strong> - Core register rendering: - <code><a href="reference/create_register_files.html">create_register_files()</a></code> - Orchestrates creation of all register views (original + filtered) - <code><a href="reference/create_original_register_files.html">create_original_register_files()</a></code> - Renders main register in all output formats - <code><a href="reference/render_register.html">render_register()</a></code> - Dispatches to format-specific renderer (MD, HTML, or JSON) - <code><a href="reference/generate_output_dir.html">generate_output_dir()</a></code> - Creates output directory path based on filter and subcategory - <code><a href="reference/generate_table_details.html">generate_table_details()</a></code> - Creates metadata dict with name, slug, subcat, output_dir - <code><a href="reference/filter_and_drop_register_columns.html">filter_and_drop_register_columns()</a></code> - Selects and orders columns per filter and format (uses hierarchical <code>CONFIG$REGISTER_COLUMNS</code>) - <code><a href="reference/adjust_cert_links_relative.html">adjust_cert_links_relative()</a></code> - Converts absolute certificate URLs to relative paths based on page depth for HTML/Markdown display (JSON/CSV retain absolute URLs) - <code><a href="reference/add_report_hyperlinks_reg.html">add_report_hyperlinks_reg()</a></code> - Formats Report column as markdown links with shortened URLs (removes “<a href="http://" class="external-link uri">http://</a>” and “<a href="https://" class="external-link uri">https://</a>” prefixes from display text) - <code><a href="reference/add_venue_hyperlinks_reg.html">add_venue_hyperlinks_reg()</a></code> - Adds markdown links to venue pages with relative paths for HTML display - <code><a href="reference/add_venue_type_hyperlinks_reg.html">add_venue_type_hyperlinks_reg()</a></code> - Adds markdown links to venue type pages with relative paths for HTML display</p>
-<p><strong>R/utils_render_register_mds.R</strong> - Markdown table generation: - <code><a href="reference/render_register_md.html">render_register_md()</a></code> - Creates markdown table with title and hyperlinks. Applies transformations in this order: 1. <code><a href="reference/adjust_cert_links_relative.html">adjust_cert_links_relative()</a></code> - Convert certificate links to relative paths 2. <code><a href="reference/add_report_hyperlinks_reg.html">add_report_hyperlinks_reg()</a></code> - Format Report column (shorten URLs) 3. <code><a href="reference/add_venue_hyperlinks_reg.html">add_venue_hyperlinks_reg()</a></code> - Make venue links relative 4. <code><a href="reference/add_venue_type_hyperlinks_reg.html">add_venue_type_hyperlinks_reg()</a></code> - Make venue type links relative - <code><a href="reference/create_md_table.html">create_md_table()</a></code> - Uses <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code> to create markdown table, adjusts column widths using <code>CONFIG$MD_TABLE_COLUMN_WIDTHS</code> - <code><a href="reference/add_markdown_title.html">add_markdown_title()</a></code> - Adds title using functions from <code>CONFIG$MD_TITLES</code></p>
-<p><strong>R/utils_render_register_htmls.R</strong> - HTML generation: - <code><a href="reference/render_html.html">render_html()</a></code> - Main HTML rendering function (used for both register and non-register tables) - <code><a href="reference/generate_html_document_yml.html">generate_html_document_yml()</a></code> - Creates YAML config for Pandoc with header/prefix/postfix includes - <code><a href="reference/create_index_section_files.html">create_index_section_files()</a></code> - Creates HTML header, prefix, and postfix from templates - <code><a href="reference/create_index_postfix_html.html">create_index_postfix_html()</a></code> - Creates postfix with links to CSV/JSON/MD versions using Whisker templating - <code><a href="reference/generate_href.html">generate_href()</a></code> - Constructs URLs based on <code>CONFIG$HREF_DETAILS</code> and filter/subcat - <code><a href="reference/edit_html_lib_paths.html">edit_html_lib_paths()</a></code> - Modifies HTML to use shared <code>docs/libs/</code> folder (avoids duplication)</p>
-<p><strong>R/utils_render_register_json.R</strong> - JSON generation: - <code><a href="reference/render_register_json.html">render_register_json()</a></code> - Creates three JSON files per view: - <code>register.json</code> - Full register with all entries - <code>featured.json</code> - Last N entries (N from <code>CONFIG$FEATURED_COUNT</code>, default 10) - <code>stats.json</code> - Metadata (source URL, cert count) - <code><a href="reference/add_repository_links_json.html">add_repository_links_json()</a></code> - Converts repository specs to full URLs - <code><a href="reference/set_paper_title_references.html">set_paper_title_references()</a></code> - Extracts paper titles and references from codecheck.yml - Uses <code>CONFIG$JSON_COLUMNS</code> to determine which columns to include</p>
-<p><strong>R/utils_render_table_venues.R</strong> - Venue list generation: - <code><a href="reference/create_venues_tables.html">create_venues_tables()</a></code> - Creates “all venues” table + one table per venue type - <code><a href="reference/create_all_venues_table.html">create_all_venues_table()</a></code> - Lists all venues with type and codechecks count - <code><a href="reference/create_venue_type_tables.html">create_venue_type_tables()</a></code> - Creates separate table for each venue type (journal, conference, community, institution) - <code><a href="reference/add_venues_hyperlinks_non_reg.html">add_venues_hyperlinks_non_reg()</a></code> - Adds markdown links to venue pages and “see all checks” links - Uses <code>CONFIG$DICT_VENUE_NAMES</code> to map short names to display names - Uses <code>CONFIG$VENUE_SUBCAT_PLURAL</code> for URL construction (conference → conferences)</p>
-<p><strong>R/utils_render_table_codecheckers.R</strong> - Codechecker list generation: - <code><a href="reference/create_all_codecheckers_table.html">create_all_codecheckers_table()</a></code> - Creates table with codechecker name, ORCID, and codechecks count - Unnests Codechecker column (each codecheck can have multiple codecheckers) - <code><a href="reference/add_all_codecheckers_hyperlink.html">add_all_codecheckers_hyperlink()</a></code> - Adds links to codechecker pages, ORCID profiles, and “see all checks” links</p>
-<p><strong>R/utils_render_table_non_registers.R</strong> - Non-register page orchestration: - <code><a href="reference/create_non_register_files.html">create_non_register_files()</a></code> - Creates HTML and JSON for venue/codechecker summary pages - <code><a href="reference/create_tables_non_register.html">create_tables_non_register()</a></code> - Dispatches to venue or codechecker table creator - <code><a href="reference/generate_table_details_non_reg.html">generate_table_details_non_reg()</a></code> - Creates metadata with title, subtext, extra_text - <code><a href="reference/render_non_register_md.html">render_non_register_md()</a></code> - Creates markdown for non-register pages - <code><a href="reference/generate_html_title_non_registers.html">generate_html_title_non_registers()</a></code> - Uses functions from <code>CONFIG$NON_REG_TITLE_FNS</code> - <code><a href="reference/generate_html_subtext_non_register.html">generate_html_subtext_non_register()</a></code> - Generates summary text (e.g., “In total, 100 codechecks…”) - <code><a href="reference/generate_html_extra_text_non_register.html">generate_html_extra_text_non_register()</a></code> - Adds explanatory text (used for codechecker page)</p>
-<p><strong>R/utils_breadcrumbs.R</strong> - Navigation and breadcrumb generation: - <code><a href="reference/generate_navigation_header.html">generate_navigation_header()</a></code> - Creates navigation header with CODECHECK logo and menu (shown on main register and overview pages) - <code><a href="reference/generate_breadcrumb.html">generate_breadcrumb()</a></code> - Generates breadcrumb navigation showing hierarchical page path - <code><a href="reference/calculate_breadcrumb_base_path.html">calculate_breadcrumb_base_path()</a></code> - Calculates relative path to register root based on page depth (handles register tables, non-register tables, and venue type pages)</p>
-<p><strong>R/utils_register_check.R</strong> - Validation functions: - <code><a href="reference/check_certificate_id.html">check_certificate_id()</a></code> - Compares certificate ID in register.csv vs codecheck.yml - <code><a href="reference/check_issue_status.html">check_issue_status()</a></code> - Verifies GitHub issue exists and checks its state</p>
-<p><strong>R/utils_download_certs.R</strong> - Certificate PDF downloads: - <code><a href="reference/download_cert_pdf.html">download_cert_pdf()</a></code> - Downloads certificate PDF from Zenodo DOI - Handles different Zenodo URL formats and API responses</p>
-</div>
-<div class="section level4">
-<h4 id="id_24-configuration-system-instextdataconfigr">2.4. Configuration System (inst/extdata/config.R)<a class="anchor" aria-label="anchor" href="#id_24-configuration-system-instextdataconfigr"></a></h4>
-<p>The CONFIG environment stores all configuration as lists/vectors. Key elements:</p>
-<p><strong>Table structure:</strong> - <code>CONFIG$REGISTER_COLUMNS</code> - Hierarchical column configuration: filter → file_type → columns - Special filter “default” used for main register and as fallback - Filter-specific configs (e.g., “venues”, “codecheckers”) can override defaults - Supports different column orders and selections per view - Example: <code>CONFIG$REGISTER_COLUMNS$default$html</code> or <code>CONFIG$REGISTER_COLUMNS$venues$json</code> - <code>CONFIG$MD_TABLE_COLUMN_WIDTHS</code> - Markdown column width specifications for register and non-register tables - Optimized for readability: Paper Title column is doubled in width, Report column significantly reduced - Different widths for main register vs venue-filtered tables (venues tables omit venue/type columns) - <code>CONFIG$JSON_COLUMNS</code> - Column order for JSON output (featured.json and main register.json)</p>
-<p><strong>Filtering:</strong> - <code>CONFIG$FILTER_COLUMN_NAMES</code> - Maps filter name to register column (venues→Venue, codecheckers→Codechecker) - <code>CONFIG$FILTER_SUBCAT_COLUMNS</code> - Maps filter to subcat column (venues→Type) - <code>CONFIG$FILTER_SUBCATEGORIES</code> - Lists subcats per filter (venues→[community, journal, conference, institution])</p>
-<p><strong>URLs and hyperlinks:</strong> - <code>CONFIG$HYPERLINKS</code> - Base URLs for all platforms (GitHub, OSF, GitLab, Zenodo, ORCID, DOI, etc.) - <code>CONFIG$HREF_DETAILS</code> - Specs for generating links (base_url, file extension) for CSV/JSON/MD downloads - <code>CONFIG$CERT_LINKS</code> - API URLs for OSF, Zenodo, CrossRef, OpenAlex</p>
-<p><strong>Display settings:</strong> - <code>CONFIG$DICT_VENUE_NAMES</code> - Maps short names to full display names (e.g., “GigaScience” → “GigaScience”) - <code>CONFIG$VENUE_SUBCAT_PLURAL</code> - Pluralization map (conference→conferences, journal→journals) - <code>CONFIG$NON_REG_TABLE_COL_NAMES</code> - Column name mappings for venues and codecheckers tables - <code>CONFIG$DICT_ORCID_ID_NAME</code> - Built dynamically during preprocessing; maps ORCID to name</p>
-<p><strong>Titles and text:</strong> - <code>CONFIG$MD_TITLES</code> - Functions that generate titles for different page types - <code>CONFIG$NON_REG_TITLE_FNS</code> - Functions that generate titles for venue/codechecker pages - <code>CONFIG$NON_REG_SUBTEXT</code> - Functions that generate summary text - <code>CONFIG$NON_REG_EXTRA_TEXT</code> - Additional explanatory text for specific pages</p>
-<p><strong>Certificates:</strong> - <code>CONFIG$CERT_DPI</code> - Resolution for PDF-to-PNG conversion (default: 800) - <code>CONFIG$CERT_REQUEST_DELAY</code> - Delay between Zenodo requests in seconds (default: 1) - <code>CONFIG$CERT_DOWNLOAD_AND_CONVERT</code> - Boolean to enable/disable PDF downloads - <code>CONFIG$FEATURED_COUNT</code> - Number of certificates in featured.json (default: 10)</p>
-<p><strong>Directories:</strong> - <code>CONFIG$CERTS_DIR</code> - Paths to certificate templates and output directory - <code>CONFIG$TEMPLATE_DIR</code> - Paths to all template files (reg, non_reg, cert, general) - <code>CONFIG$DIR_TEMP_REGISTER_CODECHECKER</code> - Temporary CSV path for codechecker filtering</p>
-<p><strong>Runtime state:</strong> - <code>CONFIG$NO_CODECHECKS</code> - Total number of codechecks (set during preprocessing) - <code>CONFIG$NO_CODECHECKS_VENUE_TYPE</code> - Codechecks count per venue type (set during venue table creation)</p>
-</div>
-<div class="section level4">
-<h4 id="id_25-template-system">2.5. Template System<a class="anchor" aria-label="anchor" href="#id_25-template-system"></a></h4>
-<p>Templates are located in <code>inst/extdata/templates/</code> with separate subdirectories:</p>
-<p><strong>Register tables</strong> (<code>reg_tables/</code>): - <code>template.md</code> - Markdown template with <code>$title$</code> and <code>$content$</code> placeholders - <code>index_postfix_template.html</code> - HTML footer with download links (CSV/JSON/MD) - Uses Whisker templating for dynamic links</p>
-<p><strong>Non-register tables</strong> (<code>non_reg_tables/</code>): - <code>template.md</code> - Markdown template with <code>$title$</code>, <code>$subtitle$</code>, <code>$content$</code>, <code>$extra_text$</code> - <code>index_postfix_template.html</code> - HTML footer with JSON link</p>
-<p><strong>Certificate pages</strong> (<code>cert/</code>): - <code>template_base.md</code> - Full template with certificate PDF display - <code>template_no_cert.md</code> - Template when PDF unavailable - <code>template_cert_page.html</code> - HTML wrapper (currently unused) - Placeholders: <code>$title$</code>, <code>$paper_title$</code>, <code>$paper_authors$</code>, <code>$abstract_content$</code>, <code>$codechecker_names$</code>, <code>$codecheck_time$</code>, <code>$codecheck_summary$</code>, <code>$codecheck_cert$</code>, <code>$codecheck_repo$</code>, <code>$codecheck_full_certificate$</code></p>
-<p><strong>General</strong> (<code>general/</code>): - <code>index_header_template.html</code> - HTML header with meta tags, CSS links - <code>index_prefix_template.html</code> - HTML prefix with navigation and branding</p>
-<p>All HTML files use Pandoc/rmarkdown for Markdown→HTML conversion with custom YAML configs.</p>
-</div>
-<div class="section level4">
-<h4 id="id_26-output-directory-structure">2.6. Output Directory Structure<a class="anchor" aria-label="anchor" href="#id_26-output-directory-structure"></a></h4>
-<p>The rendering process creates this directory structure in <code>docs/</code>:</p>
-<pre><code>docs/
-├── index.html                    # Main register page
-├── register.md                   # Markdown version
-├── register.json                 # Full JSON
-├── featured.json                 # Last 10 certificates
-├── stats.json                    # Statistics
-├── libs/                         # Shared JS/CSS libraries
-├── certs/                        # Certificate pages
-│   ├── 2024-001/
-│   │   ├── index.html
-│   │   ├── cert.pdf
-│   │   ├── cert_1.png
-│   │   ├── cert_2.png
-│   │   └── ...
-│   └── 2024-002/
-│       └── ...
-├── venues/                       # Venue-filtered registers
-│   ├── index.html                # All venues list
-│   ├── index.json
-│   ├── journals/
-│   │   ├── index.html            # Journal list
-│   │   ├── gigascience/
-│   │   │   ├── index.html        # GigaScience register
-│   │   │   ├── register.csv
-│   │   │   ├── register.md
-│   │   │   └── register.json
-│   │   └── j_geogr_syst/
-│   │       └── ...
-│   ├── conferences/
-│   │   └── ...
-│   ├── communities/
-│   │   └── ...
-│   └── institutions/
-│       └── ...
-└── codecheckers/                 # Codechecker-filtered registers
-    ├── index.html                # All codecheckers list
-    ├── index.json
-    ├── 0000-0001-2345-6789/
-    │   ├── index.html            # Individual codechecker register
-    │   ├── register.csv
-    │   ├── register.md
-    │   └── register.json
-    └── ...</code></pre>
-</div>
-<div class="section level4">
-<h4 id="id_27-javascript-library-management">2.7. JavaScript Library Management<a class="anchor" aria-label="anchor" href="#id_27-javascript-library-management"></a></h4>
-<p>Certificate pages use JavaScript libraries for interactive features like citation generation. All libraries are stored locally in <code>inst/extdata/js/</code> to avoid dependencies on external CDNs.</p>
-<p><strong>Current libraries:</strong></p>
-<p><strong>Citation.js</strong> - Generates formatted citations from DOIs - Files: <code>citation.min.js</code> (2.7 MB) + <code>citation-wrapper.js</code> (2 KB) - Version: 0.7.21 - Source: <a href="https://www.npmjs.com/package/citation-js" class="external-link uri">https://www.npmjs.com/package/citation-js</a> - Note: The npm distribution is a browserify bundle that requires <code>citation-wrapper.js</code> to expose <code>Cite</code> as a global object</p>
-<p><strong>Library management:</strong></p>
-<p>Download all libraries:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">bash</span> inst/extdata/scripts/download-js-libraries.sh</span></code></pre></div>
-<p>Or from R:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.html" class="external-link">system</a></span><span class="op">(</span><span class="st">"bash inst/extdata/scripts/download-js-libraries.sh"</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Documentation:</strong> - <code>inst/extdata/scripts/JAVASCRIPT_LIBRARIES.md</code> - Complete documentation on library management, updating, and troubleshooting - <code>inst/extdata/scripts/download-js-libraries.sh</code> - Script to download all required libraries</p>
-<p><strong>Key points:</strong> - Libraries are NOT loaded from CDNs - all files are stored locally - Citation.js requires a two-script setup: 1. <code>citation.min.js</code> - The browserify bundle 2. <code>citation-wrapper.js</code> - Exposes <code>Cite</code> globally (must load immediately after) - Template usage: <code>html   &lt;script src="../../libs/codecheck/citation.min.js"&gt;&lt;/script&gt;   &lt;script src="../../libs/codecheck/citation-wrapper.js"&gt;&lt;/script&gt;</code> - After loading, <code>Cite</code> is available globally for citation formatting</p>
-<p><strong>Troubleshooting:</strong> - If citations show “Loading citation…” indefinitely, verify both <code>citation.min.js</code> and <code>citation-wrapper.js</code> are present and loaded in the correct order - See <code>inst/extdata/scripts/JAVASCRIPT_LIBRARIES.md</code> for detailed troubleshooting steps</p>
-</div>
-<div class="section level4">
-<h4 id="id_28-relationship-with-register-repository">2.8. Relationship with ../register Repository<a class="anchor" aria-label="anchor" href="#id_28-relationship-with-register-repository"></a></h4>
-<p>The <code>../register</code> repository is the <strong>data and deployment repository</strong> that contains: - <code>register.csv</code> - The master list of all codechecks - <code>Makefile</code> - Commands for rendering (calls functions from this R package) - <code>docs/</code> - All generated output files (committed to git, served via GitHub Pages) - <code>.github/workflows/</code> - GitHub Actions that automatically render on changes</p>
-<p><strong>Workflow</strong>: 1. User edits <code>register.csv</code> in the <code>../register</code> repository 2. GitHub Action or manual <code>make render</code> calls <code><a href="reference/register_render.html">codecheck::register_render()</a></code> 3. R package reads <code>register.csv</code>, fetches remote <code>codecheck.yml</code> files, generates all output formats 4. Output is written to <code>../register/docs/</code> 5. Changes are committed and deployed to <a href="https://codecheck.org.uk/register/" class="external-link uri">https://codecheck.org.uk/register/</a></p>
-<p><strong>Testing locally</strong>:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># From within the ../register directory:</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>R <span class="sc">-</span>q <span class="sc">-</span>e <span class="st">"codecheck::register_render(); warnings()"</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co"># Check specific entries:</span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>R <span class="sc">-</span>q <span class="sc">-</span>e <span class="st">"codecheck::register_check(); warnings()"</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co"># Clear cache after updating remote codecheck.yml:</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>R <span class="sc">-</span>q <span class="sc">-</span>e <span class="st">"codecheck::register_clear_cache()"</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co"># Render only recent entries:</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>register <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">'register.csv'</span>, <span class="at">as.is =</span> <span class="cn">TRUE</span>, <span class="at">comment.char =</span> <span class="st">'#'</span>)</span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>codecheck<span class="sc">::</span><span class="fu">register_render</span>(<span class="at">from =</span> <span class="fu">nrow</span>(register) <span class="sc">-</span> <span class="dv">5</span>, <span class="at">to =</span> <span class="fu">nrow</span>(register))</span></code></pre></div>
-</div>
-<div class="section level4">
-<h4 id="id_29-important-implementation-details">2.9. Important Implementation Details<a class="anchor" aria-label="anchor" href="#id_29-important-implementation-details"></a></h4>
-<p><strong>Caching</strong>: All remote <code>codecheck.yml</code> files are cached using <code><a href="https://rdrr.io/pkg/R.cache/man/addMemoization.html" class="external-link">R.cache::addMemoization()</a></code> to avoid repeated network requests. Cache location: <code>~/.Rcache/</code>. Clear with <code><a href="reference/register_clear_cache.html">register_clear_cache()</a></code>.</p>
-<p><strong>Rate limiting</strong>: - GitHub API: Requires <code>GITHUB_PAT</code> environment variable to avoid rate limits (60 req/hour without token, 5000/hour with) - Zenodo API: Respects 1-second delay between requests (configurable via <code>CONFIG$CERT_REQUEST_DELAY</code>)</p>
-<p><strong>Library path management</strong>: All HTML files use a shared <code>docs/libs/</code> folder for Bootstrap/jQuery/etc. The function <code><a href="reference/edit_html_lib_paths.html">edit_html_lib_paths()</a></code> rewrites <code>"libs/</code> to relative paths like <code>"../../libs/</code> to avoid duplicating libraries in every subdirectory.</p>
-<p><strong>PDF handling</strong>: Certificate PDFs are downloaded from Zenodo and converted to PNG images using <code><a href="https://docs.ropensci.org/pdftools//reference/pdf_render_page.html" class="external-link">pdftools::pdf_convert()</a></code> at 800 DPI. The certificate page template includes JavaScript for image carousel/navigation.</p>
-<p><strong>Codechecker column handling</strong>: The Codechecker column contains R lists (each codecheck can have multiple codecheckers). For CSV export and grouping, the column is “flattened” by unnesting: one row with two codecheckers becomes two rows, each with one codechecker. This is why the sum of individual codechecker’s codechecks exceeds the total number of codechecks.</p>
-<p><strong>Venue name standardization</strong>: Short names in <code>register.csv</code> (e.g., “J Geogr Syst”) are mapped to full display names (e.g., “Journal of Geographical Systems”) via <code>CONFIG$DICT_VENUE_NAMES</code>. URLs use slugified versions (<code>j_geogr_syst</code>).</p>
-<p><strong>Venue label column</strong>: The “venue label” column (containing GitHub issue labels) is only displayed on the “all venues” page where it helps distinguish between different venue types. It is removed from venue type-specific pages (institutions, journals, conferences, communities) as it provides no useful information when all venues are of the same type. This is handled in <code><a href="reference/create_non_register_files.html">create_non_register_files()</a></code> which removes the column before rendering HTML for venue type pages.</p>
-<p><strong>Abstract retrieval</strong>: Abstracts are fetched in this order: 1. CrossRef API (primary source) 2. OpenAlex API (fallback, uses inverted index format) 3. If both fail, no abstract is shown</p>
-<p><strong>Markdown to HTML rendering</strong>: Uses <code><a href="https://pkgs.rstudio.com/rmarkdown/reference/render.html" class="external-link">rmarkdown::render()</a></code> with custom YAML config files that specify HTML includes (header, prefix, postfix). Pandoc processes the markdown with Bootstrap styling.</p>
-<p><strong>Relative paths for localhost development</strong>: All internal navigation links (certificate links, venue links, venue type links, codechecker links) use relative paths in HTML/Markdown for localhost development, while JSON and CSV exports retain absolute URLs for external consumption. The depth of relative paths is calculated based on the output directory structure: - Root level (<code>docs/index.html</code>): <code>./certs/2020-001/</code> - One level deep (<code>docs/venues/index.html</code>): <code>../certs/2020-001/</code> - Two levels deep (<code>docs/venues/communities/index.html</code>): <code>../../certs/2020-001/</code> - Three levels deep (<code>docs/venues/journals/gigascience/index.html</code>): <code>../../../certs/2020-001/</code></p>
-<p>Key functions: - <code><a href="reference/adjust_cert_links_relative.html">adjust_cert_links_relative()</a></code> - Converts certificate URLs (replaces <code>CONFIG$HYPERLINKS[["certs"]]</code> with relative path) - <code><a href="reference/add_report_hyperlinks_reg.html">add_report_hyperlinks_reg()</a></code> - Formats Report column (removes http/https from display text) - <code><a href="reference/add_venue_hyperlinks_reg.html">add_venue_hyperlinks_reg()</a></code> - Makes venue links relative - <code><a href="reference/add_venue_type_hyperlinks_reg.html">add_venue_type_hyperlinks_reg()</a></code> - Makes venue type links relative - <code><a href="reference/calculate_breadcrumb_base_path.html">calculate_breadcrumb_base_path()</a></code> - Calculates depth for breadcrumbs and navigation</p>
-<p><strong>Navigation header and breadcrumbs</strong>: All pages include a navigation header with the CODECHECK logo linking to register home. Overview pages (main register, all venues, all codecheckers) also show a menu with “All Venues”, “All Codecheckers”, and “About” links. Venue type pages (e.g., <code>/venues/communities/</code>) require special handling: - “All Venues” link: <code>../index.html</code> (one level up within venues directory) - “All Codecheckers” link: <code>../../codecheckers/index.html</code> (up two levels, then into codecheckers)</p>
-<p>Breadcrumbs show the hierarchical path (e.g., CODECHECK Register &gt; Venues &gt; Journals &gt; GigaScience) with clickable links to parent pages.</p>
-<p><strong>Logging for parallel execution</strong>: All certificate rendering operations include the certificate identifier as a prefix in log messages (e.g., “2020-001 | Downloaded successfully”). This makes logs easier to understand when rendering is executed in parallel, as messages from different certificates can be easily distinguished and tracked. All warning and message calls in certificate rendering functions include the <code>cert_id</code> prefix.</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="id_3-remote-configuration-retrieval-rconfigurationr">3. Remote Configuration Retrieval (R/configuration.R)<a class="anchor" aria-label="anchor" href="#id_3-remote-configuration-retrieval-rconfigurationr"></a></h3>
-<p><strong>Main entry point</strong>: <code><a href="reference/get_codecheck_yml.html">get_codecheck_yml()</a></code> fetches codecheck.yml from remote repositories.</p>
-<p><strong>Multi-platform support</strong> via <code><a href="reference/parse_repository_spec.html">parse_repository_spec()</a></code>:</p>
-<ul><li>
-<code>github::org/repo</code> - GitHub repositories</li>
-<li>
-<code>osf::ABC12</code> - OSF projects (5-character IDs)</li>
-<li>
-<code>gitlab::project/repo</code> - GitLab.com projects</li>
-<li>
-<code>zenodo::1234567</code> - Zenodo records (7+ digit IDs)</li>
-<li>
-<code>zenodo-sandbox::1234567</code> - Zenodo Sandbox</li>
-</ul><p>Each platform has dedicated retrieval functions (<code><a href="reference/get_codecheck_yml_github.html">get_codecheck_yml_github()</a></code>, etc.) and results are cached using <code><a href="https://rdrr.io/pkg/R.cache/man/addMemoization.html" class="external-link">R.cache::addMemoization()</a></code>.</p>
+<p>Semantic versioning. Use <code>usethis::use_version("patch"|"minor"|"major"|"dev")</code> to bump. If that fails (uncommitted changes), edit <code>DESCRIPTION</code> and <code>NEWS.md</code> manually.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="key-data-structures">Key Data Structures<a class="anchor" aria-label="anchor" href="#key-data-structures"></a></h2>
+<h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
 <div class="section level3">
-<h3 id="codecheckyml-structure">codecheck.yml Structure<a class="anchor" aria-label="anchor" href="#codecheckyml-structure"></a></h3>
-<p>The YAML configuration file must contain:</p>
-<ul><li>
-<code>certificate</code> - Pattern: NNNN-NNN (e.g., “2024-001”)</li>
+<h3 id="register-rendering-pipeline">Register Rendering Pipeline<a class="anchor" aria-label="anchor" href="#register-rendering-pipeline"></a></h3>
+<p>Entry point: <code><a href="reference/register_render.html">register_render()</a></code> in <code>R/register.R</code>. Flow:</p>
+<ol style="list-style-type: decimal"><li>Load <code>register.csv</code> + <code>config.R</code> (CONFIG environment)</li>
 <li>
-<code>paper</code> - Title, authors (with name and optional ORCID), reference URL</li>
+<code><a href="reference/preprocess_register.html">preprocess_register()</a></code> - enrich data from remote <code>codecheck.yml</code> files</li>
 <li>
-<code>codechecker</code> - Name and optional ORCID of checker(s)</li>
+<code><a href="reference/render_cert_htmls.html">render_cert_htmls()</a></code> - generate individual certificate HTML pages (supports <code>parallel=TRUE</code>)</li>
 <li>
-<code>manifest</code> - List of output files, each with <code>file</code> and <code>comment</code>
-</li>
+<code><a href="reference/create_filtered_reg_csvs.html">create_filtered_reg_csvs()</a></code> - CSV files per venue/codechecker</li>
 <li>
-<code>report</code> - DOI for the Zenodo certificate</li>
+<code><a href="reference/create_register_files.html">create_register_files()</a></code> - register tables in HTML/MD/JSON</li>
 <li>
-<code>repository</code> - URL(s) to the code repository</li>
-<li>
-<code>check_time</code> - ISO 8601 timestamp</li>
-</ul><p>See template at <code>inst/extdata/templates/codecheck.yml</code>.</p>
+<code><a href="reference/create_non_register_files.html">create_non_register_files()</a></code> - venue and codechecker summary pages</li>
+</ol><p>Output goes to <code>docs/</code> with structure: <code>docs/{index,certs/,venues/,codecheckers/}</code>.</p>
 </div>
 <div class="section level3">
-<h3 id="register-csv-format">Register CSV Format<a class="anchor" aria-label="anchor" href="#register-csv-format"></a></h3>
-<p>The register CSV contains columns:</p>
-<ul><li>Certificate - ID (e.g., “2024-001”)</li>
-<li>Repository - Platform-prefixed spec (e.g., “github::codecheckers/repo”)</li>
-<li>Type - Venue category (journal, conference, community, institution)</li>
-<li>Venue - Short venue name</li>
-<li>Issue - GitHub issue number for the CODECHECK</li>
-<li>Report - Zenodo DOI</li>
-<li>Check date - ISO 8601 date</li>
-</ul></div>
+<h3 id="configuration-instextdataconfigr">Configuration (<code>inst/extdata/config.R</code>)<a class="anchor" aria-label="anchor" href="#configuration-instextdataconfigr"></a></h3>
+<p>The <code>CONFIG</code> environment holds all settings: column definitions, URL patterns, venue name mappings, template paths, display settings. Read the file directly for details.</p>
 </div>
-<div class="section level2">
-<h2 id="templates">Templates<a class="anchor" aria-label="anchor" href="#templates"></a></h2>
-<p>Templates use Pandoc and Markdown for rendering and the <code>whisker</code> package for rendering specific parts of HTMLs using Mustache’s logicless templating. Templates are located in <code>inst/extdata/templates/</code>:</p>
+<div class="section level3">
+<h3 id="templates-instextdatatemplates">Templates (<code>inst/extdata/templates/</code>)<a class="anchor" aria-label="anchor" href="#templates-instextdatatemplates"></a></h3>
 <ul><li>
-<code>cert/</code> - Certificate markdown and HTML templates</li>
+<code>cert/</code> - Certificate page templates (base + no-cert variant)</li>
 <li>
 <code>reg_tables/</code> - Register table templates</li>
 <li>
 <code>non_reg_tables/</code> - Venue/codechecker list templates</li>
 <li>
-<code>general/</code> - Shared HTML headers/footers</li>
-</ul></div>
-<div class="section level2">
-<h2 id="performance--parallelization">Performance &amp; Parallelization<a class="anchor" aria-label="anchor" href="#performance--parallelization"></a></h2>
-<div class="section level3">
-<h3 id="timing-instrumentation">Timing Instrumentation<a class="anchor" aria-label="anchor" href="#timing-instrumentation"></a></h3>
-<p>All major rendering functions include comprehensive timing instrumentation with millisecond precision:</p>
-<ul><li>
-<strong><code><a href="reference/render_cert_htmls.html">render_cert_htmls()</a></code></strong> - Logs each certificate rendering time and summary statistics</li>
-<li>
-<strong><code><a href="reference/create_register_files.html">create_register_files()</a></code></strong> - Logs each register page rendering time</li>
-<li>
-<strong><code><a href="reference/create_non_register_files.html">create_non_register_files()</a></code></strong> - Logs each summary page rendering time</li>
-</ul><p>Log messages use ISO 8601 format with millisecond precision: <code>[YYYY-MM-DD HH:MM:SS.mmm]</code></p>
-<p>Certificate rendering logs include the certificate identifier as a prefix for easy tracking in parallel execution:</p>
-<pre><code>[2025-11-14 14:29:40.586] 2020-001 | Completed (1/114) in 1.50 seconds</code></pre>
+<code>general/</code> - Shared HTML headers/footers/navigation</li>
+</ul><p>Uses Pandoc/rmarkdown for Markdown→HTML, Whisker for HTML partials.</p>
 </div>
 <div class="section level3">
-<h3 id="parallel-certificate-rendering">Parallel Certificate Rendering<a class="anchor" aria-label="anchor" href="#parallel-certificate-rendering"></a></h3>
-<p>Certificate rendering supports parallelization using R’s <code>parallel</code> package for significant performance improvements:</p>
-<p><strong>Usage</strong>:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Sequential rendering (default, backward compatible)</span></span>
-<span><span class="fu"><a href="reference/register_render.html">register_render</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Parallel rendering with auto-detected cores (detectCores() - 1)</span></span>
-<span><span class="fu"><a href="reference/register_render.html">register_render</a></span><span class="op">(</span>parallel <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Parallel rendering with specific core count</span></span>
-<span><span class="fu"><a href="reference/register_render.html">register_render</a></span><span class="op">(</span>parallel <span class="op">=</span> <span class="cn">TRUE</span>, ncores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Implementation Details</strong>: - Platform-specific: Uses <code>mclapply()</code> on Unix/Mac (memory-efficient forking), <code>parLapply()</code> on Windows (cluster-based) - Auto-core detection: Defaults to <code>detectCores() - 1</code> to leave one core available for system - Enhanced error handling: Individual certificate failures don’t stop the entire render - Timing statistics: Reports theoretical speedup and parallel efficiency metrics</p>
-<p><strong>Performance Characteristics</strong> (based on 114-certificate register): - <strong>Sequential</strong>: ~131 seconds for certificates (avg: 1.15 sec/cert) - <strong>Parallel (8 cores)</strong>: ~22 seconds for certificates (~6x speedup) - <strong>Overall speedup</strong>: ~3.7x for full render (certificates are 87.5% of total time) - <strong>Typical efficiency</strong>: 90-95% parallel efficiency on 2-8 cores</p>
-<p><strong>Best Practices</strong>: - Use parallel rendering for 50+ certificates - Test with small subsets first: <code>register_render(from = 1, to = 10, parallel = TRUE)</code> - Monitor with <code>htop</code> or <code>top</code> to verify core utilization - Adjust <code>ncores</code> if system becomes unresponsive</p>
-<p><strong>Dependencies</strong>: - Requires <code>parallel</code> package (included in DESCRIPTION Imports) - Uses explicit <code>parallel::</code> notation throughout code (no @importFrom needed)</p>
+<h3 id="remote-configuration-rconfigurationr">Remote Configuration (<code>R/configuration.R</code>)<a class="anchor" aria-label="anchor" href="#remote-configuration-rconfigurationr"></a></h3>
+<p><code><a href="reference/get_codecheck_yml.html">get_codecheck_yml()</a></code> fetches from multiple platforms via <code><a href="reference/parse_repository_spec.html">parse_repository_spec()</a></code>: - <code>github::org/repo</code>, <code>osf::ABC12</code>, <code>gitlab::project/repo</code>, <code>zenodo::1234567</code></p>
+<p>Results are cached via <code>R.cache</code>. Clear with <code><a href="reference/register_clear_cache.html">register_clear_cache()</a></code>.</p>
+</div>
+<div class="section level3">
+<h3 id="relationship-with-register-repository">Relationship with ../register Repository<a class="anchor" aria-label="anchor" href="#relationship-with-register-repository"></a></h3>
+<p>The <code>../register</code> repo contains <code>register.csv</code> (data) and <code>docs/</code> (output, deployed via GitHub Pages). Workflow: edit CSV → <code>make render</code> calls <code><a href="reference/register_render.html">codecheck::register_render()</a></code> → output to <code>docs/</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="key-data-structures">Key Data Structures<a class="anchor" aria-label="anchor" href="#key-data-structures"></a></h3>
+<p><strong>codecheck.yml</strong>: <code>certificate</code>, <code>paper</code> (title, authors with ORCID), <code>codechecker</code>, <code>manifest</code>, <code>report</code> (Zenodo DOI), <code>repository</code>, <code>check_time</code>. Template at <code>inst/extdata/templates/codecheck.yml</code>.</p>
+<p><strong>register.csv</strong>: Certificate, Repository (platform-prefixed), Type, Venue, Issue, Report, Check date.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="important-notes">Important Notes<a class="anchor" aria-label="anchor" href="#important-notes"></a></h2>
+<h2 id="implementation-notes">Implementation Notes<a class="anchor" aria-label="anchor" href="#implementation-notes"></a></h2>
 <ul><li>
-<strong>GitHub API token</strong>: Set <code>GITHUB_PAT</code> environment variable to avoid rate limits when rendering the register</li>
+<strong>HTML relative paths</strong>: Internal links use relative paths for localhost dev; JSON/CSV keep absolute URLs. Depth calculated per output directory level.</li>
 <li>
-<strong>Caching</strong>: Remote configurations are cached via <code>R.cache</code>. Use <code><a href="reference/register_clear_cache.html">register_clear_cache()</a></code> to reset</li>
+<strong>Shared libs</strong>: <code><a href="reference/edit_html_lib_paths.html">edit_html_lib_paths()</a></code> rewrites paths to shared <code>docs/libs/</code> folder</li>
 <li>
-<strong>ORCID format</strong>: Must be without URL prefix (NNNN-NNNN-NNNN-NNNX format)</li>
+<strong>Codechecker column</strong>: Contains R lists (multiple codecheckers per check); unnested for CSV/grouping</li>
 <li>
-<strong>DOI validation</strong>: Uses <code><a href="https://rdrr.io/pkg/rorcid/man/check_dois.html" class="external-link">rorcid::check_dois()</a></code> and requires network access</li>
+<strong>Abstracts</strong>: Fetched from CrossRef, then OpenAlex as fallback</li>
 <li>
-<strong>UTF-8 encoding</strong>: All YAML files should be UTF-8 encoded</li>
+<strong>JS libraries</strong>: Stored locally in <code>inst/extdata/js/</code> (no CDN). Citation.js needs both <code>citation.min.js</code> + <code>citation-wrapper.js</code>
+</li>
 <li>
-<strong>Date formats</strong>: Use ISO 8601 for all date/time fields</li>
+<strong>Parallel rendering</strong>: <code>register_render(parallel=TRUE)</code> uses <code>mclapply()</code>/<code>parLapply()</code>. ~6x speedup on 8 cores</li>
 <li>
-<strong>Manifest files</strong>: Paths in the manifest are relative to the root of the repository</li>
+<strong>Log format</strong>: Certificate operations prefix with cert ID for parallel log readability</li>
 <li>
-<strong>Zenodo sandbox</strong>: Use <code>zenodo-sandbox::</code> prefix for testing uploads without affecting the main Zenodo repository</li>
+<strong>Rate limiting</strong>: Set <code>GITHUB_PAT</code> env var; Zenodo has 1s delay between requests</li>
 <li>
-<strong>Configuration updates</strong>: Update <code>inst/extdata/config.R</code> for changes in URL patterns, table structures, etc.</li>
-<li>
-<strong>Testing</strong>: Use <code>tinytest</code> for unit tests located in <code>inst/tinytest/</code>. Run tests with <code>tinytest::test_package("codecheck")</code> from the installed package or <code>tinytest::test_all(".")</code> from source.</li>
-<li>
-<strong>Documentation</strong>: Use <code>roxygen2</code> for function documentation</li>
-<li>
-<strong>Changelog</strong>: Always update <code>NEWS.md</code> when making changes. Each version should have its own section documenting new features, bug fixes, and breaking changes.</li>
+<strong>Venue names</strong>: Short names in CSV mapped to display names via <code>CONFIG$DICT_VENUE_NAMES</code>
+</li>
 </ul></div>
 </div>
 

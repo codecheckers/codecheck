@@ -28,4 +28,4 @@ A dataframe containing one row per manifest file.
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

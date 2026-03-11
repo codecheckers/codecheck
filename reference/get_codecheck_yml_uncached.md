@@ -16,4 +16,4 @@ get_codecheck_yml_uncached(x)
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

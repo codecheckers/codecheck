@@ -31,7 +31,7 @@ with an error message.
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest
 
 ## Examples
 

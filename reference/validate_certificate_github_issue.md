@@ -77,7 +77,7 @@ Invisibly returns a list with the validation result:
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest
 
 ## Examples
 

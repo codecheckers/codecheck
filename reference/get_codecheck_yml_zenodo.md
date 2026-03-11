@@ -20,4 +20,4 @@ get_codecheck_yml_zenodo(x, sandbox = FALSE)
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

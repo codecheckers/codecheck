@@ -55,7 +55,7 @@ First \| YYYY-NNN" where YYYY-NNN is the certificate identifier.
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest
 
 ## Examples
 

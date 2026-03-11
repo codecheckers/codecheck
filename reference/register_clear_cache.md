@@ -14,4 +14,4 @@ register_clear_cache()
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

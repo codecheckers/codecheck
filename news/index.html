@@ -40,6 +40,11 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0" id="codecheck-0250">codecheck 0.25.0<a class="anchor" aria-label="anchor" href="#codecheck-0250"></a></h2>
 <div class="section level3">
+<h3 id="new-features-0-25-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0"></a></h3>
+<ul><li>
+<strong>Redirect page for /certs/ directory</strong>: Visiting <code>/register/certs/</code> without a certificate ID now redirects to the main register page instead of showing a 404 error (codecheckers/register#166)</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-0-25-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0"></a></h3>
 <ul><li>
 <strong>Fixed navigation links on venue type pages</strong>: Corrected navigation menu links on venue type-specific pages (e.g., <code>/venues/institutions/</code>, <code>/venues/communities/</code>). The “All Venues” link now correctly points to <code>../index.html</code> (one level up), and “All Codecheckers” link points to <code>../../codecheckers/index.html</code> (up two levels then into codecheckers). Previously these links were broken because they were using the generic base_path calculation</li>

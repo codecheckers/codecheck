@@ -2,6 +2,12 @@
 
 ## codecheck 0.25.0
 
+### New Features
+
+- **Redirect page for /certs/ directory**: Visiting `/register/certs/`
+  without a certificate ID now redirects to the main register page
+  instead of showing a 404 error (codecheckers/register#166)
+
 ### Bug Fixes
 
 - **Fixed navigation links on venue type pages**: Corrected navigation

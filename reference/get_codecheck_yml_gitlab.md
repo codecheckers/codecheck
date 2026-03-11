@@ -17,4 +17,4 @@ get_codecheck_yml_gitlab(x)
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

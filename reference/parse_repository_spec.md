@@ -28,4 +28,4 @@ Supported variants:
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

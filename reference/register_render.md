@@ -79,4 +79,4 @@ repositories
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

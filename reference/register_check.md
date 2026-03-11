@@ -38,4 +38,4 @@ Further test ideas:
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

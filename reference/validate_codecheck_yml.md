@@ -22,4 +22,4 @@ stops with an error
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

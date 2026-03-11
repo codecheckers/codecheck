@@ -16,4 +16,4 @@ get_codecheck_yml_osf(x)
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest

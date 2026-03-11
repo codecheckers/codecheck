@@ -16,4 +16,4 @@ get_codecheck_yml(x)
 
 ## Author
 
-Daniel Nüst
+Daniel Nuest
