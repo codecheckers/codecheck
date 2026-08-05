@@ -160,9 +160,8 @@ render_manifest_files(manifest_df)
 
 ## Acknowledgements
 
-I would like to thank Dr Bhatt and his team for promptly answering any
-queries I had with this reproduction.  CODECHECK is financially
-supported by the Mozilla foundation.
+I would like to thank ... for ... [promptly answering any
+queries/providing updates; assitance with X; ...].
 
 # Citing this document
 
