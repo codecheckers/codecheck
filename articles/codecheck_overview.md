@@ -5,6 +5,7 @@
 The latest version of the package can be installed using:
 
 ``` r
+
 remotes::install_github("codecheckers/codecheck")
 ```
 
@@ -56,6 +57,7 @@ the following to generate several template files. These will then need
 to be committed into the repo.
 
 ``` r
+
 require(codecheck)
 create_codecheck_files()
 ```

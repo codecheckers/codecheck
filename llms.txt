@@ -16,6 +16,7 @@ the current version from
 [GitHub](https://github.com/codecheckers/codecheck) with:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("codecheckers/codecheck")
 ```
@@ -84,6 +85,7 @@ The package uses
 better, run the tests in a fresh install and temporary directory using
 
 ``` r
+
 # assuming . is the package path
 library(tinytest)
 build_install_test(".")
