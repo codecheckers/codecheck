@@ -9,6 +9,7 @@ register_clear_cache <- function() {
   path <- R.cache::getCacheRootPath()
   cli::cli_alert_info("Deleting cache path {.path {path}}")
   unlink(path, recursive = TRUE)
+  clear_cert_link_cache()
 }
 
 #' Function for adding clickable links to the paper for each entry in the register table.

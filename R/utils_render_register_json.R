@@ -60,8 +60,10 @@ add_cert_pdf_links <- function(register_table) {
   register_table$`Certificate PDF` <- sapply(
     seq_len(nrow(register_table)),
     function(i) {
-      report <- register_table[i, "Report"]
-      cert_id <- register_table[i, "Certificate ID"]
+      # use [[ ]] on the column: [i, "col"] returns a 1x1 tibble for tibble-backed
+      # tables (venue and type sub-tables), which downstream HTTP calls reject
+      report <- register_table[["Report"]][[i]]
+      cert_id <- register_table[["Certificate ID"]][[i]]
       if (is.na(report) || is.null(report) || nchar(report) == 0) {
         return(NA_character_)
       }

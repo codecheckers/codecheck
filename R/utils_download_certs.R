@@ -57,6 +57,39 @@ download_cert_pdf <- function(report_link, cert_id){
 #'
 #' @return The download link for the certificate file as a string if found; otherwise, NULL.
 get_cert_link <- function(report_link, cert_id){
+  # The register is rendered into many tables (main, per venue, per type) and each
+  # one resolves the same report links again, which got the requests throttled by
+  # the archives. Only successful resolutions are cached, so a transient failure
+  # is retried rather than stored for the rest of the session.
+  cache_key <- paste0(report_link, "|", cert_id)
+  if (!is.null(cert_link_cache[[cache_key]])) {
+    return(cert_link_cache[[cache_key]])
+  }
+
+  cert_download_url <- get_cert_link_uncached(report_link, cert_id)
+
+  if (!is.null(cert_download_url)) {
+    cert_link_cache[[cache_key]] <- cert_download_url
+  }
+
+  return(cert_download_url)
+}
+
+#' In-session cache of resolved certificate download links, see get_cert_link()
+cert_link_cache <- new.env(parent = emptyenv())
+
+#' Clear the in-session cache of resolved certificate download links
+clear_cert_link_cache <- function() {
+  rm(list = ls(cert_link_cache, all.names = TRUE), envir = cert_link_cache)
+}
+
+#' Resolves the download link for a certificate file without caching, see get_cert_link().
+#'
+#' @param report_link URL of the report to access, either from Zenodo, OSF, or ResearchEquals.
+#' @param cert_id ID of the certificate, used for logging and warnings.
+#'
+#' @return The download link for the certificate file as a string if found; otherwise, NULL.
+get_cert_link_uncached <- function(report_link, cert_id){
 
   if (grepl("zenodo", report_link, ignore.case = TRUE)){
     cert_download_url <- get_zenodo_cert_link(report_link, cert_id)
