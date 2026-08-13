@@ -4,6 +4,23 @@
 
 ### New Features
 
+- **Full metadata register export**: New `register-full.json` and
+  `register-full.csv` files are now generated during rendering,
+  containing all fields from each certificate’s `codecheck.yml` — paper
+  authors with ORCIDs, codecheckers with ORCIDs, summary, source, report
+  link, and paper reference. The JSON format preserves nested arrays for
+  authors and codecheckers, while the CSV uses semicolon-separated
+  values for multi-value fields. Both files are sorted by certificate ID
+  for consistent diffs (codecheckers/register#57)
+- **Single certificate rendering**: New exported function
+  `register_render_cert()` renders a single certificate’s HTML page and
+  JSON metadata by certificate ID, without modifying index or list
+  pages. Accepts a certificate ID (e.g., `"2024-017"`) and optionally
+  downloads and converts the certificate PDF. Useful for updating
+  individual certificates after metadata or PDF changes without a full
+  register re-render. The register project includes a corresponding
+  `make cert CERT_ID=2024-017` target for convenient command-line usage
+  (codecheckers/codecheck#84)
 - **Redirect page for /certs/ directory**: Visiting `/register/certs/`
   without a certificate ID now redirects to the main register page
   instead of showing a 404 error (codecheckers/register#166)
@@ -15,9 +32,22 @@
   is suppressed by default; pass `verbose = TRUE` to
   [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
   to enable detailed debugging output
+- **Warnings captured and shown as log entries**: All R warnings emitted
+  during
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  are now captured and displayed as structured `cli` warning entries at
+  the end of rendering, deduplicated with occurrence counts. This
+  replaces R’s default “There were N warnings (use warnings() to see
+  them)” prompt which was impossible to act on after the R session ended
 
 ### Bug Fixes
 
+- **Fixed stray libs/ folders from parallel rendering**: Parallel
+  certificate rendering (`mclapply` forking) could leave behind stray
+  `libs/` directories in certificate folders due to pandoc temp file
+  conflicts between forked processes sharing the same `/tmp` directory.
+  A post-render cleanup sweep now automatically removes these stray
+  folders after parallel rendering completes
 - **Fixed navigation links on venue type pages**: Corrected navigation
   menu links on venue type-specific pages (e.g.,
   `/venues/institutions/`, `/venues/communities/`). The “All Venues”

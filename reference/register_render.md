@@ -17,7 +17,8 @@ register_render(
   from = 1,
   to = nrow(register),
   parallel = FALSE,
-  ncores = NULL
+  ncores = NULL,
+  verbose = FALSE
 )
 ```
 
@@ -66,6 +67,11 @@ register_render(
 
   Integer; number of CPU cores to use for parallel rendering. If NULL,
   automatically detects available cores minus 1. Defaults to NULL.
+
+- verbose:
+
+  Logical; if TRUE, shows detailed output including pandoc commands from
+  rmarkdown::render(). Defaults to FALSE.
 
 ## Value
 

@@ -42,13 +42,21 @@
 <div class="section level3">
 <h3 id="new-features-0-25-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0"></a></h3>
 <ul><li>
+<strong>Full metadata register export</strong>: New <code>register-full.json</code> and <code>register-full.csv</code> files are now generated during rendering, containing all fields from each certificate’s <code>codecheck.yml</code> — paper authors with ORCIDs, codecheckers with ORCIDs, summary, source, report link, and paper reference. The JSON format preserves nested arrays for authors and codecheckers, while the CSV uses semicolon-separated values for multi-value fields. Both files are sorted by certificate ID for consistent diffs (codecheckers/register#57)</li>
+<li>
+<strong>Single certificate rendering</strong>: New exported function <code>register_render_cert()</code> renders a single certificate’s HTML page and JSON metadata by certificate ID, without modifying index or list pages. Accepts a certificate ID (e.g., <code>"2024-017"</code>) and optionally downloads and converts the certificate PDF. Useful for updating individual certificates after metadata or PDF changes without a full register re-render. The register project includes a corresponding <code>make cert CERT_ID=2024-017</code> target for convenient command-line usage (codecheckers/codecheck#84)</li>
+<li>
 <strong>Redirect page for /certs/ directory</strong>: Visiting <code>/register/certs/</code> without a certificate ID now redirects to the main register page instead of showing a 404 error (codecheckers/register#166)</li>
 <li>
 <strong>Rich logging with cli</strong>: Register rendering now uses the <code>cli</code> package for structured, colored output with progress bars, section headers, and semantic alerts (success/info/warning/danger). Pandoc verbose output from <code><a href="https://pkgs.rstudio.com/rmarkdown/reference/render.html" class="external-link">rmarkdown::render()</a></code> is suppressed by default; pass <code>verbose = TRUE</code> to <code><a href="../reference/register_render.html">register_render()</a></code> to enable detailed debugging output</li>
+<li>
+<strong>Warnings captured and shown as log entries</strong>: All R warnings emitted during <code><a href="../reference/register_render.html">register_render()</a></code> are now captured and displayed as structured <code>cli</code> warning entries at the end of rendering, deduplicated with occurrence counts. This replaces R’s default “There were N warnings (use warnings() to see them)” prompt which was impossible to act on after the R session ended</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0"></a></h3>
 <ul><li>
+<strong>Fixed stray libs/ folders from parallel rendering</strong>: Parallel certificate rendering (<code>mclapply</code> forking) could leave behind stray <code>libs/</code> directories in certificate folders due to pandoc temp file conflicts between forked processes sharing the same <code>/tmp</code> directory. A post-render cleanup sweep now automatically removes these stray folders after parallel rendering completes</li>
+<li>
 <strong>Fixed navigation links on venue type pages</strong>: Corrected navigation menu links on venue type-specific pages (e.g., <code>/venues/institutions/</code>, <code>/venues/communities/</code>). The “All Venues” link now correctly points to <code>../index.html</code> (one level up), and “All Codecheckers” link points to <code>../../codecheckers/index.html</code> (up two levels then into codecheckers). Previously these links were broken because they were using the generic base_path calculation</li>
 <li>
 <strong>Fixed navigation and logo paths on venue type pages</strong>: Corrected base path calculation for venue type-specific pages (e.g., <code>/venues/institutions/</code>, <code>/venues/journals/</code>). These pages are two levels deep, but were incorrectly treated as one level deep, causing broken logo and navigation links. The <code><a href="../reference/calculate_breadcrumb_base_path.html">calculate_breadcrumb_base_path()</a></code> function now correctly handles non-register table pages with subcategories</li>

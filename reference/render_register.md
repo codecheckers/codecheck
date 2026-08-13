@@ -8,7 +8,13 @@ identifier for consistency.
 ## Usage
 
 ``` r
-render_register(register_table, table_details, filter = NA, output_type)
+render_register(
+  register_table,
+  table_details,
+  filter = NA,
+  output_type,
+  full_register_table = NULL
+)
 ```
 
 ## Arguments
