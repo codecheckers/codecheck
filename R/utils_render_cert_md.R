@@ -51,30 +51,60 @@ add_repository_hyperlink <- function(md_content, repo_link) {
 #' @return A list with two elements: `source` (indicating "CrossRef" or "OpenAlex" if found)
 #'   and `text` (the abstract text as a string, or NULL if unavailable).
 get_abstract <- function(register_repo) {
-  # Initialize the abstract source and text
+  # Every certificate is rendered into markdown, HTML and JSON, each of which
+  # asks for the abstract again, so this is cached on disk. Only conclusive
+  # results are cached, otherwise a rate limited request would remove the
+  # abstract from the register until the cache is cleared.
+  cached_lookup(
+    key = list("abstract", register_repo),
+    dirs = c("codecheck", "abstract"),
+    lookup = function() get_abstract_result(register_repo)
+  )
+}
+
+#' Retrieves the abstract and reports whether the answer is conclusive
+#'
+#' Same lookup as \code{\link{get_abstract}} without the caching, and with the
+#' information needed to decide whether the result may be cached: a paper for
+#' which neither API has an abstract is a conclusive answer, a paper whose
+#' requests failed is not, see \code{\link{cached_lookup}}.
+#'
+#' @param register_repo URL or path to the repository containing the paper's configuration.
+#' @return A list with `status` ("found", "absent" or "failed") and `value`, the
+#'   latter being the `source`/`text` list described in \code{\link{get_abstract}}
+get_abstract_result <- function(register_repo) {
   abstract_source <- NULL
   abstract_text <- NULL
 
   # Try to get the abstract from Crossref first
-  abstract_text <- get_abstract_text_crossref(register_repo)
+  crossref <- get_abstract_text_crossref_result(register_repo)
+  abstract_text <- crossref$value
 
-  # If Crossref fails, try OpenAlex
+  # If Crossref has no abstract, try OpenAlex
+  openalex <- NULL
   if (is.null(abstract_text)) {
-    abstract_text <- get_abstract_text_openalex(register_repo)
+    openalex <- get_abstract_text_openalex_result(register_repo)
+    abstract_text <- openalex$value
     if (!is.null(abstract_text)) {
       abstract_source <- "OpenAlex"
     }
-  } 
+  }
   # Crossref did not fail, adding cross ref as the source
   else {
     abstract_source <- "CrossRef"
   }
 
-  # Return both the source and the abstract text as a list
-  return(list(
-    source = abstract_source,
-    text = abstract_text
-  ))
+  value <- list(source = abstract_source, text = abstract_text)
+
+  if (!is.null(abstract_text)) {
+    return(list(status = "found", value = value))
+  }
+
+  # without an abstract the result is only conclusive if both APIs answered
+  answered <- identical(crossref$status, "absent") &&
+    (!is.null(openalex) && identical(openalex$status, "absent"))
+
+  return(list(status = if (answered) "absent" else "failed", value = value))
 }
 
 #' Retrieves the abstract of a research paper using the OpenAlex API.
@@ -84,6 +114,17 @@ get_abstract <- function(register_repo) {
 #'
 #' @return The abstract text as a string if available; otherwise, NULL.
 get_abstract_text_openalex <- function(register_repo){
+  get_abstract_text_openalex_result(register_repo)$value
+}
+
+#' Retrieves the abstract from OpenAlex and reports whether the API answered
+#'
+#' @param register_repo URL or path to the repository containing the paper's configuration.
+#' @importFrom httr GET status_code content
+#'
+#' @return A list with `status` ("found", "absent" or "failed") and `value`, the
+#'   abstract text as a string or NULL
+get_abstract_text_openalex_result <- function(register_repo){
 
   abstract <- NULL
 
@@ -94,13 +135,23 @@ get_abstract_text_openalex <- function(register_repo){
   doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], doi)
   # Correcting the api_url if it is malformed
   doi_api_url <- gsub("\\n", "", doi_api_url)
-  response <- codecheck_GET(doi_api_url)
+  response <- codecheck_GET_openalex(doi_api_url)
 
-  if (httr::status_code(response) != 200){
+  if (!is.null(response) && httr::status_code(response) != 200){
     # Checking for redirects and retrieving the final doi from there
     redirect_doi <- response$url
     redirect_doi_api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], redirect_doi)
-    response <- codecheck_GET(redirect_doi_api_url)
+    response <- codecheck_GET_openalex(redirect_doi_api_url)
+  }
+
+  if (is.null(response)) {
+    return(list(status = "failed", value = NULL))
+  }
+
+  # a DOI OpenAlex does not know is an answer, any other error is not
+  if (httr::status_code(response) != 200 && httr::status_code(response) != 404) {
+    warning("Failed to retrieve abstract from OpenAlex for DOI ", doi)
+    return(list(status = "failed", value = NULL))
   }
 
   if (httr::status_code(response) == 200){
@@ -110,7 +161,7 @@ get_abstract_text_openalex <- function(register_repo){
       inverted_index <- data$abstract_inverted_index
 
       if (is.null(inverted_index)){
-        return(NULL)
+        return(list(status = "absent", value = NULL))
       }
 
       # Initialize an empty character vector to store the words by position
@@ -129,7 +180,8 @@ get_abstract_text_openalex <- function(register_repo){
       abstract <- paste(abstract_vector, collapse = " ")
     }
   }
-  return(abstract)
+
+  return(list(status = if (is.null(abstract)) "absent" else "found", value = abstract))
 }
 
 #' Look up the OpenAlex work ID for a paper reference URL
@@ -142,27 +194,51 @@ get_abstract_text_openalex <- function(register_repo){
 #' @param first_author_name Optional first author name for fallback search
 #' @return The OpenAlex work URL (e.g., "https://openalex.org/W1234567890") or NA_character_
 get_openalex_id <- function(paper_reference, paper_title = NULL, first_author_name = NULL) {
+  get_openalex_id_result(paper_reference, paper_title, first_author_name)$value
+}
+
+#' Look up the OpenAlex work ID and report whether the answer is conclusive
+#'
+#' Same lookup as \code{\link{get_openalex_id}}, but distinguishes an ID that
+#' OpenAlex does not have from a request that did not succeed, so that only the
+#' former is cached, see \code{\link{cached_lookup}}.
+#'
+#' @param paper_reference The paper reference URL (typically a DOI URL)
+#' @param paper_title Optional paper title for fallback search
+#' @param first_author_name Optional first author name for fallback search
+#' @return A list with `status` ("found", "absent" or "failed") and `value`
+get_openalex_id_result <- function(paper_reference, paper_title = NULL, first_author_name = NULL) {
   if (is.null(paper_reference) || is.na(paper_reference) || nchar(paper_reference) == 0) {
-    return(NA_character_)
+    return(list(status = "absent", value = NA_character_))
   }
+
+  # set once an API answered that it has no match, as opposed to not answering
+  answered <- FALSE
 
   # Try DOI-based lookup first
   api_url <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], gsub("\\n", "", paper_reference))
-  response <- tryCatch(codecheck_GET(api_url), error = function(e) NULL)
+  response <- codecheck_GET_openalex(api_url)
 
   if (!is.null(response) && httr::status_code(response) != 200) {
     # Follow redirects (some DOIs redirect)
     redirect_url <- response$url
     if (!is.null(redirect_url) && redirect_url != api_url) {
       api_url2 <- paste0(CONFIG$CERT_LINKS[["openalex_api"]], redirect_url)
-      response <- tryCatch(codecheck_GET(api_url2), error = function(e) NULL)
+      response <- codecheck_GET_openalex(api_url2)
     }
   }
 
-  if (!is.null(response) && httr::status_code(response) == 200) {
-    data <- httr::content(response, "parsed")
-    if (!is.null(data$id)) {
-      return(data$id)
+  if (!is.null(response)) {
+    response_status <- httr::status_code(response)
+    if (response_status == 200) {
+      data <- httr::content(response, "parsed")
+      if (!is.null(data$id)) {
+        return(list(status = "found", value = data$id))
+      }
+      answered <- TRUE
+    } else if (response_status == 404) {
+      # OpenAlex does not index this DOI, the title search may still find it
+      answered <- TRUE
     }
   }
 
@@ -179,21 +255,41 @@ get_openalex_id <- function(paper_reference, paper_title = NULL, first_author_na
         utils::URLencode(first_author_name, reserved = TRUE)
       )
     }
-    search_response <- tryCatch(codecheck_GET(search_url), error = function(e) NULL)
+    search_response <- codecheck_GET_openalex(search_url)
     if (!is.null(search_response) && httr::status_code(search_response) == 200) {
       search_data <- httr::content(search_response, "parsed")
       if (!is.null(search_data$meta$count) && search_data$meta$count == 1) {
-        return(search_data$results[[1]]$id)
+        return(list(status = "found", value = search_data$results[[1]]$id))
       }
+      # the search ran, it just did not return exactly one match
+      answered <- TRUE
+    } else {
+      # the search could have found what the DOI lookup missed, so without it
+      # the result is inconclusive regardless of what the DOI lookup said
+      answered <- FALSE
     }
   }
 
-  return(NA_character_)
+  return(list(status = if (answered) "absent" else "failed", value = NA_character_))
 }
 
 #' Cached version of get_openalex_id
+#'
+#' Caches on disk, but only when OpenAlex actually answered, see
+#' \code{\link{cached_lookup}}. Cleared by \code{\link{register_clear_cache}}.
+#'
+#' @inheritParams get_openalex_id_result
+#' @return The OpenAlex work URL or NA_character_
 #' @noRd
-get_openalex_id_cached <- R.cache::addMemoization(get_openalex_id)
+get_openalex_id_cached <- function(paper_reference, paper_title = NULL, first_author_name = NULL) {
+  cached_lookup(
+    key = list("openalex_id", paper_reference, paper_title, first_author_name),
+    dirs = c("codecheck", "openalex_id"),
+    lookup = function() {
+      get_openalex_id_result(paper_reference, paper_title, first_author_name)
+    }
+  )
+}
 
 #' Extracts the paper DOI from the config_yml of the paper,
 #' constructs a CrossRef API request, and returns the abstract text if available.
@@ -204,6 +300,18 @@ get_openalex_id_cached <- R.cache::addMemoization(get_openalex_id)
 #'
 #' @return The abstract text as a string if available; otherwise, NULL.
 get_abstract_text_crossref <- function(register_repo) {
+  get_abstract_text_crossref_result(register_repo)$value
+}
+
+#' Retrieves the abstract from CrossRef and reports whether the API answered
+#'
+#' @param register_repo URL or path to the repository containing the paper's configuration.
+#'
+#' @importFrom httr GET status_code content
+#'
+#' @return A list with `status` ("found", "absent" or "failed") and `value`, the
+#'   abstract text as a string or NULL
+get_abstract_text_crossref_result <- function(register_repo) {
   config_yml <- get_codecheck_yml(register_repo)
 
   # Retrieving the paper DOI
@@ -216,26 +324,35 @@ get_abstract_text_crossref <- function(register_repo) {
   # Correcting the api_url if it is malformed
   api_url <- gsub("\\n", "", api_url)
 
-  response <- codecheck_GET(api_url)
+  response <- codecheck_GET_retry(api_url)
+
+  if (is.null(response)) {
+    warning(paste("Failed to retrieve abstract text for DOI", doi))
+    return(list(status = "failed", value = NULL))
+  }
 
   # Check if the request was successful
   if (httr::status_code(response) == 200) {
     data <- httr::content(response, "parsed")
     # Retrieve the abstract from the response data, if available
     if (!is.null(data$message$abstract)) {
-      return(data$message$abstract)
-    } 
+      return(list(status = "found", value = data$message$abstract))
+    }
 
     # No abstract was found, returning NULL
     warning(paste("No abstract available for DOI", doi))
-    return(NULL)
-  } 
+    return(list(status = "absent", value = NULL))
+  }
+
+  # A DOI CrossRef does not know is an answer, any other error is not
+  if (httr::status_code(response) == 404) {
+    warning(paste("No CrossRef record for DOI", doi))
+    return(list(status = "absent", value = NULL))
+  }
 
   # Could not retrieve data for DOI
-  else {
-    warning(paste("Failed to retrieve abstract text for DOI", doi))
-    return(NULL)
-  }
+  warning(paste("Failed to retrieve abstract text for DOI", doi))
+  return(list(status = "failed", value = NULL))
 }
 
 #' Inserts the abstract text and source link into the Markdown content if an abstract is found for the given repository. 

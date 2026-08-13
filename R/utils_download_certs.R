@@ -130,9 +130,12 @@ get_osf_cert_link <- function(report_link, cert_id){
 
   # Continue making requests while there is a 'next' page
   while (!is.null(files_url)) {
-    response <- codecheck_GET(files_url)
-    
+    response <- codecheck_GET_retry(files_url)
+
     # Check if the request was successful
+    if (is.null(response)) {
+      stop("Failed to retrieve files: no response from ", files_url)
+    }
     if (httr::status_code(response) != 200) {
       stop("Failed to retrieve files: ", status_code(response))
     }
@@ -191,7 +194,11 @@ get_osf_cert_link <- function(report_link, cert_id){
 #' @return The download link for the certificate file as a string if found; otherwise, NULL.
 get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   # Checking for redirects and retrieving the record_id from there
-  response <- codecheck_GET(report_link)
+  response <- codecheck_GET_retry(report_link)
+  if (is.null(response)) {
+    warning(cert_id, " | Could not resolve report link ", report_link)
+    return(NULL)
+  }
   final_url <- response$url
   record_id <- basename(final_url)
 
@@ -200,8 +207,13 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
   record_url <- paste0(CONFIG$CERT_LINKS[["zenodo_api"]], record_id, "/files")
 
   # Make the API request
-  response <- codecheck_GET(record_url, httr::add_headers(Authorization = paste("Bearer", api_key)))
-  
+  response <- codecheck_GET_retry(record_url, httr::add_headers(Authorization = paste("Bearer", api_key)))
+
+  if (is.null(response)) {
+    warning(cert_id, " | Could not access Zenodo API")
+    return(NULL)
+  }
+
   # Check if the request was successful
   if (httr::status_code(response) == 200) {
     
@@ -266,7 +278,11 @@ get_researchequals_cert_link <- function(report_link, cert_id) {
   # Let's guess the ID from the report_link
   
   # Checking for redirects and retrieving the record_id from there
-  response <- codecheck_GET(report_link)
+  response <- codecheck_GET_retry(report_link)
+  if (is.null(response)) {
+    warning(cert_id, " | Could not resolve report link ", report_link)
+    return(NULL)
+  }
   final_url <- response$url
   record_id <- basename(final_url)
   
