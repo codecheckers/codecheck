@@ -12,8 +12,42 @@ get_codecheck_yml_uncached <- function(x) {
     "zenodo" = get_codecheck_yml_zenodo(spec[["repo"]]),
     "zenodo-sandbox" = get_codecheck_yml_zenodo(spec[["repo"]], sandbox = TRUE),
   )
-  
+
+  result <- normalize_person_lists(result)
+
   return(result)
+}
+
+#' Normalize person fields of a codecheck.yml to lists of persons
+#'
+#' The spec requires `codechecker` and `paper$authors` to be lists of persons,
+#' but a single person is often written as a plain mapping, which yaml parses
+#' into a named character vector instead of a list of lists. Wrap such cases so
+#' consumers can always iterate over persons and use `$name`/`$ORCID`.
+#'
+#' @param config_yml the parsed codecheck.yml, may be NULL
+#' @return the codecheck.yml with normalized person lists
+normalize_person_lists <- function(config_yml) {
+  if (is.null(config_yml)) {
+    return(config_yml)
+  }
+
+  as_person_list <- function(persons) {
+    # a single person mapping has names ("name", "ORCID", ...), a list of
+    # persons does not
+    if (!is.null(persons) && !is.null(names(persons))) {
+      list(as.list(persons))
+    } else {
+      persons
+    }
+  }
+
+  config_yml$codechecker <- as_person_list(config_yml$codechecker)
+  if (!is.null(config_yml$paper)) {
+    config_yml$paper$authors <- as_person_list(config_yml$paper$authors)
+  }
+
+  return(config_yml)
 }
 
 #' Retrieve a codecheck.yml file from a GitHub repository
