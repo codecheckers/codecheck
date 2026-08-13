@@ -77,21 +77,56 @@ Nüst</h4>
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"codecheckers/codecheck"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="configure-the-openalex-api-key">Configure the OpenAlex API key<a class="anchor" aria-label="anchor" href="#configure-the-openalex-api-key"></a>
+</h2>
+<p>Rendering looks up an OpenAlex ID and an abstract for every paper in
+the register. Without an API key these requests share a small anonymous
+daily quota, which a single render of the full register uses up. Once
+the quota is gone OpenAlex answers with HTTP 429 and the affected
+certificates are rendered without their OpenAlex ID, and possibly
+without their abstract. A free key raises the quota tenfold, see the <a href="https://help.openalex.org/api" class="external-link">OpenAlex documentation</a> for how
+to get one.</p>
+<p>The key is read from the <code>OPENALEX_API_KEY</code> environment
+variable, most conveniently set in your <code>~/.Renviron</code>:</p>
+<pre><code><span><span class="va">OPENALEX_API_KEY</span><span class="op">=</span><span class="va">your</span><span class="op">-</span><span class="va">key</span><span class="op">-</span><span class="va">here</span></span></code></pre>
+<p>Restart R afterwards, then check that the key is picked up:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"OPENALEX_API_KEY"</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span></span></code></pre></div>
+<p>Rendering works without a key, it is only slower to recover: lookups
+that did not succeed are not cached, so each render retries them until
+they work.</p>
+<p>In the <a href="https://github.com/codecheckers/register" class="external-link">register
+repository</a> the key can also be put into a git-ignored
+<code>.env</code> file, which the <code>Makefile</code> passes on to R,
+see <code>.env.example</code> there. Do not put it into a
+<code>.Renviron</code> next to the register, R reads only the first
+<code>.Renviron</code> it finds and a local one hides the settings in
+your <code>~/.Renviron</code>, such as your <code>GITHUB_PAT</code>.</p>
+</div>
+<div class="section level2">
 <h2 id="render-the-register">Render the register<a class="anchor" aria-label="anchor" href="#render-the-register"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">codecheck</span><span class="fu">::</span><span class="fu"><a href="../reference/register_render.html">register_render</a></span><span class="op">(</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/warnings.html" class="external-link">warnings</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="check-the-register">Check the register<a class="anchor" aria-label="anchor" href="#check-the-register"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">codecheck</span><span class="fu">::</span><span class="fu"><a href="../reference/register_check.html">register_check</a></span><span class="op">(</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/warnings.html" class="external-link">warnings</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="clear-the-cache">Clear the cache<a class="anchor" aria-label="anchor" href="#clear-the-cache"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>Renders cache the <code>codecheck.yml</code> files and the metadata
+looked up for them, namely OpenAlex IDs and abstracts, so that repeated
+renders neither wait for nor exhaust the quotas of these APIs. Only
+conclusive answers are cached: a request that failed is retried by the
+next render instead of leaving a permanent gap in the register.</p>
+<p>Clear the cache to pick up metadata that changed at the source, such
+as a corrected <code>codecheck.yml</code> or an abstract added after
+publication:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">codecheck</span><span class="fu">::</span><span class="fu"><a href="../reference/register_clear_cache.html">register_clear_cache</a></span><span class="op">(</span><span class="op">)</span>;</span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
