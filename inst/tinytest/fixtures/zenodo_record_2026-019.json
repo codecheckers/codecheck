@@ -1,0 +1,374 @@
+{
+ "metadata": {
+  "resource_type": {
+   "id": "publication-report",
+   "title": {
+    "de": "Bericht",
+    "en": "Report"
+   }
+  },
+  "creators": [
+   {
+    "person_or_org": {
+     "type": "personal",
+     "name": "Haacker, Jan",
+     "given_name": "Jan",
+     "family_name": "Haacker",
+     "identifiers": [
+      {
+       "identifier": "0000-0002-5464-2442",
+       "scheme": "orcid"
+      }
+     ]
+    },
+    "role": {
+     "id": "producer",
+     "title": {
+      "de": "ProduzentIn",
+      "en": "Producer"
+     }
+    },
+    "affiliations": [
+     {
+      "id": "02e2c7k09",
+      "name": "Delft University of Technology",
+      "identifiers": [
+       {
+        "identifier": "02e2c7k09",
+        "scheme": "ror"
+       },
+       {
+        "identifier": "grid.5292.c",
+        "scheme": "grid"
+       },
+       {
+        "identifier": "0000 0001 2097 4740",
+        "scheme": "isni"
+       }
+      ]
+     },
+     {
+      "id": "057ff4y42",
+      "name": "BOKU University",
+      "identifiers": [
+       {
+        "identifier": "057ff4y42",
+        "scheme": "ror"
+       },
+       {
+        "identifier": "grid.5173.0",
+        "scheme": "grid"
+       },
+       {
+        "identifier": "0000 0001 2298 5320",
+        "scheme": "isni"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "title": "CODECHECK Certificate 2026-019",
+  "publisher": "CODECHECK Community on Zenodo",
+  "publication_date": "2026-07-07",
+  "contributors": [
+   {
+    "person_or_org": {
+     "type": "personal",
+     "name": "Tabandeh, Niloufar",
+     "given_name": "Niloufar",
+     "family_name": "Tabandeh",
+     "identifiers": [
+      {
+       "identifier": "0000-0002-7971-8589",
+       "scheme": "orcid"
+      }
+     ]
+    },
+    "role": {
+     "id": "researcher",
+     "title": {
+      "de": "WissenschaftlerIn",
+      "en": "Researcher"
+     }
+    },
+    "affiliations": [
+     {
+      "id": "026nmvv73",
+      "name": "Max Planck Institute for Biological Cybernetics",
+      "identifiers": [
+       {
+        "identifier": "026nmvv73",
+        "scheme": "ror"
+       },
+       {
+        "identifier": "grid.419501.8",
+        "scheme": "grid"
+       },
+       {
+        "identifier": "0000 0001 2183 0052",
+        "scheme": "isni"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "person_or_org": {
+     "type": "personal",
+     "name": "Spitschan, Manuel",
+     "given_name": "Manuel",
+     "family_name": "Spitschan",
+     "identifiers": [
+      {
+       "identifier": "0000-0002-8572-9268",
+       "scheme": "orcid"
+      }
+     ]
+    },
+    "role": {
+     "id": "researcher",
+     "title": {
+      "de": "WissenschaftlerIn",
+      "en": "Researcher"
+     }
+    },
+    "affiliations": [
+     {
+      "name": "TUMCREATE"
+     },
+     {
+      "id": "02kkvpp62",
+      "name": "Technical University of Munich",
+      "identifiers": [
+       {
+        "identifier": "02kkvpp62",
+        "scheme": "ror"
+       },
+       {
+        "identifier": "grid.6936.a",
+        "scheme": "grid"
+       },
+       {
+        "identifier": "0000 0001 2322 2966",
+        "scheme": "isni"
+       }
+      ]
+     },
+     {
+      "id": "026nmvv73",
+      "name": "Max Planck Institute for Biological Cybernetics",
+      "identifiers": [
+       {
+        "identifier": "026nmvv73",
+        "scheme": "ror"
+       },
+       {
+        "identifier": "grid.419501.8",
+        "scheme": "grid"
+       },
+       {
+        "identifier": "0000 0001 2183 0052",
+        "scheme": "isni"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "person_or_org": {
+     "type": "personal",
+     "name": "N\u00fcst, Daniel",
+     "given_name": "Daniel",
+     "family_name": "N\u00fcst",
+     "identifiers": [
+      {
+       "identifier": "0000-0002-0024-5046",
+       "scheme": "orcid"
+      }
+     ]
+    },
+    "role": {
+     "id": "editor",
+     "title": {
+      "de": "EditorIn",
+      "en": "Editor"
+     }
+    },
+    "affiliations": [
+     {
+      "id": "042aqky30",
+      "name": "Technische Universit\u00e4t Dresden",
+      "identifiers": [
+       {
+        "identifier": "042aqky30",
+        "scheme": "ror"
+       },
+       {
+        "identifier": "grid.4488.0",
+        "scheme": "grid"
+       },
+       {
+        "identifier": "0000 0001 2111 7257",
+        "scheme": "isni"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "person_or_org": {
+     "type": "personal",
+     "name": "Eglen, Stephen",
+     "given_name": "Stephen",
+     "family_name": "Eglen",
+     "identifiers": [
+      {
+       "identifier": "0000-0001-8607-8025",
+       "scheme": "orcid"
+      }
+     ]
+    },
+    "role": {
+     "id": "editor",
+     "title": {
+      "de": "EditorIn",
+      "en": "Editor"
+     }
+    },
+    "affiliations": [
+     {
+      "id": "013meh722",
+      "name": "University of Cambridge",
+      "identifiers": [
+       {
+        "identifier": "013meh722",
+        "scheme": "ror"
+       },
+       {
+        "identifier": "grid.5335.0",
+        "scheme": "grid"
+       },
+       {
+        "identifier": "0000 0001 2188 5934",
+        "scheme": "isni"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "languages": [
+   {
+    "id": "eng",
+    "title": {
+     "en": "English"
+    }
+   }
+  ],
+  "identifiers": [
+   {
+    "identifier": "http://cdchck.science/register/certs/2026-019",
+    "scheme": "url"
+   },
+   {
+    "identifier": "cdchck.science/register/certs/2026-019",
+    "scheme": "other"
+   }
+  ],
+  "related_identifiers": [
+   {
+    "identifier": "10.1016/j.isci.2026.116661",
+    "scheme": "doi",
+    "relation_type": {
+     "id": "reviews",
+     "title": {
+      "de": "Begutachtet",
+      "en": "Reviews"
+     }
+    },
+    "resource_type": {
+     "id": "publication-preprint",
+     "title": {
+      "de": "Preprint",
+      "en": "Preprint"
+     }
+    }
+   },
+   {
+    "identifier": "https://github.com/codecheckers/codecheck-py",
+    "scheme": "url",
+    "relation_type": {
+     "id": "isderivedfrom",
+     "title": {
+      "de": "Wird abgeleitet von",
+      "en": "Is derived from"
+     }
+    },
+    "resource_type": {
+     "id": "software-computationalnotebook",
+     "title": {
+      "de": "Computational Notebook",
+      "en": "Computational notebook"
+     }
+    }
+   },
+   {
+    "identifier": "https://github.com/tscnlab/TabandehEtAl_iScience_2026",
+    "scheme": "url",
+    "relation_type": {
+     "id": "isderivedfrom",
+     "title": {
+      "de": "Wird abgeleitet von",
+      "en": "Is derived from"
+     }
+    },
+    "resource_type": {
+     "id": "software-computationalnotebook",
+     "title": {
+      "de": "Computational Notebook",
+      "en": "Computational notebook"
+     }
+    }
+   },
+   {
+    "identifier": "https://github.com/codecheckers/certificate-2026-019",
+    "scheme": "url",
+    "relation_type": {
+     "id": "iscompiledby",
+     "title": {
+      "de": "Kompiliert durch",
+      "en": "Is compiled by"
+     }
+    },
+    "resource_type": {
+     "id": "software-computationalnotebook",
+     "title": {
+      "de": "Computational Notebook",
+      "en": "Computational notebook"
+     }
+    }
+   }
+  ],
+  "rights": [
+   {
+    "id": "cc-by-4.0",
+    "title": {
+     "en": "Creative Commons Attribution 4.0 International"
+    },
+    "description": {
+     "en": "The Creative Commons Attribution license allows re-distribution and re-use of a licensed work on the condition that the creator is appropriately credited."
+    },
+    "icon": "cc-by-icon",
+    "props": {
+     "url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+     "scheme": "spdx"
+    }
+   }
+  ],
+  "description": "<p>The checked repository includes code to reproduce all figures shown in the associated manuscript titled \"Photoreceptor-specific scene statistics reveal melanopic structure in natural environments\" including one supplementary figure. The workflow is instructed by a detailed recipe in the file `README.md` and structured into three main parts and small alignment steps. The main parts are downloading the input data and running two notebooks consecutively. Following the instructions successfully produces the manuscript and supplement figures; however, in Figures 1 to 4 structural changes can occur, probably due to a non-deterministic order when processing input files. The code is entirely written in Python allowing to understand the mechanics by reading and uses a transparent repository structure.</p>"
+ },
+ "files": [
+  "codecheck.pdf"
+ ]
+}

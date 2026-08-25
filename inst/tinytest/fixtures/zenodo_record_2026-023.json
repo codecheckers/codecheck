@@ -1,0 +1,82 @@
+{
+ "metadata": {
+  "resource_type": {
+   "id": "publication-report",
+   "title": {
+    "de": "Bericht",
+    "en": "Report"
+   }
+  },
+  "creators": [
+   {
+    "person_or_org": {
+     "type": "organizational",
+     "name": "Stephen J. Eglen",
+     "identifiers": [
+      {
+       "identifier": "0000-0001-8607-8025",
+       "scheme": "orcid"
+      }
+     ]
+    }
+   }
+  ],
+  "title": "CODECHECK certificate 2026-023",
+  "publisher": "CODECHECK Community on Zenodo",
+  "publication_date": "2026-08-21",
+  "subjects": [
+   {
+    "subject": "CODECHECK"
+   }
+  ],
+  "languages": [
+   {
+    "id": "eng",
+    "title": {
+     "en": "English"
+    }
+   }
+  ],
+  "related_identifiers": [
+   {
+    "identifier": "https://github.com/codecheckers/HeinrichsEtAl_JVis_2026",
+    "scheme": "url",
+    "relation_type": {
+     "id": "issupplementedby",
+     "title": {
+      "de": "Wird erg\u00e4nzt durch",
+      "en": "Is supplemented by"
+     }
+    },
+    "resource_type": {
+     "id": "software",
+     "title": {
+      "de": "Software",
+      "en": "Software"
+     }
+    }
+   }
+  ],
+  "rights": [
+   {
+    "id": "cc-by-4.0",
+    "title": {
+     "en": "Creative Commons Attribution 4.0 International"
+    },
+    "description": {
+     "en": "The Creative Commons Attribution license allows re-distribution and re-use of a licensed work on the condition that the creator is appropriately credited."
+    },
+    "icon": "cc-by-icon",
+    "props": {
+     "url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+     "scheme": "spdx"
+    }
+   }
+  ],
+  "description": "<p><strong>Summary:</strong>&nbsp;The bulk of this project is a set of Rscripts. There is also a python package that comes in the authors&rsquo; repository,<br>and some Juypyter notebooks. There was some work involved to reproduce the environment on my machine<br>(a mac laptop). However, following feeback with the authors, these issues were resolved and the reproduction was successful.</p>\n<p><strong>Paper:</strong> Circadian timing does not modulate human temporal contrast sensitivity</p>\n<p><strong>Repository:</strong> <a href=\"https://github.com/codecheckers/HeinrichsEtAl_JVis_2026\">https://github.com/codecheckers/HeinrichsEtAl_JVis_2026</a></p>"
+ },
+ "files": [
+  "codecheck.Rmd",
+  "codecheck.pdf"
+ ]
+}

@@ -7,6 +7,10 @@ The `codecheck` R package assists in conducting [CODECHECKs](https://codecheck.o
 1. **Workspace creation** (`R/codecheck.R`, `R/configuration.R`, `R/validation.R`, `R/zenodo.R`) - Create CODECHECK workspaces, validate `codecheck.yml`, upload to Zenodo
 2. **Register management** (`R/register.R`, `R/utils_*.R`) - Render the [CODECHECK Register](https://codecheck.org.uk/register/) website from `register.csv`
 
+## Committing
+
+**Never commit. Stage changes with `git add` and propose a commit message; the user commits.** This holds even in auto-accept mode and even when the change is trivial or the message was agreed beforehand. The same applies to pushing and to anything that publishes.
+
 ## Testing
 
 **CRITICAL: ALWAYS use `tinytest::build_install_test(".")` for testing.**

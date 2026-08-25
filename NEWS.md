@@ -1,3 +1,16 @@
+# codecheck 0.25.0.9001
+
+## Bug Fixes
+
+* **Codecheckers are recorded as persons on Zenodo**: `upload_zenodo_metadata()` passed only a full `name` to `zen4R::addCreator()`, which makes Zenodo store the codechecker as an *organisation* rather than a person. The name is now split into given and family name via the new `split_person_name()` helper, and any affiliation from `codecheck.yml` is passed along. Names that cannot be split (a single token, e.g. a group name) still deposit as before, but now emit a warning
+* **Alternate identifiers are no longer silently dropped**: `upload_zenodo_metadata()` wrote the certificate identifiers to `metadata$alternate_identifiers`, a legacy field name that the InvenioRDM record model Zenodo uses today discards on deposit. The identifiers now go to `metadata$identifiers`, so the `cdchck.science/register/certs/<CERT ID>` identifiers required by the [community curation policy](https://zenodo.org/communities/codecheck/curation-policy) actually reach the record
+* **Record titles match the curation policy**: deposits are titled "CODECHECK Certificate <ID>" instead of "CODECHECK certificate <ID>"
+* **Missing paper DOI is loud**: a `paper$reference` that is not a DOI, or missing entirely, now raises a warning instead of an easily-missed message, because it means the required "reviews" relation to the checked paper cannot be created
+
+## New Features
+
+* **Curation policy audit for published records**: new `zenodo_policy_check()` evaluates record metadata against the CODECHECK community curation policy and returns a data frame of pass/warn/fail per requirement. `check_zenodo_record()` fetches a published record and prints the audit, `curate_zenodo_record()` proposes and (with `dry_run = FALSE`) applies the corrections, and `resolve_zenodo_record_id()` resolves a certificate ID via `register.csv` and the repository's `codecheck.yml` to a Zenodo record. The register project wraps these as `make zenodo_check CERT_ID=…` and `make zenodo_curate CERT_ID=…`
+
 # codecheck 0.25.0
 
 ## New Features

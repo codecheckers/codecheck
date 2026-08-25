@@ -262,17 +262,32 @@ upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(
 
   # Clear existing metadata and set basic fields
   myrec$metadata <- NULL
-  myrec$setTitle(paste("CODECHECK certificate", metadata$certificate))
+  myrec$setTitle(paste("CODECHECK Certificate", metadata$certificate))
   myrec$addLanguage(language = "eng")
   myrec$setLicense("cc-by-4.0")
 
   # Add creators (codecheckers)
+  # zen4R only records a creator as "personal" when BOTH firstname and lastname
+  # are given; passing only `name` yields type "organizational", which is wrong
+  # for a codechecker. split_person_name() does that split, see below.
   myrec$metadata$creators <- NULL
   num_creators <- length(metadata$codechecker)
   for (i in 1:num_creators) {
-    myrec$addCreator(
-            name  = metadata$codechecker[[i]]$name,
-            orcid = metadata$codechecker[[i]]$ORCID)
+    checker <- metadata$codechecker[[i]]
+    parts <- split_person_name(checker$name)
+    if (is.null(parts$family)) {
+      # Single-token name, no sensible split: keep the previous behaviour.
+      warning("Could not split codechecker name '", checker$name,
+              "' into given and family name, recording it as an organisation. ",
+              "Use \"Family, Given\" or \"Given Family\" in codecheck.yml.")
+      myrec$addCreator(name = checker$name, orcid = checker$ORCID,
+                       affiliations = checker$affiliation)
+    } else {
+      myrec$addCreator(firstname = parts$given,
+                       lastname = parts$family,
+                       orcid = checker$ORCID,
+                       affiliations = checker$affiliation)
+    }
   }
 
   # Set publication date and publisher (POLICY REQUIREMENT)
@@ -358,8 +373,15 @@ upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(
         warning("Could not add related identifier for paper: ", e$message)
       })
     } else {
-      message("Paper reference is not a DOI, skipping related identifier: ", paper_ref)
+      warning("Paper reference is not a DOI: '", paper_ref, "'. The curation ",
+              "policy requires a \"reviews\" relation to the checked paper, ",
+              "so no policy-compliant related identifier could be added. ",
+              "Please set paper$reference in codecheck.yml to the paper DOI.")
     }
+  } else {
+    warning("No paper reference in the metadata. The curation policy requires ",
+            "a \"reviews\" relation to the checked paper; please set ",
+            "paper$reference in codecheck.yml.")
   }
 
   # Add related identifier for code repository (POLICY REQUIREMENT)
@@ -403,9 +425,11 @@ upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(
   cert_id_other <- paste0("cdchck.science/register/certs/", metadata$certificate)
 
   tryCatch({
-    # Set alternate_identifiers directly in metadata
-    # This field expects a list of lists, each with 'scheme' and 'identifier'
-    myrec$metadata$alternate_identifiers <- list(
+    # The InvenioRDM record model that Zenodo uses today calls this field
+    # "identifiers"; the legacy name "alternate_identifiers" is silently
+    # dropped on deposit, which is how certificates ended up published without
+    # the certificate ID (see the CODECHECK register issue for 2026-023).
+    myrec$metadata$identifiers <- list(
       list(scheme = "url", identifier = cert_id_url),
       list(scheme = "other", identifier = cert_id_other)
     )
@@ -642,4 +666,513 @@ add_id_to_yml <- function(id, yml_file) {
                 replacement = paste0("zenodo.",id),
                 x = data1)
   writeLines(data2, yml_file)
+}
+
+
+#' Split a person name into given and family name
+#'
+#' Accepts both "Family, Given" and "Given Middle Family" spellings, which are
+#' both in use in the `codechecker` entries of `codecheck.yml` files. When no
+#' sensible split is possible (a single token, e.g. a group name), `family` is
+#' NULL and the caller should fall back to recording an organisation.
+#'
+#' @title Split a person name into given and family name
+#' @param name a single character string
+#' @return list with elements `given` and `family`; `family` is NULL if the name
+#'   could not be split.
+#' @author Daniel Nuest
+#' @export
+split_person_name <- function(name) {
+  if (is.null(name) || !is.character(name) || nchar(trimws(name)) == 0) {
+    return(list(given = NULL, family = NULL))
+  }
+  name <- trimws(name)
+
+  if (grepl(",", name, fixed = TRUE)) {
+    parts <- trimws(strsplit(name, ",", fixed = TRUE)[[1]])
+    parts <- parts[nchar(parts) > 0]
+    if (length(parts) >= 2) {
+      return(list(given = paste(parts[-1], collapse = ", "), family = parts[1]))
+    }
+    return(list(given = NULL, family = NULL))
+  }
+
+  tokens <- strsplit(name, "\\s+")[[1]]
+  tokens <- tokens[nchar(tokens) > 0]
+  if (length(tokens) < 2) {
+    return(list(given = NULL, family = NULL))
+  }
+  list(given = paste(tokens[-length(tokens)], collapse = " "),
+       family = tokens[length(tokens)])
+}
+
+
+#' Check Zenodo record metadata against the CODECHECK curation policy
+#'
+#' Pure function: it evaluates a record's metadata against the CODECHECK
+#' community curation policy, see
+#' <https://zenodo.org/communities/codecheck/curation-policy>, and does not
+#' touch the network. Pass the `metadata` element of a record as returned by the
+#' Zenodo InvenioRDM API (`https://zenodo.org/api/records/<ID>` with the
+#' `application/vnd.inveniordm.v1+json` representation) or of a `ZenodoRecord`.
+#'
+#' @title Check Zenodo record metadata against the CODECHECK curation policy
+#' @param record_metadata list of record metadata
+#' @param files character vector of file names in the deposit, optional; needed
+#'   for the checks on the certificate PDF and the machine-readable source.
+#' @return a data.frame with columns `check`, `status` (one of "pass", "warn",
+#'   "fail") and `detail`, one row per policy requirement.
+#' @author Daniel Nuest
+#' @export
+zenodo_policy_check <- function(record_metadata, files = NULL) {
+  results <- list()
+  add <- function(check, status, detail) {
+    results[[length(results) + 1]] <<- data.frame(
+      check = check, status = status, detail = detail, stringsAsFactors = FALSE)
+  }
+
+  m <- record_metadata
+
+  # Title
+  title <- if (is.character(m$title)) m$title else ""
+  if (grepl("CODECHECK Certificate", title, fixed = TRUE)) {
+    add("title", "pass", title)
+  } else if (grepl("CODECHECK certificate", title, fixed = TRUE)) {
+    add("title", "warn",
+        paste0("'", title, "' - policy spells it \"CODECHECK Certificate\""))
+  } else {
+    add("title", "fail",
+        paste0("'", title, "' - must contain \"CODECHECK Certificate\" and the certificate ID"))
+  }
+
+  # Description with summary
+  desc <- if (is.character(m$description)) m$description else ""
+  add("description", if (nchar(desc) > 0) "pass" else "fail",
+      if (nchar(desc) > 0) "present, must contain the certificate summary"
+      else "missing, must contain the certificate summary")
+
+  # License
+  rights_ids <- unlist(lapply(m$rights, function(r) r$id))
+  license_id <- if (!is.null(m$license$id)) m$license$id else rights_ids[1]
+  if (isTRUE(grepl("^cc-by", license_id))) {
+    add("license", "pass", license_id)
+  } else if (isTRUE(grepl("^cc", license_id))) {
+    add("license", "warn", paste0(license_id, " - CC-BY is preferred"))
+  } else {
+    add("license", "fail", paste0(if (is.null(license_id)) "missing" else license_id,
+                                  " - should be a CC license, preferably CC-BY"))
+  }
+
+  # Resource type
+  rt <- if (!is.null(m$resource_type$id)) m$resource_type$id else
+    paste0(m$resource_type$type, "-", m$resource_type$subtype)
+  add("resource type", if (identical(rt, "publication-report")) "pass" else "fail",
+      paste0(rt, if (!identical(rt, "publication-report")) " - should be publication-report" else ""))
+
+  # Publisher
+  pub <- m$publisher
+  add("publisher",
+      if (identical(pub, "CODECHECK Community on Zenodo")) "pass" else "fail",
+      paste0(if (is.null(pub)) "missing" else pub,
+             if (!identical(pub, "CODECHECK Community on Zenodo"))
+               " - should be 'CODECHECK Community on Zenodo'" else ""))
+
+  # Language
+  # exact matching: m$language would partially match m$languages
+  langs <- c(unlist(lapply(m$languages, function(l) l$id)), m[["language"]])
+  add("language", if (length(langs) > 0) "pass" else "fail",
+      if (length(langs) > 0) paste(langs, collapse = ", ") else "not set")
+
+  # Keywords / subjects
+  subjects <- c(unlist(lapply(m$subjects, function(s) s$subject)), m[["keywords"]])
+  add("keywords", if (length(subjects) > 0) "pass" else "warn",
+      if (length(subjects) > 0) paste(subjects, collapse = ", ") else "none set")
+
+  # Creators recorded as persons
+  creator_types <- unlist(lapply(m$creators, function(c) c$person_or_org$type))
+  if (length(creator_types) == 0) {
+    add("creators", "fail", "no creators")
+  } else if (all(creator_types == "personal")) {
+    add("creators", "pass", paste(unlist(lapply(m$creators, function(c) c$person_or_org$name)),
+                                  collapse = "; "))
+  } else {
+    orgs <- unlist(lapply(m$creators, function(c) {
+      if (identical(c$person_or_org$type, "organizational")) c$person_or_org$name else NULL
+    }))
+    add("creators", "fail",
+        paste0("recorded as organisation, should be a person: ", paste(orgs, collapse = "; ")))
+  }
+
+  # Related identifier: reviews -> paper
+  relations <- unlist(lapply(m$related_identifiers, function(r) {
+    if (!is.null(r$relation_type$id)) r$relation_type$id else r$relation
+  }))
+  reviews_idx <- which(tolower(relations) == "reviews")
+  if (length(reviews_idx) > 0) {
+    add("related work: paper", "pass",
+        paste0("reviews ", m$related_identifiers[[reviews_idx[1]]]$identifier))
+  } else {
+    add("related work: paper", "fail",
+        "no relation of type \"reviews\" to the checked paper")
+  }
+
+  # Related identifier: repository
+  repo_relations <- c("issupplementedby", "isderivedfrom", "iscompiledby", "issupplementto")
+  repo_idx <- which(tolower(relations) %in% repo_relations)
+  if (length(repo_idx) > 0) {
+    repo_ids <- unlist(lapply(m$related_identifiers[repo_idx], function(r) r$identifier))
+    in_org <- any(grepl("github.com/codecheckers|gitlab.com/cdchck", repo_ids))
+    add("related work: repository", if (in_org) "pass" else "warn",
+        paste0(paste(repo_ids, collapse = "; "),
+               if (!in_org) " - policy asks for a repository in codecheckers/ or cdchck" else ""))
+  } else {
+    add("related work: repository", "fail", "no relation to a code/data repository")
+  }
+
+  # Alternate identifiers (InvenioRDM: metadata$identifiers)
+  alt <- m$identifiers
+  if (is.null(alt)) alt <- m$alternate_identifiers
+  alt_by_scheme <- function(scheme) {
+    ids <- unlist(lapply(alt, function(a) if (tolower(a$scheme) == scheme) a$identifier else NULL))
+    ids
+  }
+  url_ids <- alt_by_scheme("url")
+  other_ids <- alt_by_scheme("other")
+  add("alternate identifier (url)",
+      if (any(grepl("cdchck.science/register/certs/", url_ids))) "pass" else "fail",
+      if (length(url_ids) > 0) paste(url_ids, collapse = "; ")
+      else "missing, expected http://cdchck.science/register/certs/<CERT ID>")
+  add("alternate identifier (other)",
+      if (any(grepl("cdchck.science/register/certs/", other_ids))) "pass" else "fail",
+      if (length(other_ids) > 0) paste(other_ids, collapse = "; ")
+      else "missing, expected cdchck.science/register/certs/<CERT ID>")
+
+  # Files
+  if (!is.null(files)) {
+    pdfs <- files[grepl("\\.pdf$", files, ignore.case = TRUE)]
+    add("certificate PDF", if (length(pdfs) > 0) "pass" else "fail",
+        if (length(pdfs) > 0) paste(pdfs, collapse = "; ") else "no PDF in the deposit")
+    sources <- files[grepl("\\.(Rmd|qmd|docx|odt|md|tex)$", files, ignore.case = TRUE)]
+    add("machine-readable certificate", if (length(sources) > 0) "pass" else "warn",
+        if (length(sources) > 0) paste(sources, collapse = "; ")
+        else "deposit should include the certificate source, e.g. codecheck.Rmd")
+  }
+
+  do.call(rbind, results)
+}
+
+
+#' Resolve a certificate ID or Zenodo record reference to a Zenodo record ID
+#'
+#' Accepts a Zenodo record ID, a Zenodo DOI, or a CODECHECK certificate ID. A
+#' certificate ID is resolved via `register.csv` in `register_dir` to the
+#' repository spec, and from there via the repository's `codecheck.yml` `report`
+#' field to the Zenodo record.
+#'
+#' @title Resolve a certificate ID or Zenodo reference to a Zenodo record ID
+#' @param x certificate ID (e.g. "2026-023"), Zenodo record ID, or Zenodo DOI
+#' @param register_dir directory holding `register.csv`, defaults to the working
+#'   directory
+#' @return the Zenodo record ID as integer
+#' @author Daniel Nuest
+#' @export
+resolve_zenodo_record_id <- function(x, register_dir = getwd()) {
+  x <- as.character(x)
+
+  # Zenodo DOI
+  id <- get_zenodo_id(x)
+  if (!is.na(id)) return(id)
+
+  # plain record ID
+  if (grepl("^[0-9]{7,}$", x)) return(as.integer(x))
+
+  # certificate ID
+  if (!grepl("^[0-9]{4}-[0-9]{3}$", x)) {
+    stop("Cannot interpret '", x, "' as a certificate ID, Zenodo record ID or Zenodo DOI")
+  }
+
+  register_file <- file.path(register_dir, "register.csv")
+  if (!file.exists(register_file)) {
+    stop("Need register.csv in '", register_dir, "' to resolve certificate ", x)
+  }
+  register <- utils::read.csv(register_file, as.is = TRUE, comment.char = "#")
+  row <- register[register$Certificate == x, ]
+  if (nrow(row) == 0) {
+    stop("Certificate ", x, " is not in ", register_file)
+  }
+
+  config <- get_codecheck_yml(row$Repository[1])
+  if (is.null(config) || is.null(config$report)) {
+    stop("No 'report' field in the codecheck.yml of ", row$Repository[1])
+  }
+  id <- get_zenodo_id(config$report)
+  if (is.na(id)) {
+    stop("The report field of ", row$Repository[1], " is not a Zenodo DOI: ", config$report)
+  }
+  id
+}
+
+
+#' Audit a published Zenodo record against the CODECHECK curation policy
+#'
+#' Read-only: fetches the record and reports which requirements of the CODECHECK
+#' community curation policy it meets, see
+#' <https://zenodo.org/communities/codecheck/curation-policy>.
+#'
+#' @title Audit a Zenodo record against the CODECHECK curation policy
+#' @param record certificate ID, Zenodo record ID, or Zenodo DOI
+#' @param register_dir directory holding `register.csv`, used to resolve a
+#'   certificate ID, defaults to the working directory
+#' @return invisibly, the data.frame returned by [zenodo_policy_check()]
+#' @author Daniel Nuest
+#' @importFrom cli cli_alert_success cli_alert_warning cli_alert_danger cli_h1
+#' @export
+check_zenodo_record <- function(record, register_dir = getwd()) {
+  id <- resolve_zenodo_record_id(record, register_dir = register_dir)
+  rec <- get_zenodo_record_metadata(id)
+
+  cli::cli_h1(paste0("Zenodo record ", id, " vs. CODECHECK curation policy"))
+  result <- zenodo_policy_check(rec$metadata, files = rec$files)
+
+  for (i in seq_len(nrow(result))) {
+    line <- paste0(result$check[i], ": ", result$detail[i])
+    switch(result$status[i],
+           pass = cli::cli_alert_success(line),
+           warn = cli::cli_alert_warning(line),
+           fail = cli::cli_alert_danger(line))
+  }
+
+  fails <- sum(result$status == "fail")
+  warns <- sum(result$status == "warn")
+  if (fails == 0 && warns == 0) {
+    cli::cli_alert_success("Record complies with the curation policy.")
+  } else {
+    cli::cli_alert_info(paste0(fails, " requirement(s) not met, ", warns, " warning(s). ",
+                               "Run curate_zenodo_record() to see the proposed fixes."))
+  }
+
+  invisible(result)
+}
+
+
+#' Fetch the metadata of a published Zenodo record
+#'
+#' Uses the InvenioRDM representation of the Zenodo REST API, which is the one
+#' the curation policy checks apply to. No authentication needed for open
+#' records.
+#'
+#' @title Fetch metadata of a published Zenodo record
+#' @param id Zenodo record ID
+#' @param sandbox use the Zenodo sandbox instance
+#' @return list with elements `metadata` and `files` (file names)
+#' @author Daniel Nuest
+#' @importFrom httr GET add_headers content stop_for_status
+#' @export
+get_zenodo_record_metadata <- function(id, sandbox = FALSE) {
+  host <- if (sandbox) "https://sandbox.zenodo.org" else "https://zenodo.org"
+  response <- httr::GET(
+    paste0(host, "/api/records/", id),
+    httr::add_headers(Accept = "application/vnd.inveniordm.v1+json"))
+  httr::stop_for_status(response)
+  record <- httr::content(response, as = "parsed", type = "application/json")
+
+  files <- names(record$files$entries)
+  if (is.null(files) && !is.null(record$files)) {
+    files <- unlist(lapply(record$files, function(f) f$key))
+  }
+
+  list(metadata = record$metadata, files = files, record = record)
+}
+
+
+#' Curate a published Zenodo record to comply with the CODECHECK curation policy
+#'
+#' Computes the metadata corrections needed to bring a published certificate
+#' record in line with the CODECHECK community curation policy, prints them, and
+#' - only with `dry_run = FALSE` - applies them by editing the published record
+#' and publishing the metadata update. No new file version is created.
+#'
+#' The target values come from the `codecheck.yml` of the checked repository,
+#' which is the source of truth for certificate ID, paper reference and
+#' codechecker names.
+#'
+#' Requires a Zenodo token with write access, see `zen4R::ZenodoManager`.
+#'
+#' @title Curate a published Zenodo record per the CODECHECK curation policy
+#' @param record certificate ID, Zenodo record ID, or Zenodo DOI
+#' @param zenodo a `zen4R` ZenodoManager; only needed when `dry_run = FALSE`.
+#'   Defaults to a manager built from the `ZENODO_TOKEN` environment variable.
+#' @param metadata codecheck metadata (list); defaults to the `codecheck.yml` of
+#'   the repository registered for the certificate
+#' @param register_dir directory holding `register.csv`, defaults to the working
+#'   directory
+#' @param dry_run if TRUE (the default) only report what would change
+#' @param record_metadata the current record metadata as returned by
+#'   [get_zenodo_record_metadata()]; fetched from Zenodo when NULL (the default).
+#'   Mainly useful for testing and for auditing a record offline.
+#' @return invisibly, a list of the proposed changes
+#' @author Daniel Nuest
+#' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_warning
+#' @export
+curate_zenodo_record <- function(record,
+                                 zenodo = NULL,
+                                 metadata = NULL,
+                                 register_dir = getwd(),
+                                 dry_run = TRUE,
+                                 record_metadata = NULL) {
+  if (is.null(record_metadata)) {
+    id <- resolve_zenodo_record_id(record, register_dir = register_dir)
+    record_metadata <- get_zenodo_record_metadata(id)
+  } else {
+    id <- record
+  }
+  cm <- record_metadata$metadata
+
+  if (is.null(metadata)) {
+    register_file <- file.path(register_dir, "register.csv")
+    if (grepl("^[0-9]{4}-[0-9]{3}$", as.character(record)) && file.exists(register_file)) {
+      register <- utils::read.csv(register_file, as.is = TRUE, comment.char = "#")
+      row <- register[register$Certificate == as.character(record), ]
+      metadata <- get_codecheck_yml(row$Repository[1])
+    } else {
+      stop("Provide `metadata` (the codecheck.yml contents) when `record` is not a certificate ID")
+    }
+  }
+
+  cert <- metadata$certificate
+  changes <- list()
+
+  # Title
+  target_title <- paste("CODECHECK Certificate", cert)
+  if (!identical(cm$title, target_title)) {
+    changes$title <- list(from = cm$title, to = target_title)
+  }
+
+  # Creators recorded as organisations
+  creator_targets <- list()
+  for (i in seq_along(cm$creators)) {
+    poo <- cm$creators[[i]]$person_or_org
+    if (identical(poo$type, "organizational")) {
+      parts <- split_person_name(poo$name)
+      if (!is.null(parts$family)) {
+        creator_targets[[length(creator_targets) + 1]] <- list(
+          index = i,
+          from = paste0("organizational: ", poo$name),
+          to = paste0("personal: ", parts$family, ", ", parts$given),
+          given = parts$given, family = parts$family,
+          orcid = unlist(lapply(poo$identifiers, function(x)
+            if (identical(x$scheme, "orcid")) x$identifier else NULL))[1]
+        )
+      }
+    }
+  }
+  if (length(creator_targets) > 0) changes$creators <- creator_targets
+
+  # "reviews" relation to the paper
+  relations <- unlist(lapply(cm$related_identifiers, function(r) {
+    if (!is.null(r$relation_type$id)) r$relation_type$id else r$relation
+  }))
+  if (!any(tolower(relations) == "reviews")) {
+    paper_ref <- metadata$paper$reference
+    if (!is.null(paper_ref) && grepl("doi\\.org|^10\\.", paper_ref)) {
+      paper_doi <- sub(".*doi\\.org/", "", paper_ref)
+      changes$reviews <- list(
+        from = "missing",
+        to = paste0("reviews ", paper_doi),
+        identifier = paper_doi,
+        resource_type = if (grepl("10\\.1101/|arxiv|biorxiv|osf\\.io", tolower(paper_ref)))
+          "publication-preprint" else "publication-article")
+    } else {
+      cli::cli_alert_warning(paste0(
+        "Cannot add the required \"reviews\" relation: paper$reference in ",
+        "codecheck.yml is not a DOI ('", paper_ref, "')"))
+    }
+  }
+
+  # Alternate identifiers
+  alt <- cm$identifiers
+  has_scheme <- function(scheme) {
+    any(unlist(lapply(alt, function(a)
+      tolower(a$scheme) == scheme && grepl("cdchck.science/register/certs/", a$identifier))))
+  }
+  if (!has_scheme("url") || !has_scheme("other")) {
+    changes$identifiers <- list(
+      from = if (length(alt) == 0) "missing" else
+        paste(unlist(lapply(alt, function(a) a$identifier)), collapse = "; "),
+      to = paste0("http://cdchck.science/register/certs/", cert,
+                  " (url); cdchck.science/register/certs/", cert, " (other)"),
+      url = paste0("http://cdchck.science/register/certs/", cert),
+      other = paste0("cdchck.science/register/certs/", cert))
+  }
+
+  cli::cli_h1(paste0("Curation of Zenodo record ", id, " (certificate ", cert, ")"))
+  if (length(changes) == 0) {
+    cli::cli_alert_success("Nothing to change, the record follows the curation policy.")
+    return(invisible(changes))
+  }
+
+  for (name in names(changes)) {
+    if (name == "creators") {
+      for (ct in changes$creators) {
+        cli::cli_alert_info(paste0("creators[", ct$index, "]: ", ct$from, "  ->  ", ct$to))
+      }
+    } else {
+      cli::cli_alert_info(paste0(name, ": ", changes[[name]]$from, "  ->  ", changes[[name]]$to))
+    }
+  }
+
+  if (dry_run) {
+    cli::cli_alert_warning("Dry run, nothing was written. Call with dry_run = FALSE to apply.")
+    return(invisible(changes))
+  }
+
+  if (is.null(zenodo)) {
+    token <- Sys.getenv("ZENODO_TOKEN")
+    if (nchar(token) == 0) {
+      stop("No Zenodo token: set the ZENODO_TOKEN environment variable or pass `zenodo`")
+    }
+    zenodo <- zen4R::ZenodoManager$new(token = token, logger = "INFO")
+  }
+
+  cli::cli_alert_info("Opening the published record for editing ...")
+  draft <- zenodo$editRecord(id)
+
+  if (!is.null(changes$title)) {
+    draft$setTitle(changes$title$to)
+  }
+
+  if (!is.null(changes$creators)) {
+    # rebuild the whole creator list, keeping creators that are already correct
+    keep <- draft$metadata$creators
+    draft$metadata$creators <- NULL
+    for (i in seq_along(keep)) {
+      fix <- Filter(function(ct) ct$index == i, changes$creators)
+      if (length(fix) == 1) {
+        draft$addCreator(firstname = fix[[1]]$given,
+                         lastname = fix[[1]]$family,
+                         orcid = fix[[1]]$orcid)
+      } else {
+        draft$metadata$creators[[length(draft$metadata$creators) + 1]] <- keep[[i]]
+      }
+    }
+  }
+
+  if (!is.null(changes$reviews)) {
+    draft$addRelatedIdentifier(identifier = changes$reviews$identifier,
+                               scheme = "doi",
+                               relation_type = "reviews",
+                               resource_type = changes$reviews$resource_type)
+  }
+
+  if (!is.null(changes$identifiers)) {
+    draft$metadata$identifiers <- list(
+      list(scheme = "url", identifier = changes$identifiers$url),
+      list(scheme = "other", identifier = changes$identifiers$other))
+  }
+
+  draft <- zenodo$depositRecord(draft)
+  published <- zenodo$publishRecord(draft$id)
+  cli::cli_alert_success(paste0("Published metadata update: ", published$links$self_html))
+
+  invisible(changes)
 }
