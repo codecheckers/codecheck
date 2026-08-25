@@ -142,3 +142,102 @@ expect_true(!is.null(changes$creators))
 expect_true(!is.null(changes$reviews))
 expect_true(!is.null(changes$identifiers))
 expect_true(!is.null(changes$title))
+
+# ------------------------------------------- register-wide check (offline)
+
+# check_register_zenodo_policy() caches record metadata, so keep this test's
+# cache out of the user's real one (restored at the end of the file;
+# on.exit() would run immediately, it is not inside a function)
+policy_cache_root <- file.path(tempfile("codecheck_zenodo_policy_cache"))
+dir.create(policy_cache_root, recursive = TRUE)
+policy_old_root <- R.cache::getCacheRootPath()
+R.cache::setCacheRootPath(policy_cache_root)
+
+# Injected metadata getter serving the two fixtures, so no network is used.
+fake_getter <- function(record_id) {
+  if (record_id == 21238767) return(compliant)
+  if (record_id == 22094773) return(broken)
+  stop("unexpected record id: ", record_id)
+}
+
+reg <- data.frame(
+  Certificate = c("2026-019", "2026-023"),
+  Report = c("https://doi.org/10.5281/zenodo.21238767",
+             "https://doi.org/10.5281/zenodo.22094773"),
+  stringsAsFactors = FALSE)
+
+res <- check_register_zenodo_policy(reg, get_metadata = fake_getter)
+
+expect_equal(nrow(res), 2L)
+expect_equal(res$status[res$certificate == "2026-019"], "compliant")
+expect_equal(res$status[res$certificate == "2026-023"], "non-compliant")
+expect_equal(res$n_fail[res$certificate == "2026-023"], 4L)
+expect_equal(res$n_fail[res$certificate == "2026-019"], 0L)
+expect_true(grepl("reviews", res$findings[res$certificate == "2026-023"]))
+
+# a getter that throws must yield "unknown", never an error. Uses a record id
+# of its own: a failed lookup is deliberately not cached, but a successful one
+# from an earlier assertion would be served from the cache instead of the getter
+res <- check_register_zenodo_policy(
+  data.frame(Certificate = "2026-999",
+             Report = "https://doi.org/10.5281/zenodo.9999999",
+             stringsAsFactors = FALSE),
+  get_metadata = function(record_id) stop("Zenodo is down"))
+expect_equal(res$status, "unknown")
+expect_true(is.na(res$n_fail))
+
+# entries not archived on Zenodo are skipped, not reported as unknown
+osf <- data.frame(Certificate = "2024-023", Report = "https://osf.io/abcde",
+                  stringsAsFactors = FALSE)
+expect_equal(nrow(check_register_zenodo_policy(osf, get_metadata = fake_getter)), 0L)
+
+# a table without the expected columns is handled, not an error
+expect_equal(nrow(check_register_zenodo_policy(data.frame(a = 1))), 0L)
+expect_equal(nrow(check_register_zenodo_policy(NULL)), 0L)
+
+# the reporter tolerates an empty result and returns its input invisibly
+expect_silent(report_zenodo_policy_findings(check_register_zenodo_policy(NULL)))
+
+# repeated checks are served from the cache rather than re-fetching
+fetches <- 0
+counting_getter <- function(record_id) {
+  fetches <<- fetches + 1
+  fake_getter(record_id)
+}
+invisible(check_register_zenodo_policy(reg, get_metadata = counting_getter))
+before <- fetches
+invisible(check_register_zenodo_policy(reg, get_metadata = counting_getter))
+expect_equal(fetches, before)
+
+R.cache::setCacheRootPath(policy_old_root)
+
+# a curated record must not keep being reported from the pre-curation cache
+policy_cache_root2 <- file.path(tempfile("codecheck_zenodo_policy_cache2"))
+dir.create(policy_cache_root2, recursive = TRUE)
+policy_old_root2 <- R.cache::getCacheRootPath()
+R.cache::setCacheRootPath(policy_cache_root2)
+
+one <- reg[reg$Certificate == "2026-023", ]
+expect_equal(check_register_zenodo_policy(one, get_metadata = fake_getter)$status,
+             "non-compliant")
+# same fixture would be served from the cache; after invalidating, the getter
+# runs again and a now-compliant record is reported as such
+expect_true(clear_zenodo_policy_cache(22094773))
+expect_equal(
+  check_register_zenodo_policy(one, get_metadata = function(id) compliant)$status,
+  "compliant")
+
+R.cache::setCacheRootPath(policy_old_root2)
+
+# a record with warnings but no failures must not carry an empty ": " finding
+policy_cache_root3 <- file.path(tempfile("codecheck_zenodo_policy_cache3"))
+dir.create(policy_cache_root3, recursive = TRUE)
+policy_old_root3 <- R.cache::getCacheRootPath()
+R.cache::setCacheRootPath(policy_cache_root3)
+
+res <- check_register_zenodo_policy(reg[reg$Certificate == "2026-019", ],
+                                    get_metadata = fake_getter)
+expect_false(grepl("^: |\\| : ", res$findings))
+expect_true(all(nchar(trimws(strsplit(res$findings, " \\| ")[[1]])) > 2))
+
+R.cache::setCacheRootPath(policy_old_root3)

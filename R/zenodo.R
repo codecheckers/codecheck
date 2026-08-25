@@ -1172,7 +1172,170 @@ curate_zenodo_record <- function(record,
 
   draft <- zenodo$depositRecord(draft)
   published <- zenodo$publishRecord(draft$id)
+  # the policy check caches record metadata; without this the freshly curated
+  # record would keep being reported with its pre-curation findings
+  clear_zenodo_policy_cache(id)
   cli::cli_alert_success(paste0("Published metadata update: ", published$links$self_html))
 
   invisible(changes)
+}
+
+
+#' Drop the cached policy-check metadata of a Zenodo record
+#'
+#' [check_register_zenodo_policy()] caches record metadata, so a record that was
+#' just curated would keep being reported with its pre-curation findings until
+#' the whole cache is cleared. Invalidating the single record keeps the rest of
+#' the cache warm.
+#'
+#' @title Drop the cached policy metadata of one Zenodo record
+#' @param record_id Zenodo record ID
+#' @return TRUE if a cache entry was removed, FALSE otherwise, invisibly
+#' @importFrom R.cache findCache
+#' @export
+clear_zenodo_policy_cache <- function(record_id) {
+  removed <- tryCatch({
+    path <- R.cache::findCache(key = list(record_id = as.integer(record_id)),
+                               dirs = "zenodo-policy")
+    if (!is.null(path) && file.exists(path)) file.remove(path) else FALSE
+  }, error = function(e) FALSE)
+  invisible(isTRUE(removed))
+}
+
+
+#' Check all Zenodo-hosted certificates of a register against the curation policy
+#'
+#' Runs [zenodo_policy_check()] over every register entry whose report is a
+#' Zenodo DOI. Meant to run at the end of a register render as a maintainer
+#' signal, so it never fails: an unreachable record, a 404 or a malformed
+#' response yields the status "unknown" rather than an error, and entries whose
+#' report is not a Zenodo DOI are skipped.
+#'
+#' Record metadata is cached via [cached_lookup()], which stores conclusive
+#' results only, so an outage is retried on the next render instead of being
+#' frozen into the cache. Clear it with [register_clear_cache()].
+#'
+#' @title Check a register's Zenodo records against the CODECHECK curation policy
+#' @param register_table a register `data.frame` with the columns `Certificate`
+#'   and `Report`
+#' @param get_metadata function of one argument (the record ID) returning the
+#'   record metadata like [get_zenodo_record_metadata()]; injectable for testing
+#' @return a data.frame with one row per checked certificate and the columns
+#'   `certificate`, `record_id`, `status` ("compliant", "non-compliant" or
+#'   "unknown"), `n_fail`, `n_warn` and `findings`
+#' @author Daniel Nuest
+#' @export
+check_register_zenodo_policy <- function(register_table,
+                                         get_metadata = get_zenodo_record_metadata) {
+  if (is.null(register_table) || nrow(register_table) == 0 ||
+      !all(c("Certificate", "Report") %in% names(register_table))) {
+    return(empty_zenodo_policy_result())
+  }
+
+  rows <- list()
+  for (i in seq_len(nrow(register_table))) {
+    # after preprocessing the Certificate column holds a markdown link, e.g.
+    # "[2026-023](https://codecheck.org.uk/...)", so reduce it to the bare ID
+    cert <- as.character(register_table$Certificate[i])
+    cert <- sub("^\\[([^]]+)\\].*$", "\\1", cert)
+    report <- as.character(register_table$Report[i])
+    record_id <- get_zenodo_id(report)
+
+    # entries not archived on Zenodo (OSF, GitLab, ...) are out of scope
+    if (is.na(record_id)) next
+
+    result <- tryCatch({
+      record <- cached_lookup(
+        key = list(record_id = record_id),
+        dirs = "zenodo-policy",
+        lookup = function() {
+          fetched <- tryCatch(get_metadata(record_id),
+                              error = function(e) NULL)
+          if (is.null(fetched) || is.null(fetched$metadata)) {
+            list(status = "failed", value = NULL)
+          } else {
+            list(status = "found", value = fetched)
+          }
+        })
+
+      if (is.null(record)) {
+        NULL
+      } else {
+        zenodo_policy_check(record$metadata, files = unlist(record$files))
+      }
+    }, error = function(e) NULL)
+
+    if (is.null(result)) {
+      rows[[length(rows) + 1]] <- data.frame(
+        certificate = cert, record_id = record_id, status = "unknown",
+        n_fail = NA_integer_, n_warn = NA_integer_,
+        findings = "record could not be checked (Zenodo unreachable)",
+        stringsAsFactors = FALSE)
+      next
+    }
+
+    fails <- result[result$status == "fail", ]
+    warns <- result[result$status == "warn", ]
+    # guard the zero-row cases: paste0(character(0), ": ", character(0)) recycles
+    # the scalar separator and yields ": " rather than an empty vector
+    describe <- function(rows) {
+      if (nrow(rows) == 0) character(0) else paste0(rows$check, ": ", rows$detail)
+    }
+    findings <- c(describe(fails), describe(warns))
+
+    rows[[length(rows) + 1]] <- data.frame(
+      certificate = cert, record_id = record_id,
+      status = if (nrow(fails) > 0) "non-compliant" else "compliant",
+      n_fail = nrow(fails), n_warn = nrow(warns),
+      # " | " because individual details already use "; " internally
+      findings = paste(findings, collapse = " | "),
+      stringsAsFactors = FALSE)
+  }
+
+  if (length(rows) == 0) return(empty_zenodo_policy_result())
+  do.call(rbind, rows)
+}
+
+empty_zenodo_policy_result <- function() {
+  data.frame(certificate = character(0), record_id = integer(0),
+             status = character(0), n_fail = integer(0), n_warn = integer(0),
+             findings = character(0), stringsAsFactors = FALSE)
+}
+
+
+#' Report the register's curation policy findings on the console
+#'
+#' Prints the result of [check_register_zenodo_policy()] as a `cli` section:
+#' a line per certificate with findings, then a tally. Certificates that comply
+#' are covered by the tally only.
+#'
+#' @title Report curation policy findings
+#' @param result the data.frame from [check_register_zenodo_policy()]
+#' @return the result, invisibly
+#' @author Daniel Nuest
+#' @importFrom cli cli_h2 cli_alert_danger cli_alert_warning cli_alert_info cli_alert_success
+#' @export
+report_zenodo_policy_findings <- function(result) {
+  if (is.null(result) || nrow(result) == 0) return(invisible(result))
+
+  cli::cli_h2("Zenodo curation policy")
+
+  for (i in seq_len(nrow(result))) {
+    row <- result[i, ]
+    if (row$status == "unknown") {
+      cli::cli_alert_info("{row$certificate}: {row$findings}")
+    } else if (row$status == "non-compliant") {
+      cli::cli_alert_danger("{row$certificate}: {row$findings}")
+    } else if (row$n_warn > 0) {
+      cli::cli_alert_warning("{row$certificate}: {row$findings}")
+    }
+  }
+
+  compliant <- sum(result$status == "compliant")
+  total <- nrow(result)
+  unknown <- sum(result$status == "unknown")
+  cli::cli_alert_success(
+    "{compliant} of {total} certificate{?s} on Zenodo comply with the curation policy{if (unknown > 0) paste0(', ', unknown, ' could not be checked') else ''}")
+
+  invisible(result)
 }

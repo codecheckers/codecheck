@@ -7,7 +7,8 @@
 register_check(
   register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   from = 1,
-  to = nrow(register)
+  to = nrow(register),
+  check_zenodo_policy = TRUE
 )
 }
 \arguments{
@@ -16,6 +17,8 @@ register_check(
 \item{from}{The first register entry to check}
 
 \item{to}{The last register entry to check}
+
+\item{check_zenodo_policy}{Logical; if TRUE (the default), also audits the Zenodo records against the CODECHECK community curation policy}
 }
 \description{
 This functions starts of a `data.frame` read from the local register file.

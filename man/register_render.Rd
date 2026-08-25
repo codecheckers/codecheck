@@ -15,7 +15,8 @@ register_render(
   to = nrow(register),
   parallel = FALSE,
   ncores = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  check_zenodo_policy = TRUE
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ register_render(
 \item{ncores}{Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.}
 
 \item{verbose}{Logical; if TRUE, shows detailed output including pandoc commands from rmarkdown::render(). Defaults to FALSE.}
+
+\item{check_zenodo_policy}{Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.}
 }
 \value{
 A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories

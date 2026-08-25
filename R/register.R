@@ -16,6 +16,7 @@
 #' @param parallel Logical; if TRUE, renders certificates in parallel using multiple cores. Defaults to FALSE.
 #' @param ncores Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.
 #' @param verbose Logical; if TRUE, shows detailed output including pandoc commands from rmarkdown::render(). Defaults to FALSE.
+#' @param check_zenodo_policy Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #'
@@ -39,7 +40,8 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             to = nrow(register),
                             parallel = FALSE,
                             ncores = NULL,
-                            verbose = FALSE) {
+                            verbose = FALSE,
+                            check_zenodo_policy = TRUE) {
   cli::cli_h1("CODECHECK Register Rendering")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
 
@@ -124,6 +126,17 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
         cli::cli_alert_warning("{msg}")
       }
     }
+  }
+
+  # Audit the Zenodo records against the community curation policy. This is a
+  # maintainer signal only: a finding, an outage or an unexpected error here
+  # must never fail a render that otherwise succeeded.
+  if (check_zenodo_policy) {
+    tryCatch({
+      report_zenodo_policy_findings(check_register_zenodo_policy(register_table))
+    }, error = function(e) {
+      cli::cli_alert_info("Could not run the Zenodo curation policy check: {conditionMessage(e)}")
+    })
   }
 
   cli::cli_alert_success("Register rendering complete")
@@ -338,6 +351,7 @@ register_update_stats <- function(docs_dir = "docs",
 #' @param register A `data.frame` with all required information for the register's view
 #' @param from The first register entry to check
 #' @param to The last register entry to check
+#' @param check_zenodo_policy Logical; if TRUE (the default), also audits the Zenodo records against the CODECHECK community curation policy
 #'
 #' @author Daniel Nuest
 #' @importFrom R.cache getCacheRootPath
@@ -346,7 +360,8 @@ register_update_stats <- function(docs_dir = "docs",
 #' @export
 register_check <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
                            from = 1,
-                           to = nrow(register)) {
+                           to = nrow(register),
+                           check_zenodo_policy = TRUE) {
   cli::cli_h1("CODECHECK Register Check")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
 
@@ -355,6 +370,10 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
 
   cli::cli_alert_info("Cache path: {.path {R.cache::getCacheRootPath()}}")
   
+  # The raw register has no Report column, the report DOI comes from each
+  # codecheck.yml, so collect it while the configurations are being read anyway.
+  zenodo_entries <- list()
+
   for (i in seq(from = from, to = to)) {
     cat("Checking", toString(register[i, ]), "\n")
     entry <- register[i, ]
@@ -363,6 +382,23 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
     codecheck_yaml <- get_codecheck_yml(entry$Repository)
     check_certificate_id(entry, codecheck_yaml)
     check_issue_status(entry)
+
+    if (!is.null(codecheck_yaml) && !is.null(codecheck_yaml$report)) {
+      zenodo_entries[[length(zenodo_entries) + 1]] <- data.frame(
+        Certificate = as.character(entry$Certificate),
+        Report = as.character(codecheck_yaml$report),
+        stringsAsFactors = FALSE)
+    }
+
     cat("Completed checking registry entry", toString(register[i, "Certificate"]), "\n")
+  }
+
+  if (check_zenodo_policy && length(zenodo_entries) > 0) {
+    tryCatch({
+      report_zenodo_policy_findings(
+        check_register_zenodo_policy(do.call(rbind, zenodo_entries)))
+    }, error = function(e) {
+      cli::cli_alert_info("Could not run the Zenodo curation policy check: {conditionMessage(e)}")
+    })
   }
 }

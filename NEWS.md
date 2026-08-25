@@ -1,4 +1,4 @@
-# codecheck 0.25.0.9001
+# codecheck 0.25.0.9002
 
 ## Bug Fixes
 
@@ -9,6 +9,7 @@
 
 ## New Features
 
+* **Curation policy check during rendering**: `register_render()` and `register_check()` now audit every Zenodo-hosted certificate against the CODECHECK community curation policy and report the findings as a `cli` section with per-status icons (✖ required item missing, ! recommendation unmet, ℹ record unreachable), followed by a tally. Non-compliance never fails a render, and neither does an outage or an unexpected error in the check itself. Record metadata is cached via `cached_lookup()`, so only a cold render pays for the extra requests; pass `check_zenodo_policy = FALSE` (or `make render CHECK_ZENODO=0` in the register project) to skip them. New functions `check_register_zenodo_policy()`, `report_zenodo_policy_findings()` and `clear_zenodo_policy_cache()`, the latter also called by `curate_zenodo_record()` so a freshly curated record is not reported from its pre-curation cache entry
 * **Curation policy audit for published records**: new `zenodo_policy_check()` evaluates record metadata against the CODECHECK community curation policy and returns a data frame of pass/warn/fail per requirement. `check_zenodo_record()` fetches a published record and prints the audit, `curate_zenodo_record()` proposes and (with `dry_run = FALSE`) applies the corrections, and `resolve_zenodo_record_id()` resolves a certificate ID via `register.csv` and the repository's `codecheck.yml` to a Zenodo record. The register project wraps these as `make zenodo_check CERT_ID=…` and `make zenodo_curate CERT_ID=…`
 
 # codecheck 0.25.0
