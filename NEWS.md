@@ -1,3 +1,14 @@
+# codecheck 0.25.0.9005
+
+## Bug Fixes
+
+* **ResearchEquals certificates can be downloaded again**: ResearchEquals replaced its `modules` API with `outputs` and `versions`, so `/api/modules/main/<DOI suffix>` - the endpoint `get_researchequals_cert_link()` built - now answers 404 for every certificate. A DOI resolves to a version page, whose id gives the deposited file through `/api/versions/<id>` and `/api/files/<key>`; the resolver follows that chain and warns when a version carries no file or is not a PDF. `CONFIG$CERT_LINKS$researchequals_api` is the apex host, the `www.` one only added a redirect
+* **A register in which no codechecker has an identifier renders**: codecheckers without ORCID and GitHub username are recorded under the literal identifier `"NA"`, which `read.csv()` reads back as a missing value - and as a logical column when it is the only identifier in the register, making `create_filtered_reg_csvs()` fail in `strsplit()` with "non-character argument". `render_table_codecheckers()` failed right after it, because `recode()` errors when both identifier dictionaries are empty
+
+## Internal
+
+* **Shared test mocks**: new `inst/tinytest/mocks.R` provides `with_mocked_codecheck()`, which swaps functions in the package namespace and restores them afterwards, along with a fake `codecheck_GET()`, a `codecheck.yml` fixture reader and a `get_codecheck_yml()` that serves it. Tests can state the property they exercise instead of depending on what a record on a remote archive happens to contain, and a slow or failing archive can no longer abort a run. `test_register_edge_cases.R` uses them; its missing-identifier warning is now asserted on `add_codechecker()`, which raises it, because `register_render()` muffles every warning and re-reports it as a `cli` alert
+
 # codecheck 0.25.0.9004
 
 ## Bug Fixes

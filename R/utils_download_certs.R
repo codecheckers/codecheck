@@ -274,22 +274,41 @@ get_zenodo_cert_link <- function(report_link, cert_id, api_key = "") {
 #'
 #' @return The download link for the certificate file as a string if found; otherwise, NULL.
 get_researchequals_cert_link <- function(report_link, cert_id) {
-  # Download link example: https://www.researchequals.com/api/modules/main/wxh7-8yjd
-  # Let's guess the ID from the report_link
-  
-  # Checking for redirects and retrieving the record_id from there
+  # A ResearchEquals DOI redirects to the page of one version of an output,
+  # https://researchequals.com/en-US/versions/<version id>, from where the API
+  # gives the key of the deposited file:
+  #   GET /api/versions/<version id>  ->  content_s3, content_mediatype
+  #   GET /api/files/<content_s3>     ->  the file itself
+  # The older /api/modules/main/<DOI suffix> endpoint no longer exists.
   response <- codecheck_GET_retry(report_link)
   if (is.null(response)) {
     warning(cert_id, " | Could not resolve report link ", report_link)
     return(NULL)
   }
-  final_url <- response$url
-  record_id <- basename(final_url)
-  
-  # Set the base URL for the ResearchEquals API
-  record_url <- paste0(CONFIG$CERT_LINKS[["researchequals_api"]], record_id)
-  
-  return (record_url)
+
+  # codecheck_GET_retry() follows redirects, so this is the resolved page; the
+  # locale prefix ResearchEquals adds does not affect the trailing version id
+  version_id <- basename(response$url)
+  api <- CONFIG$CERT_LINKS[["researchequals_api"]]
+
+  version_response <- codecheck_GET_retry(paste0(api, "versions/", version_id))
+  if (is.null(version_response) || httr::status_code(version_response) != 200) {
+    warning(cert_id, " | Could not access the ResearchEquals API for version ", version_id)
+    return(NULL)
+  }
+
+  version <- httr::content(version_response, as = "parsed", type = "application/json")
+  file_key <- version$content_s3
+  if (is.null(file_key)) {
+    warning(cert_id, " | ResearchEquals version ", version_id, " has no deposited file")
+    return(NULL)
+  }
+  if (!identical(version$content_mediatype, "application/pdf")) {
+    warning(cert_id, " | ResearchEquals version ", version_id, " is not a PDF but ",
+            toString(version$content_mediatype))
+  }
+
+  return(paste0(api, "files/", file_key))
 }
 
 

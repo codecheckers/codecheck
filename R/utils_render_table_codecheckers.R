@@ -23,8 +23,11 @@ create_all_codecheckers_table <- function(register_table){
   # Adding the codechecker name column
   # Merge both ORCID and GitHub username dictionaries
   all_codecheckers_dict <- c(CONFIG$DICT_ORCID_ID_NAME, CONFIG$DICT_GITHUB_USERNAME_NAME)
+  # recode() errors on an empty replacement set, which is the case for a
+  # register in which no codechecker has an ORCID or a GitHub username
   new_table <- new_table %>%
-    mutate(`codechecker_name` = recode(Codechecker, !!!all_codecheckers_dict)) %>%
+    mutate(`codechecker_name` = if (length(all_codecheckers_dict) > 0)
+             recode(Codechecker, !!!all_codecheckers_dict) else Codechecker) %>%
     # Handle "NA" identifier by showing a descriptive name
     mutate(`codechecker_name` = ifelse(Codechecker == "NA", "Codecheckers without ORCID", codechecker_name))
 

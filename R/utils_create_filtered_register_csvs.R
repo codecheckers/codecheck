@@ -97,6 +97,13 @@ create_filtered_reg_csvs <- function(register_table, filter_by){
       # Once the temp_register is loaded, we can remove it
       file.remove(CONFIG$DIR_TEMP_REGISTER_CODECHECKER)
 
+      # Codecheckers without ORCID or GitHub username are identified by the
+      # literal string "NA", which read.csv() reads back as a missing value -
+      # and as a logical column when every codechecker lacks an identifier,
+      # which made strsplit() below fail with "non-character argument"
+      register_table$Codechecker <- as.character(register_table$Codechecker)
+      register_table$Codechecker[is.na(register_table$Codechecker)] <- "NA"
+
       # Splitting the comma-separated strings into lists
       register_table$Codechecker <- strsplit(register_table$Codechecker, ",")
 

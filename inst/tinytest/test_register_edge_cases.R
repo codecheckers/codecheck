@@ -7,6 +7,12 @@ suppressMessages({
 })
 
 source(system.file("extdata", "config.R", package = "codecheck"))
+source("mocks.R")
+
+# read fixtures now, before the tests below setwd() into temporary directories
+codechecker_without_ids <- mock_codecheck_yml(
+  codechecker = list(list(name = "Anonymous Checker")),
+  repository = "https://github.com/codecheckers/testing")
 
 # Test 1: register_render() - empty register (0 rows) ----
 empty_register <- data.frame(
@@ -196,7 +202,10 @@ multi_platform_register <- data.frame(
   stringsAsFactors = FALSE
 )
 
-expect_warning({
+# The codecheck.yml comes from a mock: rendering four entries from four
+# different platforms is the point of this test, and reaching four archives to
+# do it made the test depend on what those records happen to contain today.
+{
   test_dir <- file.path(tempdir(), "test_multi_platform")
   if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
   dir.create(test_dir, recursive = TRUE)
@@ -206,17 +215,33 @@ expect_warning({
   # Create venues.csv for this test
   writeLines("name,longname,label\nAGILEGIS,AGILE Conference,conference\nGigaByte,GigaByte,journal\ncodecheck NL,CODECHECK NL,check-nl\ncodecheck,CODECHECK,community", "venues.csv")
 
-  suppressMessages({
-    result <- codecheck::register_render(
-      register = multi_platform_register,
-      outputs = c("json"),
-      from = 1,
-      to = 4,
-      venues_file = "venues.csv"
-    )
-  })
+  with_mocked_codecheck(
+    list(get_codecheck_yml = mock_get_codecheck_yml(codechecker_without_ids),
+         # no GitHub lookup either, so the fallback cannot rescue the name
+         get_github_handle_by_name = function(name, ...) NULL),
+    suppressMessages({
+      result <- codecheck::register_render(
+        register = multi_platform_register,
+        outputs = c("json"),
+        from = 1,
+        to = 4,
+        venues_file = "venues.csv"
+      )
+    })
+  )
+}
 
-}, "codechecker ORCID and GitHub username missing")
+# A codechecker with neither ORCID nor GitHub username must be reported. The
+# warning is asserted on add_codechecker(), which raises it: register_render()
+# muffles every warning and re-reports it as a cli alert, so no warning ever
+# escapes the render itself.
+expect_warning(
+  with_mocked_codecheck(
+    list(get_codecheck_yml = mock_get_codecheck_yml(codechecker_without_ids),
+         get_github_handle_by_name = function(name, ...) NULL),
+    codecheck:::add_codechecker(data.frame(x = seq_len(nrow(multi_platform_register))),
+                                multi_platform_register)),
+  "codechecker ORCID and GitHub username missing")
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 4)
 unlink(test_dir, recursive = TRUE)
