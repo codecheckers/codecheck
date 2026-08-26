@@ -51,10 +51,10 @@ Imports:
     parallel
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Suggests:
     tinytest,
     ttdo,
     skimr
 URL: http://codecheck.org.uk/codecheck/, https://github.com/codecheckers/codecheck
+Config/roxygen2/version: 8.1.0

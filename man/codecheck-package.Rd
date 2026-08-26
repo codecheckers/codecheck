@@ -21,6 +21,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Stephen Eglen \email{sje30@cam.ac.uk} (\href{https://orcid.org/0000-0001-8607-8025}{ORCID})
   \item Daniel Nuest \email{daniel.nuest@tu-dresden.de} (\href{https://orcid.org/0000-0002-0024-5046}{ORCID})
   \item Angelina Momin \email{angelina.momin53@gmail.com} (\href{https://orcid.org/0000-0002-6875-1551}{ORCID})
   \item Sam Langton \email{s.h.langton@amsterdamumc.nl} (\href{https://orcid.org/0000-0002-1322-1553}{ORCID})

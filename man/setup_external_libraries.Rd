@@ -19,3 +19,9 @@ Downloads CSS and JavaScript libraries from their official sources and stores th
 locally in the docs/libs directory. This removes dependency on external CDNs and
 ensures reproducibility.
 }
+\details{
+Files that are already present and of a plausible size are not downloaded again.
+When all expected files are present and `PROVENANCE.csv` matches the current
+library versions, the function returns early and leaves `PROVENANCE.csv` and
+`README.md` untouched, so that repeated rendering does not modify these files.
+}
