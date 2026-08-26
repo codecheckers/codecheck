@@ -1,3 +1,15 @@
+# codecheck 0.25.0.9006
+
+## Bug Fixes
+
+* **Rendering no longer rewrites `docs/libs/PROVENANCE.csv` on every run**: `setup_external_libraries()` wrote the provenance file and the libraries README unconditionally, with `date_configured = Sys.Date()`, so every render dirtied two tracked files even though all libraries were already present and nothing was downloaded. The function now checks whether the local copies are current - all expected files present and of a plausible size, and `PROVENANCE.csv` recording exactly the specified libraries and versions - and returns early without touching either file. A partial update keeps the recorded date of the libraries it did not download, so `date_configured` says when a library was actually fetched
+* **A failed library download is no longer stored as a library file**: the response body was written to the destination before the status code was checked, so an HTTP error page landed in, say, `bootstrap.min.css`; the `file.exists()` guard then skipped that file on every later run and the broken copy stayed forever. `download_library_file()` downloads to a temporary file and moves it into place only on HTTP 200 with a plausible size, and files below that size are re-downloaded
+
+## Internal
+
+* **One specification for the external libraries**: `external_library_specs()` is now the single source of truth, including the font files that were hardcoded in `download_font_awesome_fonts()` and `download_academicons_fonts()` (both replaced by the spec-driven `download_library_fonts()`). `libs_are_current()` and the download loop derive their expectations from it, so a version bump in the specification is enough to force a refresh
+* **Tests for the external libraries**: new `inst/tinytest/test_external_libs.R` covers the currency check, the preserved provenance, and discarded failed downloads offline via `with_mocked_codecheck()`, and keeps exactly one real download as an integration test that skips when there is no network
+
 # codecheck 0.25.0.9005
 
 ## Bug Fixes

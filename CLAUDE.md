@@ -19,6 +19,19 @@ DO NOT use `tinytest::test_all(".")` - it causes "could not find function" error
 
 For interactive development: `devtools::install()` then `library(codecheck)`.
 
+### Fast iteration loop
+
+`build_install_test(".")` builds a tarball and installs with docs and byte-compilation, which takes minutes. When iterating on a single test file, install and run the file separately instead - the install takes about 5 seconds:
+
+```sh
+R CMD INSTALL --no-docs --no-byte-compile --no-staged-install .
+R -q -e 'library(codecheck); setwd("inst/tinytest"); tinytest::run_test_file("test_<name>.R")'
+```
+
+`setwd("inst/tinytest")` matters: test files `source("mocks.R")` and read fixtures relative to their own directory. Skipping docs means `man/` is not rebuilt, so run `devtools::document()` and a full `build_install_test(".")` before proposing the change.
+
+Test runtime is dominated by installation, not by the tests: the full edge-case file runs in under 5 seconds.
+
 ## Changelog
 
 Always update `NEWS.md` when making changes. Follow the existing `# codecheck X.Y.Z` header format.
