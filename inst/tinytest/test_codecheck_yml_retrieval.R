@@ -6,6 +6,18 @@ suppressMessages({
   library(R.cache)
 })
 
+# These are integration tests: they check retrieval from every supported
+# platform, so they deliberately reach the real services. The variables are
+# declared first because a failed expect_silent(x <- ...) leaves x unassigned,
+# and the next line referring to x then aborts the whole file - and with it the
+# rest of the suite - instead of reporting one failed assertion.
+piccolo <- NULL
+agile03 <- NULL
+agile21 <- NULL
+agile <- NULL
+gigabyte <- NULL
+zenodo <- NULL
+
 # Invalid or unsupported ----
 expect_error(get_codecheck_yml("unsupported::repo/spec"),
              pattern = "Unsupported repository type 'unsupported")

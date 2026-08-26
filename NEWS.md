@@ -1,3 +1,14 @@
+# codecheck 0.25.0.9007
+
+## Bug Fixes
+
+* **OSF retrieval survives an OSF outage**: `osfr` does its own HTTP and parses every response as JSON, so an OSF error page arrived as "lexical error: invalid char in json text" instead of a status code, and `codecheck_GET_retry()` never saw it. `get_codecheck_yml_osf()` retries both `osfr` calls with the same policy used for the requests the package makes itself, and reports a clear message when they keep failing
+
+## Internal
+
+* **One flaky remote call no longer costs the whole test suite**: a failed `expect_silent(x <- ...)` leaves `x` unassigned, so the next line referring to `x` aborted the file with "object not found" and R halted the run, discarding every test after it. The integration tests in `test_codecheck_yml_retrieval.R` and `test_lifecycle_journal.R` declare their variables first, so an upstream hiccup costs one failed assertion
+* **Remote links are asserted by shape**: `get_cert_link()` returns a ResearchEquals `/api/files/<key>` URL whose key, like the version id it comes from, changes with every new deposit, so `test_cert_link.R` matches the shape rather than the identifier of the day
+
 # codecheck 0.25.0.9006
 
 ## Bug Fixes

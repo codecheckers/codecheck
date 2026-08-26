@@ -8,7 +8,18 @@ suppressMessages({
 
 # Test get_lifecycle_metadata with full DOI (using a known valid DOI)
 # This tests the real API call
+# These are integration tests: they exercise the real Lifecycle Journal API, so
+# they deliberately reach the live service. The variables are
+# declared first because a failed expect_silent(x <- ...) leaves x unassigned,
+# and the next line referring to x then aborts the whole file - and with it the
+# rest of the suite - instead of reporting one failed assertion.
 meta <- NULL
+meta2 <- NULL
+result <- NULL
+result2 <- NULL
+result3 <- NULL
+result4 <- NULL
+
 expect_silent(meta <- codecheck::get_lifecycle_metadata("10.71240/lcyc.355146"))
 expect_true("title" %in% names(meta))
 expect_true("authors" %in% names(meta))

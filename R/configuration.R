@@ -97,8 +97,26 @@ get_codecheck_yml_github <- function(x) {
 #' @param x the OSF id (5 characters)
 #' @importFrom osfr osf_retrieve_node osf_ls_files osf_download
 get_codecheck_yml_osf <- function(x) {
-  repo <- osfr::osf_retrieve_node(x)
-  repo_files <- osfr::osf_ls_files(repo, pattern = "codecheck.yml")
+  # osfr does its own HTTP and parses the response as JSON, so an OSF outage
+  # arrives as "lexical error: invalid char in json text" from an HTML error
+  # page rather than as a status code. Retry the way codecheck_GET_retry() does
+  # for the calls we make ourselves.
+  retry_osf <- function(expr, max_attempts = 4, max_wait = 30) {
+    wait <- 1
+    for (attempt in seq_len(max_attempts)) {
+      result <- tryCatch(expr(), error = function(e) e)
+      if (!inherits(result, "error")) return(result)
+      if (attempt == max_attempts) {
+        stop("OSF request failed after ", max_attempts, " attempts: ",
+             conditionMessage(result), call. = FALSE)
+      }
+      Sys.sleep(min(wait, max_wait))
+      wait <- wait * 2
+    }
+  }
+
+  repo <- retry_osf(function() osfr::osf_retrieve_node(x))
+  repo_files <- retry_osf(function() osfr::osf_ls_files(repo, pattern = "codecheck.yml"))
   
   if (nrow(repo_files) == 1) {
     temp_dir <- tempdir()

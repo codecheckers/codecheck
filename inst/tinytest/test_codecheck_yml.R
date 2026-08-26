@@ -1,5 +1,7 @@
 tinytest::using(ttdo)
 
+source("mocks.R")
+
 # valid codecheck.yml ----
 expect_silent(validate_codecheck_yml("yaml/codecheck.yml"))
 expect_true(validate_codecheck_yml("yaml/codecheck.yml"))
@@ -36,11 +38,16 @@ expect_error(validate_codecheck_yml("yaml/codechecker_name_missing/codecheck.yml
              pattern = "codecheckers must have a 'name'")
 
 # repository/ies ----
-expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck.yml"),
-             pattern = "URL returns error")
-expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-with-list.yml"),
-             pattern = "URL returns error")
-expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-with-list.yml"),
-             pattern = "does_not_exist")
-expect_silent(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-valid.yml"))
-expect_true(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-valid.yml"))
+# the repository URLs are answered by a mock: whether a given URL is reachable
+# is not what is under test here, and one unreachable archive used to abort the
+# whole file
+with_mocked_codecheck(list(codecheck_GET = mock_codecheck_GET()), {
+  expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck.yml"),
+               pattern = "URL returns error")
+  expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-with-list.yml"),
+               pattern = "URL returns error")
+  expect_error(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-with-list.yml"),
+               pattern = "does_not_exist")
+  expect_silent(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-valid.yml"))
+  expect_true(validate_codecheck_yml("yaml/repository_url_invalid/codecheck-valid.yml"))
+})
