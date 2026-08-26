@@ -268,15 +268,47 @@ no_creators <- curate_zenodo_record("2026-023", metadata = test_metadata(),
 expect_null(no_creators$creators)
 expect_true(!is.null(no_creators$identifiers))
 
-# a repository under codecheckers is proposed as a supplement relation
-no_rel <- broken
-no_rel$metadata$related_identifiers <- list()
+# a title carrying extra text is routed to the human list, never truncated
+titled <- broken
+titled$metadata$title <- "CODECHECK certificate 2026-023 for \"Some paper title\""
 res <- curate_zenodo_record("2026-023", metadata = test_metadata(),
-                            record_metadata = no_rel, dry_run = TRUE,
+                            record_metadata = titled, dry_run = TRUE,
+                            fields = "title")
+# exact indexing: res$title would partial-match res$title_manual
+expect_null(res[["title"]])
+expect_true(!is.null(res[["title_manual"]]))
+
+# a repository under codecheckers is proposed as a supplement relation
+no_rel_ok <- broken
+no_rel_ok$metadata$related_identifiers <- list()
+res <- curate_zenodo_record("2026-023", metadata = test_metadata(),
+                            record_metadata = no_rel_ok, dry_run = TRUE,
                             fields = "repository")
 expect_true(!is.null(res[["repository"]]))
 
+# a repository outside codecheckers/cdchck is surfaced, not deposited
+elsewhere <- test_metadata()
+elsewhere$repository <- "https://github.com/someone-else/repo"
+no_rel <- broken
+no_rel$metadata$related_identifiers <- list()
+res <- curate_zenodo_record("2026-023", metadata = elsewhere,
+                            record_metadata = no_rel, dry_run = TRUE,
+                            fields = "repository")
+expect_null(res[["repository"]])
+expect_true(!is.null(res[["repository_manual"]]))
+
 R.cache::setCacheRootPath(policy_old_root4)
+
+# a token without edit rights must produce a clear message, not the
+# "attempt to apply non-function" that calling a method on a non-record gives
+zen_denied <- mock_manager()
+zen_denied$editRecord <- function(recordId) NULL
+expect_error(
+  curate_zenodo_record("2026-023", zenodo = zen_denied, metadata = test_metadata(),
+                       record_metadata = broken, dry_run = FALSE),
+  "not allowed to edit")
+expect_null(zen_denied$deposited)
+expect_equal(zen_denied$publish_calls, 0)
 
 # ------------------------------------------------------- creator overrides
 

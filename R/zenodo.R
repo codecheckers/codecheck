@@ -1062,8 +1062,14 @@ curate_zenodo_record <- function(record,
 
   # Title
   target_title <- paste("CODECHECK Certificate", cert)
+  # only correct the capitalisation of a title that is otherwise as expected;
+  # a title carrying extra text (e.g. the paper title) is left to a human
   if ("title" %in% fields && !identical(cm$title, target_title)) {
-    changes$title <- list(from = cm$title, to = target_title)
+    if (identical(tolower(cm$title), tolower(target_title))) {
+      changes$title <- list(from = cm$title, to = target_title)
+    } else {
+      changes$title_manual <- list(from = cm$title, to = target_title)
+    }
   }
 
   # Publisher, language and resource type: fixed values from the policy
@@ -1143,6 +1149,10 @@ curate_zenodo_record <- function(record,
         changes$repository <- list(from = "missing",
                                    to = paste0("isSupplementedBy ", repo_url),
                                    identifier = repo_url)
+      } else {
+        # a repository outside codecheckers/cdchck is not what the policy asks
+        # for, so surface it rather than deposit it
+        changes$repository_manual <- list(from = "missing", to = repo_url)
       }
     }
   }
@@ -1164,14 +1174,19 @@ curate_zenodo_record <- function(record,
   }
 
   cli::cli_h1(paste0("Curation of Zenodo record ", id, " (certificate ", cert, ")"))
+  applicable <- names(changes)[!grepl("_manual$", names(changes))]
   if (length(changes) == 0) {
     cli::cli_alert_success("Nothing to change, the record follows the curation policy.")
     return(invisible(changes))
   }
 
   for (name in names(changes)) {
-    if (name == "creators") {
-      for (ct in changes$creators) {
+    if (grepl("_manual$", name)) {
+      cli::cli_alert_warning(paste0(
+        sub("_manual$", "", name), ": ", changes[[name]]$from,
+        "  ->  needs a human, expected something like: ", changes[[name]]$to))
+    } else if (name == "creators") {
+      for (ct in changes[["creators"]]) {
         cli::cli_alert_info(paste0("creators[", ct$index, "]: ", ct$from, "  ->  ", ct$to))
       }
     } else {
@@ -1184,6 +1199,11 @@ curate_zenodo_record <- function(record,
     return(invisible(changes))
   }
 
+  if (length(applicable) == 0) {
+    cli::cli_alert_warning("Only findings that need a human, nothing written.")
+    return(invisible(changes))
+  }
+
   if (is.null(zenodo)) {
     token <- Sys.getenv("ZENODO_TOKEN")
     if (nchar(token) == 0) {
@@ -1192,38 +1212,52 @@ curate_zenodo_record <- function(record,
     zenodo <- zen4R::ZenodoManager$new(token = token, logger = "INFO")
   }
 
+  # NOTE: read `changes` with [["..."]] below, never with $: R partial-matches
+  # $ on lists, so changes$title would silently match changes$title_manual and
+  # truncate a title that was deliberately routed to a human.
   cli::cli_alert_info("Opening the published record for editing ...")
   draft <- zenodo$editRecord(id)
 
-  if (!is.null(changes$title)) {
-    draft$setTitle(changes$title$to)
+  # editRecord() does not stop on failure, it returns a non-record (typically
+  # on "Permission denied" when the token does not own the record). Without
+  # this check the next method call fails with "attempt to apply non-function",
+  # which says nothing about the actual cause.
+  if (is.null(draft) || !inherits(draft, "ZenodoRecord")) {
+    stop("Could not open record ", id, " for editing. The Zenodo token is ",
+         "most likely not allowed to edit it - records deposited by another ",
+         "user need to be curated by their owner, or the token needs edit ",
+         "rights on them.", call. = FALSE)
   }
 
-  if (!is.null(changes$publisher)) {
-    draft$setPublisher(changes$publisher$to)
+  if (!is.null(changes[["title"]])) {
+    draft$setTitle(changes[["title"]]$to)
   }
 
-  if (!is.null(changes$language)) {
+  if (!is.null(changes[["publisher"]])) {
+    draft$setPublisher(changes[["publisher"]]$to)
+  }
+
+  if (!is.null(changes[["language"]])) {
     draft$setLanguage("eng")
   }
 
-  if (!is.null(changes$resource_type)) {
+  if (!is.null(changes[["resource_type"]])) {
     draft$setResourceType("publication-report")
   }
 
-  if (!is.null(changes$repository)) {
-    draft$addRelatedIdentifier(identifier = changes$repository$identifier,
+  if (!is.null(changes[["repository"]])) {
+    draft$addRelatedIdentifier(identifier = changes[["repository"]]$identifier,
                                scheme = "url",
                                relation_type = "issupplementedby",
                                resource_type = "software")
   }
 
-  if (!is.null(changes$creators)) {
+  if (!is.null(changes[["creators"]])) {
     # rebuild the whole creator list, keeping creators that are already correct
     keep <- draft$metadata$creators
     draft$metadata$creators <- NULL
     for (i in seq_along(keep)) {
-      fix <- Filter(function(ct) ct$index == i, changes$creators)
+      fix <- Filter(function(ct) ct$index == i, changes[["creators"]])
       if (length(fix) == 1) {
         draft$addCreator(firstname = fix[[1]]$given,
                          lastname = fix[[1]]$family,
@@ -1234,17 +1268,17 @@ curate_zenodo_record <- function(record,
     }
   }
 
-  if (!is.null(changes$reviews)) {
-    draft$addRelatedIdentifier(identifier = changes$reviews$identifier,
+  if (!is.null(changes[["reviews"]])) {
+    draft$addRelatedIdentifier(identifier = changes[["reviews"]]$identifier,
                                scheme = "doi",
                                relation_type = "reviews",
-                               resource_type = changes$reviews$resource_type)
+                               resource_type = changes[["reviews"]]$resource_type)
   }
 
-  if (!is.null(changes$identifiers)) {
+  if (!is.null(changes[["identifiers"]])) {
     draft$metadata$identifiers <- list(
-      list(scheme = "url", identifier = changes$identifiers$url),
-      list(scheme = "other", identifier = changes$identifiers$other))
+      list(scheme = "url", identifier = changes[["identifiers"]]$url),
+      list(scheme = "other", identifier = changes[["identifiers"]]$other))
   }
 
   draft <- zenodo$depositRecord(draft)

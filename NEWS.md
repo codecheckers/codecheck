@@ -1,3 +1,14 @@
+# codecheck 0.25.0.9004
+
+## Bug Fixes
+
+* **Curation no longer truncates titles routed to a human**: the apply path read its change set with `$`, which partial-matches on R lists, so `changes$title` matched `changes$title_manual` and would have overwritten a title carrying extra descriptive text with the bare `CODECHECK Certificate <ID>`. The same applies to the repository relation. All reads in the apply path are now exact (`[["..."]]`), with regression tests
+* **Clear message when a Zenodo token may not edit a record**: `zen4R::editRecord()` returns a non-record instead of stopping when the API answers "Permission denied", so curating a record deposited by another user failed with the unrelated "attempt to apply non-function". The result is now checked and reported as what it is
+
+## New Features
+
+* **Findings that need judgement are surfaced, not guessed**: `curate_zenodo_record()` no longer proposes a value where the target does not follow mechanically. A title carrying text beyond `CODECHECK Certificate <ID>` and a repository outside `codecheckers/`/`cdchck` are reported for a human instead, and a record with only such findings is never opened for editing
+
 # codecheck 0.25.0.9003
 
 ## New Features
