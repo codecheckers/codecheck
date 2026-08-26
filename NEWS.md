@@ -1,3 +1,9 @@
+# codecheck 0.25.0.9008
+
+## Bug Fixes
+
+* **`create_codecheck_files()` reports the right folder**: the confirmation message said "Created CODECHECK certificate files at  ." instead of naming the `codecheck/` subfolder the files were actually copied into, and separately `list.files("codecheck")` ignored the `target` argument entirely. Both messages now use `cli` alerts (matching the rest of the package) and correctly reference `<target>/codecheck/` (closes #87)
+
 # codecheck 0.25.0.9007
 
 ## Bug Fixes

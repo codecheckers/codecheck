@@ -135,6 +135,43 @@ expect_error({
   unlink(test_dir, recursive = TRUE)
 }, pattern = "No codecheck.yml file found")
 
+# Test 11: create_codecheck_files() - full certificate document structure ----
+local({
+  test_dir <- file.path(tempdir(), "test_create_workspace_structure")
+  if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
+  setwd(test_dir)
+
+  expect_silent(codecheck::create_codecheck_files())
+
+  cert_dir <- file.path(test_dir, "codecheck")
+  expect_true(dir.exists(cert_dir))
+
+  # All expected certificate template files/dirs are present
+  expected_entries <- c(
+    "CODECHECK_report_template.docx",
+    "CODECHECK_report_template.odt",
+    "codecheck-preamble.sty",
+    "codecheck-zenodo.R",
+    "codecheck.Rmd",
+    "Makefile",
+    "outputs",
+    "placeholder_output.txt"
+  )
+  actual_entries <- list.files(cert_dir)
+  expect_true(all(expected_entries %in% actual_entries))
+
+  # The manifest placeholder referenced by the generated codecheck.yml exists
+  yml <- yaml::read_yaml(file.path(test_dir, "codecheck.yml"))
+  manifest_file <- yml$manifest[[1]]$file
+  expect_true(file.exists(file.path(test_dir, manifest_file)))
+
+  # outputs/ is an actual directory, not a file
+  expect_true(dir.exists(file.path(cert_dir, "outputs")))
+})
+
 # Clean up any remaining test directories
 test_dirs <- list.files(tempdir(), pattern = "^test_(create_workspace|metadata)", full.names = TRUE)
 for (d in test_dirs) {

@@ -40,13 +40,16 @@ create_codecheck_files <- function() {
 copy_codecheck_yaml_template <- function(target = ".") {
   templates <- system.file("extdata", "templates", package="codecheck")
   file.copy(file.path(templates, "codecheck.yml"), target)
-  cat("Created codecheck.yml file at ", target, "\n")
+  cli::cli_alert_success("Created {.file codecheck.yml} at {.path {target}}")
 }
 
 copy_codecheck_report_template <- function(target = ".") {
   templates <- system.file("extdata", "templates", package="codecheck")
   file.copy(file.path(templates, "codecheck"), target, recursive = TRUE)
-  cat("Created CODECHECK certificate files at ", target, ":", toString(list.files("codecheck")), "\n")
+  report_dir <- file.path(target, "codecheck")
+  cli::cli_alert_success(
+    "Created CODECHECK certificate files in {.path {report_dir}}: {toString(list.files(report_dir))}"
+  )
 }
 
 ##' Return the metadata for the codecheck project in root folder of project
