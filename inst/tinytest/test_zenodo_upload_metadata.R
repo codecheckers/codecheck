@@ -35,10 +35,14 @@ create_mock_record <- function() {
     invisible(record)
   }
 
-  # Mock addCreator method
-  record$addCreator <- function(name, orcid = NULL) {
-    record$calls <- c(record$calls, list(list(method = "addCreator", name = name, orcid = orcid)))
-    creator <- list(name = name)
+  # Mock addCreator method, signature as in zen4R::ZenodoRecord
+  record$addCreator <- function(firstname = NULL, lastname = NULL,
+                                name = paste(lastname, firstname, sep = ", "),
+                                orcid = NULL, affiliations = NULL, ...) {
+    record$calls <- c(record$calls, list(list(method = "addCreator", name = name,
+                                              firstname = firstname, lastname = lastname,
+                                              orcid = orcid, affiliations = affiliations)))
+    creator <- list(name = name, firstname = firstname, lastname = lastname)
     if (!is.null(orcid)) creator$orcid <- orcid
     if (is.null(record$metadata$creators)) {
       record$metadata$creators <- list()
@@ -190,7 +194,7 @@ expect_equal(repo_call[[1]]$resource_type, "software",
 
 # Check certificate alternate identifiers (POLICY REQUIREMENT)
 # Must have TWO alternate identifiers: URL schema and Other schema
-alt_ids <- result$metadata$alternate_identifiers
+alt_ids <- result$metadata$identifiers
 expect_equal(length(alt_ids), 2, info = "POLICY: Must have 2 alternate identifiers for certificate")
 
 # Check URL schema alternate identifier
@@ -226,8 +230,12 @@ result2 <- suppressMessages(
 
 creator_calls <- find_all_calls(result2, "addCreator")
 expect_equal(length(creator_calls), 2, info = "Should add all codecheckers as creators")
-expect_equal(creator_calls[[1]]$name, "Checker One")
-expect_equal(creator_calls[[2]]$name, "Checker Two")
+# codecheckers are deposited as persons, so the name is split into given and
+# family name rather than passed as one string
+expect_equal(creator_calls[[1]]$firstname, "Checker")
+expect_equal(creator_calls[[1]]$lastname, "One")
+expect_equal(creator_calls[[2]]$firstname, "Checker")
+expect_equal(creator_calls[[2]]$lastname, "Two")
 
 # Test 5: Missing summary warning ----
 test_metadata_no_summary <- test_metadata
@@ -259,7 +267,7 @@ expect_equal(length(related_calls4), 1,
              info = "Should still add repository identifier")
 
 # Should still have alternate identifiers for certificate
-expect_equal(length(result4$metadata$alternate_identifiers), 2,
+expect_equal(length(result4$metadata$identifiers), 2,
              info = "Should have 2 alternate identifiers for certificate")
 
 # Test 7: DOI extraction from URL ----
@@ -294,7 +302,7 @@ expect_equal(length(related_calls6), 1,
              info = "Should still add paper identifier")
 
 # Should still have alternate identifiers for certificate
-expect_equal(length(result6$metadata$alternate_identifiers), 2,
+expect_equal(length(result6$metadata$identifiers), 2,
              info = "Should have 2 alternate identifiers for certificate")
 
 # Test 9: Missing certificate ID ----
@@ -320,7 +328,7 @@ expect_error(
 )
 
 # Test 11: All metadata fields properly set ----
-expect_equal(result$metadata$title, "CODECHECK certificate 2024-001",
+expect_equal(result$metadata$title, "CODECHECK Certificate 2024-001",
              info = "Title format should be correct")
 expect_equal(result$metadata$license, "cc-by-4.0", info = "License should be CC-BY 4.0")
 expect_equal(result$metadata$publication_date, "2024-01-15",
@@ -354,7 +362,7 @@ expect_equal(repo_call9[[1]]$resource_type, "dataset",
             info = "Custom repository resource type should be used")
 
 # Certificate should still have alternate identifiers
-expect_equal(length(result9$metadata$alternate_identifiers), 2,
+expect_equal(length(result9$metadata$identifiers), 2,
              info = "Should have 2 alternate identifiers for certificate")
 
 # Test 13: Repository auto-detection for GitLab ----
