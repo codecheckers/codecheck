@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,13 +38,116 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.25.0.9008" id="codecheck-02509008">codecheck 0.25.0.9008<a class="anchor" aria-label="anchor" href="#codecheck-02509008"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-25-0-9008">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9008"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/create_codecheck_files.html">create_codecheck_files()</a></code> reports the right folder</strong>: the confirmation message said “Created CODECHECK certificate files at .” instead of naming the <code>codecheck/</code> subfolder the files were actually copied into, and separately <code>list.files("codecheck")</code> ignored the <code>target</code> argument entirely. Both messages now use <code>cli</code> alerts (matching the rest of the package) and correctly reference <code>&lt;target&gt;/codecheck/</code> (closes <a href="https://github.com/codecheckers/codecheck/issues/87" class="external-link">#87</a>)</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.25.0.9007" id="codecheck-02509007">codecheck 0.25.0.9007<a class="anchor" aria-label="anchor" href="#codecheck-02509007"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-25-0-9007">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9007"></a></h3>
+<ul><li>
+<strong>OSF retrieval survives an OSF outage</strong>: <code>osfr</code> does its own HTTP and parses every response as JSON, so an OSF error page arrived as “lexical error: invalid char in json text” instead of a status code, and <code><a href="../reference/codecheck_GET_retry.html">codecheck_GET_retry()</a></code> never saw it. <code><a href="../reference/get_codecheck_yml_osf.html">get_codecheck_yml_osf()</a></code> retries both <code>osfr</code> calls with the same policy used for the requests the package makes itself, and reports a clear message when they keep failing</li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-0-25-0-9007">Internal<a class="anchor" aria-label="anchor" href="#internal-0-25-0-9007"></a></h3>
+<ul><li>
+<strong>One flaky remote call no longer costs the whole test suite</strong>: a failed <code>expect_silent(x &lt;- ...)</code> leaves <code>x</code> unassigned, so the next line referring to <code>x</code> aborted the file with “object not found” and R halted the run, discarding every test after it. The integration tests in <code>test_codecheck_yml_retrieval.R</code> and <code>test_lifecycle_journal.R</code> declare their variables first, so an upstream hiccup costs one failed assertion</li>
+<li>
+<strong>Remote links are asserted by shape</strong>: <code><a href="../reference/get_cert_link.html">get_cert_link()</a></code> returns a ResearchEquals <code>/api/files/&lt;key&gt;</code> URL whose key, like the version id it comes from, changes with every new deposit, so <code>test_cert_link.R</code> matches the shape rather than the identifier of the day</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.25.0.9006" id="codecheck-02509006">codecheck 0.25.0.9006<a class="anchor" aria-label="anchor" href="#codecheck-02509006"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-25-0-9006">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9006"></a></h3>
+<ul><li>
+<strong>Rendering no longer rewrites <code>docs/libs/PROVENANCE.csv</code> on every run</strong>: <code><a href="../reference/setup_external_libraries.html">setup_external_libraries()</a></code> wrote the provenance file and the libraries README unconditionally, with <code>date_configured = Sys.Date()</code>, so every render dirtied two tracked files even though all libraries were already present and nothing was downloaded. The function now checks whether the local copies are current - all expected files present and of a plausible size, and <code>PROVENANCE.csv</code> recording exactly the specified libraries and versions - and returns early without touching either file. A partial update keeps the recorded date of the libraries it did not download, so <code>date_configured</code> says when a library was actually fetched</li>
+<li>
+<strong>A failed library download is no longer stored as a library file</strong>: the response body was written to the destination before the status code was checked, so an HTTP error page landed in, say, <code>bootstrap.min.css</code>; the <code><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists()</a></code> guard then skipped that file on every later run and the broken copy stayed forever. <code><a href="../reference/download_library_file.html">download_library_file()</a></code> downloads to a temporary file and moves it into place only on HTTP 200 with a plausible size, and files below that size are re-downloaded</li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-0-25-0-9006">Internal<a class="anchor" aria-label="anchor" href="#internal-0-25-0-9006"></a></h3>
+<ul><li>
+<strong>One specification for the external libraries</strong>: <code><a href="../reference/external_library_specs.html">external_library_specs()</a></code> is now the single source of truth, including the font files that were hardcoded in <code>download_font_awesome_fonts()</code> and <code>download_academicons_fonts()</code> (both replaced by the spec-driven <code><a href="../reference/download_library_fonts.html">download_library_fonts()</a></code>). <code><a href="../reference/libs_are_current.html">libs_are_current()</a></code> and the download loop derive their expectations from it, so a version bump in the specification is enough to force a refresh</li>
+<li>
+<strong>Tests for the external libraries</strong>: new <code>inst/tinytest/test_external_libs.R</code> covers the currency check, the preserved provenance, and discarded failed downloads offline via <code>with_mocked_codecheck()</code>, and keeps exactly one real download as an integration test that skips when there is no network</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.25.0.9005" id="codecheck-02509005">codecheck 0.25.0.9005<a class="anchor" aria-label="anchor" href="#codecheck-02509005"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-25-0-9005">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9005"></a></h3>
+<ul><li>
+<strong>ResearchEquals certificates can be downloaded again</strong>: ResearchEquals replaced its <code>modules</code> API with <code>outputs</code> and <code>versions</code>, so <code>/api/modules/main/&lt;DOI suffix&gt;</code> - the endpoint <code><a href="../reference/get_researchequals_cert_link.html">get_researchequals_cert_link()</a></code> built - now answers 404 for every certificate. A DOI resolves to a version page, whose id gives the deposited file through <code>/api/versions/&lt;id&gt;</code> and <code>/api/files/&lt;key&gt;</code>; the resolver follows that chain and warns when a version carries no file or is not a PDF. <code>CONFIG$CERT_LINKS$researchequals_api</code> is the apex host, the <code>www.</code> one only added a redirect</li>
+<li>
+<strong>A register in which no codechecker has an identifier renders</strong>: codecheckers without ORCID and GitHub username are recorded under the literal identifier <code>"NA"</code>, which <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> reads back as a missing value - and as a logical column when it is the only identifier in the register, making <code><a href="../reference/create_filtered_reg_csvs.html">create_filtered_reg_csvs()</a></code> fail in <code><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit()</a></code> with “non-character argument”. <code>render_table_codecheckers()</code> failed right after it, because <code>recode()</code> errors when both identifier dictionaries are empty</li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-0-25-0-9005">Internal<a class="anchor" aria-label="anchor" href="#internal-0-25-0-9005"></a></h3>
+<ul><li>
+<strong>Shared test mocks</strong>: new <code>inst/tinytest/mocks.R</code> provides <code>with_mocked_codecheck()</code>, which swaps functions in the package namespace and restores them afterwards, along with a fake <code><a href="../reference/codecheck_GET.html">codecheck_GET()</a></code>, a <code>codecheck.yml</code> fixture reader and a <code><a href="../reference/get_codecheck_yml.html">get_codecheck_yml()</a></code> that serves it. Tests can state the property they exercise instead of depending on what a record on a remote archive happens to contain, and a slow or failing archive can no longer abort a run. <code>test_register_edge_cases.R</code> uses them; its missing-identifier warning is now asserted on <code><a href="../reference/add_codechecker.html">add_codechecker()</a></code>, which raises it, because <code><a href="../reference/register_render.html">register_render()</a></code> muffles every warning and re-reports it as a <code>cli</code> alert</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.25.0.9004" id="codecheck-02509004">codecheck 0.25.0.9004<a class="anchor" aria-label="anchor" href="#codecheck-02509004"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-25-0-9004">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9004"></a></h3>
+<ul><li>
+<strong>Curation no longer truncates titles routed to a human</strong>: the apply path read its change set with <code>$</code>, which partial-matches on R lists, so <code>changes$title</code> matched <code>changes$title_manual</code> and would have overwritten a title carrying extra descriptive text with the bare <code>CODECHECK Certificate &lt;ID&gt;</code>. The same applies to the repository relation. All reads in the apply path are now exact (<code>[["..."]]</code>), with regression tests</li>
+<li>
+<strong>Clear message when a Zenodo token may not edit a record</strong>: <code>zen4R::editRecord()</code> returns a non-record instead of stopping when the API answers “Permission denied”, so curating a record deposited by another user failed with the unrelated “attempt to apply non-function”. The result is now checked and reported as what it is</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-25-0-9004">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9004"></a></h3>
+<ul><li>
+<strong>Findings that need judgement are surfaced, not guessed</strong>: <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> no longer proposes a value where the target does not follow mechanically. A title carrying text beyond <code>CODECHECK Certificate &lt;ID&gt;</code> and a repository outside <code>codecheckers/</code>/<code>cdchck</code> are reported for a human instead, and a record with only such findings is never opened for editing</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.25.0.9003" id="codecheck-02509003">codecheck 0.25.0.9003<a class="anchor" aria-label="anchor" href="#codecheck-02509003"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-25-0-9003">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9003"></a></h3>
+<ul><li>
+<strong>Batch curation of a register’s Zenodo records</strong>: new <code><a href="../reference/curate_register_zenodo_records.html">curate_register_zenodo_records()</a></code> applies the mechanical corrections across a whole register, and <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> gained a <code>fields</code> argument selecting which classes of correction to consider. Beyond the title it now also corrects publisher, language, resource type and the relation to the checked repository. Creator names are excluded from batch runs because splitting a group entry such as “Delft 2024-05 participants” into given and family name would be wrong. The register project wraps this as <code>make zenodo_curate_all [APPLY=1]</code>
+</li>
+<li>
+<strong>Creator handling can be steered per record</strong>: <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> gained <code>creator_overrides</code>, keyed by the creator name as recorded. <code>list(organizational = TRUE)</code> keeps a genuine group entry (e.g. “Delft 2024-05 participants”) as an organisation, and <code>list(given = "Gabriella", family = "Low Chew Tung")</code> gives an explicit split where the last-token heuristic of <code><a href="../reference/split_person_name.html">split_person_name()</a></code> would misname a person with a compound family name</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.25.0.9002" id="codecheck-02509002">codecheck 0.25.0.9002<a class="anchor" aria-label="anchor" href="#codecheck-02509002"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-25-0-9002">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9002"></a></h3>
+<ul><li>
+<strong>Codecheckers are recorded as persons on Zenodo</strong>: <code><a href="../reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> passed only a full <code>name</code> to <code>zen4R::addCreator()</code>, which makes Zenodo store the codechecker as an <em>organisation</em> rather than a person. The name is now split into given and family name via the new <code><a href="../reference/split_person_name.html">split_person_name()</a></code> helper, and any affiliation from <code>codecheck.yml</code> is passed along. Names that cannot be split (a single token, e.g. a group name) still deposit as before, but now emit a warning</li>
+<li>
+<strong>Alternate identifiers are no longer silently dropped</strong>: <code><a href="../reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> wrote the certificate identifiers to <code>metadata$alternate_identifiers</code>, a legacy field name that the InvenioRDM record model Zenodo uses today discards on deposit. The identifiers now go to <code>metadata$identifiers</code>, so the <code>cdchck.science/register/certs/&lt;CERT ID&gt;</code> identifiers required by the <a href="https://zenodo.org/communities/codecheck/curation-policy" class="external-link">community curation policy</a> actually reach the record</li>
+<li>
+<strong>Record titles match the curation policy</strong>: deposits are titled “CODECHECK Certificate <id>” instead of “CODECHECK certificate <id>”</id></id></li>
+<li>
+<strong>Missing paper DOI is loud</strong>: a <code>paper$reference</code> that is not a DOI, or missing entirely, now raises a warning instead of an easily-missed message, because it means the required “reviews” relation to the checked paper cannot be created</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-25-0-9002">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9002"></a></h3>
+<ul><li>
+<strong>Curation policy check during rendering</strong>: <code><a href="../reference/register_render.html">register_render()</a></code> and <code><a href="../reference/register_check.html">register_check()</a></code> now audit every Zenodo-hosted certificate against the CODECHECK community curation policy and report the findings as a <code>cli</code> section with per-status icons (✖ required item missing, ! recommendation unmet, ℹ record unreachable), followed by a tally. Non-compliance never fails a render, and neither does an outage or an unexpected error in the check itself. Record metadata is cached via <code><a href="../reference/cached_lookup.html">cached_lookup()</a></code>, so only a cold render pays for the extra requests; pass <code>check_zenodo_policy = FALSE</code> (or <code>make render CHECK_ZENODO=0</code> in the register project) to skip them. New functions <code><a href="../reference/check_register_zenodo_policy.html">check_register_zenodo_policy()</a></code>, <code><a href="../reference/report_zenodo_policy_findings.html">report_zenodo_policy_findings()</a></code> and <code><a href="../reference/clear_zenodo_policy_cache.html">clear_zenodo_policy_cache()</a></code>, the latter also called by <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> so a freshly curated record is not reported from its pre-curation cache entry</li>
+<li>
+<strong>Curation policy audit for published records</strong>: new <code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> evaluates record metadata against the CODECHECK community curation policy and returns a data frame of pass/warn/fail per requirement. <code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> fetches a published record and prints the audit, <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> proposes and (with <code>dry_run = FALSE</code>) applies the corrections, and <code><a href="../reference/resolve_zenodo_record_id.html">resolve_zenodo_record_id()</a></code> resolves a certificate ID via <code>register.csv</code> and the repository’s <code>codecheck.yml</code> to a Zenodo record. The register project wraps these as <code>make zenodo_check CERT_ID=…</code> and <code>make zenodo_curate CERT_ID=…</code>
+</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0" id="codecheck-0250">codecheck 0.25.0<a class="anchor" aria-label="anchor" href="#codecheck-0250"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-25-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0"></a></h3>
 <ul><li>
 <strong>Full metadata register export</strong>: New <code>register-full.json</code> and <code>register-full.csv</code> files are now generated during rendering, containing all fields from each certificate’s <code>codecheck.yml</code> — paper authors with ORCIDs, codecheckers with ORCIDs, summary, source, report link, and paper reference. The JSON format preserves nested arrays for authors and codecheckers, while the CSV uses semicolon-separated values for multi-value fields. Both files are sorted by certificate ID for consistent diffs (codecheckers/register#57)</li>
 <li>
-<strong>Single certificate rendering</strong>: New exported function <code>register_render_cert()</code> renders a single certificate’s HTML page and JSON metadata by certificate ID, without modifying index or list pages. Accepts a certificate ID (e.g., <code>"2024-017"</code>) and optionally downloads and converts the certificate PDF. Useful for updating individual certificates after metadata or PDF changes without a full register re-render. The register project includes a corresponding <code>make cert CERT_ID=2024-017</code> target for convenient command-line usage (codecheckers/codecheck#84)</li>
+<strong>Single certificate rendering</strong>: New exported function <code><a href="../reference/register_render_cert.html">register_render_cert()</a></code> renders a single certificate’s HTML page and JSON metadata by certificate ID, without modifying index or list pages. Accepts a certificate ID (e.g., <code>"2024-017"</code>) and optionally downloads and converts the certificate PDF. Useful for updating individual certificates after metadata or PDF changes without a full register re-render. The register project includes a corresponding <code>make cert CERT_ID=2024-017</code> target for convenient command-line usage (codecheckers/codecheck#84)</li>
 <li>
 <strong>Redirect page for /certs/ directory</strong>: Visiting <code>/register/certs/</code> without a certificate ID now redirects to the main register page instead of showing a 404 error (codecheckers/register#166)</li>
 <li>

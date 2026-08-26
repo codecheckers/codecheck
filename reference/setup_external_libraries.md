@@ -24,3 +24,11 @@ setup_external_libraries(libs_dir = "docs/libs", force = FALSE)
 
 Invisibly returns a data frame with provenance information for all
 libraries
+
+## Details
+
+Files that are already present and of a plausible size are not
+downloaded again. When all expected files are present and
+\`PROVENANCE.csv\` matches the current library versions, the function
+returns early and leaves \`PROVENANCE.csv\` and \`README.md\` untouched,
+so that repeated rendering does not modify these files.

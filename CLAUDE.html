@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,10 +49,22 @@
 </li>
 </ol></div>
 <div class="section level2">
+<h2 id="committing">Committing<a class="anchor" aria-label="anchor" href="#committing"></a></h2>
+<p><strong>Never commit. Stage changes with <code>git add</code> and propose a commit message; the user commits.</strong> This holds even in auto-accept mode and even when the change is trivial or the message was agreed beforehand. The same applies to pushing and to anything that publishes.</p>
+</div>
+<div class="section level2">
 <h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
 <p><strong>CRITICAL: ALWAYS use <code>tinytest::build_install_test(".")</code> for testing.</strong></p>
 <p>DO NOT use <code>tinytest::test_all(".")</code> - it causes “could not find function” errors because the package isn’t properly loaded. Tests are in <code>inst/tinytest/</code>.</p>
 <p>For interactive development: <code>devtools::install()</code> then <code><a href="http://codecheck.org.uk/codecheck/">library(codecheck)</a></code>.</p>
+<div class="section level3">
+<h3 id="fast-iteration-loop">Fast iteration loop<a class="anchor" aria-label="anchor" href="#fast-iteration-loop"></a></h3>
+<p><code>build_install_test(".")</code> builds a tarball and installs with docs and byte-compilation, which takes minutes. When iterating on a single test file, install and run the file separately instead - the install takes about 5 seconds:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">R</span> CMD INSTALL <span class="at">--no-docs</span> <span class="at">--no-byte-compile</span> <span class="at">--no-staged-install</span> .</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">'library(codecheck); setwd("inst/tinytest"); tinytest::run_test_file("test_&lt;name&gt;.R")'</span></span></code></pre></div>
+<p><code>setwd("inst/tinytest")</code> matters: test files <code>source("mocks.R")</code> and read fixtures relative to their own directory. Skipping docs means <code>man/</code> is not rebuilt, so run <code>devtools::document()</code> and a full <code>build_install_test(".")</code> before proposing the change.</p>
+<p>Test runtime is dominated by installation, not by the tests: the full edge-case file runs in under 5 seconds.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="changelog">Changelog<a class="anchor" aria-label="anchor" href="#changelog"></a></h2>

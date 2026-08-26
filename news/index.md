@@ -1,5 +1,256 @@
 # Changelog
 
+## codecheck 0.25.0.9008
+
+### Bug Fixes
+
+- **[`create_codecheck_files()`](http://codecheck.org.uk/codecheck/reference/create_codecheck_files.md)
+  reports the right folder**: the confirmation message said “Created
+  CODECHECK certificate files at .” instead of naming the `codecheck/`
+  subfolder the files were actually copied into, and separately
+  `list.files("codecheck")` ignored the `target` argument entirely. Both
+  messages now use `cli` alerts (matching the rest of the package) and
+  correctly reference `<target>/codecheck/` (closes
+  [\#87](https://github.com/codecheckers/codecheck/issues/87))
+
+## codecheck 0.25.0.9007
+
+### Bug Fixes
+
+- **OSF retrieval survives an OSF outage**: `osfr` does its own HTTP and
+  parses every response as JSON, so an OSF error page arrived as
+  “lexical error: invalid char in json text” instead of a status code,
+  and
+  [`codecheck_GET_retry()`](http://codecheck.org.uk/codecheck/reference/codecheck_GET_retry.md)
+  never saw it.
+  [`get_codecheck_yml_osf()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_osf.md)
+  retries both `osfr` calls with the same policy used for the requests
+  the package makes itself, and reports a clear message when they keep
+  failing
+
+### Internal
+
+- **One flaky remote call no longer costs the whole test suite**: a
+  failed `expect_silent(x <- ...)` leaves `x` unassigned, so the next
+  line referring to `x` aborted the file with “object not found” and R
+  halted the run, discarding every test after it. The integration tests
+  in `test_codecheck_yml_retrieval.R` and `test_lifecycle_journal.R`
+  declare their variables first, so an upstream hiccup costs one failed
+  assertion
+- **Remote links are asserted by shape**:
+  [`get_cert_link()`](http://codecheck.org.uk/codecheck/reference/get_cert_link.md)
+  returns a ResearchEquals `/api/files/<key>` URL whose key, like the
+  version id it comes from, changes with every new deposit, so
+  `test_cert_link.R` matches the shape rather than the identifier of the
+  day
+
+## codecheck 0.25.0.9006
+
+### Bug Fixes
+
+- **Rendering no longer rewrites `docs/libs/PROVENANCE.csv` on every
+  run**:
+  [`setup_external_libraries()`](http://codecheck.org.uk/codecheck/reference/setup_external_libraries.md)
+  wrote the provenance file and the libraries README unconditionally,
+  with `date_configured = Sys.Date()`, so every render dirtied two
+  tracked files even though all libraries were already present and
+  nothing was downloaded. The function now checks whether the local
+  copies are current - all expected files present and of a plausible
+  size, and `PROVENANCE.csv` recording exactly the specified libraries
+  and versions - and returns early without touching either file. A
+  partial update keeps the recorded date of the libraries it did not
+  download, so `date_configured` says when a library was actually
+  fetched
+- **A failed library download is no longer stored as a library file**:
+  the response body was written to the destination before the status
+  code was checked, so an HTTP error page landed in, say,
+  `bootstrap.min.css`; the
+  [`file.exists()`](https://rdrr.io/r/base/files.html) guard then
+  skipped that file on every later run and the broken copy stayed
+  forever.
+  [`download_library_file()`](http://codecheck.org.uk/codecheck/reference/download_library_file.md)
+  downloads to a temporary file and moves it into place only on HTTP 200
+  with a plausible size, and files below that size are re-downloaded
+
+### Internal
+
+- **One specification for the external libraries**:
+  [`external_library_specs()`](http://codecheck.org.uk/codecheck/reference/external_library_specs.md)
+  is now the single source of truth, including the font files that were
+  hardcoded in `download_font_awesome_fonts()` and
+  `download_academicons_fonts()` (both replaced by the spec-driven
+  [`download_library_fonts()`](http://codecheck.org.uk/codecheck/reference/download_library_fonts.md)).
+  [`libs_are_current()`](http://codecheck.org.uk/codecheck/reference/libs_are_current.md)
+  and the download loop derive their expectations from it, so a version
+  bump in the specification is enough to force a refresh
+- **Tests for the external libraries**: new
+  `inst/tinytest/test_external_libs.R` covers the currency check, the
+  preserved provenance, and discarded failed downloads offline via
+  `with_mocked_codecheck()`, and keeps exactly one real download as an
+  integration test that skips when there is no network
+
+## codecheck 0.25.0.9005
+
+### Bug Fixes
+
+- **ResearchEquals certificates can be downloaded again**:
+  ResearchEquals replaced its `modules` API with `outputs` and
+  `versions`, so `/api/modules/main/<DOI suffix>` - the endpoint
+  [`get_researchequals_cert_link()`](http://codecheck.org.uk/codecheck/reference/get_researchequals_cert_link.md)
+  built - now answers 404 for every certificate. A DOI resolves to a
+  version page, whose id gives the deposited file through
+  `/api/versions/<id>` and `/api/files/<key>`; the resolver follows that
+  chain and warns when a version carries no file or is not a PDF.
+  `CONFIG$CERT_LINKS$researchequals_api` is the apex host, the `www.`
+  one only added a redirect
+- **A register in which no codechecker has an identifier renders**:
+  codecheckers without ORCID and GitHub username are recorded under the
+  literal identifier `"NA"`, which
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) reads back as
+  a missing value - and as a logical column when it is the only
+  identifier in the register, making
+  [`create_filtered_reg_csvs()`](http://codecheck.org.uk/codecheck/reference/create_filtered_reg_csvs.md)
+  fail in [`strsplit()`](https://rdrr.io/r/base/strsplit.html) with
+  “non-character argument”. `render_table_codecheckers()` failed right
+  after it, because `recode()` errors when both identifier dictionaries
+  are empty
+
+### Internal
+
+- **Shared test mocks**: new `inst/tinytest/mocks.R` provides
+  `with_mocked_codecheck()`, which swaps functions in the package
+  namespace and restores them afterwards, along with a fake
+  [`codecheck_GET()`](http://codecheck.org.uk/codecheck/reference/codecheck_GET.md),
+  a `codecheck.yml` fixture reader and a
+  [`get_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml.md)
+  that serves it. Tests can state the property they exercise instead of
+  depending on what a record on a remote archive happens to contain, and
+  a slow or failing archive can no longer abort a run.
+  `test_register_edge_cases.R` uses them; its missing-identifier warning
+  is now asserted on
+  [`add_codechecker()`](http://codecheck.org.uk/codecheck/reference/add_codechecker.md),
+  which raises it, because
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  muffles every warning and re-reports it as a `cli` alert
+
+## codecheck 0.25.0.9004
+
+### Bug Fixes
+
+- **Curation no longer truncates titles routed to a human**: the apply
+  path read its change set with `$`, which partial-matches on R lists,
+  so `changes$title` matched `changes$title_manual` and would have
+  overwritten a title carrying extra descriptive text with the bare
+  `CODECHECK Certificate <ID>`. The same applies to the repository
+  relation. All reads in the apply path are now exact (`[["..."]]`),
+  with regression tests
+- **Clear message when a Zenodo token may not edit a record**:
+  `zen4R::editRecord()` returns a non-record instead of stopping when
+  the API answers “Permission denied”, so curating a record deposited by
+  another user failed with the unrelated “attempt to apply
+  non-function”. The result is now checked and reported as what it is
+
+### New Features
+
+- **Findings that need judgement are surfaced, not guessed**:
+  [`curate_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/curate_zenodo_record.md)
+  no longer proposes a value where the target does not follow
+  mechanically. A title carrying text beyond
+  `CODECHECK Certificate <ID>` and a repository outside
+  `codecheckers/`/`cdchck` are reported for a human instead, and a
+  record with only such findings is never opened for editing
+
+## codecheck 0.25.0.9003
+
+### New Features
+
+- **Batch curation of a register’s Zenodo records**: new
+  [`curate_register_zenodo_records()`](http://codecheck.org.uk/codecheck/reference/curate_register_zenodo_records.md)
+  applies the mechanical corrections across a whole register, and
+  [`curate_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/curate_zenodo_record.md)
+  gained a `fields` argument selecting which classes of correction to
+  consider. Beyond the title it now also corrects publisher, language,
+  resource type and the relation to the checked repository. Creator
+  names are excluded from batch runs because splitting a group entry
+  such as “Delft 2024-05 participants” into given and family name would
+  be wrong. The register project wraps this as
+  `make zenodo_curate_all [APPLY=1]`
+- **Creator handling can be steered per record**:
+  [`curate_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/curate_zenodo_record.md)
+  gained `creator_overrides`, keyed by the creator name as recorded.
+  `list(organizational = TRUE)` keeps a genuine group entry (e.g. “Delft
+  2024-05 participants”) as an organisation, and
+  `list(given = "Gabriella", family = "Low Chew Tung")` gives an
+  explicit split where the last-token heuristic of
+  [`split_person_name()`](http://codecheck.org.uk/codecheck/reference/split_person_name.md)
+  would misname a person with a compound family name
+
+## codecheck 0.25.0.9002
+
+### Bug Fixes
+
+- **Codecheckers are recorded as persons on Zenodo**:
+  [`upload_zenodo_metadata()`](http://codecheck.org.uk/codecheck/reference/upload_zenodo_metadata.md)
+  passed only a full `name` to `zen4R::addCreator()`, which makes Zenodo
+  store the codechecker as an *organisation* rather than a person. The
+  name is now split into given and family name via the new
+  [`split_person_name()`](http://codecheck.org.uk/codecheck/reference/split_person_name.md)
+  helper, and any affiliation from `codecheck.yml` is passed along.
+  Names that cannot be split (a single token, e.g. a group name) still
+  deposit as before, but now emit a warning
+- **Alternate identifiers are no longer silently dropped**:
+  [`upload_zenodo_metadata()`](http://codecheck.org.uk/codecheck/reference/upload_zenodo_metadata.md)
+  wrote the certificate identifiers to `metadata$alternate_identifiers`,
+  a legacy field name that the InvenioRDM record model Zenodo uses today
+  discards on deposit. The identifiers now go to `metadata$identifiers`,
+  so the `cdchck.science/register/certs/<CERT ID>` identifiers required
+  by the [community curation
+  policy](https://zenodo.org/communities/codecheck/curation-policy)
+  actually reach the record
+- **Record titles match the curation policy**: deposits are titled
+  “CODECHECK Certificate ” instead of “CODECHECK certificate ”
+- **Missing paper DOI is loud**: a `paper$reference` that is not a DOI,
+  or missing entirely, now raises a warning instead of an easily-missed
+  message, because it means the required “reviews” relation to the
+  checked paper cannot be created
+
+### New Features
+
+- **Curation policy check during rendering**:
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  and
+  [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  now audit every Zenodo-hosted certificate against the CODECHECK
+  community curation policy and report the findings as a `cli` section
+  with per-status icons (✖ required item missing, ! recommendation
+  unmet, ℹ record unreachable), followed by a tally. Non-compliance
+  never fails a render, and neither does an outage or an unexpected
+  error in the check itself. Record metadata is cached via
+  [`cached_lookup()`](http://codecheck.org.uk/codecheck/reference/cached_lookup.md),
+  so only a cold render pays for the extra requests; pass
+  `check_zenodo_policy = FALSE` (or `make render CHECK_ZENODO=0` in the
+  register project) to skip them. New functions
+  [`check_register_zenodo_policy()`](http://codecheck.org.uk/codecheck/reference/check_register_zenodo_policy.md),
+  [`report_zenodo_policy_findings()`](http://codecheck.org.uk/codecheck/reference/report_zenodo_policy_findings.md)
+  and
+  [`clear_zenodo_policy_cache()`](http://codecheck.org.uk/codecheck/reference/clear_zenodo_policy_cache.md),
+  the latter also called by
+  [`curate_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/curate_zenodo_record.md)
+  so a freshly curated record is not reported from its pre-curation
+  cache entry
+- **Curation policy audit for published records**: new
+  [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  evaluates record metadata against the CODECHECK community curation
+  policy and returns a data frame of pass/warn/fail per requirement.
+  [`check_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/check_zenodo_record.md)
+  fetches a published record and prints the audit,
+  [`curate_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/curate_zenodo_record.md)
+  proposes and (with `dry_run = FALSE`) applies the corrections, and
+  [`resolve_zenodo_record_id()`](http://codecheck.org.uk/codecheck/reference/resolve_zenodo_record_id.md)
+  resolves a certificate ID via `register.csv` and the repository’s
+  `codecheck.yml` to a Zenodo record. The register project wraps these
+  as `make zenodo_check CERT_ID=…` and `make zenodo_curate CERT_ID=…`
+
 ## codecheck 0.25.0
 
 ### New Features
@@ -13,12 +264,13 @@
   values for multi-value fields. Both files are sorted by certificate ID
   for consistent diffs (codecheckers/register#57)
 - **Single certificate rendering**: New exported function
-  `register_render_cert()` renders a single certificate’s HTML page and
-  JSON metadata by certificate ID, without modifying index or list
-  pages. Accepts a certificate ID (e.g., `"2024-017"`) and optionally
-  downloads and converts the certificate PDF. Useful for updating
-  individual certificates after metadata or PDF changes without a full
-  register re-render. The register project includes a corresponding
+  [`register_render_cert()`](http://codecheck.org.uk/codecheck/reference/register_render_cert.md)
+  renders a single certificate’s HTML page and JSON metadata by
+  certificate ID, without modifying index or list pages. Accepts a
+  certificate ID (e.g., `"2024-017"`) and optionally downloads and
+  converts the certificate PDF. Useful for updating individual
+  certificates after metadata or PDF changes without a full register
+  re-render. The register project includes a corresponding
   `make cert CERT_ID=2024-017` target for convenient command-line usage
   (codecheckers/codecheck#84)
 - **Redirect page for /certs/ directory**: Visiting `/register/certs/`

@@ -18,7 +18,8 @@ register_render(
   to = nrow(register),
   parallel = FALSE,
   ncores = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  check_zenodo_policy = TRUE
 )
 ```
 
@@ -72,6 +73,14 @@ register_render(
 
   Logical; if TRUE, shows detailed output including pandoc commands from
   rmarkdown::render(). Defaults to FALSE.
+
+- check_zenodo_policy:
+
+  Logical; if TRUE (the default), audits all Zenodo-hosted certificates
+  against the CODECHECK community curation policy after rendering and
+  reports the findings on the console. Never fails a render. Results are
+  cached, so only a cold render pays for the extra requests; set to
+  FALSE to skip them entirely.
 
 ## Value
 

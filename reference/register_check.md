@@ -9,7 +9,8 @@ file.
 register_check(
   register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   from = 1,
-  to = nrow(register)
+  to = nrow(register),
+  check_zenodo_policy = TRUE
 )
 ```
 
@@ -26,6 +27,11 @@ register_check(
 - to:
 
   The last register entry to check
+
+- check_zenodo_policy:
+
+  Logical; if TRUE (the default), also audits the Zenodo records against
+  the CODECHECK community curation policy
 
 ## Details
 

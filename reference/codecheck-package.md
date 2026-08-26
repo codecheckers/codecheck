@@ -20,6 +20,9 @@ Useful links:
 
 Authors:
 
+- Stephen Eglen <sje30@cam.ac.uk>
+  ([ORCID](https://orcid.org/0000-0001-8607-8025))
+
 - Daniel Nuest <daniel.nuest@tu-dresden.de>
   ([ORCID](https://orcid.org/0000-0002-0024-5046))
 
