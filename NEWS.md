@@ -1,3 +1,9 @@
+# codecheck 0.25.0.9009
+
+## Bug Fixes
+
+* **The register CSS is written to the output directory, not to the working directory**: `copy_register_css()` defaulted to a hardcoded `docs/assets` relative to the working directory and ignored where the libraries were being installed, so rendering with a `libs_dir` outside the current directory scattered `codecheck-register.css` into whatever directory the render happened to start from. The assets directory is now derived from the libraries directory through the new `register_assets_dir()`, which is what the two call sites in `setup_external_libraries()` pass
+
 # codecheck 0.25.0.9008
 
 ## Bug Fixes

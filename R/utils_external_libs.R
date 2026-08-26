@@ -226,7 +226,7 @@ setup_external_libraries <- function(libs_dir = "docs/libs", force = FALSE) {
   # Nothing to do: keep provenance and README as they are
   if (!force && libs_are_current(libs_dir, libraries)) {
     cli::cli_alert_success("External libraries are up to date in {.path {libs_dir}}")
-    copy_register_css()
+    copy_register_css(register_assets_dir(libs_dir))
     return(invisible(utils::read.csv(provenance_file, stringsAsFactors = FALSE)))
   }
 
@@ -291,7 +291,7 @@ setup_external_libraries <- function(libs_dir = "docs/libs", force = FALSE) {
     ))
   }
 
-  copy_register_css()
+  copy_register_css(register_assets_dir(libs_dir))
 
   # Write provenance information
   utils::write.csv(provenance, provenance_file, row.names = FALSE)
@@ -306,9 +306,10 @@ setup_external_libraries <- function(libs_dir = "docs/libs", force = FALSE) {
 
 #' Copy the CODECHECK Register CSS to the Output Assets Directory
 #'
-#' @param assets_dir Directory for the register's own assets
+#' @param assets_dir Directory for the register's own assets, by convention a
+#'   sibling of the libraries directory, see [register_assets_dir()]
 #' @keywords internal
-copy_register_css <- function(assets_dir = "docs/assets") {
+copy_register_css <- function(assets_dir) {
   cli::cli_alert_info("Copying CODECHECK register CSS...")
   if (!dir.exists(assets_dir)) {
     dir.create(assets_dir, recursive = TRUE)
@@ -324,6 +325,17 @@ copy_register_css <- function(assets_dir = "docs/assets") {
   } else {
     warning("  ✗ Could not find codecheck-register.css in package templates")
   }
+}
+
+#' The Assets Directory Belonging to a Libraries Directory
+#'
+#' Both live in the render output directory, so "docs/libs" gives "docs/assets".
+#'
+#' @param libs_dir Base libraries directory
+#' @return the path of the assets directory
+#' @keywords internal
+register_assets_dir <- function(libs_dir) {
+  file.path(dirname(libs_dir), "assets")
 }
 
 #' Download the Font Files of a Library

@@ -95,14 +95,20 @@ provenance_file <- file.path(libs_dir, "PROVENANCE.csv")
 before_content <- readLines(provenance_file)
 before_mtime <- file.mtime(provenance_file)
 
-# run from a temporary working directory: the register CSS is copied to a
-# hardcoded "docs/assets" relative to the working directory
-old_wd <- setwd(tempdir())
 result <- with_mocked_codecheck(
   list(codecheck_GET = function(...) stop("no download expected")),
   suppressMessages(codecheck::setup_external_libraries(libs_dir))
 )
-setwd(old_wd)
+
+# the CSS goes next to the libraries directory, not into the working directory
+expect_true(
+  file.exists(file.path(dirname(libs_dir), "assets", "codecheck-register.css")),
+  info = "the register CSS is copied to the assets directory beside libs_dir"
+)
+expect_false(
+  dir.exists(file.path(getwd(), "docs", "assets")),
+  info = "no assets directory is created relative to the working directory"
+)
 
 expect_equal(
   readLines(provenance_file), before_content,

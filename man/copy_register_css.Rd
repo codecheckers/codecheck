@@ -4,10 +4,11 @@
 \alias{copy_register_css}
 \title{Copy the CODECHECK Register CSS to the Output Assets Directory}
 \usage{
-copy_register_css(assets_dir = "docs/assets")
+copy_register_css(assets_dir)
 }
 \arguments{
-\item{assets_dir}{Directory for the register's own assets}
+\item{assets_dir}{Directory for the register's own assets, by convention a
+sibling of the libraries directory, see [register_assets_dir()]}
 }
 \description{
 Copy the CODECHECK Register CSS to the Output Assets Directory
