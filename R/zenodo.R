@@ -751,16 +751,25 @@ zenodo_policy_check <- function(record_metadata, files = NULL) {
       if (nchar(desc) > 0) "present, must contain the certificate summary"
       else "missing, must contain the certificate summary")
 
-  # License
+  # License. The certificate PDF must be CC-BY 4.0, but a record may carry
+  # further licences for other artefacts it contains (code, data, a source
+  # archive), so additional entries alongside CC-BY are correct, not a defect.
   rights_ids <- unlist(lapply(m$rights, function(r) r$id))
-  license_id <- if (!is.null(m$license$id)) m$license$id else rights_ids[1]
-  if (isTRUE(grepl("^cc-by", license_id))) {
-    add("license", "pass", license_id)
-  } else if (isTRUE(grepl("^cc", license_id))) {
-    add("license", "warn", paste0(license_id, " - CC-BY is preferred"))
+  if (length(rights_ids) == 0 && !is.null(m$license$id)) rights_ids <- m$license$id
+  others <- setdiff(rights_ids, "cc-by-4.0")
+  if ("cc-by-4.0" %in% rights_ids) {
+    add("license", "pass",
+        if (length(others) > 0)
+          paste0("cc-by-4.0 (plus ", paste(others, collapse = ", "),
+                 " for other artefacts in the deposit)")
+        else "cc-by-4.0")
+  } else if (length(rights_ids) == 0) {
+    add("license", "fail", "missing - the certificate must be CC-BY 4.0")
   } else {
-    add("license", "fail", paste0(if (is.null(license_id)) "missing" else license_id,
-                                  " - should be a CC license, preferably CC-BY"))
+    add("license", "fail",
+        paste0(paste(rights_ids, collapse = ", "),
+               " - the certificate must be CC-BY 4.0; other licences may be kept ",
+               "alongside it for other artefacts in the deposit"))
   }
 
   # Resource type
@@ -1035,7 +1044,8 @@ curate_zenodo_record <- function(record,
                                  record_metadata = NULL,
                                  fields = c("title", "publisher", "language",
                                             "resource_type", "identifiers",
-                                            "reviews", "repository", "creators"),
+                                            "reviews", "repository", "creators",
+                                            "license"),
                                  creator_overrides = list()) {
   fields <- match.arg(fields, several.ok = TRUE)
   if (is.null(record_metadata)) {
@@ -1081,6 +1091,17 @@ curate_zenodo_record <- function(record,
 
   if ("language" %in% fields && length(cm$languages) == 0) {
     changes$language <- list(from = "not set", to = "eng")
+  }
+
+  # Licence: the certificate must be CC-BY 4.0, so add it when missing. Any
+  # other licence already on the record is kept: it may cover code, data or a
+  # source archive deposited alongside the certificate.
+  current_rights <- unlist(lapply(cm$rights, function(r) r$id))
+  if ("license" %in% fields && !("cc-by-4.0" %in% current_rights)) {
+    changes$license <- list(
+      from = if (length(current_rights) == 0) "missing" else paste(current_rights, collapse = ", "),
+      to = paste(c(current_rights, "cc-by-4.0"), collapse = ", "),
+      rights = c(current_rights, "cc-by-4.0"))
   }
 
   current_rt <- if (!is.null(cm$resource_type$id)) cm$resource_type$id else "missing"
@@ -1243,6 +1264,13 @@ curate_zenodo_record <- function(record,
 
   if (!is.null(changes[["resource_type"]])) {
     draft$setResourceType("publication-report")
+  }
+
+  if (!is.null(changes[["license"]])) {
+    # set the full list explicitly: CC-BY for the certificate plus whatever the
+    # record already carried for its other artefacts
+    draft$metadata$rights <- lapply(changes[["license"]]$rights,
+                                    function(id) list(id = id))
   }
 
   if (!is.null(changes[["repository"]])) {

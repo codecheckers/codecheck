@@ -1,3 +1,9 @@
+# codecheck 0.25.0.9010
+
+## New Features
+
+* **Licence correction keeps the licences already on a record**: the curation policy requires the certificate to be CC-BY 4.0, but a deposit may hold code, data or a source archive under other terms alongside it. `curate_zenodo_record()` adds CC-BY 4.0 through the new `license` field when it is missing and writes the full rights list, leaving every other entry in place - stripping one would overrule the depositor'''s deliberate choice for those files. `zenodo_policy_check()` accordingly passes any record containing CC-BY 4.0, whatever else is listed, and reports the others as covering further artefacts
+
 # codecheck 0.25.0.9009
 
 ## Bug Fixes

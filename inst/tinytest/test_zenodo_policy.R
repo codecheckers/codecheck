@@ -337,3 +337,54 @@ expect_equal(res[["creators"]][[1]]$family, "Low Chew Tung")
 expect_equal(res[["creators"]][[1]]$given, "Gabriella")
 # without the override the heuristic would get it wrong, which is why it exists
 expect_equal(split_person_name("Gabriella Low Chew Tung")$family, "Tung")
+
+# ------------------------------------------------------------------ licence
+
+# CC-BY 4.0 must be present; further licences for other artefacts are fine
+ok_multi <- broken
+ok_multi$metadata$rights <- list(list(id = "other-open"), list(id = "cc-by-4.0"))
+res <- zenodo_policy_check(ok_multi$metadata)
+expect_equal(res$status[res$check == "license"], "pass")
+expect_true(grepl("other artefacts", res$detail[res$check == "license"]))
+
+# CC-BY alone passes
+only_ccby <- broken
+only_ccby$metadata$rights <- list(list(id = "cc-by-4.0"))
+expect_equal(zenodo_policy_check(only_ccby$metadata)$status[1:3][3], "pass")
+
+# without CC-BY it fails, whatever else is present
+nocc <- broken
+nocc$metadata$rights <- list(list(id = "other-open"))
+res <- zenodo_policy_check(nocc$metadata)
+expect_equal(res$status[res$check == "license"], "fail")
+
+# curation ADDS cc-by-4.0 and keeps the existing licence
+res <- curate_zenodo_record("2020-002", metadata = test_metadata(),
+                            record_metadata = nocc, dry_run = TRUE, fields = "license")
+expect_equal(res[["license"]]$rights, c("other-open", "cc-by-4.0"))
+
+# a missing licence just gets cc-by-4.0
+nolic <- broken
+nolic$metadata$rights <- NULL
+res <- curate_zenodo_record("2024-001", metadata = test_metadata(),
+                            record_metadata = nolic, dry_run = TRUE, fields = "license")
+expect_equal(res[["license"]]$rights, "cc-by-4.0")
+
+# a record already carrying cc-by-4.0 needs no licence change
+res <- curate_zenodo_record("2020-002", metadata = test_metadata(),
+                            record_metadata = ok_multi, dry_run = TRUE, fields = "license")
+expect_null(res[["license"]])
+
+# applying the licence writes the full rights list: CC-BY for the certificate,
+# keeping any other licence the record carries for its other artefacts
+zen_lic <- mock_manager()
+lic_rec <- zen4R::ZenodoRecord$new()
+lic_rec$metadata$rights <- list(list(id = "other-open"))
+zen_lic$editRecord <- function(recordId) lic_rec
+nocc2 <- broken
+nocc2$metadata$rights <- list(list(id = "other-open"))
+invisible(curate_zenodo_record(3750741, zenodo = zen_lic, metadata = test_metadata(),
+                               record_metadata = nocc2, dry_run = FALSE,
+                               fields = "license"))
+ids <- unlist(lapply(zen_lic$deposited$metadata$rights, function(r) r$id))
+expect_equal(ids, c("other-open", "cc-by-4.0"))
