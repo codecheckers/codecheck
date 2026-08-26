@@ -241,3 +241,67 @@ expect_false(grepl("^: |\\| : ", res$findings))
 expect_true(all(nchar(trimws(strsplit(res$findings, " \\| ")[[1]])) > 2))
 
 R.cache::setCacheRootPath(policy_old_root3)
+
+# ------------------------------------------------ fields selector and batching
+
+policy_cache_root4 <- file.path(tempfile("codecheck_zenodo_policy_cache4"))
+dir.create(policy_cache_root4, recursive = TRUE)
+policy_old_root4 <- R.cache::getCacheRootPath()
+R.cache::setCacheRootPath(policy_cache_root4)
+
+# `fields` restricts which corrections are proposed
+only_title <- curate_zenodo_record("2026-023", metadata = test_metadata(),
+                                   record_metadata = broken, dry_run = TRUE,
+                                   fields = "title")
+expect_true(!is.null(only_title[["title"]]))
+expect_null(only_title[["identifiers"]])
+expect_null(only_title$reviews)
+expect_null(only_title$creators)
+
+# the batch default must never touch creator names: splitting a group entry
+# such as "Delft 2024-05 participants" into given/family would be wrong
+no_creators <- curate_zenodo_record("2026-023", metadata = test_metadata(),
+                                    record_metadata = broken, dry_run = TRUE,
+                                    fields = c("title", "publisher", "language",
+                                               "resource_type", "identifiers",
+                                               "reviews", "repository"))
+expect_null(no_creators$creators)
+expect_true(!is.null(no_creators$identifiers))
+
+# a repository under codecheckers is proposed as a supplement relation
+no_rel <- broken
+no_rel$metadata$related_identifiers <- list()
+res <- curate_zenodo_record("2026-023", metadata = test_metadata(),
+                            record_metadata = no_rel, dry_run = TRUE,
+                            fields = "repository")
+expect_true(!is.null(res[["repository"]]))
+
+R.cache::setCacheRootPath(policy_old_root4)
+
+# ------------------------------------------------------- creator overrides
+
+# a genuine group stays an organisation instead of being split into nonsense
+group_rec <- broken
+group_rec$metadata$creators <- list(
+  list(person_or_org = list(type = "organizational", name = "Delft 2024-05 participants")))
+res <- curate_zenodo_record("2024-003", metadata = test_metadata(),
+                            record_metadata = group_rec, dry_run = TRUE,
+                            fields = "creators",
+                            creator_overrides = list(
+                              "Delft 2024-05 participants" = list(organizational = TRUE)))
+expect_null(res[["creators"]])
+
+# an explicit split beats the last-token heuristic for a compound family name
+compound <- broken
+compound$metadata$creators <- list(
+  list(person_or_org = list(type = "organizational", name = "Gabriella Low Chew Tung")))
+res <- curate_zenodo_record("2024-019", metadata = test_metadata(),
+                            record_metadata = compound, dry_run = TRUE,
+                            fields = "creators",
+                            creator_overrides = list(
+                              "Gabriella Low Chew Tung" = list(given = "Gabriella",
+                                                               family = "Low Chew Tung")))
+expect_equal(res[["creators"]][[1]]$family, "Low Chew Tung")
+expect_equal(res[["creators"]][[1]]$given, "Gabriella")
+# without the override the heuristic would get it wrong, which is why it exists
+expect_equal(split_person_name("Gabriella Low Chew Tung")$family, "Tung")

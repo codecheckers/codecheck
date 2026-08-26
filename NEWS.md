@@ -1,3 +1,10 @@
+# codecheck 0.25.0.9003
+
+## New Features
+
+* **Batch curation of a register's Zenodo records**: new `curate_register_zenodo_records()` applies the mechanical corrections across a whole register, and `curate_zenodo_record()` gained a `fields` argument selecting which classes of correction to consider. Beyond the title it now also corrects publisher, language, resource type and the relation to the checked repository. Creator names are excluded from batch runs because splitting a group entry such as "Delft 2024-05 participants" into given and family name would be wrong. The register project wraps this as `make zenodo_curate_all [APPLY=1]`
+* **Creator handling can be steered per record**: `curate_zenodo_record()` gained `creator_overrides`, keyed by the creator name as recorded. `list(organizational = TRUE)` keeps a genuine group entry (e.g. "Delft 2024-05 participants") as an organisation, and `list(given = "Gabriella", family = "Low Chew Tung")` gives an explicit split where the last-token heuristic of `split_person_name()` would misname a person with a compound family name
+
 # codecheck 0.25.0.9002
 
 ## Bug Fixes

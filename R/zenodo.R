@@ -1010,6 +1010,19 @@ get_zenodo_record_metadata <- function(id, sandbox = FALSE) {
 #' @param record_metadata the current record metadata as returned by
 #'   [get_zenodo_record_metadata()]; fetched from Zenodo when NULL (the default).
 #'   Mainly useful for testing and for auditing a record offline.
+#' @param creator_overrides named list keyed by the creator name as currently
+#'   recorded, controlling how that creator is handled. Use
+#'   `list(organizational = TRUE)` to keep an entry as an organisation (correct
+#'   for a group such as "Delft 2024-05 participants"), or
+#'   `list(given = "Gabriella", family = "Low Chew Tung")` to give an explicit
+#'   split where the last-token heuristic of [split_person_name()] is wrong.
+#' @param fields which classes of correction to consider. Defaults to all of
+#'   "title", "publisher", "language", "resource_type", "identifiers", "reviews",
+#'   "repository" and "creators". The first seven are mechanical: their target
+#'   value follows from the certificate ID or from `codecheck.yml`. "creators"
+#'   is not: splitting a name into given and family name is wrong for group
+#'   entries such as "Delft 2024-05 participants", so exclude it from batch runs
+#'   and review those records individually.
 #' @return invisibly, a list of the proposed changes
 #' @author Daniel Nuest
 #' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_warning
@@ -1019,7 +1032,12 @@ curate_zenodo_record <- function(record,
                                  metadata = NULL,
                                  register_dir = getwd(),
                                  dry_run = TRUE,
-                                 record_metadata = NULL) {
+                                 record_metadata = NULL,
+                                 fields = c("title", "publisher", "language",
+                                            "resource_type", "identifiers",
+                                            "reviews", "repository", "creators"),
+                                 creator_overrides = list()) {
+  fields <- match.arg(fields, several.ok = TRUE)
   if (is.null(record_metadata)) {
     id <- resolve_zenodo_record_id(record, register_dir = register_dir)
     record_metadata <- get_zenodo_record_metadata(id)
@@ -1044,16 +1062,41 @@ curate_zenodo_record <- function(record,
 
   # Title
   target_title <- paste("CODECHECK Certificate", cert)
-  if (!identical(cm$title, target_title)) {
+  if ("title" %in% fields && !identical(cm$title, target_title)) {
     changes$title <- list(from = cm$title, to = target_title)
+  }
+
+  # Publisher, language and resource type: fixed values from the policy
+  if ("publisher" %in% fields &&
+      !identical(cm$publisher, "CODECHECK Community on Zenodo")) {
+    changes$publisher <- list(from = if (is.null(cm$publisher)) "missing" else cm$publisher,
+                              to = "CODECHECK Community on Zenodo")
+  }
+
+  if ("language" %in% fields && length(cm$languages) == 0) {
+    changes$language <- list(from = "not set", to = "eng")
+  }
+
+  current_rt <- if (!is.null(cm$resource_type$id)) cm$resource_type$id else "missing"
+  if ("resource_type" %in% fields && !identical(current_rt, "publication-report")) {
+    changes$resource_type <- list(from = current_rt, to = "publication-report")
   }
 
   # Creators recorded as organisations
   creator_targets <- list()
-  for (i in seq_along(cm$creators)) {
+  for (i in if ("creators" %in% fields) seq_along(cm$creators) else integer(0)) {
     poo <- cm$creators[[i]]$person_or_org
     if (identical(poo$type, "organizational")) {
-      parts <- split_person_name(poo$name)
+      override <- creator_overrides[[poo$name]]
+      if (isTRUE(override$organizational)) {
+        # a genuine group, correctly recorded as an organisation
+        next
+      }
+      parts <- if (!is.null(override$family)) {
+        list(given = override$given, family = override$family)
+      } else {
+        split_person_name(poo$name)
+      }
       if (!is.null(parts$family)) {
         creator_targets[[length(creator_targets) + 1]] <- list(
           index = i,
@@ -1072,7 +1115,7 @@ curate_zenodo_record <- function(record,
   relations <- unlist(lapply(cm$related_identifiers, function(r) {
     if (!is.null(r$relation_type$id)) r$relation_type$id else r$relation
   }))
-  if (!any(tolower(relations) == "reviews")) {
+  if ("reviews" %in% fields && !any(tolower(relations) == "reviews")) {
     paper_ref <- metadata$paper$reference
     if (!is.null(paper_ref) && grepl("doi\\.org|^10\\.", paper_ref)) {
       paper_doi <- sub(".*doi\\.org/", "", paper_ref)
@@ -1089,13 +1132,28 @@ curate_zenodo_record <- function(record,
     }
   }
 
+  # Relation to the code/data repository
+  repo_relations <- c("issupplementedby", "isderivedfrom", "iscompiledby", "issupplementto")
+  if ("repository" %in% fields && !any(tolower(relations) %in% repo_relations)) {
+    repo_url <- metadata$repository
+    if (is.list(repo_url) && length(repo_url) > 0) repo_url <- repo_url[[1]]
+    if (is.character(repo_url) && nchar(repo_url) > 0) {
+      repo_url <- gsub("[<>]", "", repo_url)
+      if (grepl("github.com/codecheckers|gitlab.com/cdchck", repo_url)) {
+        changes$repository <- list(from = "missing",
+                                   to = paste0("isSupplementedBy ", repo_url),
+                                   identifier = repo_url)
+      }
+    }
+  }
+
   # Alternate identifiers
   alt <- cm$identifiers
   has_scheme <- function(scheme) {
     any(unlist(lapply(alt, function(a)
       tolower(a$scheme) == scheme && grepl("cdchck.science/register/certs/", a$identifier))))
   }
-  if (!has_scheme("url") || !has_scheme("other")) {
+  if ("identifiers" %in% fields && (!has_scheme("url") || !has_scheme("other"))) {
     changes$identifiers <- list(
       from = if (length(alt) == 0) "missing" else
         paste(unlist(lapply(alt, function(a) a$identifier)), collapse = "; "),
@@ -1139,6 +1197,25 @@ curate_zenodo_record <- function(record,
 
   if (!is.null(changes$title)) {
     draft$setTitle(changes$title$to)
+  }
+
+  if (!is.null(changes$publisher)) {
+    draft$setPublisher(changes$publisher$to)
+  }
+
+  if (!is.null(changes$language)) {
+    draft$setLanguage("eng")
+  }
+
+  if (!is.null(changes$resource_type)) {
+    draft$setResourceType("publication-report")
+  }
+
+  if (!is.null(changes$repository)) {
+    draft$addRelatedIdentifier(identifier = changes$repository$identifier,
+                               scheme = "url",
+                               relation_type = "issupplementedby",
+                               resource_type = "software")
   }
 
   if (!is.null(changes$creators)) {
@@ -1336,6 +1413,82 @@ report_zenodo_policy_findings <- function(result) {
   unknown <- sum(result$status == "unknown")
   cli::cli_alert_success(
     "{compliant} of {total} certificate{?s} on Zenodo comply with the curation policy{if (unknown > 0) paste0(', ', unknown, ' could not be checked') else ''}")
+
+  invisible(result)
+}
+
+
+#' Curate all Zenodo records of a register against the curation policy
+#'
+#' Runs [curate_zenodo_record()] over every register entry whose report is a
+#' Zenodo DOI. Intended for the mechanical corrections, whose target values
+#' follow from the certificate ID or from `codecheck.yml`; `fields` therefore
+#' defaults to everything except "creators", which needs a human because
+#' splitting a name is wrong for group entries.
+#'
+#' One record failing does not stop the run: its error is recorded in the
+#' result and the loop continues.
+#'
+#' @title Curate all Zenodo records of a register
+#' @param register_table a register `data.frame` with columns `Certificate`,
+#'   `Report` and `Repository`
+#' @param zenodo a `zen4R` ZenodoManager, only needed when `dry_run = FALSE`
+#' @param fields which classes of correction to consider, see [curate_zenodo_record()]
+#' @param dry_run if TRUE (the default) only report what would change
+#' @param register_dir directory holding `register.csv`
+#' @return a data.frame with one row per record: `certificate`, `record_id`,
+#'   `applied` (the corrections), `manual` (findings needing a human), `error`
+#' @author Daniel Nuest
+#' @importFrom cli cli_h1 cli_alert_info cli_alert_success
+#' @export
+curate_register_zenodo_records <- function(register_table,
+                                           zenodo = NULL,
+                                           fields = c("title", "publisher", "language",
+                                                      "resource_type", "identifiers",
+                                                      "reviews", "repository"),
+                                           dry_run = TRUE,
+                                           register_dir = getwd()) {
+  rows <- list()
+
+  for (i in seq_len(nrow(register_table))) {
+    cert <- sub("^\\[([^]]+)\\].*$", "\\1", as.character(register_table$Certificate[i]))
+    record_id <- get_zenodo_id(as.character(register_table$Report[i]))
+    if (is.na(record_id)) next
+
+    outcome <- tryCatch({
+      config <- get_codecheck_yml(as.character(register_table$Repository[i]))
+      changes <- curate_zenodo_record(record_id, zenodo = zenodo, metadata = config,
+                                      register_dir = register_dir, dry_run = dry_run,
+                                      fields = fields)
+      names_all <- names(changes)
+      list(applied = paste(setdiff(names_all, grep("_manual$", names_all, value = TRUE)),
+                           collapse = ", "),
+           manual = paste(sub("_manual$", "", grep("_manual$", names_all, value = TRUE)),
+                          collapse = ", "),
+           error = NA_character_)
+    }, error = function(e) {
+      list(applied = "", manual = "", error = conditionMessage(e))
+    })
+
+    rows[[length(rows) + 1]] <- data.frame(
+      certificate = cert, record_id = record_id,
+      applied = outcome$applied, manual = outcome$manual, error = outcome$error,
+      stringsAsFactors = FALSE)
+  }
+
+  result <- if (length(rows) == 0) {
+    data.frame(certificate = character(0), record_id = integer(0),
+               applied = character(0), manual = character(0),
+               error = character(0), stringsAsFactors = FALSE)
+  } else do.call(rbind, rows)
+
+  changed <- sum(nchar(result$applied) > 0)
+  cli::cli_alert_info(paste0(
+    if (dry_run) "Dry run: " else "Applied: ",
+    changed, " of ", nrow(result), " records ",
+    if (dry_run) "would be corrected" else "corrected",
+    ", ", sum(nchar(result$manual) > 0), " have findings needing a human, ",
+    sum(!is.na(result$error)), " errored"))
 
   invisible(result)
 }
