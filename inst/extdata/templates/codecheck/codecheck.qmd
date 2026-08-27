@@ -114,7 +114,8 @@ latex_codecheck_logo()
 ```
 
 ```{r validate_certificate, echo=FALSE, results='asis'}
-## Validate certificate and display warning if placeholder
+## Validate certificate and display warning if placeholder, or if the
+## report DOI is a Zenodo concept DOI instead of a version-specific DOI
 ## Set strict = TRUE to fail rendering if certificate is a placeholder
 ## Set display_warning = FALSE to suppress the warning box in PDF output
 validate_certificate_for_rendering(

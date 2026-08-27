@@ -27,4 +27,6 @@ summary: >
 repository: https://github.com/codecheckers/Reproduction-Hancock
 check_time: "2020-04-13 10:00:00"
 certificate: 2020-XYZ
+# Use the version-specific Zenodo DOI, not the "concept DOI" (which always
+# points at the latest version) - see https://zenodo.org/help/versioning
 report: https://doi.org/10.5281/zenodo.FIXME

@@ -552,6 +552,15 @@ validate_codecheck_yml <- function(configuration) {
   assertthat::assert_that(codecheck_yml$report %in% rorcid::check_dois(codecheck_yml$report)$good,
                           msg = paste0(codecheck_yml$report, " is not a valid DOI"))
 
+  # if the report is on Zenodo, it MUST be the version-specific DOI, not the concept DOI, see #36
+  if (grepl("zenodo", codecheck_yml$report, ignore.case = TRUE)) {
+    assertthat::assert_that(!is_zenodo_concept_doi(codecheck_yml$report),
+                            msg = paste0(codecheck_yml$report,
+                                         " is a Zenodo concept DOI, which always resolves to the ",
+                                         "latest version (see https://zenodo.org/help/versioning). ",
+                                         "Use the version-specific DOI for this report instead."))
+  }
+
   # Check if the paper_link contains a valid URL. We only check that it starts with https?://
   url_regex <- "^https?://"
   assertthat::assert_that(grepl(url_regex, codecheck_yml$paper$reference),

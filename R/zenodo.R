@@ -163,6 +163,48 @@ get_zenodo_id <- function(report) {
   as.integer(result)
 }
 
+##' Check whether a report DOI is a Zenodo "concept DOI"
+##'
+##' Zenodo assigns every versioned deposit two DOIs: a version-specific DOI
+##' (which always resolves to that exact version) and a concept DOI (which
+##' always resolves to the *latest* version, see
+##' https://zenodo.org/help/versioning). A CODECHECK certificate's `report`
+##' field should reference the version-specific DOI so that the certificate
+##' points at an immutable record; this function detects the mistake of
+##' using the concept DOI instead.
+##'
+##' @title Check whether a report DOI is a Zenodo concept DOI
+##' @param report - string containing the report DOI or URL on Zenodo.
+##' @param sandbox connect with the Zenodo Sandbox instead of the real service
+##' @param zenodo An object from zen4R to connect with Zenodo (or a mock with
+##'   a compatible `getRecordByConceptId()` method, for testing). Defaults to
+##'   a new `ZenodoManager` connected to the production (or sandbox) service.
+##' @return `TRUE` if `report` is a Zenodo concept DOI, `FALSE` if it is a
+##'   version-specific DOI or not a (matchable) Zenodo DOI at all.
+##' @author Daniel Nuest
+##' @importFrom zen4R ZenodoManager
+##' @export
+is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL) {
+  id <- get_zenodo_id(report)
+  if (is.na(id)) {
+    return(FALSE)
+  }
+
+  if (is.null(zenodo)) {
+    zenodo <- ZenodoManager$new(
+      url = if (sandbox) "https://sandbox.zenodo.org/api" else "https://zenodo.org/api",
+      sandbox = sandbox,
+      logger = "INFO"
+    )
+  }
+
+  # A concept ID only resolves via getRecordByConceptId(); a version-specific
+  # record ID does not (Zenodo doesn't treat a concept ID as a record itself).
+  record <- zenodo$getRecordByConceptId(id)
+
+  !is.null(record)
+}
+
 #' Get the full Zenodo record from the metadata
 #'
 #' Retrieve the Zenodo record, if one exists. By default, loads metadata from

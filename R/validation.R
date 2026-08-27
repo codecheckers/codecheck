@@ -1111,9 +1111,10 @@ is_placeholder_certificate <- function(yml_file = "codecheck.yml",
 ##' Validate certificate for rendering and display warning if placeholder
 ##'
 ##' This function checks if the certificate identifier and report DOI are
-##' placeholders and prints a LaTeX warning box with a warning icon if they are.
-##' Intended for use in R Markdown templates to alert users about placeholder
-##' certificates and DOIs.
+##' placeholders, or the report DOI is a Zenodo concept DOI instead of a
+##' version-specific DOI (see #36), and prints a LaTeX warning box with a
+##' warning icon if so. Intended for use in R Markdown or Quarto templates
+##' to alert users about placeholder certificates and DOIs.
 ##'
 ##' @title Validate certificate for rendering with visual warning
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
@@ -1122,6 +1123,11 @@ is_placeholder_certificate <- function(yml_file = "codecheck.yml",
 ##'   Default is FALSE (displays warning but continues).
 ##' @param display_warning Logical. If TRUE (default), displays a warning box in
 ##'   the rendered output when certificate or DOI is a placeholder.
+##' @param check_concept_doi Logical. If TRUE (default), checks whether a Zenodo
+##'   report DOI is a concept DOI (which always resolves to the latest version)
+##'   rather than a version-specific DOI, and warns if so. Requires a network
+##'   request to Zenodo; if that request fails (e.g. offline rendering), the
+##'   check is silently skipped rather than failing the render.
 ##' @return Invisibly returns TRUE if certificate and DOI are valid, FALSE if any placeholder
 ##' @author Daniel Nuest
 ##' @export
@@ -1136,7 +1142,8 @@ is_placeholder_certificate <- function(yml_file = "codecheck.yml",
 validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
                                                metadata = NULL,
                                                strict = FALSE,
-                                               display_warning = TRUE) {
+                                               display_warning = TRUE,
+                                               check_concept_doi = TRUE) {
   # Load metadata if not provided
   if (is.null(metadata)) {
     if (!file.exists(yml_file)) {
@@ -1163,8 +1170,16 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
     has_doi_placeholder <- TRUE
   }
 
+  # Check if the report DOI is a Zenodo concept DOI rather than a version-specific DOI, see #36
+  has_concept_doi <- FALSE
+  if (check_concept_doi && !has_doi_placeholder &&
+      isTRUE(grepl("zenodo", report_doi, ignore.case = TRUE))) {
+    has_concept_doi <- isTRUE(tryCatch(is_zenodo_concept_doi(report_doi),
+                                       error = function(e) FALSE))
+  }
+
   # Check if any placeholder found
-  is_placeholder <- has_cert_placeholder || has_doi_placeholder
+  is_placeholder <- has_cert_placeholder || has_doi_placeholder || has_concept_doi
 
   if (is_placeholder) {
     cert_id <- if (is.null(metadata$certificate) || metadata$certificate == "") {
@@ -1195,6 +1210,15 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
                         paste0("\\textbf{Report DOI is a placeholder: \\texttt{", report_doi, "}}"))
       console_warnings <- c(console_warnings,
                            paste0("Report DOI '", report_doi, "' is a placeholder"))
+    }
+
+    if (has_concept_doi) {
+      warning_parts <- c(warning_parts,
+                        paste0("\\textbf{Report DOI is a Zenodo concept DOI: \\texttt{", report_doi, "}}"))
+      console_warnings <- c(console_warnings,
+                           paste0("Report DOI '", report_doi, "' is a Zenodo concept DOI, ",
+                                  "which always resolves to the latest version; ",
+                                  "use the version-specific DOI instead"))
     }
 
     # Display warning in PDF output if requested

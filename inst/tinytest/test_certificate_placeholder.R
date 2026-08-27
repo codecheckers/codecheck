@@ -687,5 +687,66 @@ manifest:
 expect_true(is_placeholder_certificate(test_yml, check_doi = TRUE),
             info = "Example text in DOI should be detected")
 
+# Test 48: validate_certificate_for_rendering flags a Zenodo concept DOI, see #36
+# Uses the real DOI pair from issue #36: 10213244 is the version-specific DOI,
+# 10213243 is its concept DOI. Skipped gracefully if there is no network.
+concept_probe <- tryCatch(
+  codecheck::is_zenodo_concept_doi("https://doi.org/10.5281/zenodo.10213243"),
+  error = function(e) NA
+)
+
+if (!is.na(concept_probe)) {
+  cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.5281/zenodo.10213243'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+  output_concept <- capture.output(
+    suppressWarnings(
+      result_concept <- validate_certificate_for_rendering(test_yml, display_warning = TRUE)
+    )
+  )
+  output_text_concept <- paste(output_concept, collapse = "\n")
+
+  expect_false(result_concept, info = "Concept DOI should be treated as invalid for rendering")
+  expect_true(grepl("concept DOI", output_text_concept, ignore.case = TRUE),
+              info = "Should mention concept DOI in warning")
+
+  # Test 49: version-specific DOI does not trigger the concept DOI warning
+  cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.5281/zenodo.10213244'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+  result_version <- suppressWarnings(
+    validate_certificate_for_rendering(test_yml, display_warning = FALSE)
+  )
+  expect_true(result_version, info = "Version-specific DOI should not trigger a warning")
+
+  # Test 50: check_concept_doi = FALSE skips the check entirely
+  cat("---
+certificate: 2024-001
+report: 'https://doi.org/10.5281/zenodo.10213243'
+paper:
+  title: Test Paper
+manifest:
+  - file: output.pdf
+", file = test_yml)
+
+  result_skip <- validate_certificate_for_rendering(test_yml, display_warning = FALSE,
+                                                     check_concept_doi = FALSE)
+  expect_true(result_skip, info = "check_concept_doi = FALSE should skip the concept DOI check")
+} else {
+  expect_true(TRUE, info = "concept DOI rendering tests skipped (no network)")
+}
+
 # Clean up
 unlink(test_yml)

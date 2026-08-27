@@ -55,6 +55,16 @@ For first-time codecheckers using this R package:
     e.g., via a sharing link or the CODECHECK Zenodo community; push the
     `codecheck.yml` to the repository
 
+    > **Note:** Zenodo gives every deposit two DOIs: a version-specific
+    > DOI (pointing at that exact record) and a "concept DOI" (which
+    > always resolves to the *latest* version, see
+    > [Zenodo versioning](https://zenodo.org/help/versioning)). The
+    > `report` field in `codecheck.yml` must use the version-specific
+    > DOI, so the certificate stays linked to an immutable record.
+    > `codecheck::validate_codecheck_yml()` and
+    > `validate_certificate_for_rendering()` both flag a concept DOI used
+    > by mistake.
+
 ## Key Concepts
 
 - **Certificate** - The final report documenting your CODECHECK, which

@@ -8,7 +8,8 @@ validate_certificate_for_rendering(
   yml_file = "codecheck.yml",
   metadata = NULL,
   strict = FALSE,
-  display_warning = TRUE
+  display_warning = TRUE,
+  check_concept_doi = TRUE
 )
 }
 \arguments{
@@ -21,6 +22,12 @@ Default is FALSE (displays warning but continues).}
 
 \item{display_warning}{Logical. If TRUE (default), displays a warning box in
 the rendered output when certificate or DOI is a placeholder.}
+
+\item{check_concept_doi}{Logical. If TRUE (default), checks whether a Zenodo
+report DOI is a concept DOI (which always resolves to the latest version)
+rather than a version-specific DOI, and warns if so. Requires a network
+request to Zenodo; if that request fails (e.g. offline rendering), the
+check is silently skipped rather than failing the render.}
 }
 \value{
 Invisibly returns TRUE if certificate and DOI are valid, FALSE if any placeholder
@@ -30,9 +37,10 @@ Validate certificate for rendering and display warning if placeholder
 }
 \details{
 This function checks if the certificate identifier and report DOI are
-placeholders and prints a LaTeX warning box with a warning icon if they are.
-Intended for use in R Markdown templates to alert users about placeholder
-certificates and DOIs.
+placeholders, or the report DOI is a Zenodo concept DOI instead of a
+version-specific DOI (see #36), and prints a LaTeX warning box with a
+warning icon if so. Intended for use in R Markdown or Quarto templates
+to alert users about placeholder certificates and DOIs.
 }
 \examples{
 \dontrun{

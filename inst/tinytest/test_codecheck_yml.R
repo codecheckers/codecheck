@@ -23,6 +23,10 @@ expect_error(validate_codecheck_yml("yaml/manifest_missing/codecheck.yml"),
 expect_error(validate_codecheck_yml("yaml/report_doi_invalid/codecheck.yml"),
              pattern = "not a valid DOI")
 
+# report DOI - Zenodo concept DOI is rejected, see #36 ----
+expect_error(validate_codecheck_yml("yaml/report_doi_concept/codecheck.yml"),
+             pattern = "is a Zenodo concept DOI")
+
 # ORCIDs ----
 expect_error(validate_codecheck_yml("yaml/orcids/invalid_checker.yml"),
              pattern = "checker's ORCID '0000-abcd-0000-000X'")
