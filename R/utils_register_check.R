@@ -25,13 +25,16 @@ check_certificate_id <- function(entry, codecheck_yaml) {
   }
 }
 
-#' Check that a repository is in the codecheckers/cdchck organisation
+#' Check that a repository is in an allowed organisation/group
 #'
 #' A pure string check on the repository spec, no network call: registry
-#' policy requires the checked repository to live in the `codecheckers`
-#' GitHub organisation or the `cdchck` GitLab group (the same rule already
-#' enforced for Zenodo records, see `check_register_zenodo_policy()`). A
-#' violation stops the check for this entry, it is not a hint to fix later.
+#' policy requires the checked repository to live in one of the GitHub
+#' organisations or GitLab groups listed in `CONFIG$ALLOWED_REPO_ORGS` (the
+#' `codecheckers` org and `cdchck` group by default, see the same rule
+#' enforced for Zenodo records in `check_register_zenodo_policy()`). Add
+#' further trusted orgs/groups by extending `CONFIG$ALLOWED_REPO_ORGS` in
+#' `config.R`. A violation stops the check for this entry, it is not a hint
+#' to fix later.
 #'
 #' @param entry The registry entry
 #' @param spec The parsed repository spec, see `parse_repository_spec()`
@@ -39,15 +42,17 @@ check_certificate_id <- function(entry, codecheck_yaml) {
 check_repository_org <- function(entry, spec) {
   if (spec[["type"]] == "github") {
     org <- split_github_repo_spec(spec[["repo"]])$org
-    if (!identical(org, "codecheckers")) {
-      stop(entry$Certificate, " repository is not in the codecheckers GitHub organisation: ",
-           spec[["repo"]])
+    allowed <- CONFIG$ALLOWED_REPO_ORGS[["github"]]
+    if (!(org %in% allowed)) {
+      stop(entry$Certificate, " repository is not in an allowed GitHub organisation (",
+           toString(allowed), "): ", spec[["repo"]])
     }
   } else if (spec[["type"]] == "gitlab") {
     group <- strsplit(spec[["repo"]], "/", fixed = TRUE)[[1]][[1]]
-    if (!identical(group, "cdchck")) {
-      stop(entry$Certificate, " repository is not in the cdchck GitLab group: ",
-           spec[["repo"]])
+    allowed <- CONFIG$ALLOWED_REPO_ORGS[["gitlab"]]
+    if (!(group %in% allowed)) {
+      stop(entry$Certificate, " repository is not in an allowed GitLab group (",
+           toString(allowed), "): ", spec[["repo"]])
     }
   }
 }

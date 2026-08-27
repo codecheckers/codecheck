@@ -1,6 +1,7 @@
 tinytest::using(ttdo)
 
 source("mocks.R")
+source(system.file("extdata", "config.R", package = "codecheck"))
 
 entry <- data.frame(Certificate = "2024-111", stringsAsFactors = FALSE)
 
@@ -25,6 +26,11 @@ expect_silent(
 expect_error(
   codecheck:::check_repository_org(entry, codecheck:::parse_repository_spec("github::someoneelse/Foo")),
   pattern = "codecheckers"
+)
+
+# Test 3b: additional allowed GitHub org from CONFIG$ALLOWED_REPO_ORGS is fine
+expect_silent(
+  codecheck:::check_repository_org(entry, codecheck:::parse_repository_spec("github::reproducible-agile/reviews-2025|reports/28"))
 )
 
 # Test 4: GitLab repo in cdchck/ is fine

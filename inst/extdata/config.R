@@ -2,6 +2,17 @@ CONFIG <- new.env()
 
 utils::globalVariables(c("CONFIG"))
 
+# REPOSITORY POLICY
+
+# Organisations/groups a checked repository is allowed to live in, per
+# platform, see `check_repository_org()`. "codecheckers" and "cdchck" are the
+# project's own org/group; additional trusted orgs (e.g. community-run
+# venues that host their own checks) can be added here.
+CONFIG$ALLOWED_REPO_ORGS <- list(
+  github = c("codecheckers", "reproducible-agile"),
+  gitlab = c("cdchck")
+)
+
 # REGISTER TABLE
 
 # Specifying the register table column widths
