@@ -226,5 +226,41 @@ expect_error({
   })
 }, pattern = "Duplicate certificate ID")
 
+# Test 14: register_check() - defaults check newest-first (closes #79) ----
+test_register_order <- data.frame(
+  Certificate = c("2024-111", "2024-999"),
+  Repository = c("zenodo-sandbox::145250", "github::codecheckers/register"),
+  Type = c("community", "community"),
+  Venue = c("test", "test"),
+  Issue = c(NA, NA),
+  stringsAsFactors = FALSE
+)
+
+# no explicit from/to: defaults should walk row 2 then row 1 (newest first)
+output <- capture.output({
+  expect_warning({
+    suppressMessages({
+      codecheck::register_check(test_register_order)
+    })
+  }, pattern = "does not have a codecheck.yml file")
+})
+checking_lines <- grep("^Checking", output, value = TRUE)
+expect_true(length(checking_lines) >= 2)
+expect_true(grepl("2024-999", checking_lines[1]))
+expect_true(grepl("2024-111", checking_lines[2]))
+
+# Test 15: register_check() - explicit ascending from/to still works ----
+output <- capture.output({
+  expect_warning({
+    suppressMessages({
+      codecheck::register_check(test_register_order, from = 1, to = nrow(test_register_order))
+    })
+  }, pattern = "does not have a codecheck.yml file")
+})
+checking_lines <- grep("^Checking", output, value = TRUE)
+expect_true(length(checking_lines) >= 2)
+expect_true(grepl("2024-111", checking_lines[1]))
+expect_true(grepl("2024-999", checking_lines[2]))
+
 # Clean up
 file.remove(list.files(tempdir(), pattern = "^file.*\\.csv$", full.names = TRUE))

@@ -352,9 +352,15 @@ register_update_stats <- function(docs_dir = "docs",
 #' (`check_repository_license()`) and the `codecheck` topic tag
 #' (`check_repository_topic()`).
 #'
+#' By default entries are checked newest-first (`from` defaults to the last
+#' row, `to` to the first): problems are more likely to appear in recent
+#' checks and certificates than in old, already-vetted ones, so breaking
+#' issues surface earlier in a full-register run (closes #79). Pass
+#' `from = 1, to = nrow(register)` to check oldest-first instead.
+#'
 #' @param register A `data.frame` with all required information for the register's view
-#' @param from The first register entry to check
-#' @param to The last register entry to check
+#' @param from The first register entry to check (defaults to the last row, i.e. the newest entry)
+#' @param to The last register entry to check (defaults to the first row, i.e. the oldest entry)
 #' @param check_zenodo_policy Logical; if TRUE (the default), also audits the Zenodo records against the CODECHECK community curation policy
 #'
 #' @author Daniel Nuest
@@ -363,8 +369,8 @@ register_update_stats <- function(docs_dir = "docs",
 #' @importFrom gh gh
 #' @export
 register_check <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
-                           from = 1,
-                           to = nrow(register),
+                           from = nrow(register),
+                           to = 1,
                            check_zenodo_policy = TRUE) {
   cli::cli_h1("CODECHECK Register Check")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
