@@ -1,0 +1,84 @@
+{
+  "id": "8d0a10a6-c84b-4505-903a-f55224441a40",
+  "output_id": "96e06840-c430-40e7-b7b3-e91670ffb432",
+  "version": 1,
+  "version_label": "1.0.0",
+  "changelog": null,
+  "created_at": "2026-01-31T22:02:34",
+  "updated_at": "2026-03-30T17:17:59",
+  "published_at": "2025-05-20T20:57:24",
+  "title": "CODECHECK Certificate 2020-007",
+  "description": "Reproducibility review of [Re] Spike Timing Dependent Plasticity Finds the Start of Repeating Patterns in Continuous Spike Trains.\n\nThe code was straightforward to codecheck. All figures could be recreated with the original code and data as described in the README file. Only the computing environment could not be recreated exactly, as a lot of time has passed since the publication of the original code. Both a quick (saved data) execution and a longer (seemingly new data) execution were successful and yielded figures who by visual inspection matched the figures in the original article. Errors and warnings were mostly related to deprecation of libraries and missing libraries.",
+  "content_s3": "fbdeef1a-eec8-46bb-9131-939a5e8d4f52",
+  "refs": [],
+  "supporting_files": [
+    {
+      "name": "environment.yml",
+      "s3": "16db3c64-2a28-429d-af79-d1d99722a67d",
+      "type": "application/x-yaml"
+    },
+    {
+      "name": "log-new-true.txt",
+      "s3": "1f892978-242a-48b5-b34b-0badb84d702b",
+      "type": "text/plain"
+    },
+    {
+      "name": "screenshot-figure-1-to-11.png",
+      "s3": "a88d09a6-a22d-4369-b9e9-37c0aa0a5592",
+      "type": "image/png"
+    },
+    {
+      "name": "figure_5_created_250520.pdf",
+      "s3": "b0612808-fdb0-41fa-b687-ffad02458ed7",
+      "type": "application/pdf"
+    },
+    {
+      "name": "figure_6_created_250520.pdf",
+      "s3": "8fbd43f3-4058-40e3-8c88-07ede398e4a1",
+      "type": "application/pdf"
+    },
+    {
+      "name": "figure_7CD_seed28_created_250520.pdf",
+      "s3": "c02d07d0-ef5c-4970-ab62-7b388b099dc4",
+      "type": "application/pdf"
+    },
+    {
+      "name": "figure_8_created_250520.pdf",
+      "s3": "ba3e2175-3eb3-4c03-b533-397a2e331680",
+      "type": "application/pdf"
+    }
+  ],
+  "published": true,
+  "type_id": "Q116740071",
+  "license_id": "Q20007257",
+  "language": "en",
+  "contributors": [
+    {
+      "role": "author",
+      "position": 0,
+      "given_name": "Daniel",
+      "surname": "Nüst",
+      "username": "nuest",
+      "orcid": "0000-0002-0024-5046"
+    }
+  ],
+  "pids": [
+    "doi:10.53962/nsys-9a40"
+  ],
+  "output_pids": [
+    "doi:10.53962/s7vk-0nw3"
+  ],
+  "version_history": [
+    {
+      "id": "8d0a10a6-c84b-4505-903a-f55224441a40",
+      "version": 1,
+      "version_label": "1.0.0",
+      "changelog": null,
+      "published_at": "2025-05-20T20:57:24",
+      "pids": [
+        "doi:10.53962/nsys-9a40"
+      ]
+    }
+  ],
+  "content_mediatype": "application/pdf"
+}

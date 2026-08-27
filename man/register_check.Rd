@@ -8,7 +8,8 @@ register_check(
   register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   from = nrow(register),
   to = 1,
-  check_zenodo_policy = TRUE
+  check_zenodo_policy = TRUE,
+  check_researchequals_policy = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ register_check(
 \item{to}{The last register entry to check (defaults to the first row, i.e. the oldest entry)}
 
 \item{check_zenodo_policy}{Logical; if TRUE (the default), also audits the Zenodo records against the CODECHECK community curation policy}
+
+\item{check_researchequals_policy}{Logical; if TRUE (the default), also audits the certificates published on ResearchEquals against the CODECHECK curation policy, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection}
 }
 \description{
 This functions starts of a `data.frame` read from the local register file.

@@ -35,6 +35,7 @@ is_full_register_run <- function(from, to, n) {
 #' @param ncores Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.
 #' @param verbose Logical; if TRUE, shows detailed output including pandoc commands from rmarkdown::render(). Defaults to FALSE.
 #' @param check_zenodo_policy Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.
+#' @param check_researchequals_policy Logical; if TRUE (the default), audits all certificates published on ResearchEquals against the CODECHECK curation policy after rendering, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection, and reports the findings on the console. Never fails a render. Results are cached like the Zenodo ones; set to FALSE to skip them entirely.
 #' @param prune_unreferenced_libs Logical; if TRUE (the default), removes directories under `docs/libs` that no rendered HTML file references any more (see [prune_libs()] and codecheckers/codecheck#89) once rendering finishes. Only actually runs after a complete, unfiltered render (`from`/`to` covering the whole register) with no certificate failures; otherwise the step is skipped with a message, since a partial render can leave HTML that still references a directory this would delete.
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
@@ -61,6 +62,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             ncores = NULL,
                             verbose = FALSE,
                             check_zenodo_policy = TRUE,
+                            check_researchequals_policy = TRUE,
                             prune_unreferenced_libs = TRUE) {
   cli::cli_h1("CODECHECK Register Rendering")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
@@ -170,6 +172,17 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       report_zenodo_policy_findings(check_register_zenodo_policy(register_table))
     }, error = function(e) {
       cli::cli_alert_info("Could not run the Zenodo curation policy check: {conditionMessage(e)}")
+    })
+  }
+
+  # The same audit for the certificates published on ResearchEquals, whose
+  # counterpart of the Zenodo community is the CODECHECK collection.
+  if (check_researchequals_policy) {
+    tryCatch({
+      report_researchequals_policy_findings(
+        check_register_researchequals_policy(register_table))
+    }, error = function(e) {
+      cli::cli_alert_info("Could not run the ResearchEquals curation policy check: {conditionMessage(e)}")
     })
   }
 
@@ -413,6 +426,7 @@ register_update_stats <- function(docs_dir = "docs",
 #' @param from The first register entry to check (defaults to the last row, i.e. the newest entry)
 #' @param to The last register entry to check (defaults to the first row, i.e. the oldest entry)
 #' @param check_zenodo_policy Logical; if TRUE (the default), also audits the Zenodo records against the CODECHECK community curation policy
+#' @param check_researchequals_policy Logical; if TRUE (the default), also audits the certificates published on ResearchEquals against the CODECHECK curation policy, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection
 #'
 #' @author Daniel Nuest
 #' @importFrom R.cache getCacheRootPath
@@ -422,7 +436,8 @@ register_update_stats <- function(docs_dir = "docs",
 register_check <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
                            from = nrow(register),
                            to = 1,
-                           check_zenodo_policy = TRUE) {
+                           check_zenodo_policy = TRUE,
+                           check_researchequals_policy = TRUE) {
   cli::cli_h1("CODECHECK Register Check")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
 
@@ -441,7 +456,8 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
 
   # The raw register has no Report column, the report DOI comes from each
   # codecheck.yml, so collect it while the configurations are being read anyway.
-  zenodo_entries <- list()
+  # The platform-specific policy checks pick their own entries from this table.
+  report_entries <- list()
 
   for (i in seq(from = from, to = to)) {
     cat("Checking", toString(register[i, ]), "\n")
@@ -464,21 +480,33 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
     check_issue_status(entry)
 
     if (!is.null(codecheck_yaml) && !is.null(codecheck_yaml$report)) {
-      zenodo_entries[[length(zenodo_entries) + 1]] <- data.frame(
+      report_entries[[length(report_entries) + 1]] <- data.frame(
         Certificate = as.character(entry$Certificate),
         Report = as.character(codecheck_yaml$report),
+        # the ResearchEquals policy check needs the venue: the Reproducible
+        # AGILE collection is only required for AGILEGIS certificates
+        Venue = if (!is.null(entry$Venue)) as.character(entry$Venue) else NA_character_,
         stringsAsFactors = FALSE)
     }
 
     cat("Completed checking registry entry", toString(register[i, "Certificate"]), "\n")
   }
 
-  if (check_zenodo_policy && length(zenodo_entries) > 0) {
+  reports <- if (length(report_entries) > 0) do.call(rbind, report_entries) else NULL
+
+  if (check_zenodo_policy && !is.null(reports)) {
     tryCatch({
-      report_zenodo_policy_findings(
-        check_register_zenodo_policy(do.call(rbind, zenodo_entries)))
+      report_zenodo_policy_findings(check_register_zenodo_policy(reports))
     }, error = function(e) {
       cli::cli_alert_info("Could not run the Zenodo curation policy check: {conditionMessage(e)}")
+    })
+  }
+
+  if (check_researchequals_policy && !is.null(reports)) {
+    tryCatch({
+      report_researchequals_policy_findings(check_register_researchequals_policy(reports))
+    }, error = function(e) {
+      cli::cli_alert_info("Could not run the ResearchEquals curation policy check: {conditionMessage(e)}")
     })
   }
 }

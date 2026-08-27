@@ -1,0 +1,42 @@
+{
+  "id": "418426de-e3c3-4f4d-b66d-81381cc1c5b9",
+  "collection_id": "720ac28c-07a1-40c3-a098-c77443e5de96",
+  "created_at": "2025-02-28T12:25:31",
+  "updated_at": "2025-02-28T12:48:16",
+  "public": true,
+  "published_at": null,
+  "volume": null,
+  "issue": 1,
+  "language": "en",
+  "title": "CODECHECK – CODECHECK Certificates and Reproducibility Reports",
+  "subtitle": null,
+  "description": "This collection includes [CODECHECK](https://codecheck.org.uk/) Certificates and Reproduciblity Reports complying to the CODECHECK principles for assessing the reproducibility of computational papers.",
+  "icon_s3": "ba3a82f0-3510-4ff4-8059-db3d12b5c6e0",
+  "header_s3": null,
+  "contributors": [
+    {
+      "given_name": "Daniel",
+      "surname": "Nüst",
+      "username": "nuest",
+      "avatar_s3": "d9848b66-474d-4706-8ec8-0e5639892f95",
+      "role": "editor"
+    }
+  ],
+  "submissions": [
+    {
+      "id": "0f15fb2e-a25e-11f1-b3d9-fa163ee7ec8f",
+      "status": "accepted",
+      "link_url": "https://doi.org/10.53962/pdw8-n5v0",
+      "link_title": "Reproducibility review of: Food Insecurity Projections for Anticipatory Action: A Comparative Spatiotemporal Analysis of FEWS NET and the IPC in Somalia"
+    },
+    {
+      "id": "dd7b078a-5f3a-45ee-b9f7-b1a69eedc544",
+      "status": "accepted",
+      "link_url": "https://doi.org/10.53962/nsys-9a40",
+      "link_title": "CODECHECK Certificate 2020-007"
+    }
+  ],
+  "pids": [
+    "doi:10.53962/qtrx-1a"
+  ]
+}

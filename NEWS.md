@@ -1,3 +1,10 @@
+# codecheck 0.26.0.9000
+
+## New Features
+
+* Certificates published on ResearchEquals are now audited against the CODECHECK curation policy, including membership in the CODECHECK collection (<https://researchequals.com/collections/720ac28c-07a1-40c3-a098-c77443e5de96>) for every certificate and in the Reproducible AGILE collection (<https://researchequals.com/collections/aad8e6af-bd94-47f3-b215-c68d31687c74>) for certificates of the AGILEGIS venue, each reported as its own finding. New `researchequals_policy_check()`, `check_researchequals_record()` for a single certificate, and `check_register_researchequals_policy()`/`report_researchequals_policy_findings()` for a whole register.
+* `register_render()` and `register_check()` gained `check_researchequals_policy` (default `TRUE`), the ResearchEquals counterpart of `check_zenodo_policy`.
+
 # codecheck 0.26.0
 
 ## New Features

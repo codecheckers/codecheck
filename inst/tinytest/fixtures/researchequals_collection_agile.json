@@ -1,0 +1,56 @@
+{
+  "id": "1bb9dfbe-e027-481b-92af-126479cf2075",
+  "collection_id": "aad8e6af-bd94-47f3-b215-c68d31687c74",
+  "created_at": "2025-02-28T12:50:38",
+  "updated_at": "2026-02-02T11:41:08",
+  "public": true,
+  "published_at": "2026-02-02T11:41:08",
+  "volume": null,
+  "issue": 1,
+  "language": "en",
+  "title": "Reproducible AGILE – Reproducibility Reports of the AGILE conferences on GI Science",
+  "subtitle": null,
+  "description": "Reproducibility reports of the reproductions conducted for accepted papers at the AGILE conference on GI Science, see <https://agile-gi.eu/conferences>. The conference series is organised by the [Association of Geographic Information Laboratories in Europe](https://agile-gi.eu/). Learn more about the reproducibility reviews at <https://reproducible-agile.github.io/>.\n",
+  "icon_s3": "b7e6268b-dbe9-4e56-9175-eb38128dc894",
+  "header_s3": null,
+  "contributors": [
+    {
+      "given_name": "Daniel",
+      "surname": "Nüst",
+      "username": "nuest",
+      "avatar_s3": "d9848b66-474d-4706-8ec8-0e5639892f95",
+      "role": "editor"
+    },
+    {
+      "given_name": "Carlos",
+      "surname": "Granell",
+      "username": "cgranell",
+      "avatar_s3": null,
+      "role": "editor"
+    },
+    {
+      "given_name": "Frank",
+      "surname": "Ostermann",
+      "username": "foost",
+      "avatar_s3": null,
+      "role": "editor"
+    }
+  ],
+  "submissions": [
+    {
+      "id": "8b2ade83-df94-45c8-bb67-197cc8c9cab1",
+      "status": "accepted",
+      "link_url": "https://doi.org/10.53962/wxh7-8yjd",
+      "link_title": "Reproducibility review of: Measuring Landmark Salience in Rural Areas: A Comparative Study of Two Models"
+    },
+    {
+      "id": "b810db85-5fc6-4a64-9fbc-0e3fc3a455b9",
+      "status": "accepted",
+      "link_url": "https://doi.org/10.53962/yckj-53e8",
+      "link_title": "Reproducibility review of: How close is \"close\"? An analysis of the spatial characteristics of perceived proximity in AirBnB property descriptions using Large Language Models"
+    }
+  ],
+  "pids": [
+    "doi:10.53962/nxah-m4"
+  ]
+}
