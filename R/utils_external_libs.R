@@ -372,6 +372,98 @@ download_library_fonts <- function(libs_dir, lib, force = FALSE) {
   downloaded
 }
 
+#' Prune Unreferenced Library Directories
+#'
+#' `docs/libs` accumulates directories that nothing renders references any
+#' more - most notably `header-attrs-<rmarkdown version>`, whose name changes
+#' with every rmarkdown release even though the file itself never does (see
+#' \url{https://github.com/codecheckers/codecheck/issues/89}). Nothing else
+#' in the render pipeline removes an old directory once its version stops
+#' being generated, so this scans every rendered HTML file for `libs/<name>/`
+#' references and deletes the directories that no file references.
+#'
+#' The libraries managed by [setup_external_libraries()] (Bootstrap, Font
+#' Awesome, Academicons) and the package's own JavaScript, copied by
+#' [copy_package_javascript()] into `docs/libs/codecheck`, are always kept,
+#' since their presence is intentional regardless of whether the current HTML
+#' output happens to link to every file inside them.
+#'
+#' **This must only be run after a complete, unfiltered render.** A partial
+#' render (a `from`/`to` subset, or one with certificate failures) leaves
+#' HTML files un-rerendered that may still reference a directory this would
+#' otherwise delete. As a further safeguard, if no HTML file can be found
+#' under `docs_dir` at all, nothing is deleted - an empty result there means
+#' there is no reliable way to tell what is still referenced, not that
+#' everything is unreferenced.
+#'
+#' @param docs_dir Root output directory that was rendered into (default "docs")
+#' @param libs_dir Libraries directory to prune (default "<docs_dir>/libs")
+#' @param dry_run If TRUE, only report what would be removed, without deleting anything
+#'
+#' @return Character vector of the pruned (or, if `dry_run`, prunable) directory names, invisibly
+#' @export
+prune_libs <- function(docs_dir = "docs", libs_dir = file.path(docs_dir, "libs"), dry_run = FALSE) {
+  if (!dir.exists(libs_dir)) {
+    cli::cli_alert_info("No libraries directory at {.path {libs_dir}}, nothing to prune")
+    return(invisible(character(0)))
+  }
+
+  # The top-level directory of every file belonging to a managed library
+  # (e.g. "font-awesome/css/font-awesome.min.css" -> "font-awesome"), plus the
+  # "codecheck" directory managed by copy_package_javascript() separately.
+  managed <- unique(c(
+    unlist(lapply(external_library_specs(), function(lib) {
+      vapply(library_expected_files(lib), function(f) strsplit(f, "/", fixed = TRUE)[[1]][1], character(1))
+    })),
+    "codecheck"
+  ))
+
+  entries <- list.dirs(libs_dir, recursive = FALSE, full.names = FALSE)
+  entries <- setdiff(entries, managed)
+
+  if (length(entries) == 0) {
+    cli::cli_alert_success("No unreferenced library directories in {.path {libs_dir}}")
+    return(invisible(character(0)))
+  }
+
+  html_files <- list.files(docs_dir, pattern = "\\.html$", recursive = TRUE, full.names = TRUE)
+
+  if (length(html_files) == 0) {
+    cli::cli_alert_warning("No HTML files found under {.path {docs_dir}}, skipping prune for safety")
+    return(invisible(character(0)))
+  }
+
+  referenced <- character(0)
+  for (html_file in html_files) {
+    content <- paste(readLines(html_file, warn = FALSE), collapse = "\n")
+    matches <- regmatches(content, gregexpr("libs/[^\"'/]+/", content))[[1]]
+    if (length(matches) > 0) {
+      referenced <- c(referenced, unique(gsub("^libs/|/$", "", matches)))
+    }
+  }
+  referenced <- unique(referenced)
+
+  unreferenced <- setdiff(entries, referenced)
+
+  if (length(unreferenced) == 0) {
+    cli::cli_alert_success("No unreferenced library directories in {.path {libs_dir}}")
+    return(invisible(character(0)))
+  }
+
+  total_size <- sum(file.size(list.files(file.path(libs_dir, unreferenced), recursive = TRUE, full.names = TRUE)), na.rm = TRUE)
+
+  if (dry_run) {
+    cli::cli_alert_info("Would prune {length(unreferenced)} unreferenced director{?y/ies} from {.path {libs_dir}} ({round(total_size / 1024)} KB): {toString(unreferenced)}")
+  } else {
+    for (entry in unreferenced) {
+      unlink(file.path(libs_dir, entry), recursive = TRUE)
+    }
+    cli::cli_alert_success("Pruned {length(unreferenced)} unreferenced director{?y/ies} from {.path {libs_dir}} ({round(total_size / 1024)} KB): {toString(unreferenced)}")
+  }
+
+  invisible(unreferenced)
+}
+
 #' Create README for Libraries Directory
 #'
 #' @param libs_dir Libraries directory

@@ -1,3 +1,21 @@
+#' Whether a `from`/`to` range covers a whole register, in either direction
+#'
+#' `register_render()`'s `register[(from:to),]` accepts `from`/`to` in either
+#' direction (newest-first or oldest-first, as `register_check()` also
+#' supports, see codecheckers/codecheck#79), so a full run is either
+#' `from = 1, to = n` or `from = n, to = 1` - checking only the first would
+#' wrongly treat a newest-first full run as partial and skip [prune_libs()].
+#'
+#' @param from The `from` argument as passed to `register_render()`
+#' @param to The `to` argument as passed to `register_render()`
+#' @param n Number of rows in the (unsubset) register
+#'
+#' @return `TRUE` if `from`/`to` covers every row of the register
+#' @keywords internal
+is_full_register_run <- function(from, to, n) {
+  (isTRUE(from == 1) && isTRUE(to == n)) || (isTRUE(from == n) && isTRUE(to == 1))
+}
+
 #' Function for rendering the register into different view
 #'
 #' NOTE: You should put a GitHub API token in the environment variable `GITHUB_PAT` to fix rate limits. Acquire one at see https://github.com/settings/tokens.
@@ -17,6 +35,7 @@
 #' @param ncores Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.
 #' @param verbose Logical; if TRUE, shows detailed output including pandoc commands from rmarkdown::render(). Defaults to FALSE.
 #' @param check_zenodo_policy Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.
+#' @param prune_unreferenced_libs Logical; if TRUE (the default), removes directories under `docs/libs` that no rendered HTML file references any more (see [prune_libs()] and codecheckers/codecheck#89) once rendering finishes. Only actually runs after a complete, unfiltered render (`from`/`to` covering the whole register) with no certificate failures; otherwise the step is skipped with a message, since a partial render can leave HTML that still references a directory this would delete.
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #'
@@ -41,9 +60,24 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             parallel = FALSE,
                             ncores = NULL,
                             verbose = FALSE,
-                            check_zenodo_policy = TRUE) {
+                            check_zenodo_policy = TRUE,
+                            prune_unreferenced_libs = TRUE) {
   cli::cli_h1("CODECHECK Register Rendering")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
+
+  # rmarkdown versions the header-attrs HTML dependency with
+  # packageVersion("rmarkdown"), so its directory name in docs/libs changes on
+  # every rmarkdown release even though the file itself never does, and the
+  # script is a no-op on the register's output (no `div.section` markup). See
+  # https://github.com/codecheckers/codecheck/issues/89
+  old_opts <- options(rmarkdown.html_dependency.header_attr = FALSE)
+  on.exit(options(old_opts), add = TRUE)
+
+  # Whether this is a complete, unfiltered render; prune_libs() must only run
+  # after one of these, since a partial render can leave HTML that still
+  # references a directory it would otherwise delete.
+  full_run <- is_full_register_run(from, to, nrow(register))
+  render_result <- NULL
 
   # Capture all warnings so they can be shown as structured log entries at the
   # end, rather than R's default "There were N warnings" prompt.
@@ -83,7 +117,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       CONFIG$NO_CODECHECKS <- nrow(register_table)
 
       if("html" %in% outputs) {
-        render_cert_htmls(register_table, force_download = FALSE, parallel = parallel, ncores = ncores)
+        render_result <- render_cert_htmls(register_table, force_download = FALSE, parallel = parallel, ncores = ncores)
       }
 
       create_filtered_reg_csvs(register_table, filter_by)
@@ -139,6 +173,19 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
     })
   }
 
+  # Prune docs/libs directories no HTML file references any more (#89). Only
+  # safe after a complete, unfiltered render with no certificate failures -
+  # see prune_libs()'s documentation for why.
+  no_failures <- is.null(render_result) || render_result$failures == 0
+  if (prune_unreferenced_libs && full_run && no_failures) {
+    tryCatch(
+      prune_libs(),
+      error = function(e) cli::cli_alert_warning("Could not prune docs/libs: {conditionMessage(e)}")
+    )
+  } else if (prune_unreferenced_libs) {
+    cli::cli_alert_info("Skipping docs/libs pruning: not a complete, failure-free render")
+  }
+
   cli::cli_alert_success("Register rendering complete")
   invisible(register_table)
 }
@@ -181,6 +228,10 @@ register_render_cert <- function(cert_id,
                                  download_and_convert = TRUE,
                                  verbose = FALSE) {
   cli::cli_h1("CODECHECK Render Certificate {cert_id}")
+
+  # See register_render() for why (codecheckers/codecheck#89).
+  old_opts <- options(rmarkdown.html_dependency.header_attr = FALSE)
+  on.exit(options(old_opts), add = TRUE)
 
   # Load register from file path if a string was provided
   if (is.character(register) && length(register) == 1 && !is.data.frame(register)) {

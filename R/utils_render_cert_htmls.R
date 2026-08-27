@@ -153,9 +153,12 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
                             c("CONFIG", "register_table", "force_download", "parallel"),
                             envir = environment())
 
-      # Load required packages on each worker
+      # Load required packages on each worker, and re-apply the option set by
+      # register_render() to skip the rmarkdown header-attrs dependency (#89) -
+      # options set on the main process are not inherited by PSOCK workers.
       parallel::clusterEvalQ(cl, {
         library(codecheck)
+        options(rmarkdown.html_dependency.header_attr = FALSE)
       })
 
       # Run in parallel
@@ -255,6 +258,8 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
       cli::cli_alert_warning("Cleaned up {length(stray_temps)} stray temporary file{?s} from parallel rendering")
     }
   }
+
+  invisible(list(n = nrow(register_table), failures = failures))
 }
 
 #'

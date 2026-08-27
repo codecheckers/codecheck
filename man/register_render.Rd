@@ -16,7 +16,8 @@ register_render(
   parallel = FALSE,
   ncores = NULL,
   verbose = FALSE,
-  check_zenodo_policy = TRUE
+  check_zenodo_policy = TRUE,
+  prune_unreferenced_libs = TRUE
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ register_render(
 \item{verbose}{Logical; if TRUE, shows detailed output including pandoc commands from rmarkdown::render(). Defaults to FALSE.}
 
 \item{check_zenodo_policy}{Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.}
+
+\item{prune_unreferenced_libs}{Logical; if TRUE (the default), removes directories under `docs/libs` that no rendered HTML file references any more (see [prune_libs()] and codecheckers/codecheck#89) once rendering finishes. Only actually runs after a complete, unfiltered render (`from`/`to` covering the whole register) with no certificate failures; otherwise the step is skipped with a message, since a partial render can leave HTML that still references a directory this would delete.}
 }
 \value{
 A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
