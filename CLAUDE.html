@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9011</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,6 +64,11 @@
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">R</span> <span class="at">-q</span> <span class="at">-e</span> <span class="st">'library(codecheck); setwd("inst/tinytest"); tinytest::run_test_file("test_&lt;name&gt;.R")'</span></span></code></pre></div>
 <p><code>setwd("inst/tinytest")</code> matters: test files <code>source("mocks.R")</code> and read fixtures relative to their own directory. Skipping docs means <code>man/</code> is not rebuilt, so run <code>devtools::document()</code> and a full <code>build_install_test(".")</code> before proposing the change.</p>
 <p>Test runtime is dominated by installation, not by the tests: the full edge-case file runs in under 5 seconds.</p>
+</div>
+<div class="section level3">
+<h3 id="when-to-run-the-full-suite">When to run the full suite<a class="anchor" aria-label="anchor" href="#when-to-run-the-full-suite"></a></h3>
+<p>After a large or multi-file change, run the focused test files touched by the change (as above), then offer to run the full <code>build_install_test(".")</code> suite - but let the user decide when to actually run it; do not run it unprompted just because a change was “large”.</p>
+<p><strong>Exception: always run the full suite, not just an offer, before/after any non-dev version bump</strong> (i.e. <code>usethis::use_version("patch"|"minor"|"major")</code>, or any manual <code>DESCRIPTION</code> edit that drops the <code>.9000</code>-style dev suffix). A version bump is a release signal, and the full suite is the only thing that has caught cross-file regressions like stale template fixtures or build-tool quirks (e.g. <code>R CMD build</code> silently stripping empty directories) that focused tests can’t see.</p>
 </div>
 </div>
 <div class="section level2">

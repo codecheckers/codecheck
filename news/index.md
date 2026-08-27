@@ -1,5 +1,152 @@
 # Changelog
 
+## codecheck 0.25.0.9011
+
+### New Features
+
+- **[`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  now also checks the checked repository itself**:
+  [`check_repository_org()`](http://codecheck.org.uk/codecheck/reference/check_repository_org.md)
+  fails the entry if the GitHub repository is not under `codecheckers/`
+  or the GitLab project not under `cdchck/`, mirroring the same rule
+  already enforced for Zenodo records.
+  [`check_repository_archived()`](http://codecheck.org.uk/codecheck/reference/check_repository_archived.md)
+  warns if the repository is not archived, closing
+  codecheckers/codecheck#25.
+  [`check_repository_badge()`](http://codecheck.org.uk/codecheck/reference/check_repository_badge.md)
+  and
+  [`check_repository_license()`](http://codecheck.org.uk/codecheck/reference/check_repository_license.md)
+  report, as information only, a missing CODECHECK badge (closing
+  codecheckers/codecheck#75) or license - neither is required by the
+  spec, so neither should stop a check or count as a defect. New helpers
+  [`get_github_repo_metadata()`](http://codecheck.org.uk/codecheck/reference/get_github_repo_metadata.md),
+  [`get_github_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_github_readme_raw.md),
+  [`get_gitlab_project_metadata()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_project_metadata.md)
+  and
+  [`get_gitlab_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_readme_raw.md)
+  (`R/configuration.R`) back the GitHub/GitLab lookups; OSF and Zenodo
+  repositories are unaffected, as none of these concepts apply there.
+
+### Bug Fixes
+
+- **ORCID icon on certificate pages is now clickable and links to the
+  ORCID profile**: the HTML certificate page showed no ORCID icon at
+  all - only the name itself was a plain text link.
+  [`add_paper_details_md()`](http://codecheck.org.uk/codecheck/reference/add_paper_details_md.md)
+  and
+  [`add_codecheck_details_md()`](http://codecheck.org.uk/codecheck/reference/add_codecheck_details_md.md)
+  (`R/utils_render_cert_md.R`) now also render the academicons ORCID
+  glyph as a link to `https://orcid.org/<id>` next to each name with an
+  ORCID ID, matching the icon already used on codechecker profile pages.
+
+- **ORCID icon in the PDF certificate no longer silently goes missing**:
+  `codecheck-preamble.sty`’s `\orcidicon` used the `academicons`
+  package’s `\aiOrcid`, which selects the icon font by OS-level family
+  name (via fontspec’s `\newfontfamily`). On a system where the font
+  isn’t registered with the OS font system (fontconfig) - which is not
+  guaranteed by a plain TeX Live/TinyTeX install - this silently falls
+  back to a legacy 8-bit TFM with no ORCID glyph, so the icon vanished
+  with no compile error. `\orcidicon` now loads `academicons.ttf`
+  directly by filename via `\newfontface`, resolved through TeX’s own
+  search path, so it no longer depends on OS font registration. Closes
+  codecheckers/codecheck#37
+
+- **An organisational creator is reported as information, not as an
+  error**:
+  [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  failed a record whenever any creator was recorded as an organisation,
+  but that can be correct - a workshop’s participants recorded as one
+  entry is a genuine group, not a person mistakenly recorded as one, and
+  record metadata alone cannot tell the two apart. The “creators” check
+  now reports this as a new `"info"` status rather than `"fail"`, so it
+  is surfaced to a human to judge instead of asserted as a defect, and
+  never makes a record non-compliant.
+  [`check_register_zenodo_policy()`](http://codecheck.org.uk/codecheck/reference/check_register_zenodo_policy.md)
+  gains an `n_info` column, and
+  [`report_zenodo_policy_findings()`](http://codecheck.org.uk/codecheck/reference/report_zenodo_policy_findings.md)
+  and
+  [`check_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/check_zenodo_record.md)
+  display info-level findings with an info icon during rendering. Raised
+  in codecheckers/register#205
+
+## codecheck 0.25.0.9010
+
+### Bug Fixes
+
+- **ORCID name checks no longer fail a fresh, unauthenticated
+  workspace**: `codecheck.Rmd`’s `validate_crossref` chunk called
+  `validate_contents_references(strict = TRUE)` with ORCID’s
+  `skip_on_auth_error` left off, so `make all` hard-failed on a
+  brand-new certificate unless the codechecker already had working ORCID
+  authentication - and the error’s own advice to run
+  [`rorcid::orcid_auth()`](https://rdrr.io/pkg/rorcid/man/orcid_auth.html)
+  could never fix it for a co-author’s or codechecker’s ORCID, since a
+  personal token only authorizes reading the authenticated user’s own
+  record. `get_orcid_name()` now falls back to the public,
+  unauthenticated ORCID API
+  ([`get_orcid_name_public()`](http://codecheck.org.uk/codecheck/reference/get_orcid_name_public.md))
+  whenever the authenticated lookup fails, which succeeds for any record
+  with a public name and needs no token at all; the template also
+  enables `skip_on_auth_error = TRUE` by default so rendering still
+  completes even when both lookups fail (e.g. offline)
+- **A fresh workspace now passes strict CrossRef and name validation out
+  of the box**: the shipped example `codecheck.yml`’s `reference` field
+  held a non-DOI semanticscholar PDF link, which CrossRef validation
+  always fetched and always got a 404 for; it is now the same `FIXME`
+  placeholder style already used elsewhere in the template, which the
+  existing placeholder-skip check recognizes. Separately, both the
+  CrossRef and ORCID name-matching checks split names on whitespace and
+  treated any 2+ character token as significant, so a middle initial
+  like “S.” (2 characters, period included) could never match a
+  spelled-out middle name like “Samuel” in the authoritative record -
+  exactly what the example author “Leslie S. Smith” hit against ORCID’s
+  “Leslie Samuel Smith”. Both comparisons now strip periods before
+  splitting, so initials are correctly reduced to a single,
+  insignificant character
+- **`test_workspace_creation.R` no longer expects a shipped `outputs/`
+  directory**: the test asserted
+  [`create_codecheck_files()`](http://codecheck.org.uk/codecheck/reference/create_codecheck_files.md)
+  produces a `codecheck/outputs` folder, but that folder is empty in the
+  template source, which git never tracks and which `R CMD build`
+  explicitly strips from the package tarball (“Removed empty directory
+  …”) - so the assertion only ever passed by accident, when a stray
+  local copy happened to exist. `codecheck.Rmd` already creates
+  `outputs/` on demand during rendering (see the `manifest` chunk), so
+  the test now only checks for the files that are actually shipped
+
+### New Features
+
+- **Licence correction keeps the licences already on a record**: the
+  curation policy requires the certificate to be CC-BY 4.0, but a
+  deposit may hold code, data or a source archive under other terms
+  alongside it.
+  [`curate_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/curate_zenodo_record.md)
+  adds CC-BY 4.0 through the new `license` field when it is missing and
+  writes the full rights list, leaving every other entry in place -
+  stripping one would overrule the depositor’’’s deliberate choice for
+  those files.
+  [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  accordingly passes any record containing CC-BY 4.0, whatever else is
+  listed, and reports the others as covering further artefacts
+
+## codecheck 0.25.0.9009
+
+### Bug Fixes
+
+- **The register CSS is written to the output directory, not to the
+  working directory**:
+  [`copy_register_css()`](http://codecheck.org.uk/codecheck/reference/copy_register_css.md)
+  defaulted to a hardcoded `docs/assets` relative to the working
+  directory and ignored where the libraries were being installed, so
+  rendering with a `libs_dir` outside the current directory scattered
+  `codecheck-register.css` into whatever directory the render happened
+  to start from. The assets directory is now derived from the libraries
+  directory through the new
+  [`register_assets_dir()`](http://codecheck.org.uk/codecheck/reference/register_assets_dir.md),
+  which is what the two call sites in
+  [`setup_external_libraries()`](http://codecheck.org.uk/codecheck/reference/setup_external_libraries.md)
+  pass
+
 ## codecheck 0.25.0.9008
 
 ### Bug Fixes

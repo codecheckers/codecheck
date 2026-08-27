@@ -35,10 +35,11 @@ validate_codecheck_yml_orcid(
 
 - skip_on_auth_error:
 
-  Logical. If `TRUE`, skip validation when ORCID authentication fails
-  instead of throwing an error. Default is `FALSE`, which requires ORCID
-  authentication. Set to `TRUE` to allow the function to work without
-  ORCID authentication (e.g., CI/CD pipelines, test environments).
+  Logical. If `TRUE`, skip validation for a record when both the
+  authenticated ORCID lookup and the public API fallback fail, instead
+  of throwing an error. Default is `FALSE`. Most records are still
+  validated via the public API fallback regardless of this setting; this
+  only controls behavior once both lookups fail.
 
 ## Value
 
@@ -62,17 +63,21 @@ Validates author and codechecker information against the ORCID API. For
 each person with an ORCID, retrieves their ORCID record and compares the
 name in the ORCID record with the name in the local codecheck.yml file.
 
-Note: This function requires access to the ORCID API. If you encounter
-authentication issues, you can either:
+Note: Name lookups first try the authenticated ORCID API
+([`orcid_person`](https://rdrr.io/pkg/rorcid/man/orcid_person.html)),
+then automatically fall back to the public, unauthenticated ORCID API
+for records whose name is publicly visible. Personal ORCID
+authentication (`ORCID_TOKEN` or
+[`rorcid::orcid_auth()`](https://rdrr.io/pkg/rorcid/man/orcid_auth.html))
+only ever authorizes reading the authenticated user's own record, so it
+cannot help validate a co-author's or a different codechecker's ORCID -
+the public fallback is what makes those lookups work. If both the
+authenticated lookup and the public fallback fail (e.g. no network
+access, or the record's name is not public), you can either:
 
-- Set the `ORCID_TOKEN` environment variable with your ORCID token
+- Set `skip_on_auth_error = TRUE` to skip validation for that record
 
-- Run
-  [`rorcid::orcid_auth()`](https://rdrr.io/pkg/rorcid/man/orcid_auth.html)
-  to authenticate interactively
-
-- Set `skip_on_auth_error = TRUE` to skip validation if authentication
-  fails
+- Verify the ORCID is correct and its name is public
 
 ## Author
 

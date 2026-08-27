@@ -52,6 +52,23 @@ read fixtures relative to their own directory. Skipping docs means
 Test runtime is dominated by installation, not by the tests: the full
 edge-case file runs in under 5 seconds.
 
+### When to run the full suite
+
+After a large or multi-file change, run the focused test files touched
+by the change (as above), then offer to run the full
+`build_install_test(".")` suite - but let the user decide when to
+actually run it; do not run it unprompted just because a change was
+“large”.
+
+**Exception: always run the full suite, not just an offer, before/after
+any non-dev version bump**
+(i.e. `usethis::use_version("patch"|"minor"|"major")`, or any manual
+`DESCRIPTION` edit that drops the `.9000`-style dev suffix). A version
+bump is a release signal, and the full suite is the only thing that has
+caught cross-file regressions like stale template fixtures or build-tool
+quirks (e.g. `R CMD build` silently stripping empty directories) that
+focused tests can’t see.
+
 ## Changelog
 
 Always update `NEWS.md` when making changes. Follow the existing

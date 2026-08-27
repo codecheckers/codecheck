@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9011</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,9 @@ record metadata like [get_zenodo_record_metadata()]; injectable for testing</p><
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>a data.frame with one row per checked certificate and the columns
   `certificate`, `record_id`, `status` ("compliant", "non-compliant" or
-  "unknown"), `n_fail`, `n_warn` and `findings`</p>
+  "unknown"), `n_fail`, `n_warn`, `n_info` and `findings`. An "info" finding
+  (e.g. a creator recorded as an organisation, which is correct for a
+  genuine group) never makes a record non-compliant</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

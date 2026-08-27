@@ -197,6 +197,14 @@ under the MIT license, see file `LICENSE`.
 - [`check_register_zenodo_policy()`](http://codecheck.org.uk/codecheck/reference/check_register_zenodo_policy.md)
   : Check a register's Zenodo records against the CODECHECK curation
   policy
+- [`check_repository_archived()`](http://codecheck.org.uk/codecheck/reference/check_repository_archived.md)
+  : Check that a repository is archived
+- [`check_repository_badge()`](http://codecheck.org.uk/codecheck/reference/check_repository_badge.md)
+  : Check that a repository advertises the CODECHECK badge
+- [`check_repository_license()`](http://codecheck.org.uk/codecheck/reference/check_repository_license.md)
+  : Check that a repository has a license
+- [`check_repository_org()`](http://codecheck.org.uk/codecheck/reference/check_repository_org.md)
+  : Check that a repository is in the codecheckers/cdchck organisation
 - [`check_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/check_zenodo_record.md)
   : Audit a Zenodo record against the CODECHECK curation policy
 - [`cite_certificate()`](http://codecheck.org.uk/codecheck/reference/cite_certificate.md)
@@ -391,6 +399,14 @@ under the MIT license, see file `LICENSE`.
   : Get git repository information
 - [`get_github_handle_by_name()`](http://codecheck.org.uk/codecheck/reference/get_github_handle_by_name.md)
   : Get GitHub handle for a codechecker by name
+- [`get_github_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_github_readme_raw.md)
+  : Retrieve the rendered README of a GitHub repository, as raw text
+- [`get_github_repo_metadata()`](http://codecheck.org.uk/codecheck/reference/get_github_repo_metadata.md)
+  : Retrieve repository metadata from the GitHub API
+- [`get_gitlab_project_metadata()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_project_metadata.md)
+  : Retrieve repository metadata from the GitLab.com API
+- [`get_gitlab_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_readme_raw.md)
+  : Retrieve the README of a GitLab.com project, as raw text
 - [`get_lifecycle_metadata()`](http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.md)
   : Retrieve metadata from Lifecycle Journal
 - [`get_openalex_id()`](http://codecheck.org.uk/codecheck/reference/get_openalex_id.md)
@@ -487,6 +503,8 @@ under the MIT license, see file `LICENSE`.
   : Set "Title" and "Paper reference" columns for CSV files
 - [`setup_external_libraries()`](http://codecheck.org.uk/codecheck/reference/setup_external_libraries.md)
   : Download and Setup External Libraries Locally
+- [`split_github_repo_spec()`](http://codecheck.org.uk/codecheck/reference/split_github_repo_spec.md)
+  : Split a GitHub repo spec into org, repo and an optional sub-path
 - [`split_person_name()`](http://codecheck.org.uk/codecheck/reference/split_person_name.md)
   : Split a person name into given and family name
 - [`update_certificate_from_github()`](http://codecheck.org.uk/codecheck/reference/update_certificate_from_github.md)

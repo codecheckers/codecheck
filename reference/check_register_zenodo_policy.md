@@ -28,7 +28,9 @@ check_register_zenodo_policy(
 
 a data.frame with one row per checked certificate and the columns
 \`certificate\`, \`record_id\`, \`status\` ("compliant", "non-compliant"
-or "unknown"), \`n_fail\`, \`n_warn\` and \`findings\`
+or "unknown"), \`n_fail\`, \`n_warn\`, \`n_info\` and \`findings\`. An
+"info" finding (e.g. a creator recorded as an organisation, which is
+correct for a genuine group) never makes a record non-compliant
 
 ## Details
 

@@ -14,7 +14,7 @@ curate_zenodo_record(
   dry_run = TRUE,
   record_metadata = NULL,
   fields = c("title", "publisher", "language", "resource_type", "identifiers", "reviews",
-    "repository", "creators"),
+    "repository", "creators", "license"),
   creator_overrides = list()
 )
 ```

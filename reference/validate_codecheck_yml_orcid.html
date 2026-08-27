@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9011</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,10 +75,11 @@ If <code>FALSE</code> (default), only issue warnings.</p></dd>
 
 
 <dt id="arg-skip-on-auth-error">skip_on_auth_error<a class="anchor" aria-label="anchor" href="#arg-skip-on-auth-error"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, skip validation when ORCID
-authentication fails instead of throwing an error. Default is <code>FALSE</code>,
-which requires ORCID authentication. Set to <code>TRUE</code> to allow the function
-to work without ORCID authentication (e.g., CI/CD pipelines, test environments).</p></dd>
+<dd><p>Logical. If <code>TRUE</code>, skip validation for a
+record when both the authenticated ORCID lookup and the public API
+fallback fail, instead of throwing an error. Default is <code>FALSE</code>.
+Most records are still validated via the public API fallback regardless
+of this setting; this only controls behavior once both lookups fail.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -99,10 +100,17 @@ to work without ORCID authentication (e.g., CI/CD pipelines, test environments).
     <p>Validates author and codechecker information against the ORCID API.
 For each person with an ORCID, retrieves their ORCID record and compares
 the name in the ORCID record with the name in the local codecheck.yml file.</p>
-<p>Note: This function requires access to the ORCID API. If you encounter
-authentication issues, you can either:</p><ul><li><p>Set the <code>ORCID_TOKEN</code> environment variable with your ORCID token</p></li>
-<li><p>Run <code><a href="https://rdrr.io/pkg/rorcid/man/orcid_auth.html" class="external-link">rorcid::orcid_auth()</a></code> to authenticate interactively</p></li>
-<li><p>Set <code>skip_on_auth_error = TRUE</code> to skip validation if authentication fails</p></li>
+<p>Note: Name lookups first try the authenticated ORCID API
+(<code><a href="https://rdrr.io/pkg/rorcid/man/orcid_person.html" class="external-link">orcid_person</a></code>), then automatically fall back to the
+public, unauthenticated ORCID API for records whose name is publicly
+visible. Personal ORCID authentication (<code>ORCID_TOKEN</code> or
+<code><a href="https://rdrr.io/pkg/rorcid/man/orcid_auth.html" class="external-link">rorcid::orcid_auth()</a></code>) only ever authorizes reading the
+authenticated user's own record, so it cannot help validate a co-author's
+or a different codechecker's ORCID - the public fallback is what makes
+those lookups work. If both the authenticated lookup and the public
+fallback fail (e.g. no network access, or the record's name is not
+public), you can either:</p><ul><li><p>Set <code>skip_on_auth_error = TRUE</code> to skip validation for that record</p></li>
+<li><p>Verify the ORCID is correct and its name is public</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

@@ -41,6 +41,10 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_certificate_id.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_issue_status.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_register_zenodo_policy.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/check_repository_archived.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/check_repository_badge.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/check_repository_license.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/check_repository_org.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_zenodo_record.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/cite_certificate.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/clear_cert_link_cache.html</loc></url>
@@ -129,10 +133,15 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_codecheckers_data.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_git_info.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_github_handle_by_name.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_github_readme_raw.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_github_repo_metadata.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_gitlab_project_metadata.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_gitlab_readme_raw.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_openalex_id.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_openalex_id_result.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_or_create_zenodo_record.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/get_orcid_name_public.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_osf_cert_link.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_researchequals_cert_link.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_zenodo_cert_link.html</loc></url>
@@ -153,6 +162,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_url_with_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/parse_repository_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/preprocess_register.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/register_assets_dir.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_check.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_clear_cache.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_render.html</loc></url>
@@ -184,6 +194,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/set_paper_title_references.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/set_paper_title_references_csv.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/setup_external_libraries.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/split_github_repo_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_person_name.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/update_certificate_from_github.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/update_codecheck_yml_from_lifecycle.html</loc></url>
