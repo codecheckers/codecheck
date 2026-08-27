@@ -343,11 +343,14 @@ register_update_stats <- function(docs_dir = "docs",
 #' This functions starts of a `data.frame` read from the local register file.
 #'
 #' **Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+#' Certificate IDs must also be unique across the whole register; this is checked
+#' once up front, over all rows, before any per-entry checks run.
 #'
 #' Also checks the checked repository itself: organisation membership
 #' (`check_repository_org()`), archived status (`check_repository_archived()`),
-#' CODECHECK badge presence (`check_repository_badge()`) and license presence
-#' (`check_repository_license()`).
+#' CODECHECK badge presence (`check_repository_badge()`), license presence
+#' (`check_repository_license()`) and the `codecheck` topic tag
+#' (`check_repository_topic()`).
 #'
 #' @param register A `data.frame` with all required information for the register's view
 #' @param from The first register entry to check
@@ -370,7 +373,15 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
   source(system.file("extdata", "config.R", package = "codecheck"))
 
   cli::cli_alert_info("Cache path: {.path {R.cache::getCacheRootPath()}}")
-  
+
+  # certificate IDs must be unique across the whole register, see #9; checked
+  # once up front over all rows, not just the from:to range being audited
+  dup <- duplicated(register$Certificate) | duplicated(register$Certificate, fromLast = TRUE)
+  if (any(dup)) {
+    stop("Duplicate certificate ID(s) in register: ",
+         toString(unique(register$Certificate[dup])))
+  }
+
   # The raw register has no Report column, the report DOI comes from each
   # codecheck.yml, so collect it while the configurations are being read anyway.
   zenodo_entries <- list()
@@ -387,6 +398,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
       check_repository_archived(entry, spec)
       check_repository_badge(entry, spec)
       check_repository_license(entry, spec)
+      check_repository_topic(entry, spec)
     }
 
     # check certificate IDs if there is a codecheck.yml

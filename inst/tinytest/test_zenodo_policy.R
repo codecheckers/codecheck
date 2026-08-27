@@ -356,6 +356,48 @@ expect_equal(res[["creators"]][[1]]$given, "Gabriella")
 # without the override the heuristic would get it wrong, which is why it exists
 expect_equal(split_person_name("Gabriella Low Chew Tung")$family, "Tung")
 
+# ------------------------------------------------------- title certificate ID
+
+# a title without a certificate ID fails, even if correctly spelled, see #20
+no_id <- broken
+no_id$metadata$title <- "CODECHECK Certificate"
+res <- zenodo_policy_check(no_id$metadata)
+expect_equal(res$status[res$check == "title"], "fail")
+expect_true(grepl("certificate ID", res$detail[res$check == "title"]))
+
+# ------------------------------------------------------------ certificate PDF
+
+# a PDF present but not named codecheck.pdf warns rather than fails, see #20
+other_name <- broken
+res <- zenodo_policy_check(other_name$metadata, files = c("certificate.pdf", "codecheck.Rmd"))
+expect_equal(res$status[res$check == "certificate PDF"], "warn")
+expect_true(grepl("codecheck.pdf", res$detail[res$check == "certificate PDF"], fixed = TRUE))
+
+# no PDF at all is still a failure
+res <- zenodo_policy_check(other_name$metadata, files = c("codecheck.Rmd"))
+expect_equal(res$status[res$check == "certificate PDF"], "fail")
+
+# ------------------------------------------------------- community membership
+
+# no `record` argument -> the check is not run at all, see #20
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files))
+expect_equal(sum(res$check == "community"), 0L)
+
+# member of the codecheck community -> pass
+member <- list(parent = list(communities = list(ids = list("codecheck"))))
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = member)
+expect_equal(res$status[res$check == "community"], "pass")
+
+# not a member -> fail
+non_member <- list(parent = list(communities = list(ids = list("some-other-community"))))
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = non_member)
+expect_equal(res$status[res$check == "community"], "fail")
+
+# no communities at all -> fail
+no_comm <- list(parent = list())
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = no_comm)
+expect_equal(res$status[res$check == "community"], "fail")
+
 # ------------------------------------------------------------------ licence
 
 # CC-BY 4.0 must be present; further licences for other artefacts are fine

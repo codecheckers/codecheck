@@ -174,3 +174,49 @@ info <- capture_info(
   )
 )
 expect_true(grepl("has no license", info))
+
+# --- check_repository_topic(): info only, mocked GitHub + GitLab ---------
+
+# Test 21: GitHub, 'codecheck' topic present -> no info message
+info <- capture_info(
+  with_mocked_codecheck(
+    list(get_github_repo_metadata = function(repo) list(topics = list("codecheck", "reproducibility"))),
+    codecheck:::check_repository_topic(entry, codecheck:::parse_repository_spec("github::codecheckers/Foo"))
+  )
+)
+expect_equal(info, "")
+
+# Test 22: GitHub, no 'codecheck' topic -> info message
+info <- capture_info(
+  with_mocked_codecheck(
+    list(get_github_repo_metadata = function(repo) list(topics = list("reproducibility"))),
+    codecheck:::check_repository_topic(entry, codecheck:::parse_repository_spec("github::codecheckers/Foo"))
+  )
+)
+expect_true(grepl("does not have the 'codecheck' topic tag", info))
+
+# Test 23: GitLab, 'codecheck' topic present -> no info message
+info <- capture_info(
+  with_mocked_codecheck(
+    list(get_gitlab_project_metadata = function(repo) list(topics = list("codecheck"))),
+    codecheck:::check_repository_topic(entry, codecheck:::parse_repository_spec("gitlab::cdchck/Foo"))
+  )
+)
+expect_equal(info, "")
+
+# Test 24: GitLab, no topics at all -> info message
+info <- capture_info(
+  with_mocked_codecheck(
+    list(get_gitlab_project_metadata = function(repo) list(topics = NULL)),
+    codecheck:::check_repository_topic(entry, codecheck:::parse_repository_spec("gitlab::cdchck/Foo"))
+  )
+)
+expect_true(grepl("does not have the 'codecheck' topic tag", info))
+
+# Test 25: metadata lookup failure degrades to a no-op, not a crash
+expect_silent(
+  with_mocked_codecheck(
+    list(get_github_repo_metadata = function(repo) NULL),
+    codecheck:::check_repository_topic(entry, codecheck:::parse_repository_spec("github::codecheckers/Foo"))
+  )
+)

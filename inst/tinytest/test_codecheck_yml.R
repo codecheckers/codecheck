@@ -19,6 +19,18 @@ expect_error(validate_codecheck_yml("yaml/certificate_id_invalid/codecheck3.yml"
 expect_error(validate_codecheck_yml("yaml/manifest_missing/codecheck.yml"),
              pattern = "root-level node 'manifest'")
 
+# YAML document marker '---' ----
+expect_error(validate_codecheck_yml("yaml/missing_document_marker/codecheck.yml"),
+             pattern = "must start with the YAML document marker '---'")
+
+# UTF-8 encoding ----
+expect_error(validate_codecheck_yml("yaml/invalid_utf8/codecheck.yml"),
+             pattern = "is not valid UTF-8 encoded")
+
+# codechecker must have at least one entry ----
+expect_error(validate_codecheck_yml("yaml/codechecker_empty/codecheck.yml"),
+             pattern = "at least one 'codechecker' entry")
+
 # report DOI ----
 expect_error(validate_codecheck_yml("yaml/report_doi_invalid/codecheck.yml"),
              pattern = "not a valid DOI")

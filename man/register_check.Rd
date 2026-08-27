@@ -25,11 +25,14 @@ This functions starts of a `data.frame` read from the local register file.
 }
 \details{
 **Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+Certificate IDs must also be unique across the whole register; this is checked
+once up front, over all rows, before any per-entry checks run.
 
 Also checks the checked repository itself: organisation membership
 (`check_repository_org()`), archived status (`check_repository_archived()`),
-CODECHECK badge presence (`check_repository_badge()`) and license presence
-(`check_repository_license()`).
+CODECHECK badge presence (`check_repository_badge()`), license presence
+(`check_repository_license()`) and the `codecheck` topic tag
+(`check_repository_topic()`).
 }
 \author{
 Daniel Nuest

@@ -762,11 +762,16 @@ split_person_name <- function(name) {
 #' @param record_metadata list of record metadata
 #' @param files character vector of file names in the deposit, optional; needed
 #'   for the checks on the certificate PDF and the machine-readable source.
+#' @param record the full record as returned by the InvenioRDM API (i.e. the
+#'   `record` element of [get_zenodo_record_metadata()]'s return value),
+#'   optional; needed for the community membership check, see #20. Community
+#'   membership lives outside `metadata` (under `parent$communities`), so this
+#'   check is only added when `record` is supplied.
 #' @return a data.frame with columns `check`, `status` (one of "pass", "warn",
 #'   "fail") and `detail`, one row per policy requirement.
 #' @author Daniel Nuest
 #' @export
-zenodo_policy_check <- function(record_metadata, files = NULL) {
+zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
   results <- list()
   add <- function(check, status, detail) {
     results[[length(results) + 1]] <<- data.frame(
@@ -775,13 +780,20 @@ zenodo_policy_check <- function(record_metadata, files = NULL) {
 
   m <- record_metadata
 
-  # Title
+  # Title: must contain "CODECHECK Certificate" (correctly spelled) and the
+  # certificate ID (e.g. "2026-023"), see #20
   title <- if (is.character(m$title)) m$title else ""
-  if (grepl("CODECHECK Certificate", title, fixed = TRUE)) {
+  has_cert_text <- grepl("CODECHECK Certificate", title, fixed = TRUE)
+  has_cert_text_lower <- grepl("CODECHECK certificate", title, fixed = TRUE)
+  has_cert_id <- grepl("[0-9]{4}-[0-9]{3}", title)
+  if (has_cert_text && has_cert_id) {
     add("title", "pass", title)
-  } else if (grepl("CODECHECK certificate", title, fixed = TRUE)) {
+  } else if (has_cert_text_lower && has_cert_id) {
     add("title", "warn",
         paste0("'", title, "' - policy spells it \"CODECHECK Certificate\""))
+  } else if (has_cert_text || has_cert_text_lower) {
+    add("title", "fail",
+        paste0("'", title, "' - must contain the certificate ID, e.g. \"2026-023\""))
   } else {
     add("title", "fail",
         paste0("'", title, "' - must contain \"CODECHECK Certificate\" and the certificate ID"))
@@ -907,8 +919,17 @@ zenodo_policy_check <- function(record_metadata, files = NULL) {
   # Files
   if (!is.null(files)) {
     pdfs <- files[grepl("\\.pdf$", files, ignore.case = TRUE)]
-    add("certificate PDF", if (length(pdfs) > 0) "pass" else "fail",
-        if (length(pdfs) > 0) paste(pdfs, collapse = "; ") else "no PDF in the deposit")
+    # the file must be present, and should specifically be named codecheck.pdf
+    # (see #20); a differently-named PDF is a warning, not a failure
+    if (length(pdfs) == 0) {
+      add("certificate PDF", "fail", "no PDF in the deposit")
+    } else if (any(tolower(pdfs) == "codecheck.pdf")) {
+      add("certificate PDF", "pass", paste(pdfs, collapse = "; "))
+    } else {
+      add("certificate PDF", "warn",
+          paste0(paste(pdfs, collapse = "; "),
+                 " - policy expects the certificate PDF to be named codecheck.pdf"))
+    }
     sources <- files[grepl("\\.(Rmd|qmd|docx|odt|md|tex)$", files, ignore.case = TRUE)]
     has_rmd <- any(grepl("\\.Rmd$", sources, ignore.case = TRUE))
     has_qmd <- any(grepl("\\.qmd$", sources, ignore.case = TRUE))
@@ -922,6 +943,17 @@ zenodo_policy_check <- function(record_metadata, files = NULL) {
                  "so the certificate source is unambiguous")
         else if (length(sources) > 0) paste(sources, collapse = "; ")
         else "deposit should include the certificate source, e.g. codecheck.Rmd")
+  }
+
+  # Community membership: the deposit must be part of the Zenodo "codecheck"
+  # community, see #20. Only checked when the full record is supplied, since
+  # this information is not part of `metadata`.
+  if (!is.null(record)) {
+    community_ids <- unlist(record$parent$communities$ids)
+    in_community <- "codecheck" %in% community_ids
+    add("community", if (in_community) "pass" else "fail",
+        if (in_community) "member of the codecheck community"
+        else "not a member of the Zenodo codecheck community (https://zenodo.org/communities/codecheck/)")
   }
 
   do.call(rbind, results)
@@ -998,7 +1030,7 @@ check_zenodo_record <- function(record, register_dir = getwd()) {
   rec <- get_zenodo_record_metadata(id)
 
   cli::cli_h1(paste0("Zenodo record ", id, " vs. CODECHECK curation policy"))
-  result <- zenodo_policy_check(rec$metadata, files = rec$files)
+  result <- zenodo_policy_check(rec$metadata, files = rec$files, record = rec$record)
 
   for (i in seq_len(nrow(result))) {
     line <- paste0(result$check[i], ": ", result$detail[i])
@@ -1460,7 +1492,7 @@ check_register_zenodo_policy <- function(register_table,
       if (is.null(record)) {
         NULL
       } else {
-        zenodo_policy_check(record$metadata, files = unlist(record$files))
+        zenodo_policy_check(record$metadata, files = unlist(record$files), record = record$record)
       }
     }, error = function(e) NULL)
 

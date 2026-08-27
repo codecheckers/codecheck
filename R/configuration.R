@@ -507,15 +507,31 @@ get_certificate_from_github_issue <- function(yml_file,
 #' @export
 validate_codecheck_yml <- function(configuration) {
   codecheck_yml <- NULL
-  if (is.character(configuration) && file.exists(configuration)) {
-    # TODO: validate that file encoding is UTF-8, if a file is given
+  is_file <- is.character(configuration) && file.exists(configuration)
+  if (is_file) {
+    # these two checks need the raw bytes, and must run before read_yaml():
+    # an invalid byte inside a quoted scalar makes the YAML parser itself
+    # fail with a cryptic scanner error rather than the message below
+    lines <- readLines(configuration, warn = FALSE, encoding = "bytes")
+
+    # MUST be UTF-8 encoded
+    assertthat::assert_that(all(validUTF8(lines)),
+                            msg = paste0(configuration, " is not valid UTF-8 encoded"))
+
+    # MUST start with the YAML document marker '---'
+    non_empty <- trimws(lines)
+    non_empty <- non_empty[nzchar(non_empty)]
+    assertthat::assert_that(length(non_empty) > 0 && identical(non_empty[1], "---"),
+                            msg = paste0(configuration,
+                                         " must start with the YAML document marker '---'"))
+
     codecheck_yml <- yaml::read_yaml(configuration)
   } else if (inherits(configuration, "list")) {
     codecheck_yml <- configuration
   } else {
     stop("Could not load codecheck configuration from input '", configuration, "'")
   }
-  
+
   # MUST have a non-empty certificate identifier matching the pattern NNNN-NNN
   assertthat::assert_that(isTRUE(grepl("^\\d{4}-\\d{3}$", codecheck_yml$certificate)), # if certificate is missing, grepl returns a logical(0)
                           msg = paste0("The certificate identifier '",
@@ -542,6 +558,10 @@ validate_codecheck_yml <- function(configuration) {
                             msg = "All authors must have a 'name'.")
   })
   
+  # codechecker MUST have at least one entry
+  assertthat::assert_that(is.list(codecheck_yml$codechecker) && length(codecheck_yml$codechecker) > 0,
+                          msg = "codecheck.yml must have at least one 'codechecker' entry")
+
   # codechecker MUST have a name
   sapply(X = codecheck_yml$codechecker, FUN = function(codechecker_item) {
     assertthat::assert_that(assertthat::has_name(codechecker_item, "name"),

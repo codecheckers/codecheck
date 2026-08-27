@@ -129,6 +129,34 @@ check_repository_license <- function(entry, spec) {
   }
 }
 
+#' Check that a repository advertises the "codecheck" topic tag
+#'
+#' The community workflow asks codecheckers to tag the checked repository with
+#' the `codecheck` topic, see codecheckers/codecheck#14 and
+#' <https://github.com/search?q=topic%3Acodecheck+fork%3Atrue+org%3Acodecheckers&type=Repositories>.
+#' A missing topic is informational only, not a defect, so this reports via
+#' `cli::cli_alert_info()` rather than `warning()`, matching
+#' `check_repository_badge()`.
+#'
+#' @param entry The registry entry
+#' @param spec The parsed repository spec, see `parse_repository_spec()`
+#' @return None
+check_repository_topic <- function(entry, spec) {
+  metadata <- switch(spec[["type"]],
+    "github" = get_github_repo_metadata(spec[["repo"]]),
+    "gitlab" = get_gitlab_project_metadata(spec[["repo"]]),
+    NULL
+  )
+
+  if (is.null(metadata)) {
+    return(invisible(NULL))
+  }
+
+  if (!("codecheck" %in% unlist(metadata$topics))) {
+    cli::cli_alert_info("{entry$Certificate} repository does not have the 'codecheck' topic tag: {spec[['repo']]}")
+  }
+}
+
 #' Function issue status. If the issue is not closed a warning is thrown
 #' stating that the issue is still open.
 #'

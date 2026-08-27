@@ -1,0 +1,8 @@
+---
+version: https://codecheck.org.uk/spec/config/1.0/
+certificate: "2024-001"
+manifest:
+  - file: test.txt
+codechecker:
+  - name: "Test ÿ Checker"
+report: https://doi.org/10.5281/zenodo.1234567

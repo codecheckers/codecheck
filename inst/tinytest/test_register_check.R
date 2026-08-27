@@ -208,5 +208,23 @@ output <- capture.output({
 })
 expect_true(length(output) > 0)
 
+# Test 13: register_check() - duplicate certificate IDs are rejected up front ----
+# Purely local: must fail before any network call is made, so no repository
+# needs to be reachable
+test_register_dup <- data.frame(
+  Certificate = c("2024-111", "2024-111"),
+  Repository = c("zenodo-sandbox::145250", "github::codecheckers/register"),
+  Type = c("community", "community"),
+  Venue = c("test", "test"),
+  Issue = c(NA, NA),
+  stringsAsFactors = FALSE
+)
+
+expect_error({
+  suppressMessages({
+    codecheck::register_check(test_register_dup, from = 1, to = 1)
+  })
+}, pattern = "Duplicate certificate ID")
+
 # Clean up
 file.remove(list.files(tempdir(), pattern = "^file.*\\.csv$", full.names = TRUE))
