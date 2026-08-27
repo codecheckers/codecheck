@@ -3,12 +3,11 @@ version: https://codecheck.org.uk/spec/config/1.0
 
 paper:
   title: >
-    The principal components of natural images
+    FIXME: Paper title
   authors:
-    - name: Peter J. B. Hancock
-    - name: Roland J. Baddeley
-    - name: Leslie S. Smith
-      ORCID: 0000-0002-3716-8013
+    - name: FIXME
+    - name: Josiah Carberry
+      ORCID: 0000-0002-1825-0097
   reference: https://doi.org/FIXME
 
 manifest:
@@ -16,15 +15,12 @@ manifest:
     comment: Placeholder output file - replace with actual reproduced outputs (figures, data files, tables, etc.)
 
 codechecker:
-  - name: Stephen J. Eglen
-    ORCID: 0000-0001-8607-8025
-  - name: Daniel Nüst
-    ORCID: 0000-0002-0024-5046
+  - name: Cameron Checker
+    ORCID: 0000-0000-0000-0000
 
 summary: >
-  Matlab code written by Iain Davies to reproduce original
-  paper; natural images provided by Peter Hancock.
-repository: https://github.com/codecheckers/Reproduction-Hancock
+  FIXME: Short summary of the CODECHECK certificate
+repository: https://github.com/FIXME/FIXME
 check_time: "2020-04-13 10:00:00"
 certificate: 2020-XYZ
 # Use the version-specific Zenodo DOI, not the "concept DOI" (which always
