@@ -344,9 +344,10 @@ register_update_stats <- function(docs_dir = "docs",
 #'
 #' **Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
 #'
-#' Further test ideas:
-#'
-#' - Does the repo have a LICENSE?
+#' Also checks the checked repository itself: organisation membership
+#' (`check_repository_org()`), archived status (`check_repository_archived()`),
+#' CODECHECK badge presence (`check_repository_badge()`) and license presence
+#' (`check_repository_license()`).
 #'
 #' @param register A `data.frame` with all required information for the register's view
 #' @param from The first register entry to check
@@ -377,6 +378,16 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
   for (i in seq(from = from, to = to)) {
     cat("Checking", toString(register[i, ]), "\n")
     entry <- register[i, ]
+
+    # repository-level checks: org membership (fail), archived status
+    # (warning), badge and license presence (info)
+    spec <- tryCatch(parse_repository_spec(entry$Repository), error = function(e) NULL)
+    if (!is.null(spec)) {
+      check_repository_org(entry, spec)
+      check_repository_archived(entry, spec)
+      check_repository_badge(entry, spec)
+      check_repository_license(entry, spec)
+    }
 
     # check certificate IDs if there is a codecheck.yml
     codecheck_yaml <- get_codecheck_yml(entry$Repository)

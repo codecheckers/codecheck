@@ -153,6 +153,103 @@ get_codecheck_yml_gitlab <- function(x) {
   }
 }
 
+#' Split a GitHub repo spec into org, repo and an optional sub-path
+#'
+#' Repository specs from `register.csv` are `org/repo` or `org/repo|path`
+#' (the latter used when the `codecheck.yml` lives in a sub-directory). Repo
+#' metadata (archived status, README, license) applies to the whole repo, so
+#' callers that only need `org`/`repo` can drop the `path` piece.
+#'
+#' @param x the `org/repo` or `org/repo|path` spec
+#' @return a named list with `org` and `repo`
+split_github_repo_spec <- function(x) {
+  org_repo <- regmatches(x, regexpr("/", x), invert = TRUE)[[1]]
+
+  if (length(org_repo) != 2) {
+    stop("Incomplete repo specification for type 'github', need 'org/repo(|path)' but have '", x, "'")
+  }
+
+  repo_path <- strsplit(org_repo[[2]], "|", fixed = TRUE)[[1]]
+  list(org = org_repo[[1]], repo = repo_path[[1]])
+}
+
+#' Retrieve repository metadata from the GitHub API
+#'
+#' Thin wrapper around the repo endpoint so callers (and tests, via
+#' `with_mocked_codecheck()`) only need to deal with the fields they use, e.g.
+#' `archived` and `license`.
+#'
+#' @author Daniel Nuest
+#' @importFrom gh gh
+#' @param repo the `org/repo` or `org/repo|path` spec
+#' @return the parsed API response, or `NULL` if the repository could not be retrieved
+get_github_repo_metadata <- function(repo) {
+  org_repo <- split_github_repo_spec(repo)
+
+  tryCatch(
+    gh::gh("GET /repos/:org/:repo", org = org_repo$org, repo = org_repo$repo),
+    error = function(e) NULL
+  )
+}
+
+#' Retrieve the rendered README of a GitHub repository, as raw text
+#'
+#' @author Daniel Nuest
+#' @importFrom gh gh
+#' @param repo the `org/repo` or `org/repo|path` spec
+#' @return the README text, or `NULL` if none was found
+get_github_readme_raw <- function(repo) {
+  org_repo <- split_github_repo_spec(repo)
+
+  tryCatch(
+    gh::gh("GET /repos/:org/:repo/readme",
+           org = org_repo$org, repo = org_repo$repo,
+           .accept = "application/vnd.github.VERSION.raw"),
+    error = function(e) NULL
+  )
+}
+
+#' Retrieve repository metadata from the GitLab.com API
+#'
+#' @author Daniel Nuest
+#' @importFrom httr GET content status_code
+#' @importFrom jsonlite fromJSON
+#' @param repo the project path, e.g. `cdchck/Piccolo-2020`
+#' @return the parsed API response, or `NULL` if the project could not be retrieved
+get_gitlab_project_metadata <- function(repo) {
+  # license=true is required for the API to include the `license` field at all
+  link <- paste0("https://gitlab.com/api/v4/projects/", utils::URLencode(repo, reserved = TRUE),
+                 "?license=true")
+  response <- tryCatch(codecheck_GET(link), error = function(e) NULL)
+
+  if (is.null(response) || httr::status_code(response) != 200) {
+    return(NULL)
+  }
+
+  jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"), simplifyVector = FALSE)
+}
+
+#' Retrieve the README of a GitLab.com project, as raw text
+#'
+#' Tries the `main` branch first, then falls back to `master`.
+#'
+#' @author Daniel Nuest
+#' @importFrom httr content status_code
+#' @param repo the project path, e.g. `cdchck/Piccolo-2020`
+#' @return the README text, or `NULL` if none was found
+get_gitlab_readme_raw <- function(repo) {
+  for (branch in c("main", "master")) {
+    link <- paste0("https://gitlab.com/", repo, "/-/raw/", branch, "/README.md?inline=false")
+    response <- tryCatch(codecheck_GET(link), error = function(e) NULL)
+
+    if (!is.null(response) && httr::status_code(response) == 200) {
+      return(httr::content(response, as = "text", encoding = "UTF-8"))
+    }
+  }
+
+  NULL
+}
+
 #' Retrieve a codecheck.yml file from a Zenodo record
 #' 
 #' @author Daniel Nuest

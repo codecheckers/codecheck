@@ -26,9 +26,10 @@ This functions starts of a `data.frame` read from the local register file.
 \details{
 **Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
 
-Further test ideas:
-
-- Does the repo have a LICENSE?
+Also checks the checked repository itself: organisation membership
+(`check_repository_org()`), archived status (`check_repository_archived()`),
+CODECHECK badge presence (`check_repository_badge()`) and license presence
+(`check_repository_license()`).
 }
 \author{
 Daniel Nuest

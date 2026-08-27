@@ -1,5 +1,9 @@
 # codecheck 0.25.0.9011
 
+## New Features
+
+* **`register_check()` now also checks the checked repository itself**: `check_repository_org()` fails the entry if the GitHub repository is not under `codecheckers/` or the GitLab project not under `cdchck/`, mirroring the same rule already enforced for Zenodo records. `check_repository_archived()` warns if the repository is not archived, closing codecheckers/codecheck#25. `check_repository_badge()` and `check_repository_license()` report, as information only, a missing CODECHECK badge (closing codecheckers/codecheck#75) or license - neither is required by the spec, so neither should stop a check or count as a defect. New helpers `get_github_repo_metadata()`, `get_github_readme_raw()`, `get_gitlab_project_metadata()` and `get_gitlab_readme_raw()` (`R/configuration.R`) back the GitHub/GitLab lookups; OSF and Zenodo repositories are unaffected, as none of these concepts apply there.
+
 ## Bug Fixes
 
 * **ORCID icon on certificate pages is now clickable and links to the ORCID profile**: the HTML certificate page showed no ORCID icon at all - only the name itself was a plain text link. `add_paper_details_md()` and `add_codecheck_details_md()` (`R/utils_render_cert_md.R`) now also render the academicons ORCID glyph as a link to `https://orcid.org/<id>` next to each name with an ORCID ID, matching the icon already used on codechecker profile pages.
