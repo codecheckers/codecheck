@@ -163,6 +163,82 @@ get_zenodo_id <- function(report) {
   as.integer(result)
 }
 
+# Pace real Zenodo API calls to stay under its rate limit.
+#
+# Zenodo's search endpoint (used by getRecordByConceptId(), which both
+# is_zenodo_concept_doi() and is_zenodo_latest_version() call below) enforces
+# a much stricter limit than the general API - observed empirically as 30
+# requests per minute, i.e. one every 2 seconds - rather than the 60/minute
+# documented for the API as a whole (see the comment on
+# CONFIG$CERT_REQUEST_DELAY in config.R). A register_check() run walks every
+# register entry and calls these two functions for each one, so without
+# pacing it trips the limit within the first few dozen entries and the whole
+# run aborts (register_check() treats a lookup failure here as fatal, not a
+# warning). Sleeps only when the last real call was too recent; a fresh R
+# session's first call never waits. Not exported: internal to this file.
+.zenodo_last_call_time <- new.env(parent = emptyenv())
+zenodo_throttle <- function(min_interval = 2.1) {
+  last <- .zenodo_last_call_time$t
+  if (!is.null(last)) {
+    elapsed <- as.numeric(Sys.time() - last, units = "secs")
+    if (elapsed < min_interval) {
+      Sys.sleep(min_interval - elapsed)
+    }
+  }
+  .zenodo_last_call_time$t <- Sys.time()
+  invisible(NULL)
+}
+
+# Reuse one ZenodoManager per (url, token presence) for the life of the R
+# session, instead of creating a fresh one on every call.
+#
+# ZenodoManager$new() with a token calls checkUserAuthentication(), an extra
+# request against the same rate-limited endpoint; is_zenodo_concept_doi() and
+# is_zenodo_latest_version() each created their own manager, so every entry
+# paid for two of these on top of the three lookups zenodo_throttle() already
+# paces - enough to trip the 30/minute limit even with pacing in place. Not
+# exported: internal to this file.
+.zenodo_manager_cache <- new.env(parent = emptyenv())
+get_shared_zenodo_manager <- function(sandbox = FALSE, logger = NULL) {
+  token <- Sys.getenv("ZENODO_TOKEN")
+  url <- if (sandbox) "https://sandbox.zenodo.org/api" else "https://zenodo.org/api"
+  key <- paste(url, nzchar(token))
+  cached <- .zenodo_manager_cache[[key]]
+  if (is.null(cached)) {
+    zenodo_throttle()
+    cached <- ZenodoManager$new(
+      url = url,
+      token = if (nzchar(token)) token else NULL,
+      sandbox = sandbox,
+      logger = logger
+    )
+    .zenodo_manager_cache[[key]] <- cached
+  }
+  cached
+}
+
+# Retry a zen4R call that hit Zenodo's rate limit.
+#
+# zen4R surfaces an HTTP 429 as a ZenodoException return value rather than an
+# R error/condition, so retrying on 429 means inspecting the return value
+# rather than catching an error. zenodo_throttle() prevents most 429s, but a
+# run that shares the rate limit with other traffic (e.g. a concurrent
+# `make zenodo_curate` or another process) can still hit one; retrying after
+# a wait recovers the run instead of aborting it. Zenodo reports its limits
+# as "N per 1 minute", so wait_seconds needs to be close to that window to
+# reliably clear it. Not exported: internal to this file.
+zenodo_call_retry <- function(call_fn, max_attempts = 3, wait_seconds = 65) {
+  result <- call_fn()
+  for (attempt in seq_len(max_attempts - 1)) {
+    is_rate_limited <- inherits(result, "ZenodoException") &&
+      !is.null(result$status) && isTRUE(result$status == 429)
+    if (!is_rate_limited) break
+    Sys.sleep(wait_seconds)
+    result <- call_fn()
+  }
+  result
+}
+
 ##' Check whether a report DOI is a Zenodo "concept DOI"
 ##'
 ##' Zenodo assigns every versioned deposit two DOIs: a version-specific DOI
@@ -198,27 +274,24 @@ is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL, logger
     return(FALSE)
   }
 
-  if (is.null(zenodo)) {
+  # only pace/retry calls made through a ZenodoManager created here: a
+  # caller-supplied `zenodo` (real or a test mock) manages its own pacing
+  own_zenodo <- is.null(zenodo)
+  if (own_zenodo) {
     # An authenticated request gets a much higher Zenodo rate limit than an
     # anonymous one; use ZENODO_TOKEN when set even though this is a read-only
-    # lookup that works without a token too.
-    token <- Sys.getenv("ZENODO_TOKEN")
-    # logger defaults to NULL: zen4R's own methods already emit a cli::
-    # alert for each step (connect, fetch, record count, ...); logger =
-    # "INFO"/"DEBUG" additionally prints zen4R's own "[zen4R][...]" line for
-    # every one of them, so leave it opt-in rather than doubling console
-    # output by default. Pass logger = "INFO" or "DEBUG" to opt back in.
-    zenodo <- ZenodoManager$new(
-      url = if (sandbox) "https://sandbox.zenodo.org/api" else "https://zenodo.org/api",
-      token = if (nzchar(token)) token else NULL,
-      sandbox = sandbox,
-      logger = logger
-    )
+    # lookup that works without a token too. logger defaults to NULL: zen4R's
+    # own methods already emit a cli:: alert for each step (connect, fetch,
+    # record count, ...); logger = "INFO"/"DEBUG" additionally prints zen4R's
+    # own "[zen4R][...]" line for every one of them, so leave it opt-in
+    # rather than doubling console output by default.
+    zenodo <- get_shared_zenodo_manager(sandbox = sandbox, logger = logger)
   }
 
   # A concept ID only resolves via getRecordByConceptId(); a version-specific
   # record ID does not (Zenodo doesn't treat a concept ID as a record itself).
-  record <- zenodo$getRecordByConceptId(id)
+  if (own_zenodo) zenodo_throttle()
+  record <- zenodo_call_retry(function() zenodo$getRecordByConceptId(id))
 
   # On a request failure (e.g. HTTP 429 rate limiting), zen4R's
   # getRecordByConceptId() returns a ZenodoException object rather than NULL
@@ -271,19 +344,14 @@ is_zenodo_latest_version <- function(report, sandbox = FALSE, zenodo = NULL, log
     return(TRUE)
   }
 
-  if (is.null(zenodo)) {
-    token <- Sys.getenv("ZENODO_TOKEN")
-    # logger defaults to NULL: see the matching comment in
-    # is_zenodo_concept_doi() above.
-    zenodo <- ZenodoManager$new(
-      url = if (sandbox) "https://sandbox.zenodo.org/api" else "https://zenodo.org/api",
-      token = if (nzchar(token)) token else NULL,
-      sandbox = sandbox,
-      logger = logger
-    )
+  # see the matching comment in is_zenodo_concept_doi() above
+  own_zenodo <- is.null(zenodo)
+  if (own_zenodo) {
+    zenodo <- get_shared_zenodo_manager(sandbox = sandbox, logger = logger)
   }
 
-  record <- zenodo$getRecordById(id)
+  if (own_zenodo) zenodo_throttle()
+  record <- zenodo_call_retry(function() zenodo$getRecordById(id))
   if (inherits(record, "ZenodoException")) {
     stop("Could not check whether ", report, " is the latest Zenodo version: ",
          record$message, call. = FALSE)
@@ -295,7 +363,8 @@ is_zenodo_latest_version <- function(report, sandbox = FALSE, zenodo = NULL, log
     return(TRUE)
   }
 
-  latest <- zenodo$getRecordByConceptId(record$parent$id)
+  if (own_zenodo) zenodo_throttle()
+  latest <- zenodo_call_retry(function() zenodo$getRecordByConceptId(record$parent$id))
   if (inherits(latest, "ZenodoException")) {
     stop("Could not check whether ", report, " is the latest Zenodo version: ",
          latest$message, call. = FALSE)
