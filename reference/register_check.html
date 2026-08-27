@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9011</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9012</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,11 +74,14 @@
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>**Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.</p>
+    <p>**Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+Certificate IDs must also be unique across the whole register; this is checked
+once up front, over all rows, before any per-entry checks run.</p>
 <p>Also checks the checked repository itself: organisation membership
 (`check_repository_org()`), archived status (`check_repository_archived()`),
-CODECHECK badge presence (`check_repository_badge()`) and license presence
-(`check_repository_license()`).</p>
+CODECHECK badge presence (`check_repository_badge()`), license presence
+(`check_repository_license()`) and the `codecheck` topic tag
+(`check_repository_topic()`).</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

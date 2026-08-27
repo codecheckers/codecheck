@@ -1,5 +1,95 @@
 # Changelog
 
+## codecheck 0.25.0.9012
+
+### New Features
+
+- **[`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  now also checks the checked repository itself**:
+  [`check_repository_org()`](http://codecheck.org.uk/codecheck/reference/check_repository_org.md)
+  fails the entry if the GitHub repository is not under `codecheckers/`
+  or the GitLab project not under `cdchck/`, mirroring the same rule
+  already enforced for Zenodo records.
+  [`check_repository_archived()`](http://codecheck.org.uk/codecheck/reference/check_repository_archived.md)
+  warns if the repository is not archived, closing
+  codecheckers/codecheck#25.
+  [`check_repository_badge()`](http://codecheck.org.uk/codecheck/reference/check_repository_badge.md),
+  [`check_repository_license()`](http://codecheck.org.uk/codecheck/reference/check_repository_license.md)
+  and the new
+  [`check_repository_topic()`](http://codecheck.org.uk/codecheck/reference/check_repository_topic.md)
+  report, as information only, a missing CODECHECK badge (closing
+  codecheckers/codecheck#75), a missing license, or a missing
+  `codecheck` topic tag - none of these are required by the spec, so
+  none should stop a check or count as a defect.
+  [`check_repository_topic()`](http://codecheck.org.uk/codecheck/reference/check_repository_topic.md)
+  closes codecheckers/codecheck#14. New helpers
+  [`get_github_repo_metadata()`](http://codecheck.org.uk/codecheck/reference/get_github_repo_metadata.md),
+  [`get_github_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_github_readme_raw.md),
+  [`get_gitlab_project_metadata()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_project_metadata.md)
+  and
+  [`get_gitlab_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_readme_raw.md)
+  (`R/configuration.R`) back the GitHub/GitLab lookups; OSF and Zenodo
+  repositories are unaffected, as none of these concepts apply there.
+- **[`validate_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.md)
+  now enforces more of the CODECHECK config spec, and
+  [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  catches duplicate certificate IDs**: closing codecheckers/codecheck#9.
+  When given a file path, the function now checks that the file is valid
+  UTF-8 and that it starts with the YAML document marker `---`, both
+  MUST requirements of the [config
+  spec](https://codecheck.org.uk/spec/config/1.0/) that were previously
+  unchecked (raw bytes are needed for both, so they only run for a file
+  path, not for an already-parsed list). It also now requires at least
+  one `codechecker` entry, matching the spec’s “at least one child
+  element”. Separately,
+  [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  now rejects the whole register up front if any `Certificate` value is
+  duplicated across rows, rather than only ever comparing one row’s
+  certificate against its own repository’s `codecheck.yml`.
+- **[`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  gains three checks from codecheckers/codecheck#20**: the deposit title
+  must contain the certificate ID (e.g. “2026-023”), not just the fixed
+  text “CODECHECK Certificate”; a certificate PDF present under a name
+  other than `codecheck.pdf` now warns instead of silently passing; and
+  a new `record` argument (the full record from
+  [`get_zenodo_record_metadata()`](http://codecheck.org.uk/codecheck/reference/get_zenodo_record_metadata.md))
+  enables a new “community” check confirming the deposit is a member of
+  the Zenodo `codecheck` community - skipped when `record` is not
+  supplied, since community membership is not part of `metadata`.
+  [`check_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/check_zenodo_record.md)
+  and
+  [`check_register_zenodo_policy()`](http://codecheck.org.uk/codecheck/reference/check_register_zenodo_policy.md)
+  now pass the full record through.
+
+### Bug Fixes
+
+- **[`is_zenodo_concept_doi()`](http://codecheck.org.uk/codecheck/reference/is_zenodo_concept_doi.md)
+  no longer misreports an old record as a concept DOI when the Zenodo
+  API is rate-limited**: on an HTTP error (e.g. 429 “Too Many
+  Requests”), zen4R’s `getRecordByConceptId()` returns a
+  `ZenodoException` object rather than `NULL`, so `!is.null(record)`
+  read this as “yes, a concept DOI was found” and
+  [`validate_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.md)
+  failed with the misleading message “… is a Zenodo concept DOI”. The
+  function now detects a `ZenodoException` and raises a clear error
+  about the failed request instead.
+  [`is_zenodo_concept_doi()`](http://codecheck.org.uk/codecheck/reference/is_zenodo_concept_doi.md)
+  and
+  [`get_zenodo_record_metadata()`](http://codecheck.org.uk/codecheck/reference/get_zenodo_record_metadata.md)
+  also now send the `ZENODO_TOKEN` environment variable as a bearer
+  token when set, since an authenticated request gets a much higher
+  Zenodo rate limit than an anonymous one - both previously ignored it
+  even when set, which is what made the rate limit easy to hit during
+  [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md).
+- **`rprojroot` declared as a package dependency**: `codecheck.Rmd` and
+  `codecheck.qmd`’s setup chunk calls `find_root()` from `rprojroot`,
+  but the package was never listed in `DESCRIPTION`, so a clean install
+  (e.g. `r-lib/actions/setup-r-dependencies` on CI) never installed it;
+  [`require("rprojroot")`](https://rprojroot.r-lib.org/) then failed
+  silently and `find_root()` errored with “could not find function”.
+  This broke every test that renders the certificate template
+  (`test_manifest_file_rendering.R`, `test_render_qmd_workspace.R`).
+
 ## codecheck 0.25.0.9011
 
 ### New Features
@@ -37,28 +127,6 @@
   [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)’s
   “machine-readable certificate” check now fails a deposit that contains
   both a `.Rmd` and a `.qmd` source.
-- **[`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
-  now also checks the checked repository itself**:
-  [`check_repository_org()`](http://codecheck.org.uk/codecheck/reference/check_repository_org.md)
-  fails the entry if the GitHub repository is not under `codecheckers/`
-  or the GitLab project not under `cdchck/`, mirroring the same rule
-  already enforced for Zenodo records.
-  [`check_repository_archived()`](http://codecheck.org.uk/codecheck/reference/check_repository_archived.md)
-  warns if the repository is not archived, closing
-  codecheckers/codecheck#25.
-  [`check_repository_badge()`](http://codecheck.org.uk/codecheck/reference/check_repository_badge.md)
-  and
-  [`check_repository_license()`](http://codecheck.org.uk/codecheck/reference/check_repository_license.md)
-  report, as information only, a missing CODECHECK badge (closing
-  codecheckers/codecheck#75) or license - neither is required by the
-  spec, so neither should stop a check or count as a defect. New helpers
-  [`get_github_repo_metadata()`](http://codecheck.org.uk/codecheck/reference/get_github_repo_metadata.md),
-  [`get_github_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_github_readme_raw.md),
-  [`get_gitlab_project_metadata()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_project_metadata.md)
-  and
-  [`get_gitlab_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_readme_raw.md)
-  (`R/configuration.R`) back the GitHub/GitLab lookups; OSF and Zenodo
-  repositories are unaffected, as none of these concepts apply there.
 
 ### Bug Fixes
 

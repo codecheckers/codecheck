@@ -26,7 +26,8 @@ list with elements \`metadata\` and \`files\` (file names)
 
 Uses the InvenioRDM representation of the Zenodo REST API, which is the
 one the curation policy checks apply to. No authentication needed for
-open records.
+open records, but an authenticated request gets a much higher Zenodo
+rate limit, so ZENODO_TOKEN is sent when set.
 
 ## Author
 

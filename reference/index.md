@@ -95,6 +95,8 @@
   : Check that a repository has a license
 - [`check_repository_org()`](http://codecheck.org.uk/codecheck/reference/check_repository_org.md)
   : Check that a repository is in the codecheckers/cdchck organisation
+- [`check_repository_topic()`](http://codecheck.org.uk/codecheck/reference/check_repository_topic.md)
+  : Check that a repository advertises the "codecheck" topic tag
 - [`check_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/check_zenodo_record.md)
   : Audit a Zenodo record against the CODECHECK curation policy
 - [`cite_certificate()`](http://codecheck.org.uk/codecheck/reference/cite_certificate.md)

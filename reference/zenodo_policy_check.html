@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9011</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9012</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">zenodo_policy_check</span><span class="op">(</span><span class="va">record_metadata</span>, files <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">zenodo_policy_check</span><span class="op">(</span><span class="va">record_metadata</span>, files <span class="op">=</span> <span class="cn">NULL</span>, record <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,6 +58,14 @@
 <dt id="arg-files">files<a class="anchor" aria-label="anchor" href="#arg-files"></a></dt>
 <dd><p>character vector of file names in the deposit, optional; needed
 for the checks on the certificate PDF and the machine-readable source.</p></dd>
+
+
+<dt id="arg-record">record<a class="anchor" aria-label="anchor" href="#arg-record"></a></dt>
+<dd><p>the full record as returned by the InvenioRDM API (i.e. the
+`record` element of [get_zenodo_record_metadata()]'s return value),
+optional; needed for the community membership check, see #20. Community
+membership lives outside `metadata` (under `parent$communities`), so this
+check is only added when `record` is supplied.</p></dd>
 
 </dl></div>
     <div class="section level2">

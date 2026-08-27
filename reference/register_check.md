@@ -36,13 +36,16 @@ register_check(
 ## Details
 
 \*\*Note\*\*: The validation of \`codecheck.yml\` files happens in
-function \`validate_codecheck_yml()\`.
+function \`validate_codecheck_yml()\`. Certificate IDs must also be
+unique across the whole register; this is checked once up front, over
+all rows, before any per-entry checks run.
 
 Also checks the checked repository itself: organisation membership
 (\`check_repository_org()\`), archived status
 (\`check_repository_archived()\`), CODECHECK badge presence
-(\`check_repository_badge()\`) and license presence
-(\`check_repository_license()\`).
+(\`check_repository_badge()\`), license presence
+(\`check_repository_license()\`) and the \`codecheck\` topic tag
+(\`check_repository_topic()\`).
 
 ## Author
 
