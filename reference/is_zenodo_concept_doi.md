@@ -5,7 +5,7 @@ Check whether a report DOI is a Zenodo "concept DOI"
 ## Usage
 
 ``` r
-is_zenodo_concept_doi(report, sandbox = FALSE, zenodo = NULL, logger = NULL)
+is_zenodo_concept_doi(report, sandbox = FALSE, fetch_record = NULL)
 ```
 
 ## Arguments
@@ -18,22 +18,13 @@ is_zenodo_concept_doi(report, sandbox = FALSE, zenodo = NULL, logger = NULL)
 
   connect with the Zenodo Sandbox instead of the real service
 
-- zenodo:
+- fetch_record:
 
-  An object from zen4R to connect with Zenodo (or a mock with a
-  compatible \`getRecordByConceptId()\` method, for testing). Defaults
-  to a new \`ZenodoManager\` connected to the production (or sandbox)
-  service. When supplied, \`logger\` is ignored - configure logging on
-  the object you pass in instead.
-
-- logger:
-
-  zen4R logger level for the default \`ZenodoManager\` created when
-  \`zenodo\` is not supplied: \`NULL\` (the default) keeps output to the
-  single \`cli\` alert zen4R always prints per request; \`"INFO"\` or
-  \`"DEBUG"\` additionally prints zen4R's own \`\[zen4R\]\[...\]\` line
-  for every request (connect, fetch, record count, ...), useful when
-  diagnosing rate-limiting or unexpected API responses.
+  a function \`function(id, sandbox, follow_redirect)\` returning
+  \`list(status, body)\` for a Zenodo record lookup (or \`NULL\` on an
+  unrecoverable request failure), for injecting a mock in tests.
+  Defaults to \[fetch_zenodo_record()\], a direct HTTP call to the
+  production (or sandbox) API.
 
 ## Value
 

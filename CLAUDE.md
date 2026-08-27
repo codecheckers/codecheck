@@ -89,6 +89,24 @@ Semantic versioning. Use
 `usethis::use_version("patch"|"minor"|"major"|"dev")` to bump. If that
 fails (uncommitted changes), edit `DESCRIPTION` and `NEWS.md` manually.
 
+`use_version()` only touches `DESCRIPTION` and adds an empty `NEWS.md`
+heading above the accumulated dev-cycle entries; it does not consolidate
+them under the release heading, regenerate `man/`, or touch
+`CITATION.cff`. A release therefore also needs:
+
+- Merge the dev-cycle `# codecheck X.Y.Z.9NNN` sections `use_version()`
+  leaves below the new heading into that heading’s own
+  `## New Features`/`## Bug Fixes` (etc.) lists, then delete the
+  now-empty dev headings.
+- Run `devtools::document()` so `man/` reflects the current code
+  (roxygen doesn’t stamp the package version into `.Rd` files, but a
+  stale `man/` from skipped `--no-docs` installs during iteration should
+  not ship in a release).
+- Update the hardcoded `version:` and `date-released:` fields in
+  `CITATION.cff` - nothing else touches this file, so it silently
+  drifted for several releases (last correct at 0.21.0) before being
+  caught at 0.26.0.
+
 ## Architecture
 
 ### Register Rendering Pipeline

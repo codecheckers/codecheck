@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9012</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,11 @@
 <div class="section level3">
 <h3 id="version-management">Version Management<a class="anchor" aria-label="anchor" href="#version-management"></a></h3>
 <p>Semantic versioning. Use <code>usethis::use_version("patch"|"minor"|"major"|"dev")</code> to bump. If that fails (uncommitted changes), edit <code>DESCRIPTION</code> and <code>NEWS.md</code> manually.</p>
-</div>
+<p><code>use_version()</code> only touches <code>DESCRIPTION</code> and adds an empty <code>NEWS.md</code> heading above the accumulated dev-cycle entries; it does not consolidate them under the release heading, regenerate <code>man/</code>, or touch <code>CITATION.cff</code>. A release therefore also needs:</p>
+<ul><li>Merge the dev-cycle <code># codecheck X.Y.Z.9NNN</code> sections <code>use_version()</code> leaves below the new heading into that heading’s own <code>## New Features</code>/<code>## Bug Fixes</code> (etc.) lists, then delete the now-empty dev headings.</li>
+<li>Run <code>devtools::document()</code> so <code>man/</code> reflects the current code (roxygen doesn’t stamp the package version into <code>.Rd</code> files, but a stale <code>man/</code> from skipped <code>--no-docs</code> installs during iteration should not ship in a release).</li>
+<li>Update the hardcoded <code>version:</code> and <code>date-released:</code> fields in <code>CITATION.cff</code> - nothing else touches this file, so it silently drifted for several releases (last correct at 0.21.0) before being caught at 0.26.0.</li>
+</ul></div>
 </div>
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>

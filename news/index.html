@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9012</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,9 +38,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9012" id="codecheck-02509012">codecheck 0.25.0.9012<a class="anchor" aria-label="anchor" href="#codecheck-02509012"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.26.0" id="codecheck-0260">codecheck 0.26.0<a class="anchor" aria-label="anchor" href="#codecheck-0260"></a></h2>
 <div class="section level3">
-<h3 id="new-features-0-25-0-9012">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9012"></a></h3>
+<h3 id="new-features-0-26-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-26-0"></a></h3>
 <ul><li>
 <code><a href="../reference/register_check.html">register_check()</a></code> now checks the register newest-first by default (closes codecheckers/codecheck#79). Pass <code>from = 1, to = nrow(register)</code> for the previous oldest-first order.</li>
 <li>
@@ -53,119 +53,45 @@
 <li>
 <code><a href="../reference/register_render.html">register_render()</a></code> no longer accumulates stale <code>header-attrs-*</code> directories in <code>docs/libs</code>, and gained <code><a href="../reference/prune_libs.html">prune_libs()</a></code> to remove other unreferenced library directories (closes codecheckers/codecheck#89).</li>
 <li>Zenodo concept DOI checking is extended to also catch an outdated version-specific DOI, via new <code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> (closes codecheckers/codecheck#36).</li>
-</ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9012">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9012"></a></h3>
-<ul><li>
-<code><a href="../reference/register_check.html">register_check()</a></code> no longer aborts the whole run when Zenodo’s search endpoint rate-limits it; the underlying calls are now paced, share one connection per run instead of reconnecting for every entry, and are retried automatically.</li>
-<li>
-<code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> and <code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> no longer double-log every Zenodo API step.</li>
-<li>
-<code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> no longer misreports a rate-limited lookup as a concept DOI; both functions now use <code>ZENODO_TOKEN</code> when set for a higher rate limit.</li>
-<li>
-<code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> no longer misreports a record’s own latest version as outdated: it compared record IDs against a second, search-based lookup that is not reliably ordered by version, and could return a stale record even when the checked one was in fact current. It now reads the authoritative <code>is_latest</code> flag already present on the record itself, which is also one fewer request per check.</li>
-<li>
-<code>rprojroot</code> is now declared as a package dependency, fixing a missing-function error on a clean install.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9011" id="codecheck-02509011">codecheck 0.25.0.9011<a class="anchor" aria-label="anchor" href="#codecheck-02509011"></a></h2>
-<div class="section level3">
-<h3 id="new-features-0-25-0-9011">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9011"></a></h3>
-<ul><li>Zenodo “concept DOIs” are now rejected in the <code>report</code> field of <code>codecheck.yml</code> (closes codecheckers/codecheck#36).</li>
+<li>Zenodo “concept DOIs” are now rejected in the <code>report</code> field of <code>codecheck.yml</code> (closes codecheckers/codecheck#36).</li>
 <li>A Quarto certificate template (<code>codecheck.qmd</code>) is now shipped alongside the R Markdown one (closes codecheckers/codecheck#29).</li>
-</ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9011">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9011"></a></h3>
-<ul><li>The ORCID icon on certificate pages is now clickable and links to the ORCID profile.</li>
-<li>The ORCID icon in the PDF certificate no longer silently goes missing (closes codecheckers/codecheck#37).</li>
-<li>A creator recorded as an organisation is now reported as information, not an error, in the Zenodo curation policy check (raised in codecheckers/register#205).</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9010" id="codecheck-02509010">codecheck 0.25.0.9010<a class="anchor" aria-label="anchor" href="#codecheck-02509010"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9010">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9010"></a></h3>
-<ul><li>ORCID name checks no longer fail a fresh, unauthenticated workspace.</li>
-<li>A fresh workspace now passes strict CrossRef and ORCID name validation out of the box.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="new-features-0-25-0-9010">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9010"></a></h3>
-<ul><li>Licence correction now keeps the licences already on a Zenodo record when adding the required CC-BY 4.0.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9009" id="codecheck-02509009">codecheck 0.25.0.9009<a class="anchor" aria-label="anchor" href="#codecheck-02509009"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9009">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9009"></a></h3>
-<ul><li>The register CSS is now written to the output directory rather than the working directory.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9008" id="codecheck-02509008">codecheck 0.25.0.9008<a class="anchor" aria-label="anchor" href="#codecheck-02509008"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9008">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9008"></a></h3>
-<ul><li>
-<code><a href="../reference/create_codecheck_files.html">create_codecheck_files()</a></code> now reports the correct target folder (closes <a href="https://github.com/codecheckers/codecheck/issues/87" class="external-link">#87</a>).</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9007" id="codecheck-02509007">codecheck 0.25.0.9007<a class="anchor" aria-label="anchor" href="#codecheck-02509007"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9007">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9007"></a></h3>
-<ul><li>OSF certificate retrieval now survives an OSF outage instead of failing with an unrelated parsing error.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9006" id="codecheck-02509006">codecheck 0.25.0.9006<a class="anchor" aria-label="anchor" href="#codecheck-02509006"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9006">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9006"></a></h3>
-<ul><li>Rendering no longer rewrites <code>docs/libs/PROVENANCE.csv</code> on every run when nothing changed.</li>
-<li>A failed library download is no longer stored as if it were the library file.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9005" id="codecheck-02509005">codecheck 0.25.0.9005<a class="anchor" aria-label="anchor" href="#codecheck-02509005"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9005">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9005"></a></h3>
-<ul><li>ResearchEquals certificates can be downloaded again after that platform’s API change.</li>
-<li>A register in which no codechecker has an ORCID or GitHub identifier now renders correctly.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9004" id="codecheck-02509004">codecheck 0.25.0.9004<a class="anchor" aria-label="anchor" href="#codecheck-02509004"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-0-25-0-9004">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9004"></a></h3>
-<ul><li>Zenodo curation no longer truncates titles that need a human’s review.</li>
-<li>A clear error message is now shown when a Zenodo token may not edit a record.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="new-features-0-25-0-9004">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9004"></a></h3>
-<ul><li>Curation findings that need human judgement (e.g. a non-standard title or repository) are now surfaced instead of guessed.</li>
-</ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9003" id="codecheck-02509003">codecheck 0.25.0.9003<a class="anchor" aria-label="anchor" href="#codecheck-02509003"></a></h2>
-<div class="section level3">
-<h3 id="new-features-0-25-0-9003">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9003"></a></h3>
-<ul><li>New <code><a href="../reference/curate_register_zenodo_records.html">curate_register_zenodo_records()</a></code> applies mechanical Zenodo metadata corrections across a whole register in one batch.</li>
+<li>Licence correction now keeps the licences already on a Zenodo record when adding the required CC-BY 4.0.</li>
+<li>Curation findings that need human judgement (e.g. a non-standard title or repository) are now surfaced instead of guessed.</li>
+<li>New <code><a href="../reference/curate_register_zenodo_records.html">curate_register_zenodo_records()</a></code> applies mechanical Zenodo metadata corrections across a whole register in one batch.</li>
 <li>
 <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> gained <code>creator_overrides</code> to control how individual creator names are split or kept as an organisation.</li>
+<li>Every Zenodo-hosted certificate is now audited against the CODECHECK community curation policy during <code><a href="../reference/register_render.html">register_render()</a></code> and <code><a href="../reference/register_check.html">register_check()</a></code>, with findings reported as a summary.</li>
+<li>New <code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> and <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> audit and correct a single published Zenodo record’s metadata against the curation policy.</li>
 </ul></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.25.0.9002" id="codecheck-02509002">codecheck 0.25.0.9002<a class="anchor" aria-label="anchor" href="#codecheck-02509002"></a></h2>
 <div class="section level3">
-<h3 id="bug-fixes-0-25-0-9002">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9002"></a></h3>
-<ul><li>Codecheckers are now recorded as persons, not organisations, in Zenodo metadata.</li>
+<h3 id="bug-fixes-0-26-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-26-0"></a></h3>
+<ul><li>
+<code><a href="../reference/register_check.html">register_check()</a></code> no longer aborts the whole run when Zenodo rate-limits it. <code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> and <code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> now query Zenodo’s plain record endpoint directly instead of through zen4R’s search-based lookups, which carried a much stricter, easily-tripped limit; requests are paced adaptively from Zenodo’s own <code>X-RateLimit-*</code> response headers rather than a fixed guess, with a <code>cli</code> message logged whenever a wait is actually applied, and a 429 is retried automatically.</li>
+<li>
+<code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> no longer misreports a rate-limited lookup as a concept DOI.</li>
+<li>
+<code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> no longer misreports a record’s own latest version as outdated: it compared record IDs against a second, search-based lookup that is not reliably ordered by version, and could return a stale record even when the checked one was in fact current. It now reads the authoritative <code>is_latest</code> flag already present on the record itself.</li>
+<li>
+<code>rprojroot</code> is now declared as a package dependency, fixing a missing-function error on a clean install.</li>
+<li>The ORCID icon on certificate pages is now clickable and links to the ORCID profile.</li>
+<li>The ORCID icon in the PDF certificate no longer silently goes missing (closes codecheckers/codecheck#37).</li>
+<li>A creator recorded as an organisation is now reported as information, not an error, in the Zenodo curation policy check (raised in codecheckers/register#205).</li>
+<li>ORCID name checks no longer fail a fresh, unauthenticated workspace.</li>
+<li>A fresh workspace now passes strict CrossRef and ORCID name validation out of the box.</li>
+<li>The register CSS is now written to the output directory rather than the working directory.</li>
+<li>
+<code><a href="../reference/create_codecheck_files.html">create_codecheck_files()</a></code> now reports the correct target folder (closes <a href="https://github.com/codecheckers/codecheck/issues/87" class="external-link">#87</a>).</li>
+<li>OSF certificate retrieval now survives an OSF outage instead of failing with an unrelated parsing error.</li>
+<li>Rendering no longer rewrites <code>docs/libs/PROVENANCE.csv</code> on every run when nothing changed.</li>
+<li>A failed library download is no longer stored as if it were the library file.</li>
+<li>ResearchEquals certificates can be downloaded again after that platform’s API change.</li>
+<li>A register in which no codechecker has an ORCID or GitHub identifier now renders correctly.</li>
+<li>Zenodo curation no longer truncates titles that need a human’s review.</li>
+<li>A clear error message is now shown when a Zenodo token may not edit a record.</li>
+<li>Codecheckers are now recorded as persons, not organisations, in Zenodo metadata.</li>
 <li>Alternate identifiers are no longer silently dropped when uploading Zenodo metadata.</li>
 <li>Record titles now match the curation policy (“CODECHECK Certificate &lt;ID&gt;”).</li>
 <li>A missing or non-DOI paper reference now raises a clear warning.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="new-features-0-25-0-9002">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9002"></a></h3>
-<ul><li>Every Zenodo-hosted certificate is now audited against the CODECHECK community curation policy during <code><a href="../reference/register_render.html">register_render()</a></code> and <code><a href="../reference/register_check.html">register_check()</a></code>, with findings reported as a summary.</li>
-<li>New <code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> and <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> audit and correct a single published Zenodo record’s metadata against the curation policy.</li>
 </ul></div>
 </div>
     <div class="section level2">

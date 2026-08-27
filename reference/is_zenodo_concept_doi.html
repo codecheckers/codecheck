@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.25.0.9012</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">is_zenodo_concept_doi</span><span class="op">(</span><span class="va">report</span>, sandbox <span class="op">=</span> <span class="cn">FALSE</span>, zenodo <span class="op">=</span> <span class="cn">NULL</span>, logger <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">is_zenodo_concept_doi</span><span class="op">(</span><span class="va">report</span>, sandbox <span class="op">=</span> <span class="cn">FALSE</span>, fetch_record <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,21 +59,12 @@
 <dd><p>connect with the Zenodo Sandbox instead of the real service</p></dd>
 
 
-<dt id="arg-zenodo">zenodo<a class="anchor" aria-label="anchor" href="#arg-zenodo"></a></dt>
-<dd><p>An object from zen4R to connect with Zenodo (or a mock with
-a compatible `getRecordByConceptId()` method, for testing). Defaults to
-a new `ZenodoManager` connected to the production (or sandbox) service.
-When supplied, `logger` is ignored - configure logging on the object
-you pass in instead.</p></dd>
-
-
-<dt id="arg-logger">logger<a class="anchor" aria-label="anchor" href="#arg-logger"></a></dt>
-<dd><p>zen4R logger level for the default `ZenodoManager` created
-when `zenodo` is not supplied: `NULL` (the default) keeps output to the
-single `cli` alert zen4R always prints per request; `"INFO"` or
-`"DEBUG"` additionally prints zen4R's own `[zen4R][...]` line for every
-request (connect, fetch, record count, ...), useful when diagnosing
-rate-limiting or unexpected API responses.</p></dd>
+<dt id="arg-fetch-record">fetch_record<a class="anchor" aria-label="anchor" href="#arg-fetch-record"></a></dt>
+<dd><p>a function `function(id, sandbox, follow_redirect)`
+returning `list(status, body)` for a Zenodo record lookup (or `NULL` on
+an unrecoverable request failure), for injecting a mock in tests.
+Defaults to [fetch_zenodo_record()], a direct HTTP call to the
+production (or sandbox) API.</p></dd>
 
 </dl></div>
     <div class="section level2">
