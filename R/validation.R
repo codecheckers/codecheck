@@ -496,18 +496,74 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 }
 
 
+##' Retrieve a person's name from the public ORCID API
+##'
+##' Looks up the name on an ORCID record via the public, unauthenticated
+##' ORCID API (\url{https://pub.orcid.org}). This works for any record whose
+##' name is publicly visible and requires no ORCID token, unlike
+##' \code{\link[rorcid]{orcid_person}}, whose personal-authentication tokens
+##' are only valid for reading the authenticated user's own record.
+##'
+##' @param orcid_id Character. An ORCID identifier (NNNN-NNNN-NNNN-NNNX).
+##' @return Character name, or \code{NULL} if the record or name is not
+##'   publicly available or the request fails.
+##' @keywords internal
+get_orcid_name_public <- function(orcid_id) {
+  tryCatch({
+    resp <- httr::GET(
+      paste0("https://pub.orcid.org/v3.0/", orcid_id, "/person"),
+      httr::add_headers(Accept = "application/json")
+    )
+
+    if (httr::status_code(resp) != 200) {
+      return(NULL)
+    }
+
+    person_data <- jsonlite::fromJSON(
+      httr::content(resp, as = "text", encoding = "UTF-8"),
+      simplifyVector = FALSE
+    )
+
+    name_data <- person_data$name
+    if (is.null(name_data)) {
+      return(NULL)
+    }
+
+    given_names <- name_data$`given-names`$value
+    family_name <- name_data$`family-name`$value
+
+    if (!is.null(given_names) && !is.null(family_name)) {
+      paste(given_names, family_name)
+    } else if (!is.null(family_name)) {
+      family_name
+    } else if (!is.null(given_names)) {
+      given_names
+    } else {
+      NULL
+    }
+  }, error = function(e) NULL)
+}
+
+
 ##' Validate codecheck.yml metadata against ORCID
 ##'
 ##' Validates author and codechecker information against the ORCID API.
 ##' For each person with an ORCID, retrieves their ORCID record and compares
 ##' the name in the ORCID record with the name in the local codecheck.yml file.
 ##'
-##' Note: This function requires access to the ORCID API. If you encounter
-##' authentication issues, you can either:
+##' Note: Name lookups first try the authenticated ORCID API
+##' (\code{\link[rorcid]{orcid_person}}), then automatically fall back to the
+##' public, unauthenticated ORCID API for records whose name is publicly
+##' visible. Personal ORCID authentication (\code{ORCID_TOKEN} or
+##' \code{rorcid::orcid_auth()}) only ever authorizes reading the
+##' authenticated user's own record, so it cannot help validate a co-author's
+##' or a different codechecker's ORCID - the public fallback is what makes
+##' those lookups work. If both the authenticated lookup and the public
+##' fallback fail (e.g. no network access, or the record's name is not
+##' public), you can either:
 ##' \itemize{
-##'   \item Set the \code{ORCID_TOKEN} environment variable with your ORCID token
-##'   \item Run \code{rorcid::orcid_auth()} to authenticate interactively
-##'   \item Set \code{skip_on_auth_error = TRUE} to skip validation if authentication fails
+##'   \item Set \code{skip_on_auth_error = TRUE} to skip validation for that record
+##'   \item Verify the ORCID is correct and its name is public
 ##' }
 ##'
 ##' @title Validate codecheck.yml metadata against ORCID
@@ -516,10 +572,11 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 ##'   If \code{FALSE} (default), only issue warnings.
 ##' @param validate_authors Logical. If \code{TRUE} (default), validate author ORCIDs.
 ##' @param validate_codecheckers Logical. If \code{TRUE} (default), validate codechecker ORCIDs.
-##' @param skip_on_auth_error Logical. If \code{TRUE}, skip validation when ORCID
-##'   authentication fails instead of throwing an error. Default is \code{FALSE},
-##'   which requires ORCID authentication. Set to \code{TRUE} to allow the function
-##'   to work without ORCID authentication (e.g., CI/CD pipelines, test environments).
+##' @param skip_on_auth_error Logical. If \code{TRUE}, skip validation for a
+##'   record when both the authenticated ORCID lookup and the public API
+##'   fallback fail, instead of throwing an error. Default is \code{FALSE}.
+##'   Most records are still validated via the public API fallback regardless
+##'   of this setting; this only controls behavior once both lookups fail.
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
 ##'     \item{valid}{Logical indicating if all checks passed}
@@ -528,6 +585,8 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 ##'   }
 ##' @author Daniel Nuest
 ##' @importFrom rorcid orcid_person
+##' @importFrom httr GET add_headers status_code content
+##' @importFrom jsonlite fromJSON
 ##' @export
 ##' @examples
 ##' \dontrun{
@@ -599,15 +658,30 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 
       # Check if this is an authentication error
       if (grepl("Unauthorized|401|authentication|token", error_msg, ignore.case = TRUE)) {
+        # Personal ORCID authentication only ever authorizes reading the
+        # authenticated user's own record, so it cannot fix lookups of
+        # someone else's ORCID. Fall back to the public, unauthenticated
+        # ORCID API, which works for any record with a public name.
+        public_name <- get_orcid_name_public(orcid_id)
+        if (!is.null(public_name)) {
+          message("\u2139 ORCID authentication unavailable for ", orcid_id,
+                  "; used the public ORCID API instead (only public profile data was checked)")
+          return(public_name)
+        }
+
         if (skip_on_auth_error) {
           validation_skipped <<- TRUE
-          message("\u2139 ORCID authentication required but not available. Skipping validation for ", orcid_id)
-          message("  To enable ORCID validation, set ORCID_TOKEN environment variable or run rorcid::orcid_auth()")
+          message("\u2139 ORCID authentication required but not available, and the public ORCID API lookup also failed for ", orcid_id)
+          message("  Skipping validation for this record.")
           return("AUTH_ERROR")
         } else {
           stop("ORCID authentication failed for ", orcid_id, ": ", error_msg,
-               "\n  Set ORCID_TOKEN environment variable or run rorcid::orcid_auth() to authenticate.",
-               "\n  Or set skip_on_auth_error = TRUE to skip validation when authentication fails.")
+               "\n  The public ORCID API lookup also failed for this record ",
+               "(it may not be public, or there is no network access).",
+               "\n  Note: personal ORCID authentication (ORCID_TOKEN or rorcid::orcid_auth()) ",
+               "only authorizes reading your own ORCID record, not other authors'/checkers'.",
+               "\n  Set skip_on_auth_error = TRUE to skip validation for this record, ",
+               "or verify the ORCID is correct and its name is public.")
         }
       }
 
@@ -748,8 +822,8 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
   valid <- length(issues) == 0
 
   if (validation_skipped) {
-    message("\n\u2139 ORCID validation skipped due to authentication issues")
-    message("  Set ORCID_TOKEN environment variable or run rorcid::orcid_auth() to enable ORCID validation")
+    message("\n\u2139 ORCID validation skipped for one or more records")
+    message("  Authenticated lookup and the public ORCID API fallback both failed - the record(s) may not be public, or there is no network access")
   } else if (!valid) {
     message("\n\u26a0 ORCID validation completed with ", length(issues), " issue(s)")
     if (strict) {

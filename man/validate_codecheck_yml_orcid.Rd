@@ -22,10 +22,11 @@ If \code{FALSE} (default), only issue warnings.}
 
 \item{validate_codecheckers}{Logical. If \code{TRUE} (default), validate codechecker ORCIDs.}
 
-\item{skip_on_auth_error}{Logical. If \code{TRUE}, skip validation when ORCID
-authentication fails instead of throwing an error. Default is \code{FALSE},
-which requires ORCID authentication. Set to \code{TRUE} to allow the function
-to work without ORCID authentication (e.g., CI/CD pipelines, test environments).}
+\item{skip_on_auth_error}{Logical. If \code{TRUE}, skip validation for a
+record when both the authenticated ORCID lookup and the public API
+fallback fail, instead of throwing an error. Default is \code{FALSE}.
+Most records are still validated via the public API fallback regardless
+of this setting; this only controls behavior once both lookups fail.}
 }
 \value{
 Invisibly returns a list with validation results:
@@ -43,12 +44,19 @@ Validates author and codechecker information against the ORCID API.
 For each person with an ORCID, retrieves their ORCID record and compares
 the name in the ORCID record with the name in the local codecheck.yml file.
 
-Note: This function requires access to the ORCID API. If you encounter
-authentication issues, you can either:
+Note: Name lookups first try the authenticated ORCID API
+(\code{\link[rorcid]{orcid_person}}), then automatically fall back to the
+public, unauthenticated ORCID API for records whose name is publicly
+visible. Personal ORCID authentication (\code{ORCID_TOKEN} or
+\code{rorcid::orcid_auth()}) only ever authorizes reading the
+authenticated user's own record, so it cannot help validate a co-author's
+or a different codechecker's ORCID - the public fallback is what makes
+those lookups work. If both the authenticated lookup and the public
+fallback fail (e.g. no network access, or the record's name is not
+public), you can either:
 \itemize{
-  \item Set the \code{ORCID_TOKEN} environment variable with your ORCID token
-  \item Run \code{rorcid::orcid_auth()} to authenticate interactively
-  \item Set \code{skip_on_auth_error = TRUE} to skip validation if authentication fails
+  \item Set \code{skip_on_auth_error = TRUE} to skip validation for that record
+  \item Verify the ORCID is correct and its name is public
 }
 }
 \examples{

@@ -1,5 +1,9 @@
 # codecheck 0.25.0.9010
 
+## Bug Fixes
+
+* **ORCID name checks no longer fail a fresh, unauthenticated workspace**: `codecheck.Rmd`'s `validate_crossref` chunk called `validate_contents_references(strict = TRUE)` with ORCID's `skip_on_auth_error` left off, so `make all` hard-failed on a brand-new certificate unless the codechecker already had working ORCID authentication - and the error's own advice to run `rorcid::orcid_auth()` could never fix it for a co-author's or codechecker's ORCID, since a personal token only authorizes reading the authenticated user's own record. `get_orcid_name()` now falls back to the public, unauthenticated ORCID API (`get_orcid_name_public()`) whenever the authenticated lookup fails, which succeeds for any record with a public name and needs no token at all; the template also enables `skip_on_auth_error = TRUE` by default so rendering still completes even when both lookups fail (e.g. offline)
+
 ## New Features
 
 * **Licence correction keeps the licences already on a record**: the curation policy requires the certificate to be CC-BY 4.0, but a deposit may hold code, data or a source archive under other terms alongside it. `curate_zenodo_record()` adds CC-BY 4.0 through the new `license` field when it is missing and writes the full rights list, leaving every other entry in place - stripping one would overrule the depositor'''s deliberate choice for those files. `zenodo_policy_check()` accordingly passes any record containing CC-BY 4.0, whatever else is listed, and reports the others as covering further artefacts

@@ -90,18 +90,16 @@ manifest_df <- copy_manifest_files(root, metadata,
 ## Validate metadata against CrossRef and ORCID metadata - will fail rendering on mismatch
 ## Set strict = FALSE or remove this chunk if you want to skip validation
 ##
-## ORCID validation requires authentication by default (set ORCID_TOKEN environment variable)
-## If you want to skip ORCID validation when authentication is not available,
-## add: skip_on_auth_error = TRUE
-##
-## To set up ORCID authentication:
-##   1. Run: rorcid::orcid_auth()
-##   2. Add ORCID_TOKEN to your .Renviron file
+## ORCID name checks first try the authenticated ORCID API, then automatically
+## fall back to the public, unauthenticated ORCID API for records whose name
+## is publicly visible - so most checks work without any ORCID setup at all.
+## skip_on_auth_error only matters if BOTH lookups fail for a record (e.g. no
+## network access, or the record's name is not public); it is enabled below
+## so a fresh workspace always renders even in that case.
 validation_result <- validate_contents_references(
   yml_file = file.path(root, "codecheck.yml"),
   strict = TRUE
-  # Uncomment the line below to skip ORCID validation if authentication is unavailable:
-  # , skip_on_auth_error = TRUE
+  , skip_on_auth_error = TRUE
 )
 ```
 

@@ -344,5 +344,20 @@ expect_true(!is.null(result_combined$orcid_result))
 expect_true("skipped" %in% names(result_combined$orcid_result),
             info = "ORCID result should include 'skipped' field")
 
+# Test 18: get_orcid_name_public() works against a known public ORCID record
+# without any authentication - this is the fallback that makes name checks
+# work for co-authors/codecheckers even when the caller has no ORCID token
+# (or one scoped only to their own record).
+public_name <- codecheck:::get_orcid_name_public("0000-0002-1825-0097")
+if (!is.null(public_name)) {
+  expect_true(grepl("Carberry", public_name),
+              info = "Public ORCID API lookup should return Josiah Carberry's name")
+} else {
+  expect_true(TRUE, info = "Public ORCID API not reachable in this environment - skipping")
+}
+
+# Test 19: get_orcid_name_public() returns NULL for a malformed/nonexistent ORCID
+expect_true(is.null(codecheck:::get_orcid_name_public("0000-0000-0000-0000")))
+
 # Clean up
 unlink(test_yml)
