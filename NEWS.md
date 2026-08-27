@@ -1,3 +1,9 @@
+# codecheck 0.25.0.9011
+
+## Bug Fixes
+
+* **An organisational creator is reported as information, not as an error**: `zenodo_policy_check()` failed a record whenever any creator was recorded as an organisation, but that can be correct - a workshop's participants recorded as one entry is a genuine group, not a person mistakenly recorded as one, and record metadata alone cannot tell the two apart. The "creators" check now reports this as a new `"info"` status rather than `"fail"`, so it is surfaced to a human to judge instead of asserted as a defect, and never makes a record non-compliant. `check_register_zenodo_policy()` gains an `n_info` column, and `report_zenodo_policy_findings()` and `check_zenodo_record()` display info-level findings with an info icon during rendering. Raised in codecheckers/register#205
+
 # codecheck 0.25.0.9010
 
 ## Bug Fixes

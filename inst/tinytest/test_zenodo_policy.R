@@ -42,12 +42,16 @@ result <- zenodo_policy_check(broken$metadata, files = unlist(broken$files))
 
 failed <- result$check[result$status == "fail"]
 expect_equal(sort(failed),
-             sort(c("creators",
-                    "related work: paper",
+             sort(c("related work: paper",
                     "alternate identifier (url)",
                     "alternate identifier (other)")))
 # lowercase "certificate" in the title is a warning, not a failure
 expect_equal(result$status[result$check == "title"], "warn")
+# an organisational creator is reported as information, not asserted as an
+# error: record metadata alone cannot tell a genuine group apart from a
+# person mistakenly recorded as an organisation
+expect_equal(result$status[result$check == "creators"], "info")
+expect_true(grepl("Stephen J. Eglen", result$detail[result$check == "creators"]))
 # the parts that are fine must stay fine
 expect_equal(result$status[result$check == "publisher"], "pass")
 expect_equal(result$status[result$check == "resource type"], "pass")
@@ -171,9 +175,14 @@ res <- check_register_zenodo_policy(reg, get_metadata = fake_getter)
 expect_equal(nrow(res), 2L)
 expect_equal(res$status[res$certificate == "2026-019"], "compliant")
 expect_equal(res$status[res$certificate == "2026-023"], "non-compliant")
-expect_equal(res$n_fail[res$certificate == "2026-023"], 4L)
+expect_equal(res$n_fail[res$certificate == "2026-023"], 3L)
 expect_equal(res$n_fail[res$certificate == "2026-019"], 0L)
+# the organisational creator is an info finding, not a failure, and does not
+# by itself make the record non-compliant
+expect_equal(res$n_info[res$certificate == "2026-023"], 1L)
+expect_equal(res$n_info[res$certificate == "2026-019"], 0L)
 expect_true(grepl("reviews", res$findings[res$certificate == "2026-023"]))
+expect_true(grepl("creators", res$findings[res$certificate == "2026-023"]))
 
 # a getter that throws must yield "unknown", never an error. Uses a record id
 # of its own: a failed lookup is deliberately not cached, but a successful one

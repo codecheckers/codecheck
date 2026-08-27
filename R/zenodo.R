@@ -797,7 +797,12 @@ zenodo_policy_check <- function(record_metadata, files = NULL) {
   add("keywords", if (length(subjects) > 0) "pass" else "warn",
       if (length(subjects) > 0) paste(subjects, collapse = ", ") else "none set")
 
-  # Creators recorded as persons
+  # Creators recorded as persons. An organisational creator is not a defect the
+  # check can assert either way: a workshop's participants recorded as one
+  # entry is correct, a person mistakenly recorded as an organisation is not,
+  # and record metadata alone cannot tell the two apart. It is reported as
+  # "info" rather than "fail", so it never blocks compliance and is surfaced
+  # to a human to judge, instead of being asserted as an error.
   creator_types <- unlist(lapply(m$creators, function(c) c$person_or_org$type))
   if (length(creator_types) == 0) {
     add("creators", "fail", "no creators")
@@ -808,8 +813,9 @@ zenodo_policy_check <- function(record_metadata, files = NULL) {
     orgs <- unlist(lapply(m$creators, function(c) {
       if (identical(c$person_or_org$type, "organizational")) c$person_or_org$name else NULL
     }))
-    add("creators", "fail",
-        paste0("recorded as organisation, should be a person: ", paste(orgs, collapse = "; ")))
+    add("creators", "info",
+        paste0("recorded as organisation: ", paste(orgs, collapse = "; "),
+               " - correct for a genuine group, otherwise should be a person"))
   }
 
   # Related identifier: reviews -> paper
@@ -947,6 +953,7 @@ check_zenodo_record <- function(record, register_dir = getwd()) {
     line <- paste0(result$check[i], ": ", result$detail[i])
     switch(result$status[i],
            pass = cli::cli_alert_success(line),
+           info = cli::cli_alert_info(line),
            warn = cli::cli_alert_warning(line),
            fail = cli::cli_alert_danger(line))
   }
@@ -1361,7 +1368,9 @@ clear_zenodo_policy_cache <- function(record_id) {
 #'   record metadata like [get_zenodo_record_metadata()]; injectable for testing
 #' @return a data.frame with one row per checked certificate and the columns
 #'   `certificate`, `record_id`, `status` ("compliant", "non-compliant" or
-#'   "unknown"), `n_fail`, `n_warn` and `findings`
+#'   "unknown"), `n_fail`, `n_warn`, `n_info` and `findings`. An "info" finding
+#'   (e.g. a creator recorded as an organisation, which is correct for a
+#'   genuine group) never makes a record non-compliant
 #' @author Daniel Nuest
 #' @export
 check_register_zenodo_policy <- function(register_table,
@@ -1407,7 +1416,7 @@ check_register_zenodo_policy <- function(register_table,
     if (is.null(result)) {
       rows[[length(rows) + 1]] <- data.frame(
         certificate = cert, record_id = record_id, status = "unknown",
-        n_fail = NA_integer_, n_warn = NA_integer_,
+        n_fail = NA_integer_, n_warn = NA_integer_, n_info = NA_integer_,
         findings = "record could not be checked (Zenodo unreachable)",
         stringsAsFactors = FALSE)
       next
@@ -1415,17 +1424,20 @@ check_register_zenodo_policy <- function(register_table,
 
     fails <- result[result$status == "fail", ]
     warns <- result[result$status == "warn", ]
+    infos <- result[result$status == "info", ]
     # guard the zero-row cases: paste0(character(0), ": ", character(0)) recycles
     # the scalar separator and yields ": " rather than an empty vector
     describe <- function(rows) {
       if (nrow(rows) == 0) character(0) else paste0(rows$check, ": ", rows$detail)
     }
-    findings <- c(describe(fails), describe(warns))
+    findings <- c(describe(fails), describe(warns), describe(infos))
 
     rows[[length(rows) + 1]] <- data.frame(
       certificate = cert, record_id = record_id,
+      # an "info" finding (e.g. a creator recorded as an organisation) is
+      # never a compliance defect, only fails count against it
       status = if (nrow(fails) > 0) "non-compliant" else "compliant",
-      n_fail = nrow(fails), n_warn = nrow(warns),
+      n_fail = nrow(fails), n_warn = nrow(warns), n_info = nrow(infos),
       # " | " because individual details already use "; " internally
       findings = paste(findings, collapse = " | "),
       stringsAsFactors = FALSE)
@@ -1438,7 +1450,7 @@ check_register_zenodo_policy <- function(register_table,
 empty_zenodo_policy_result <- function() {
   data.frame(certificate = character(0), record_id = integer(0),
              status = character(0), n_fail = integer(0), n_warn = integer(0),
-             findings = character(0), stringsAsFactors = FALSE)
+             n_info = integer(0), findings = character(0), stringsAsFactors = FALSE)
 }
 
 
@@ -1446,7 +1458,9 @@ empty_zenodo_policy_result <- function() {
 #'
 #' Prints the result of [check_register_zenodo_policy()] as a `cli` section:
 #' a line per certificate with findings, then a tally. Certificates that comply
-#' are covered by the tally only.
+#' with no findings at all are covered by the tally only; a compliant
+#' certificate that has an "info" finding (e.g. a creator recorded as an
+#' organisation) is still surfaced, as information rather than as an error.
 #'
 #' @title Report curation policy findings
 #' @param result the data.frame from [check_register_zenodo_policy()]
@@ -1467,6 +1481,8 @@ report_zenodo_policy_findings <- function(result) {
       cli::cli_alert_danger("{row$certificate}: {row$findings}")
     } else if (row$n_warn > 0) {
       cli::cli_alert_warning("{row$certificate}: {row$findings}")
+    } else if (row$n_info > 0) {
+      cli::cli_alert_info("{row$certificate}: {row$findings}")
     }
   }
 

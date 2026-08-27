@@ -19,7 +19,9 @@ record metadata like [get_zenodo_record_metadata()]; injectable for testing}
 \value{
 a data.frame with one row per checked certificate and the columns
   `certificate`, `record_id`, `status` ("compliant", "non-compliant" or
-  "unknown"), `n_fail`, `n_warn` and `findings`
+  "unknown"), `n_fail`, `n_warn`, `n_info` and `findings`. An "info" finding
+  (e.g. a creator recorded as an organisation, which is correct for a
+  genuine group) never makes a record non-compliant
 }
 \description{
 Check all Zenodo-hosted certificates of a register against the curation policy
