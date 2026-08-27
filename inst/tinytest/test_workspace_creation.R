@@ -149,7 +149,11 @@ local({
   cert_dir <- file.path(test_dir, "codecheck")
   expect_true(dir.exists(cert_dir))
 
-  # All expected certificate template files/dirs are present
+  # All expected certificate template files are present.
+  # Note: "outputs/" is intentionally not shipped as a template file - it is
+  # an empty directory, which git does not track and `R CMD build` strips
+  # from the package tarball, and codecheck.Rmd itself creates it on demand
+  # during rendering (see the "manifest" chunk), so it should not exist yet.
   expected_entries <- c(
     "CODECHECK_report_template.docx",
     "CODECHECK_report_template.odt",
@@ -157,7 +161,6 @@ local({
     "codecheck-zenodo.R",
     "codecheck.Rmd",
     "Makefile",
-    "outputs",
     "placeholder_output.txt"
   )
   actual_entries <- list.files(cert_dir)
@@ -167,9 +170,6 @@ local({
   yml <- yaml::read_yaml(file.path(test_dir, "codecheck.yml"))
   manifest_file <- yml$manifest[[1]]$file
   expect_true(file.exists(file.path(test_dir, manifest_file)))
-
-  # outputs/ is an actual directory, not a file
-  expect_true(dir.exists(file.path(cert_dir, "outputs")))
 })
 
 # Clean up any remaining test directories

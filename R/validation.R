@@ -427,8 +427,10 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 
       # Compare names (case-insensitive)
       if (!is.null(local_author$name)) {
-        local_name_clean <- tolower(trimws(local_author$name))
-        crossref_name_clean <- tolower(trimws(crossref_name))
+        # Strip periods so initials like "S." don't count as a significant,
+        # unmatchable token against a spelled-out middle name like "Samuel"
+        local_name_clean <- tolower(trimws(gsub("\\.", "", local_author$name)))
+        crossref_name_clean <- tolower(trimws(gsub("\\.", "", crossref_name)))
 
         # Allow for different name formats (e.g., "John Smith" vs "Smith, John")
         # Just check if key parts are present
@@ -620,7 +622,9 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 
   # Helper function to normalize names for comparison
   normalize_name <- function(name) {
-    tolower(trimws(gsub("\\s+", " ", name)))
+    # Strip periods so initials like "S." don't count as a significant,
+    # unmatchable token against a spelled-out middle name like "Samuel"
+    tolower(trimws(gsub("\\s+", " ", gsub("\\.", "", name))))
   }
 
   # Helper function to extract name from ORCID record

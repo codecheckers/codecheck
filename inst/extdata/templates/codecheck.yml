@@ -9,7 +9,7 @@ paper:
     - name: Roland J. Baddeley
     - name: Leslie S. Smith
       ORCID: 0000-0002-3716-8013
-  reference: http://pdfs.semanticscholar.org/7dcf/a42cfe3b59becb441844b72558b361693608.pdf
+  reference: https://doi.org/FIXME
 
 manifest:
   - file: codecheck/placeholder_output.txt
