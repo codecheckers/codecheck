@@ -4,25 +4,18 @@
 \alias{is_zenodo_concept_doi}
 \title{Check whether a report DOI is a Zenodo concept DOI}
 \usage{
-is_zenodo_concept_doi(report, sandbox = FALSE, zenodo = NULL, logger = NULL)
+is_zenodo_concept_doi(report, sandbox = FALSE, fetch_record = NULL)
 }
 \arguments{
 \item{report}{- string containing the report DOI or URL on Zenodo.}
 
 \item{sandbox}{connect with the Zenodo Sandbox instead of the real service}
 
-\item{zenodo}{An object from zen4R to connect with Zenodo (or a mock with
-a compatible `getRecordByConceptId()` method, for testing). Defaults to
-a new `ZenodoManager` connected to the production (or sandbox) service.
-When supplied, `logger` is ignored - configure logging on the object
-you pass in instead.}
-
-\item{logger}{zen4R logger level for the default `ZenodoManager` created
-when `zenodo` is not supplied: `NULL` (the default) keeps output to the
-single `cli` alert zen4R always prints per request; `"INFO"` or
-`"DEBUG"` additionally prints zen4R's own `[zen4R][...]` line for every
-request (connect, fetch, record count, ...), useful when diagnosing
-rate-limiting or unexpected API responses.}
+\item{fetch_record}{a function `function(id, sandbox, follow_redirect)`
+returning `list(status, body)` for a Zenodo record lookup (or `NULL` on
+an unrecoverable request failure), for injecting a mock in tests.
+Defaults to [fetch_zenodo_record()], a direct HTTP call to the
+production (or sandbox) API.}
 }
 \value{
 `TRUE` if `report` is a Zenodo concept DOI, `FALSE` if it is a
