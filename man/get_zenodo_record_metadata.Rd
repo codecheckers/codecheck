@@ -20,7 +20,8 @@ Fetch the metadata of a published Zenodo record
 \details{
 Uses the InvenioRDM representation of the Zenodo REST API, which is the one
 the curation policy checks apply to. No authentication needed for open
-records.
+records, but an authenticated request gets a much higher Zenodo rate limit,
+so ZENODO_TOKEN is sent when set.
 }
 \author{
 Daniel Nuest

@@ -48,7 +48,8 @@ Imports:
     rsvg,
     magick,
     git2r,
-    parallel
+    parallel,
+    rprojroot
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr

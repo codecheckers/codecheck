@@ -191,8 +191,13 @@ is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL) {
   }
 
   if (is.null(zenodo)) {
+    # An authenticated request gets a much higher Zenodo rate limit than an
+    # anonymous one; use ZENODO_TOKEN when set even though this is a read-only
+    # lookup that works without a token too.
+    token <- Sys.getenv("ZENODO_TOKEN")
     zenodo <- ZenodoManager$new(
       url = if (sandbox) "https://sandbox.zenodo.org/api" else "https://zenodo.org/api",
+      token = if (nzchar(token)) token else NULL,
       sandbox = sandbox,
       logger = "INFO"
     )
@@ -201,6 +206,15 @@ is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL) {
   # A concept ID only resolves via getRecordByConceptId(); a version-specific
   # record ID does not (Zenodo doesn't treat a concept ID as a record itself).
   record <- zenodo$getRecordByConceptId(id)
+
+  # On a request failure (e.g. HTTP 429 rate limiting), zen4R's
+  # getRecordByConceptId() returns a ZenodoException object rather than NULL
+  # or a record, so `!is.null(record)` would wrongly read as "is a concept
+  # DOI". Surface the failure instead of misclassifying the DOI.
+  if (inherits(record, "ZenodoException")) {
+    stop("Could not check whether ", report, " is a Zenodo concept DOI: ",
+         record$message, call. = FALSE)
+  }
 
   !is.null(record)
 }
@@ -1058,7 +1072,8 @@ check_zenodo_record <- function(record, register_dir = getwd()) {
 #'
 #' Uses the InvenioRDM representation of the Zenodo REST API, which is the one
 #' the curation policy checks apply to. No authentication needed for open
-#' records.
+#' records, but an authenticated request gets a much higher Zenodo rate limit,
+#' so ZENODO_TOKEN is sent when set.
 #'
 #' @title Fetch metadata of a published Zenodo record
 #' @param id Zenodo record ID
@@ -1069,9 +1084,14 @@ check_zenodo_record <- function(record, register_dir = getwd()) {
 #' @export
 get_zenodo_record_metadata <- function(id, sandbox = FALSE) {
   host <- if (sandbox) "https://sandbox.zenodo.org" else "https://zenodo.org"
-  response <- httr::GET(
-    paste0(host, "/api/records/", id),
-    httr::add_headers(Accept = "application/vnd.inveniordm.v1+json"))
+  token <- Sys.getenv("ZENODO_TOKEN")
+  headers <- if (nzchar(token)) {
+    httr::add_headers(Accept = "application/vnd.inveniordm.v1+json",
+                      Authorization = paste("Bearer", token))
+  } else {
+    httr::add_headers(Accept = "application/vnd.inveniordm.v1+json")
+  }
+  response <- httr::GET(paste0(host, "/api/records/", id), headers)
   httr::stop_for_status(response)
   record <- httr::content(response, as = "parsed", type = "application/json")
 
