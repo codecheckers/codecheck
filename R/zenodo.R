@@ -179,12 +179,20 @@ get_zenodo_id <- function(report) {
 ##' @param zenodo An object from zen4R to connect with Zenodo (or a mock with
 ##'   a compatible `getRecordByConceptId()` method, for testing). Defaults to
 ##'   a new `ZenodoManager` connected to the production (or sandbox) service.
+##'   When supplied, `logger` is ignored - configure logging on the object
+##'   you pass in instead.
+##' @param logger zen4R logger level for the default `ZenodoManager` created
+##'   when `zenodo` is not supplied: `NULL` (the default) keeps output to the
+##'   single `cli` alert zen4R always prints per request; `"INFO"` or
+##'   `"DEBUG"` additionally prints zen4R's own `[zen4R][...]` line for every
+##'   request (connect, fetch, record count, ...), useful when diagnosing
+##'   rate-limiting or unexpected API responses.
 ##' @return `TRUE` if `report` is a Zenodo concept DOI, `FALSE` if it is a
 ##'   version-specific DOI or not a (matchable) Zenodo DOI at all.
 ##' @author Daniel Nuest
 ##' @importFrom zen4R ZenodoManager
 ##' @export
-is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL) {
+is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL, logger = NULL) {
   id <- get_zenodo_id(report)
   if (is.na(id)) {
     return(FALSE)
@@ -195,11 +203,16 @@ is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL) {
     # anonymous one; use ZENODO_TOKEN when set even though this is a read-only
     # lookup that works without a token too.
     token <- Sys.getenv("ZENODO_TOKEN")
+    # logger defaults to NULL: zen4R's own methods already emit a cli::
+    # alert for each step (connect, fetch, record count, ...); logger =
+    # "INFO"/"DEBUG" additionally prints zen4R's own "[zen4R][...]" line for
+    # every one of them, so leave it opt-in rather than doubling console
+    # output by default. Pass logger = "INFO" or "DEBUG" to opt back in.
     zenodo <- ZenodoManager$new(
       url = if (sandbox) "https://sandbox.zenodo.org/api" else "https://zenodo.org/api",
       token = if (nzchar(token)) token else NULL,
       sandbox = sandbox,
-      logger = "INFO"
+      logger = logger
     )
   }
 
