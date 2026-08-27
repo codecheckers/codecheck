@@ -1,4 +1,4 @@
-# codecheck 0.25.0.9012
+# codecheck 0.26.0
 
 ## New Features
 
@@ -9,6 +9,14 @@
 * `zenodo_policy_check()` gained three checks: the certificate ID must appear in the deposit title, a non-standard certificate PDF filename is now flagged, and deposit membership in the Zenodo `codecheck` community is checked (closes codecheckers/codecheck#20).
 * `register_render()` no longer accumulates stale `header-attrs-*` directories in `docs/libs`, and gained `prune_libs()` to remove other unreferenced library directories (closes codecheckers/codecheck#89).
 * Zenodo concept DOI checking is extended to also catch an outdated version-specific DOI, via new `is_zenodo_latest_version()` (closes codecheckers/codecheck#36).
+* Zenodo "concept DOIs" are now rejected in the `report` field of `codecheck.yml` (closes codecheckers/codecheck#36).
+* A Quarto certificate template (`codecheck.qmd`) is now shipped alongside the R Markdown one (closes codecheckers/codecheck#29).
+* Licence correction now keeps the licences already on a Zenodo record when adding the required CC-BY 4.0.
+* Curation findings that need human judgement (e.g. a non-standard title or repository) are now surfaced instead of guessed.
+* New `curate_register_zenodo_records()` applies mechanical Zenodo metadata corrections across a whole register in one batch.
+* `curate_zenodo_record()` gained `creator_overrides` to control how individual creator names are split or kept as an organisation.
+* Every Zenodo-hosted certificate is now audited against the CODECHECK community curation policy during `register_render()` and `register_check()`, with findings reported as a summary.
+* New `check_zenodo_record()` and `curate_zenodo_record()` audit and correct a single published Zenodo record's metadata against the curation policy.
 
 ## Bug Fixes
 
@@ -16,94 +24,24 @@
 * `is_zenodo_concept_doi()` no longer misreports a rate-limited lookup as a concept DOI.
 * `is_zenodo_latest_version()` no longer misreports a record's own latest version as outdated: it compared record IDs against a second, search-based lookup that is not reliably ordered by version, and could return a stale record even when the checked one was in fact current. It now reads the authoritative `is_latest` flag already present on the record itself.
 * `rprojroot` is now declared as a package dependency, fixing a missing-function error on a clean install.
-
-# codecheck 0.25.0.9011
-
-## New Features
-
-* Zenodo "concept DOIs" are now rejected in the `report` field of `codecheck.yml` (closes codecheckers/codecheck#36).
-* A Quarto certificate template (`codecheck.qmd`) is now shipped alongside the R Markdown one (closes codecheckers/codecheck#29).
-
-## Bug Fixes
-
 * The ORCID icon on certificate pages is now clickable and links to the ORCID profile.
 * The ORCID icon in the PDF certificate no longer silently goes missing (closes codecheckers/codecheck#37).
 * A creator recorded as an organisation is now reported as information, not an error, in the Zenodo curation policy check (raised in codecheckers/register#205).
-
-# codecheck 0.25.0.9010
-
-## Bug Fixes
-
 * ORCID name checks no longer fail a fresh, unauthenticated workspace.
 * A fresh workspace now passes strict CrossRef and ORCID name validation out of the box.
-
-## New Features
-
-* Licence correction now keeps the licences already on a Zenodo record when adding the required CC-BY 4.0.
-
-# codecheck 0.25.0.9009
-
-## Bug Fixes
-
 * The register CSS is now written to the output directory rather than the working directory.
-
-# codecheck 0.25.0.9008
-
-## Bug Fixes
-
 * `create_codecheck_files()` now reports the correct target folder (closes #87).
-
-# codecheck 0.25.0.9007
-
-## Bug Fixes
-
 * OSF certificate retrieval now survives an OSF outage instead of failing with an unrelated parsing error.
-
-# codecheck 0.25.0.9006
-
-## Bug Fixes
-
 * Rendering no longer rewrites `docs/libs/PROVENANCE.csv` on every run when nothing changed.
 * A failed library download is no longer stored as if it were the library file.
-
-# codecheck 0.25.0.9005
-
-## Bug Fixes
-
 * ResearchEquals certificates can be downloaded again after that platform's API change.
 * A register in which no codechecker has an ORCID or GitHub identifier now renders correctly.
-
-# codecheck 0.25.0.9004
-
-## Bug Fixes
-
 * Zenodo curation no longer truncates titles that need a human's review.
 * A clear error message is now shown when a Zenodo token may not edit a record.
-
-## New Features
-
-* Curation findings that need human judgement (e.g. a non-standard title or repository) are now surfaced instead of guessed.
-
-# codecheck 0.25.0.9003
-
-## New Features
-
-* New `curate_register_zenodo_records()` applies mechanical Zenodo metadata corrections across a whole register in one batch.
-* `curate_zenodo_record()` gained `creator_overrides` to control how individual creator names are split or kept as an organisation.
-
-# codecheck 0.25.0.9002
-
-## Bug Fixes
-
 * Codecheckers are now recorded as persons, not organisations, in Zenodo metadata.
 * Alternate identifiers are no longer silently dropped when uploading Zenodo metadata.
 * Record titles now match the curation policy ("CODECHECK Certificate \<ID\>").
 * A missing or non-DOI paper reference now raises a clear warning.
-
-## New Features
-
-* Every Zenodo-hosted certificate is now audited against the CODECHECK community curation policy during `register_render()` and `register_check()`, with findings reported as a summary.
-* New `check_zenodo_record()` and `curate_zenodo_record()` audit and correct a single published Zenodo record's metadata against the curation policy.
 
 # codecheck 0.25.0
 
