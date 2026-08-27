@@ -73,24 +73,23 @@
 </h2>
 <p>For first-time codecheckers using this R package:</p>
 <ol style="list-style-type: decimal">
+<li><p><strong>Fork the research repository</strong> - Fork to the <a href="https://github.com/codecheckers" class="external-link">codecheckers organization</a> on GitHub</p></li>
+<li><p><strong>Clone and navigate to the repository root</strong> - Run R from the top-level directory of the research project</p></li>
 <li>
-<strong>Fork the research repository</strong> - Fork to the <a href="https://github.com/codecheckers" class="external-link">codecheckers organization</a> on GitHub</li>
-<li>
-<strong>Clone and navigate to the repository root</strong> - Run R from the top-level directory of the research project</li>
-<li>
-<strong>Create CODECHECK files</strong> - Run <code><a href="reference/create_codecheck_files.html">codecheck::create_codecheck_files()</a></code> to generate:
+<p><strong>Create CODECHECK files</strong> - Run <code><a href="reference/create_codecheck_files.html">codecheck::create_codecheck_files()</a></code> to generate:</p>
 <ul>
 <li>A <code>codecheck.yml</code> configuration file with metadata (certificate ID, authors, manifest, etc.)</li>
 <li>A <code>codecheck/</code> directory with report templates</li>
 </ul>
 </li>
+<li><p><strong>Define the manifest</strong> - List all computational outputs (figures, tables, data files) that you’ve successfully reproduced in the <code>manifest</code> section of <code>codecheck.yml</code></p></li>
+<li><p><strong>Complete the certificate</strong> - Fill in the report template and render it</p></li>
 <li>
-<strong>Define the manifest</strong> - List all computational outputs (figures, tables, data files) that you’ve successfully reproduced in the <code>manifest</code> section of <code>codecheck.yml</code>
+<p><strong>Create a record on Zenodo</strong> (or OSF, or ResearchEquals) and submit the draft for feedback to your CODECHECK editor/contact person, e.g., via a sharing link or the CODECHECK Zenodo community; push the <code>codecheck.yml</code> to the repository</p>
+<blockquote>
+<p><strong>Note:</strong> Zenodo gives every deposit two DOIs: a version-specific DOI (pointing at that exact record) and a “concept DOI” (which always resolves to the <em>latest</em> version, see <a href="https://zenodo.org/help/versioning" class="external-link">Zenodo versioning</a>). The <code>report</code> field in <code>codecheck.yml</code> must use the version-specific DOI, so the certificate stays linked to an immutable record. <code><a href="reference/validate_codecheck_yml.html">codecheck::validate_codecheck_yml()</a></code> and <code><a href="reference/validate_certificate_for_rendering.html">validate_certificate_for_rendering()</a></code> both flag a concept DOI used by mistake.</p>
+</blockquote>
 </li>
-<li>
-<strong>Complete the certificate</strong> - Fill in the report template and render it</li>
-<li>
-<strong>Create a record on Zenodo</strong> (or OSF, or ResearchEquals) and submit the draft for feedback to your CODECHECK editor/contact person, e.g., via a sharing link or the CODECHECK Zenodo community; push the <code>codecheck.yml</code> to the repository</li>
 </ol>
 </div>
 <div class="section level2">

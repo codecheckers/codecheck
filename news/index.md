@@ -4,6 +4,39 @@
 
 ### New Features
 
+- **Zenodo “concept DOIs” are now rejected in the `report` field of
+  `codecheck.yml`**: Zenodo assigns every deposit both a
+  version-specific DOI and a “concept DOI” that always resolves to the
+  latest version (see [Zenodo
+  versioning](https://zenodo.org/help/versioning)); using the latter in
+  a certificate’s `report` field means the certificate no longer points
+  at an immutable record. New
+  [`is_zenodo_concept_doi()`](http://codecheck.org.uk/codecheck/reference/is_zenodo_concept_doi.md)
+  (`R/zenodo.R`) detects this by comparing the DOI’s record ID against
+  the concept ID reported by the Zenodo API.
+  [`validate_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.md)
+  now fails strict validation on a concept DOI, and
+  [`validate_certificate_for_rendering()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_for_rendering.md)
+  (used by both `codecheck.Rmd` and `codecheck.qmd`) gains a
+  `check_concept_doi` argument (default `TRUE`) that shows the same
+  warning box at render time, degrading gracefully if the Zenodo API is
+  unreachable. Closes codecheckers/codecheck#36
+- **A Quarto certificate template is now shipped alongside the R
+  Markdown one**: `codecheck.qmd` (`inst/extdata/templates/codecheck/`)
+  mirrors `codecheck.Rmd` - same helper calls, same PDF appearance via
+  `codecheck-preamble.sty` and the `xelatex` engine - and adds demo
+  (non-executed) R/Python/Julia chunks plus links to the Quarto docs,
+  closing codecheckers/codecheck#29.
+  [`create_codecheck_files()`](http://codecheck.org.uk/codecheck/reference/create_codecheck_files.md)
+  and `copy_codecheck_report_template()` gain a
+  `template = c("all", "rmd", "qmd")` argument (default `"all"`) to pick
+  which source(s) to copy into a new workspace. Since having both files
+  around makes it unclear which is the canonical certificate source,
+  both templates now warn at render time if their sibling is also
+  present, the shipped `Makefile` refuses to build if both exist, and
+  [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)’s
+  “machine-readable certificate” check now fails a deposit that contains
+  both a `.Rmd` and a `.qmd` source.
 - **[`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
   now also checks the checked repository itself**:
   [`check_repository_org()`](http://codecheck.org.uk/codecheck/reference/check_repository_org.md)

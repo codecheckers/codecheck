@@ -328,6 +328,8 @@
   : Fetch metadata of a published Zenodo record
 - [`is_placeholder_certificate()`](http://codecheck.org.uk/codecheck/reference/is_placeholder_certificate.md)
   : Check if certificate identifier or DOI is a placeholder
+- [`is_zenodo_concept_doi()`](http://codecheck.org.uk/codecheck/reference/is_zenodo_concept_doi.md)
+  : Check whether a report DOI is a Zenodo concept DOI
 - [`latex_codecheck_logo()`](http://codecheck.org.uk/codecheck/reference/latex_codecheck_logo.md)
   : Print the latex code to include the CODECHECK logo
 - [`latex_summary_of_manifest()`](http://codecheck.org.uk/codecheck/reference/latex_summary_of_manifest.md)

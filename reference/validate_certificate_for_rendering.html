@@ -48,7 +48,8 @@
 <span>  yml_file <span class="op">=</span> <span class="st">"codecheck.yml"</span>,</span>
 <span>  metadata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  strict <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  display_warning <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  display_warning <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  check_concept_doi <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -73,6 +74,14 @@ Default is FALSE (displays warning but continues).</p></dd>
 <dd><p>Logical. If TRUE (default), displays a warning box in
 the rendered output when certificate or DOI is a placeholder.</p></dd>
 
+
+<dt id="arg-check-concept-doi">check_concept_doi<a class="anchor" aria-label="anchor" href="#arg-check-concept-doi"></a></dt>
+<dd><p>Logical. If TRUE (default), checks whether a Zenodo
+report DOI is a concept DOI (which always resolves to the latest version)
+rather than a version-specific DOI, and warns if so. Requires a network
+request to Zenodo; if that request fails (e.g. offline rendering), the
+check is silently skipped rather than failing the render.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -81,9 +90,10 @@ the rendered output when certificate or DOI is a placeholder.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This function checks if the certificate identifier and report DOI are
-placeholders and prints a LaTeX warning box with a warning icon if they are.
-Intended for use in R Markdown templates to alert users about placeholder
-certificates and DOIs.</p>
+placeholders, or the report DOI is a Zenodo concept DOI instead of a
+version-specific DOI (see #36), and prints a LaTeX warning box with a
+warning icon if so. Intended for use in R Markdown or Quarto templates
+to alert users about placeholder certificates and DOIs.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
