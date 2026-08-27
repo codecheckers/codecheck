@@ -457,11 +457,13 @@ add_paper_details_md <- function(md_content, repo_link, download_cert_status){
   # Formatting the authors list
   paper_authors <- paste(lapply(config_yml$paper$authors, function(author) {
     if (!is.null(author$ORCID) && author$ORCID != "") {
-      # If ORCID exists, create a hyperlink
-      paste0("[", author$name, "](", 
-      CONFIG$HYPERLINKS["orcid"], author$ORCID, ")")
-    } 
-    
+      # If ORCID exists, create a hyperlink and a clickable ORCID icon
+      paste0("[", author$name, "](",
+      CONFIG$HYPERLINKS[["orcid"]], author$ORCID, ") ",
+      '<a href="', CONFIG$HYPERLINKS[["orcid"]], author$ORCID, '" title="ORCID iD">',
+      '<i class="ai ai-orcid orcid-icon-large"></i></a>')
+    }
+
     # If ORCID is missing, just return the name
     else {
       author$name
@@ -520,7 +522,10 @@ add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venu
     if ("ORCID" %in% names(checker)){
       # Use relative path: certificate pages are at docs/certs/YYYY-NNN/
       # so we need to go up 2 levels to reach codecheckers/
-      codechecker <- paste0("[", checker$name, "](../../codecheckers/", checker$ORCID, "/)")
+      # The icon links directly to the ORCID profile page.
+      codechecker <- paste0("[", checker$name, "](../../codecheckers/", checker$ORCID, "/) ",
+      '<a href="', CONFIG$HYPERLINKS[["orcid"]], checker$ORCID, '" title="ORCID iD">',
+      '<i class="ai ai-orcid orcid-icon-large"></i></a>')
     }
 
     else{

@@ -7,7 +7,7 @@
 \usepackage{pdfpages}
 \usepackage{xcolor}  % For colored warning boxes
 \usepackage{pifont}  % For dingbat symbols in error boxes
-\usepackage{academicons}  % For \aiOrcid icon
+\usepackage{fontspec}  % For loading the ORCID icon font directly by file
 \usepackage[font=Large,labelfont=bf,textfont=bf]{caption}
 \DeclareCaptionLabelFormat{addC}{#1 C#2}
 
@@ -16,6 +16,15 @@
 %% Set hyperlinks in colour to the "CODECHECK colour".
 \hypersetup{colorlinks=true, urlcolor = [rgb]{0,.5,0.2}}
 
-%% ORCID icon as clickable link using academicons
+%% ORCID icon as clickable link. Loaded directly from the academicons TTF
+%% (shipped with the academicons LaTeX package) by filename via \newfontface,
+%% rather than through the academicons package's \aiOrcid command. \aiOrcid
+%% selects the font by OS-level family name via fontspec's \newfontfamily,
+%% which silently falls back to a legacy 8-bit TFM with no ORCID glyph on
+%% systems where the font isn't registered with the OS font system
+%% (fontconfig) - producing no visible icon with no compile error. Loading by
+%% filename resolves the font via TeX's own search path instead, so it works
+%% regardless of OS font registration.
+\newfontface\orcidfont{academicons.ttf}
 \definecolor{orcidlogocol}{HTML}{A6CE39}
-\newcommand\orcidicon[1]{\href{https://orcid.org/#1}{\textcolor{orcidlogocol}{\aiOrcid}}}
+\newcommand\orcidicon[1]{\href{https://orcid.org/#1}{\textcolor{orcidlogocol}{\orcidfont\symbol{"E9D9}}}}
