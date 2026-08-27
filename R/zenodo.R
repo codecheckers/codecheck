@@ -868,8 +868,17 @@ zenodo_policy_check <- function(record_metadata, files = NULL) {
     add("certificate PDF", if (length(pdfs) > 0) "pass" else "fail",
         if (length(pdfs) > 0) paste(pdfs, collapse = "; ") else "no PDF in the deposit")
     sources <- files[grepl("\\.(Rmd|qmd|docx|odt|md|tex)$", files, ignore.case = TRUE)]
-    add("machine-readable certificate", if (length(sources) > 0) "pass" else "warn",
-        if (length(sources) > 0) paste(sources, collapse = "; ")
+    has_rmd <- any(grepl("\\.Rmd$", sources, ignore.case = TRUE))
+    has_qmd <- any(grepl("\\.qmd$", sources, ignore.case = TRUE))
+    add("machine-readable certificate",
+        if (has_rmd && has_qmd) "fail"
+        else if (length(sources) > 0) "pass"
+        else "warn",
+        if (has_rmd && has_qmd)
+          paste0(paste(sources, collapse = "; "),
+                 " - both codecheck.Rmd and codecheck.qmd present, remove one ",
+                 "so the certificate source is unambiguous")
+        else if (length(sources) > 0) paste(sources, collapse = "; ")
         else "deposit should include the certificate source, e.g. codecheck.Rmd")
   }
 

@@ -1,10 +1,10 @@
 ---
-output:
-  pdf_document:
+format:
+  pdf:
     toc: false
-    includes:
-       in_header: codecheck-preamble.sty
-    latex_engine: xelatex
+    include-in-header: codecheck-preamble.sty
+    pdf-engine: xelatex
+engine: knitr
 ---
 
 ```{r rsetup,eval=TRUE,include=FALSE}
@@ -22,9 +22,9 @@ root <- find_root("codecheck.yml")
 ```
 
 ```{r check_sibling_template, eval=TRUE, include=FALSE}
-## Warn if codecheck.qmd is also present next to this file - having both
+## Warn if codecheck.Rmd is also present next to this file - having both
 ## makes it unclear which one is the canonical certificate source.
-if (file.exists(file.path(root, "codecheck", "codecheck.qmd"))) {
+if (file.exists(file.path(root, "codecheck", "codecheck.Rmd"))) {
   warning("Both codecheck.Rmd and codecheck.qmd are present in codecheck/ - ",
           "remove one so the certificate source is unambiguous.")
 }
@@ -63,21 +63,6 @@ if (is_placeholder_certificate(yml_path)) {
 }
 ```
 
-```{r codecheck_logo, echo=FALSE,results='asis'}
-latex_codecheck_logo()
-```
-
-```{r validate_certificate, echo=FALSE, results='asis'}
-## Validate certificate and display warning if placeholder
-## Set strict = TRUE to fail rendering if certificate is a placeholder
-## Set display_warning = FALSE to suppress the warning box in PDF output
-validate_certificate_for_rendering(
-  yml_file = file.path(root, "codecheck.yml"),
-  strict = FALSE,           # Set to TRUE to fail rendering
-  display_warning = TRUE    # Set to FALSE to hide warning in PDF
-)
-```
-
 ```{r manifest, eval=TRUE, include=FALSE}
 metadata <- codecheck_metadata(root)
 manifest <- metadata$manifest
@@ -112,10 +97,32 @@ validation_result <- validate_contents_references(
 )
 ```
 
----
-title: `r paste("CODECHECK certificate", metadata$certificate)`
-subtitle: `r codecheck:::as_latex_url(metadata$report)`
----
+```{r print_title, echo=FALSE, results='asis'}
+## The certificate title/subtitle depend on `metadata`, computed above from
+## codecheck.yml - unlike R Markdown, Quarto's knitr engine does not evaluate
+## inline `r` code inside a document's YAML metadata blocks, so the title
+## cannot be set dynamically via YAML here. It is instead emitted directly as
+## LaTeX, using the same \title/\subtitle/\maketitle commands pandoc's
+## title-block metadata would otherwise have produced.
+cat(sprintf("\\title{%s}\n", paste("CODECHECK certificate", metadata$certificate)))
+cat(sprintf("\\subtitle{%s}\n", codecheck:::as_latex_url(metadata$report)))
+cat("\\maketitle\n")
+```
+
+```{r codecheck_logo, echo=FALSE,results='asis'}
+latex_codecheck_logo()
+```
+
+```{r validate_certificate, echo=FALSE, results='asis'}
+## Validate certificate and display warning if placeholder
+## Set strict = TRUE to fail rendering if certificate is a placeholder
+## Set display_warning = FALSE to suppress the warning box in PDF output
+validate_certificate_for_rendering(
+  yml_file = file.path(root, "codecheck.yml"),
+  strict = FALSE,           # Set to TRUE to fail rendering
+  display_warning = TRUE    # Set to FALSE to hide warning in PDF
+)
+```
 
 ```{r summary_metadata, echo=FALSE, results='asis'}
 latex_summary_of_metadata(metadata)
@@ -186,10 +193,38 @@ required for the reproduction are freely available by following the
 links in this document, the reader can then study for themselves the
 code and data.
 
+## Multi-language code chunks
+
+Quarto can execute R, Python, and Julia code in the same document - see the
+[Quarto language guides](https://quarto.org/docs/computations/languages.html)
+for details. The R chunk below is a real, unevaluated (`eval: false`) knitr
+chunk. The Python and Julia snippets are shown as plain (non-executed) code
+blocks rather than `{python}`/`{julia}` engine chunks, since those engines
+need the `reticulate` or `JuliaCall` packages (and a Python/Julia
+installation) even to be parsed - not needed just to demonstrate the syntax.
+Use `{python}`/`{julia}` chunks instead if your report actually executes
+Python or Julia code.
+
+```{r}
+#| eval: false
+1 + 1
+```
+
+```python
+1 + 1
+```
+
+```julia
+1 + 1
+```
 
 # About this document
 
-This document was created using [R Markdown](https://rmarkdown.rstudio.com/) using the [`codecheck`](https://github.com/codecheckers/codecheck) R package.
+This document was created using [Quarto](https://quarto.org/) using the
+[`codecheck`](https://github.com/codecheckers/codecheck) R package. See the
+[Quarto PDF basics](https://quarto.org/docs/output-formats/pdf-basics.html)
+and [PDF engine](https://quarto.org/docs/output-formats/pdf-engine.html)
+documentation for background on the PDF output produced here (via tinytex).
 `make codecheck.pdf` will regenerate the report file.
 
 ```{r}
@@ -206,6 +241,5 @@ codecheck::upload_zenodo_certificate(zenodo = zenodo, record = record$id, certif
 ```
 
 ```{r, include=FALSE, eval=FALSE}
-# render this document in RStudio
-rmarkdown::render("codecheck.Rmd", output_format = "pdf_document")
+# render this document from the command line: quarto render codecheck.qmd --to pdf
 ```

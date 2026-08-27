@@ -160,6 +160,7 @@ local({
     "codecheck-preamble.sty",
     "codecheck-zenodo.R",
     "codecheck.Rmd",
+    "codecheck.qmd",
     "Makefile",
     "placeholder_output.txt"
   )
@@ -170,6 +171,40 @@ local({
   yml <- yaml::read_yaml(file.path(test_dir, "codecheck.yml"))
   manifest_file <- yml$manifest[[1]]$file
   expect_true(file.exists(file.path(test_dir, manifest_file)))
+})
+
+# Test 12: create_codecheck_files(template = "rmd") - only codecheck.Rmd shipped ----
+local({
+  test_dir <- file.path(tempdir(), "test_create_workspace_rmd")
+  if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
+  setwd(test_dir)
+
+  expect_silent(codecheck::create_codecheck_files(template = "rmd"))
+
+  cert_dir <- file.path(test_dir, "codecheck")
+  actual_entries <- list.files(cert_dir)
+  expect_true("codecheck.Rmd" %in% actual_entries)
+  expect_false("codecheck.qmd" %in% actual_entries)
+})
+
+# Test 13: create_codecheck_files(template = "qmd") - only codecheck.qmd shipped ----
+local({
+  test_dir <- file.path(tempdir(), "test_create_workspace_qmd")
+  if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
+  dir.create(test_dir)
+  old_wd <- getwd()
+  on.exit({setwd(old_wd); unlink(test_dir, recursive = TRUE)})
+  setwd(test_dir)
+
+  expect_silent(codecheck::create_codecheck_files(template = "qmd"))
+
+  cert_dir <- file.path(test_dir, "codecheck")
+  actual_entries <- list.files(cert_dir)
+  expect_true("codecheck.qmd" %in% actual_entries)
+  expect_false("codecheck.Rmd" %in% actual_entries)
 })
 
 # Clean up any remaining test directories

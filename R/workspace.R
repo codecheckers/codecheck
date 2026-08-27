@@ -19,10 +19,20 @@ utils::globalVariables(c(
 ##' it assumes you have already started codechecking, and so will not copy any
 ##' files across.
 ##' @title Create template files for the codecheck process.
+##' @param template Which certificate source template(s) to copy: `"all"`
+##'   (default) copies both the R Markdown (`codecheck.Rmd`) and Quarto
+##'   (`codecheck.qmd`) templates, `"rmd"` copies only `codecheck.Rmd`, and
+##'   `"qmd"` copies only `codecheck.qmd`. Shipping both is convenient while
+##'   deciding, but only one should end up committed/published, since having
+##'   both makes it unclear which is the canonical certificate source (see
+##'   the sibling-template warnings in each template and the Zenodo policy
+##'   check in `zenodo_policy_check()`).
 ##' @return Nothing
 ##' @author Stephen J. Eglen
 ##' @export
-create_codecheck_files <- function() {
+create_codecheck_files <- function(template = c("all", "rmd", "qmd")) {
+  template <- match.arg(template)
+
   if (file.exists("codecheck.yml"))
     warning("codecheck.yml already exists, so not overwriting it.",
             "See the template file at ",
@@ -34,7 +44,7 @@ create_codecheck_files <- function() {
   if (dir.exists("codecheck"))
     stop("codecheck folder exists, so stopping.")
   else
-    copy_codecheck_report_template()
+    copy_codecheck_report_template(template = template)
 }
 
 copy_codecheck_yaml_template <- function(target = ".") {
@@ -43,10 +53,29 @@ copy_codecheck_yaml_template <- function(target = ".") {
   cli::cli_alert_success("Created {.file codecheck.yml} at {.path {target}}")
 }
 
-copy_codecheck_report_template <- function(target = ".") {
+copy_codecheck_report_template <- function(target = ".", template = c("all", "rmd", "qmd")) {
+  template <- match.arg(template)
+
   templates <- system.file("extdata", "templates", package="codecheck")
-  file.copy(file.path(templates, "codecheck"), target, recursive = TRUE)
+  src_dir <- file.path(templates, "codecheck")
   report_dir <- file.path(target, "codecheck")
+  dir.create(report_dir, recursive = TRUE, showWarnings = FALSE)
+
+  shared_files <- c("codecheck-preamble.sty", "Makefile", "codecheck-zenodo.R",
+                     "CODECHECK_report_template.docx", "CODECHECK_report_template.odt",
+                     "placeholder_output.txt")
+  file.copy(file.path(src_dir, shared_files), report_dir)
+  # "outputs/" is an empty directory in the template source, so git does not
+  # track it and R CMD build strips it from the package tarball - it may not
+  # exist in an installed package, in which case there is nothing to copy.
+  if (dir.exists(file.path(src_dir, "outputs")))
+    file.copy(file.path(src_dir, "outputs"), report_dir, recursive = TRUE)
+
+  if (template %in% c("all", "rmd"))
+    file.copy(file.path(src_dir, "codecheck.Rmd"), report_dir)
+  if (template %in% c("all", "qmd"))
+    file.copy(file.path(src_dir, "codecheck.qmd"), report_dir)
+
   cli::cli_alert_success(
     "Created CODECHECK certificate files in {.path {report_dir}}: {toString(list.files(report_dir))}"
   )

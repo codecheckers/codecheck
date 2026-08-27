@@ -35,6 +35,15 @@ expect_equal(result$status[result$check == "alternate identifier (url)"], "pass"
 expect_equal(result$status[result$check == "alternate identifier (other)"], "pass")
 expect_equal(result$status[result$check == "creators"], "pass")
 
+# a deposit with both codecheck.Rmd and codecheck.qmd has an ambiguous source
+result_ambiguous <- zenodo_policy_check(
+  compliant$metadata,
+  files = c("codecheck.pdf", "codecheck.Rmd", "codecheck.qmd")
+)
+expect_equal(result_ambiguous$status[result_ambiguous$check == "machine-readable certificate"], "fail")
+expect_true(grepl("codecheck\\.Rmd", result_ambiguous$detail[result_ambiguous$check == "machine-readable certificate"]))
+expect_true(grepl("codecheck\\.qmd", result_ambiguous$detail[result_ambiguous$check == "machine-readable certificate"]))
+
 # --------------------------------------------------- policy check: non-compliant
 
 broken <- fixture("zenodo_record_2026-023.json")
