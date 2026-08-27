@@ -56,7 +56,8 @@
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  ncores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  check_zenodo_policy <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  check_zenodo_policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prune_unreferenced_libs <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -110,6 +111,10 @@
 
 <dt id="arg-check-zenodo-policy">check_zenodo_policy<a class="anchor" aria-label="anchor" href="#arg-check-zenodo-policy"></a></dt>
 <dd><p>Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.</p></dd>
+
+
+<dt id="arg-prune-unreferenced-libs">prune_unreferenced_libs<a class="anchor" aria-label="anchor" href="#arg-prune-unreferenced-libs"></a></dt>
+<dd><p>Logical; if TRUE (the default), removes directories under `docs/libs` that no rendered HTML file references any more (see [prune_libs()] and codecheckers/codecheck#89) once rendering finishes. Only actually runs after a complete, unfiltered render (`from`/`to` covering the whole register) with no certificate failures; otherwise the step is skipped with a message, since a partial render can leave HTML that still references a directory this would delete.</p></dd>
 
 </dl></div>
     <div class="section level2">

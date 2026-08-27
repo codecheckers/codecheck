@@ -150,8 +150,10 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_zenodo_record.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/get_zenodo_record_metadata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/index.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/is_full_register_run.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_placeholder_certificate.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_zenodo_concept_doi.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/is_zenodo_latest_version.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/latex_codecheck_logo.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/latex_summary_of_manifest.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/latex_summary_of_metadata.html</loc></url>
@@ -164,6 +166,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_url_with_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/parse_repository_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/preprocess_register.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/prune_libs.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_assets_dir.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_check.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_clear_cache.html</loc></url>

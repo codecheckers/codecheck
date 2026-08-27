@@ -5,7 +5,7 @@ Check whether a report DOI is a Zenodo "concept DOI"
 ## Usage
 
 ``` r
-is_zenodo_concept_doi(report, sandbox = FALSE, zenodo = NULL)
+is_zenodo_concept_doi(report, sandbox = FALSE, zenodo = NULL, logger = NULL)
 ```
 
 ## Arguments
@@ -23,7 +23,17 @@ is_zenodo_concept_doi(report, sandbox = FALSE, zenodo = NULL)
   An object from zen4R to connect with Zenodo (or a mock with a
   compatible \`getRecordByConceptId()\` method, for testing). Defaults
   to a new \`ZenodoManager\` connected to the production (or sandbox)
-  service.
+  service. When supplied, \`logger\` is ignored - configure logging on
+  the object you pass in instead.
+
+- logger:
+
+  zen4R logger level for the default \`ZenodoManager\` created when
+  \`zenodo\` is not supplied: \`NULL\` (the default) keeps output to the
+  single \`cli\` alert zen4R always prints per request; \`"INFO"\` or
+  \`"DEBUG"\` additionally prints zen4R's own \`\[zen4R\]\[...\]\` line
+  for every request (connect, fetch, record count, ...), useful when
+  diagnosing rate-limiting or unexpected API responses.
 
 ## Value
 

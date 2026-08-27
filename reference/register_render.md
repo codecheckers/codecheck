@@ -19,7 +19,8 @@ register_render(
   parallel = FALSE,
   ncores = NULL,
   verbose = FALSE,
-  check_zenodo_policy = TRUE
+  check_zenodo_policy = TRUE,
+  prune_unreferenced_libs = TRUE
 )
 ```
 
@@ -81,6 +82,17 @@ register_render(
   reports the findings on the console. Never fails a render. Results are
   cached, so only a cold render pays for the extra requests; set to
   FALSE to skip them entirely.
+
+- prune_unreferenced_libs:
+
+  Logical; if TRUE (the default), removes directories under
+  \`docs/libs\` that no rendered HTML file references any more (see
+  \[prune_libs()\] and codecheckers/codecheck#89) once rendering
+  finishes. Only actually runs after a complete, unfiltered render
+  (\`from\`/\`to\` covering the whole register) with no certificate
+  failures; otherwise the step is skipped with a message, since a
+  partial render can leave HTML that still references a directory this
+  would delete.
 
 ## Value
 

@@ -1,11 +1,13 @@
-# Check that a repository is in the codecheckers/cdchck organisation
+# Check that a repository is in an allowed organisation/group
 
 A pure string check on the repository spec, no network call: registry
-policy requires the checked repository to live in the \`codecheckers\`
-GitHub organisation or the \`cdchck\` GitLab group (the same rule
-already enforced for Zenodo records, see
-\`check_register_zenodo_policy()\`). A violation stops the check for
-this entry, it is not a hint to fix later.
+policy requires the checked repository to live in one of the GitHub
+organisations or GitLab groups listed in \`CONFIG\$ALLOWED_REPO_ORGS\`
+(the \`codecheckers\` org and \`cdchck\` group by default, see the same
+rule enforced for Zenodo records in \`check_register_zenodo_policy()\`).
+Add further trusted orgs/groups by extending
+\`CONFIG\$ALLOWED_REPO_ORGS\` in \`config.R\`. A violation stops the
+check for this entry, it is not a hint to fix later.
 
 ## Usage
 

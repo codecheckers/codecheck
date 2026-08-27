@@ -94,7 +94,7 @@
 - [`check_repository_license()`](http://codecheck.org.uk/codecheck/reference/check_repository_license.md)
   : Check that a repository has a license
 - [`check_repository_org()`](http://codecheck.org.uk/codecheck/reference/check_repository_org.md)
-  : Check that a repository is in the codecheckers/cdchck organisation
+  : Check that a repository is in an allowed organisation/group
 - [`check_repository_topic()`](http://codecheck.org.uk/codecheck/reference/check_repository_topic.md)
   : Check that a repository advertises the "codecheck" topic tag
 - [`check_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/check_zenodo_record.md)
@@ -332,6 +332,9 @@
   : Check if certificate identifier or DOI is a placeholder
 - [`is_zenodo_concept_doi()`](http://codecheck.org.uk/codecheck/reference/is_zenodo_concept_doi.md)
   : Check whether a report DOI is a Zenodo concept DOI
+- [`is_zenodo_latest_version()`](http://codecheck.org.uk/codecheck/reference/is_zenodo_latest_version.md)
+  : Check whether a report DOI is the latest version of its Zenodo
+  record
 - [`latex_codecheck_logo()`](http://codecheck.org.uk/codecheck/reference/latex_codecheck_logo.md)
   : Print the latex code to include the CODECHECK logo
 - [`latex_summary_of_manifest()`](http://codecheck.org.uk/codecheck/reference/latex_summary_of_manifest.md)
@@ -354,6 +357,8 @@
 - [`preprocess_register()`](http://codecheck.org.uk/codecheck/reference/preprocess_register.md)
   : Function for preprocessing the register to create and return the
   preprocessed register table.
+- [`prune_libs()`](http://codecheck.org.uk/codecheck/reference/prune_libs.md)
+  : Prune Unreferenced Library Directories
 - [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
   : Function for checking all entries in the register
 - [`register_clear_cache()`](http://codecheck.org.uk/codecheck/reference/register_clear_cache.md)

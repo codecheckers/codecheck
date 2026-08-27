@@ -42,59 +42,63 @@
 <div class="section level3">
 <h3 id="new-features-0-25-0-9012">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9012"></a></h3>
 <ul><li>
-<strong><code><a href="../reference/register_check.html">register_check()</a></code> now also checks the checked repository itself</strong>: <code><a href="../reference/check_repository_org.html">check_repository_org()</a></code> fails the entry if the GitHub repository is not under <code>codecheckers/</code> or the GitLab project not under <code>cdchck/</code>, mirroring the same rule already enforced for Zenodo records. <code><a href="../reference/check_repository_archived.html">check_repository_archived()</a></code> warns if the repository is not archived, closing codecheckers/codecheck#25. <code><a href="../reference/check_repository_badge.html">check_repository_badge()</a></code>, <code><a href="../reference/check_repository_license.html">check_repository_license()</a></code> and the new <code><a href="../reference/check_repository_topic.html">check_repository_topic()</a></code> report, as information only, a missing CODECHECK badge (closing codecheckers/codecheck#75), a missing license, or a missing <code>codecheck</code> topic tag - none of these are required by the spec, so none should stop a check or count as a defect. <code><a href="../reference/check_repository_topic.html">check_repository_topic()</a></code> closes codecheckers/codecheck#14. New helpers <code><a href="../reference/get_github_repo_metadata.html">get_github_repo_metadata()</a></code>, <code><a href="../reference/get_github_readme_raw.html">get_github_readme_raw()</a></code>, <code><a href="../reference/get_gitlab_project_metadata.html">get_gitlab_project_metadata()</a></code> and <code><a href="../reference/get_gitlab_readme_raw.html">get_gitlab_readme_raw()</a></code> (<code>R/configuration.R</code>) back the GitHub/GitLab lookups; OSF and Zenodo repositories are unaffected, as none of these concepts apply there.</li>
+<code><a href="../reference/register_check.html">register_check()</a></code> now checks the register newest-first by default (closes codecheckers/codecheck#79). Pass <code>from = 1, to = nrow(register)</code> for the previous oldest-first order.</li>
 <li>
-<strong><code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> now enforces more of the CODECHECK config spec, and <code><a href="../reference/register_check.html">register_check()</a></code> catches duplicate certificate IDs</strong>: closing codecheckers/codecheck#9. When given a file path, the function now checks that the file is valid UTF-8 and that it starts with the YAML document marker <code>---</code>, both MUST requirements of the <a href="https://codecheck.org.uk/spec/config/1.0/" class="external-link">config spec</a> that were previously unchecked (raw bytes are needed for both, so they only run for a file path, not for an already-parsed list). It also now requires at least one <code>codechecker</code> entry, matching the spec’s “at least one child element”. Separately, <code><a href="../reference/register_check.html">register_check()</a></code> now rejects the whole register up front if any <code>Certificate</code> value is duplicated across rows, rather than only ever comparing one row’s certificate against its own repository’s <code>codecheck.yml</code>.</li>
+<code><a href="../reference/register_check.html">register_check()</a></code> now also checks the checked repository itself: organisation/group membership, archived status, CODECHECK badge, license, and <code>codecheck</code> topic tag (closes codecheckers/codecheck#25, <a href="https://github.com/codecheckers/codecheck/issues/75" class="external-link">#75</a>, <a href="https://github.com/codecheckers/codecheck/issues/14" class="external-link">#14</a>).</li>
+<li>The allowed GitHub organisations/GitLab groups for <code><a href="../reference/check_repository_org.html">check_repository_org()</a></code> are now configurable via <code>CONFIG$ALLOWED_REPO_ORGS</code>; <code>github.com/reproducible-agile</code> was added to the default list.</li>
 <li>
-<strong><code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> gains three checks from codecheckers/codecheck#20</strong>: the deposit title must contain the certificate ID (e.g. “2026-023”), not just the fixed text “CODECHECK Certificate”; a certificate PDF present under a name other than <code>codecheck.pdf</code> now warns instead of silently passing; and a new <code>record</code> argument (the full record from <code><a href="../reference/get_zenodo_record_metadata.html">get_zenodo_record_metadata()</a></code>) enables a new “community” check confirming the deposit is a member of the Zenodo <code>codecheck</code> community - skipped when <code>record</code> is not supplied, since community membership is not part of <code>metadata</code>. <code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> and <code><a href="../reference/check_register_zenodo_policy.html">check_register_zenodo_policy()</a></code> now pass the full record through.</li>
+<code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> now checks that <code>codecheck.yml</code> is valid UTF-8, starts with the YAML document marker, and has at least one <code>codechecker</code> entry; <code><a href="../reference/register_check.html">register_check()</a></code> now rejects a register containing duplicate certificate IDs (closes codecheckers/codecheck#9).</li>
+<li>
+<code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> gained three checks: the certificate ID must appear in the deposit title, a non-standard certificate PDF filename is now flagged, and deposit membership in the Zenodo <code>codecheck</code> community is checked (closes codecheckers/codecheck#20).</li>
+<li>
+<code><a href="../reference/register_render.html">register_render()</a></code> no longer accumulates stale <code>header-attrs-*</code> directories in <code>docs/libs</code>, and gained <code><a href="../reference/prune_libs.html">prune_libs()</a></code> to remove other unreferenced library directories (closes codecheckers/codecheck#89).</li>
+<li>Zenodo concept DOI checking is extended to also catch an outdated version-specific DOI, via new <code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> (closes codecheckers/codecheck#36).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9012">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9012"></a></h3>
 <ul><li>
-<strong><code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> no longer misreports an old record as a concept DOI when the Zenodo API is rate-limited</strong>: on an HTTP error (e.g. 429 “Too Many Requests”), zen4R’s <code>getRecordByConceptId()</code> returns a <code>ZenodoException</code> object rather than <code>NULL</code>, so <code>!is.null(record)</code> read this as “yes, a concept DOI was found” and <code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> failed with the misleading message “… is a Zenodo concept DOI”. The function now detects a <code>ZenodoException</code> and raises a clear error about the failed request instead. <code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> and <code><a href="../reference/get_zenodo_record_metadata.html">get_zenodo_record_metadata()</a></code> also now send the <code>ZENODO_TOKEN</code> environment variable as a bearer token when set, since an authenticated request gets a much higher Zenodo rate limit than an anonymous one - both previously ignored it even when set, which is what made the rate limit easy to hit during <code><a href="../reference/register_check.html">register_check()</a></code>.</li>
+<code><a href="../reference/register_check.html">register_check()</a></code> no longer aborts the whole run when Zenodo’s search endpoint rate-limits it; the underlying calls are now paced, share one connection per run instead of reconnecting for every entry, and are retried automatically.</li>
 <li>
-<strong><code>rprojroot</code> declared as a package dependency</strong>: <code>codecheck.Rmd</code> and <code>codecheck.qmd</code>’s setup chunk calls <code>find_root()</code> from <code>rprojroot</code>, but the package was never listed in <code>DESCRIPTION</code>, so a clean install (e.g. <code>r-lib/actions/setup-r-dependencies</code> on CI) never installed it; <code><a href="https://rprojroot.r-lib.org/" class="external-link">require("rprojroot")</a></code> then failed silently and <code>find_root()</code> errored with “could not find function”. This broke every test that renders the certificate template (<code>test_manifest_file_rendering.R</code>, <code>test_render_qmd_workspace.R</code>).</li>
+<code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> and <code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> no longer double-log every Zenodo API step.</li>
+<li>
+<code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> no longer misreports a rate-limited lookup as a concept DOI; both functions now use <code>ZENODO_TOKEN</code> when set for a higher rate limit.</li>
+<li>
+<code><a href="../reference/is_zenodo_latest_version.html">is_zenodo_latest_version()</a></code> no longer misreports a record’s own latest version as outdated: it compared record IDs against a second, search-based lookup that is not reliably ordered by version, and could return a stale record even when the checked one was in fact current. It now reads the authoritative <code>is_latest</code> flag already present on the record itself, which is also one fewer request per check.</li>
+<li>
+<code>rprojroot</code> is now declared as a package dependency, fixing a missing-function error on a clean install.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9011" id="codecheck-02509011">codecheck 0.25.0.9011<a class="anchor" aria-label="anchor" href="#codecheck-02509011"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-25-0-9011">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9011"></a></h3>
-<ul><li>
-<strong>Zenodo “concept DOIs” are now rejected in the <code>report</code> field of <code>codecheck.yml</code></strong>: Zenodo assigns every deposit both a version-specific DOI and a “concept DOI” that always resolves to the latest version (see <a href="https://zenodo.org/help/versioning" class="external-link">Zenodo versioning</a>); using the latter in a certificate’s <code>report</code> field means the certificate no longer points at an immutable record. New <code><a href="../reference/is_zenodo_concept_doi.html">is_zenodo_concept_doi()</a></code> (<code>R/zenodo.R</code>) detects this by comparing the DOI’s record ID against the concept ID reported by the Zenodo API. <code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> now fails strict validation on a concept DOI, and <code><a href="../reference/validate_certificate_for_rendering.html">validate_certificate_for_rendering()</a></code> (used by both <code>codecheck.Rmd</code> and <code>codecheck.qmd</code>) gains a <code>check_concept_doi</code> argument (default <code>TRUE</code>) that shows the same warning box at render time, degrading gracefully if the Zenodo API is unreachable. Closes codecheckers/codecheck#36</li>
-<li>
-<strong>A Quarto certificate template is now shipped alongside the R Markdown one</strong>: <code>codecheck.qmd</code> (<code>inst/extdata/templates/codecheck/</code>) mirrors <code>codecheck.Rmd</code> - same helper calls, same PDF appearance via <code>codecheck-preamble.sty</code> and the <code>xelatex</code> engine - and adds demo (non-executed) R/Python/Julia chunks plus links to the Quarto docs, closing codecheckers/codecheck#29. <code><a href="../reference/create_codecheck_files.html">create_codecheck_files()</a></code> and <code>copy_codecheck_report_template()</code> gain a <code>template = c("all", "rmd", "qmd")</code> argument (default <code>"all"</code>) to pick which source(s) to copy into a new workspace. Since having both files around makes it unclear which is the canonical certificate source, both templates now warn at render time if their sibling is also present, the shipped <code>Makefile</code> refuses to build if both exist, and <code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code>’s “machine-readable certificate” check now fails a deposit that contains both a <code>.Rmd</code> and a <code>.qmd</code> source.</li>
+<ul><li>Zenodo “concept DOIs” are now rejected in the <code>report</code> field of <code>codecheck.yml</code> (closes codecheckers/codecheck#36).</li>
+<li>A Quarto certificate template (<code>codecheck.qmd</code>) is now shipped alongside the R Markdown one (closes codecheckers/codecheck#29).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9011">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9011"></a></h3>
-<ul><li><p><strong>ORCID icon on certificate pages is now clickable and links to the ORCID profile</strong>: the HTML certificate page showed no ORCID icon at all - only the name itself was a plain text link. <code><a href="../reference/add_paper_details_md.html">add_paper_details_md()</a></code> and <code><a href="../reference/add_codecheck_details_md.html">add_codecheck_details_md()</a></code> (<code>R/utils_render_cert_md.R</code>) now also render the academicons ORCID glyph as a link to <code>https://orcid.org/&lt;id&gt;</code> next to each name with an ORCID ID, matching the icon already used on codechecker profile pages.</p></li>
-<li><p><strong>ORCID icon in the PDF certificate no longer silently goes missing</strong>: <code>codecheck-preamble.sty</code>’s <code>\orcidicon</code> used the <code>academicons</code> package’s <code>\aiOrcid</code>, which selects the icon font by OS-level family name (via fontspec’s <code>\newfontfamily</code>). On a system where the font isn’t registered with the OS font system (fontconfig) - which is not guaranteed by a plain TeX Live/TinyTeX install - this silently falls back to a legacy 8-bit TFM with no ORCID glyph, so the icon vanished with no compile error. <code>\orcidicon</code> now loads <code>academicons.ttf</code> directly by filename via <code>\newfontface</code>, resolved through TeX’s own search path, so it no longer depends on OS font registration. Closes codecheckers/codecheck#37</p></li>
-<li><p><strong>An organisational creator is reported as information, not as an error</strong>: <code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> failed a record whenever any creator was recorded as an organisation, but that can be correct - a workshop’s participants recorded as one entry is a genuine group, not a person mistakenly recorded as one, and record metadata alone cannot tell the two apart. The “creators” check now reports this as a new <code>"info"</code> status rather than <code>"fail"</code>, so it is surfaced to a human to judge instead of asserted as a defect, and never makes a record non-compliant. <code><a href="../reference/check_register_zenodo_policy.html">check_register_zenodo_policy()</a></code> gains an <code>n_info</code> column, and <code><a href="../reference/report_zenodo_policy_findings.html">report_zenodo_policy_findings()</a></code> and <code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> display info-level findings with an info icon during rendering. Raised in codecheckers/register#205</p></li>
+<ul><li>The ORCID icon on certificate pages is now clickable and links to the ORCID profile.</li>
+<li>The ORCID icon in the PDF certificate no longer silently goes missing (closes codecheckers/codecheck#37).</li>
+<li>A creator recorded as an organisation is now reported as information, not an error, in the Zenodo curation policy check (raised in codecheckers/register#205).</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9010" id="codecheck-02509010">codecheck 0.25.0.9010<a class="anchor" aria-label="anchor" href="#codecheck-02509010"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9010">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9010"></a></h3>
-<ul><li>
-<strong>ORCID name checks no longer fail a fresh, unauthenticated workspace</strong>: <code>codecheck.Rmd</code>’s <code>validate_crossref</code> chunk called <code>validate_contents_references(strict = TRUE)</code> with ORCID’s <code>skip_on_auth_error</code> left off, so <code>make all</code> hard-failed on a brand-new certificate unless the codechecker already had working ORCID authentication - and the error’s own advice to run <code><a href="https://rdrr.io/pkg/rorcid/man/orcid_auth.html" class="external-link">rorcid::orcid_auth()</a></code> could never fix it for a co-author’s or codechecker’s ORCID, since a personal token only authorizes reading the authenticated user’s own record. <code>get_orcid_name()</code> now falls back to the public, unauthenticated ORCID API (<code><a href="../reference/get_orcid_name_public.html">get_orcid_name_public()</a></code>) whenever the authenticated lookup fails, which succeeds for any record with a public name and needs no token at all; the template also enables <code>skip_on_auth_error = TRUE</code> by default so rendering still completes even when both lookups fail (e.g. offline)</li>
-<li>
-<strong>A fresh workspace now passes strict CrossRef and name validation out of the box</strong>: the shipped example <code>codecheck.yml</code>’s <code>reference</code> field held a non-DOI semanticscholar PDF link, which CrossRef validation always fetched and always got a 404 for; it is now the same <code>FIXME</code> placeholder style already used elsewhere in the template, which the existing placeholder-skip check recognizes. Separately, both the CrossRef and ORCID name-matching checks split names on whitespace and treated any 2+ character token as significant, so a middle initial like “S.” (2 characters, period included) could never match a spelled-out middle name like “Samuel” in the authoritative record - exactly what the example author “Leslie S. Smith” hit against ORCID’s “Leslie Samuel Smith”. Both comparisons now strip periods before splitting, so initials are correctly reduced to a single, insignificant character</li>
-<li>
-<strong><code>test_workspace_creation.R</code> no longer expects a shipped <code>outputs/</code> directory</strong>: the test asserted <code><a href="../reference/create_codecheck_files.html">create_codecheck_files()</a></code> produces a <code>codecheck/outputs</code> folder, but that folder is empty in the template source, which git never tracks and which <code>R CMD build</code> explicitly strips from the package tarball (“Removed empty directory …”) - so the assertion only ever passed by accident, when a stray local copy happened to exist. <code>codecheck.Rmd</code> already creates <code>outputs/</code> on demand during rendering (see the <code>manifest</code> chunk), so the test now only checks for the files that are actually shipped</li>
+<ul><li>ORCID name checks no longer fail a fresh, unauthenticated workspace.</li>
+<li>A fresh workspace now passes strict CrossRef and ORCID name validation out of the box.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-0-25-0-9010">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9010"></a></h3>
-<ul><li>
-<strong>Licence correction keeps the licences already on a record</strong>: the curation policy requires the certificate to be CC-BY 4.0, but a deposit may hold code, data or a source archive under other terms alongside it. <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> adds CC-BY 4.0 through the new <code>license</code> field when it is missing and writes the full rights list, leaving every other entry in place - stripping one would overrule the depositor’’’s deliberate choice for those files. <code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> accordingly passes any record containing CC-BY 4.0, whatever else is listed, and reports the others as covering further artefacts</li>
+<ul><li>Licence correction now keeps the licences already on a Zenodo record when adding the required CC-BY 4.0.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9009" id="codecheck-02509009">codecheck 0.25.0.9009<a class="anchor" aria-label="anchor" href="#codecheck-02509009"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9009">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9009"></a></h3>
-<ul><li>
-<strong>The register CSS is written to the output directory, not to the working directory</strong>: <code><a href="../reference/copy_register_css.html">copy_register_css()</a></code> defaulted to a hardcoded <code>docs/assets</code> relative to the working directory and ignored where the libraries were being installed, so rendering with a <code>libs_dir</code> outside the current directory scattered <code>codecheck-register.css</code> into whatever directory the render happened to start from. The assets directory is now derived from the libraries directory through the new <code><a href="../reference/register_assets_dir.html">register_assets_dir()</a></code>, which is what the two call sites in <code><a href="../reference/setup_external_libraries.html">setup_external_libraries()</a></code> pass</li>
+<ul><li>The register CSS is now written to the output directory rather than the working directory.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -102,686 +106,334 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9008">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9008"></a></h3>
 <ul><li>
-<strong><code><a href="../reference/create_codecheck_files.html">create_codecheck_files()</a></code> reports the right folder</strong>: the confirmation message said “Created CODECHECK certificate files at .” instead of naming the <code>codecheck/</code> subfolder the files were actually copied into, and separately <code>list.files("codecheck")</code> ignored the <code>target</code> argument entirely. Both messages now use <code>cli</code> alerts (matching the rest of the package) and correctly reference <code>&lt;target&gt;/codecheck/</code> (closes <a href="https://github.com/codecheckers/codecheck/issues/87" class="external-link">#87</a>)</li>
+<code><a href="../reference/create_codecheck_files.html">create_codecheck_files()</a></code> now reports the correct target folder (closes <a href="https://github.com/codecheckers/codecheck/issues/87" class="external-link">#87</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9007" id="codecheck-02509007">codecheck 0.25.0.9007<a class="anchor" aria-label="anchor" href="#codecheck-02509007"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9007">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9007"></a></h3>
-<ul><li>
-<strong>OSF retrieval survives an OSF outage</strong>: <code>osfr</code> does its own HTTP and parses every response as JSON, so an OSF error page arrived as “lexical error: invalid char in json text” instead of a status code, and <code><a href="../reference/codecheck_GET_retry.html">codecheck_GET_retry()</a></code> never saw it. <code><a href="../reference/get_codecheck_yml_osf.html">get_codecheck_yml_osf()</a></code> retries both <code>osfr</code> calls with the same policy used for the requests the package makes itself, and reports a clear message when they keep failing</li>
-</ul></div>
-<div class="section level3">
-<h3 id="internal-0-25-0-9007">Internal<a class="anchor" aria-label="anchor" href="#internal-0-25-0-9007"></a></h3>
-<ul><li>
-<strong>One flaky remote call no longer costs the whole test suite</strong>: a failed <code>expect_silent(x &lt;- ...)</code> leaves <code>x</code> unassigned, so the next line referring to <code>x</code> aborted the file with “object not found” and R halted the run, discarding every test after it. The integration tests in <code>test_codecheck_yml_retrieval.R</code> and <code>test_lifecycle_journal.R</code> declare their variables first, so an upstream hiccup costs one failed assertion</li>
-<li>
-<strong>Remote links are asserted by shape</strong>: <code><a href="../reference/get_cert_link.html">get_cert_link()</a></code> returns a ResearchEquals <code>/api/files/&lt;key&gt;</code> URL whose key, like the version id it comes from, changes with every new deposit, so <code>test_cert_link.R</code> matches the shape rather than the identifier of the day</li>
+<ul><li>OSF certificate retrieval now survives an OSF outage instead of failing with an unrelated parsing error.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9006" id="codecheck-02509006">codecheck 0.25.0.9006<a class="anchor" aria-label="anchor" href="#codecheck-02509006"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9006">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9006"></a></h3>
-<ul><li>
-<strong>Rendering no longer rewrites <code>docs/libs/PROVENANCE.csv</code> on every run</strong>: <code><a href="../reference/setup_external_libraries.html">setup_external_libraries()</a></code> wrote the provenance file and the libraries README unconditionally, with <code>date_configured = Sys.Date()</code>, so every render dirtied two tracked files even though all libraries were already present and nothing was downloaded. The function now checks whether the local copies are current - all expected files present and of a plausible size, and <code>PROVENANCE.csv</code> recording exactly the specified libraries and versions - and returns early without touching either file. A partial update keeps the recorded date of the libraries it did not download, so <code>date_configured</code> says when a library was actually fetched</li>
-<li>
-<strong>A failed library download is no longer stored as a library file</strong>: the response body was written to the destination before the status code was checked, so an HTTP error page landed in, say, <code>bootstrap.min.css</code>; the <code><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists()</a></code> guard then skipped that file on every later run and the broken copy stayed forever. <code><a href="../reference/download_library_file.html">download_library_file()</a></code> downloads to a temporary file and moves it into place only on HTTP 200 with a plausible size, and files below that size are re-downloaded</li>
-</ul></div>
-<div class="section level3">
-<h3 id="internal-0-25-0-9006">Internal<a class="anchor" aria-label="anchor" href="#internal-0-25-0-9006"></a></h3>
-<ul><li>
-<strong>One specification for the external libraries</strong>: <code><a href="../reference/external_library_specs.html">external_library_specs()</a></code> is now the single source of truth, including the font files that were hardcoded in <code>download_font_awesome_fonts()</code> and <code>download_academicons_fonts()</code> (both replaced by the spec-driven <code><a href="../reference/download_library_fonts.html">download_library_fonts()</a></code>). <code><a href="../reference/libs_are_current.html">libs_are_current()</a></code> and the download loop derive their expectations from it, so a version bump in the specification is enough to force a refresh</li>
-<li>
-<strong>Tests for the external libraries</strong>: new <code>inst/tinytest/test_external_libs.R</code> covers the currency check, the preserved provenance, and discarded failed downloads offline via <code>with_mocked_codecheck()</code>, and keeps exactly one real download as an integration test that skips when there is no network</li>
+<ul><li>Rendering no longer rewrites <code>docs/libs/PROVENANCE.csv</code> on every run when nothing changed.</li>
+<li>A failed library download is no longer stored as if it were the library file.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9005" id="codecheck-02509005">codecheck 0.25.0.9005<a class="anchor" aria-label="anchor" href="#codecheck-02509005"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9005">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9005"></a></h3>
-<ul><li>
-<strong>ResearchEquals certificates can be downloaded again</strong>: ResearchEquals replaced its <code>modules</code> API with <code>outputs</code> and <code>versions</code>, so <code>/api/modules/main/&lt;DOI suffix&gt;</code> - the endpoint <code><a href="../reference/get_researchequals_cert_link.html">get_researchequals_cert_link()</a></code> built - now answers 404 for every certificate. A DOI resolves to a version page, whose id gives the deposited file through <code>/api/versions/&lt;id&gt;</code> and <code>/api/files/&lt;key&gt;</code>; the resolver follows that chain and warns when a version carries no file or is not a PDF. <code>CONFIG$CERT_LINKS$researchequals_api</code> is the apex host, the <code>www.</code> one only added a redirect</li>
-<li>
-<strong>A register in which no codechecker has an identifier renders</strong>: codecheckers without ORCID and GitHub username are recorded under the literal identifier <code>"NA"</code>, which <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> reads back as a missing value - and as a logical column when it is the only identifier in the register, making <code><a href="../reference/create_filtered_reg_csvs.html">create_filtered_reg_csvs()</a></code> fail in <code><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit()</a></code> with “non-character argument”. <code>render_table_codecheckers()</code> failed right after it, because <code>recode()</code> errors when both identifier dictionaries are empty</li>
-</ul></div>
-<div class="section level3">
-<h3 id="internal-0-25-0-9005">Internal<a class="anchor" aria-label="anchor" href="#internal-0-25-0-9005"></a></h3>
-<ul><li>
-<strong>Shared test mocks</strong>: new <code>inst/tinytest/mocks.R</code> provides <code>with_mocked_codecheck()</code>, which swaps functions in the package namespace and restores them afterwards, along with a fake <code><a href="../reference/codecheck_GET.html">codecheck_GET()</a></code>, a <code>codecheck.yml</code> fixture reader and a <code><a href="../reference/get_codecheck_yml.html">get_codecheck_yml()</a></code> that serves it. Tests can state the property they exercise instead of depending on what a record on a remote archive happens to contain, and a slow or failing archive can no longer abort a run. <code>test_register_edge_cases.R</code> uses them; its missing-identifier warning is now asserted on <code><a href="../reference/add_codechecker.html">add_codechecker()</a></code>, which raises it, because <code><a href="../reference/register_render.html">register_render()</a></code> muffles every warning and re-reports it as a <code>cli</code> alert</li>
+<ul><li>ResearchEquals certificates can be downloaded again after that platform’s API change.</li>
+<li>A register in which no codechecker has an ORCID or GitHub identifier now renders correctly.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9004" id="codecheck-02509004">codecheck 0.25.0.9004<a class="anchor" aria-label="anchor" href="#codecheck-02509004"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9004">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9004"></a></h3>
-<ul><li>
-<strong>Curation no longer truncates titles routed to a human</strong>: the apply path read its change set with <code>$</code>, which partial-matches on R lists, so <code>changes$title</code> matched <code>changes$title_manual</code> and would have overwritten a title carrying extra descriptive text with the bare <code>CODECHECK Certificate &lt;ID&gt;</code>. The same applies to the repository relation. All reads in the apply path are now exact (<code>[["..."]]</code>), with regression tests</li>
-<li>
-<strong>Clear message when a Zenodo token may not edit a record</strong>: <code>zen4R::editRecord()</code> returns a non-record instead of stopping when the API answers “Permission denied”, so curating a record deposited by another user failed with the unrelated “attempt to apply non-function”. The result is now checked and reported as what it is</li>
+<ul><li>Zenodo curation no longer truncates titles that need a human’s review.</li>
+<li>A clear error message is now shown when a Zenodo token may not edit a record.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-0-25-0-9004">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9004"></a></h3>
-<ul><li>
-<strong>Findings that need judgement are surfaced, not guessed</strong>: <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> no longer proposes a value where the target does not follow mechanically. A title carrying text beyond <code>CODECHECK Certificate &lt;ID&gt;</code> and a repository outside <code>codecheckers/</code>/<code>cdchck</code> are reported for a human instead, and a record with only such findings is never opened for editing</li>
+<ul><li>Curation findings that need human judgement (e.g. a non-standard title or repository) are now surfaced instead of guessed.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9003" id="codecheck-02509003">codecheck 0.25.0.9003<a class="anchor" aria-label="anchor" href="#codecheck-02509003"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-25-0-9003">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9003"></a></h3>
-<ul><li>
-<strong>Batch curation of a register’s Zenodo records</strong>: new <code><a href="../reference/curate_register_zenodo_records.html">curate_register_zenodo_records()</a></code> applies the mechanical corrections across a whole register, and <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> gained a <code>fields</code> argument selecting which classes of correction to consider. Beyond the title it now also corrects publisher, language, resource type and the relation to the checked repository. Creator names are excluded from batch runs because splitting a group entry such as “Delft 2024-05 participants” into given and family name would be wrong. The register project wraps this as <code>make zenodo_curate_all [APPLY=1]</code>
-</li>
+<ul><li>New <code><a href="../reference/curate_register_zenodo_records.html">curate_register_zenodo_records()</a></code> applies mechanical Zenodo metadata corrections across a whole register in one batch.</li>
 <li>
-<strong>Creator handling can be steered per record</strong>: <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> gained <code>creator_overrides</code>, keyed by the creator name as recorded. <code>list(organizational = TRUE)</code> keeps a genuine group entry (e.g. “Delft 2024-05 participants”) as an organisation, and <code>list(given = "Gabriella", family = "Low Chew Tung")</code> gives an explicit split where the last-token heuristic of <code><a href="../reference/split_person_name.html">split_person_name()</a></code> would misname a person with a compound family name</li>
+<code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> gained <code>creator_overrides</code> to control how individual creator names are split or kept as an organisation.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0.9002" id="codecheck-02509002">codecheck 0.25.0.9002<a class="anchor" aria-label="anchor" href="#codecheck-02509002"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0-9002">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0-9002"></a></h3>
-<ul><li>
-<strong>Codecheckers are recorded as persons on Zenodo</strong>: <code><a href="../reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> passed only a full <code>name</code> to <code>zen4R::addCreator()</code>, which makes Zenodo store the codechecker as an <em>organisation</em> rather than a person. The name is now split into given and family name via the new <code><a href="../reference/split_person_name.html">split_person_name()</a></code> helper, and any affiliation from <code>codecheck.yml</code> is passed along. Names that cannot be split (a single token, e.g. a group name) still deposit as before, but now emit a warning</li>
-<li>
-<strong>Alternate identifiers are no longer silently dropped</strong>: <code><a href="../reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> wrote the certificate identifiers to <code>metadata$alternate_identifiers</code>, a legacy field name that the InvenioRDM record model Zenodo uses today discards on deposit. The identifiers now go to <code>metadata$identifiers</code>, so the <code>cdchck.science/register/certs/&lt;CERT ID&gt;</code> identifiers required by the <a href="https://zenodo.org/communities/codecheck/curation-policy" class="external-link">community curation policy</a> actually reach the record</li>
-<li>
-<strong>Record titles match the curation policy</strong>: deposits are titled “CODECHECK Certificate <id>” instead of “CODECHECK certificate <id>”</id></id></li>
-<li>
-<strong>Missing paper DOI is loud</strong>: a <code>paper$reference</code> that is not a DOI, or missing entirely, now raises a warning instead of an easily-missed message, because it means the required “reviews” relation to the checked paper cannot be created</li>
+<ul><li>Codecheckers are now recorded as persons, not organisations, in Zenodo metadata.</li>
+<li>Alternate identifiers are no longer silently dropped when uploading Zenodo metadata.</li>
+<li>Record titles now match the curation policy (“CODECHECK Certificate &lt;ID&gt;”).</li>
+<li>A missing or non-DOI paper reference now raises a clear warning.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-0-25-0-9002">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0-9002"></a></h3>
-<ul><li>
-<strong>Curation policy check during rendering</strong>: <code><a href="../reference/register_render.html">register_render()</a></code> and <code><a href="../reference/register_check.html">register_check()</a></code> now audit every Zenodo-hosted certificate against the CODECHECK community curation policy and report the findings as a <code>cli</code> section with per-status icons (✖ required item missing, ! recommendation unmet, ℹ record unreachable), followed by a tally. Non-compliance never fails a render, and neither does an outage or an unexpected error in the check itself. Record metadata is cached via <code><a href="../reference/cached_lookup.html">cached_lookup()</a></code>, so only a cold render pays for the extra requests; pass <code>check_zenodo_policy = FALSE</code> (or <code>make render CHECK_ZENODO=0</code> in the register project) to skip them. New functions <code><a href="../reference/check_register_zenodo_policy.html">check_register_zenodo_policy()</a></code>, <code><a href="../reference/report_zenodo_policy_findings.html">report_zenodo_policy_findings()</a></code> and <code><a href="../reference/clear_zenodo_policy_cache.html">clear_zenodo_policy_cache()</a></code>, the latter also called by <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> so a freshly curated record is not reported from its pre-curation cache entry</li>
-<li>
-<strong>Curation policy audit for published records</strong>: new <code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> evaluates record metadata against the CODECHECK community curation policy and returns a data frame of pass/warn/fail per requirement. <code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> fetches a published record and prints the audit, <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> proposes and (with <code>dry_run = FALSE</code>) applies the corrections, and <code><a href="../reference/resolve_zenodo_record_id.html">resolve_zenodo_record_id()</a></code> resolves a certificate ID via <code>register.csv</code> and the repository’s <code>codecheck.yml</code> to a Zenodo record. The register project wraps these as <code>make zenodo_check CERT_ID=…</code> and <code>make zenodo_curate CERT_ID=…</code>
-</li>
+<ul><li>Every Zenodo-hosted certificate is now audited against the CODECHECK community curation policy during <code><a href="../reference/register_render.html">register_render()</a></code> and <code><a href="../reference/register_check.html">register_check()</a></code>, with findings reported as a summary.</li>
+<li>New <code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> and <code><a href="../reference/curate_zenodo_record.html">curate_zenodo_record()</a></code> audit and correct a single published Zenodo record’s metadata against the curation policy.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.25.0" id="codecheck-0250">codecheck 0.25.0<a class="anchor" aria-label="anchor" href="#codecheck-0250"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-25-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-25-0"></a></h3>
-<ul><li>
-<strong>Full metadata register export</strong>: New <code>register-full.json</code> and <code>register-full.csv</code> files are now generated during rendering, containing all fields from each certificate’s <code>codecheck.yml</code> — paper authors with ORCIDs, codecheckers with ORCIDs, summary, source, report link, and paper reference. The JSON format preserves nested arrays for authors and codecheckers, while the CSV uses semicolon-separated values for multi-value fields. Both files are sorted by certificate ID for consistent diffs (codecheckers/register#57)</li>
-<li>
-<strong>Single certificate rendering</strong>: New exported function <code><a href="../reference/register_render_cert.html">register_render_cert()</a></code> renders a single certificate’s HTML page and JSON metadata by certificate ID, without modifying index or list pages. Accepts a certificate ID (e.g., <code>"2024-017"</code>) and optionally downloads and converts the certificate PDF. Useful for updating individual certificates after metadata or PDF changes without a full register re-render. The register project includes a corresponding <code>make cert CERT_ID=2024-017</code> target for convenient command-line usage (codecheckers/codecheck#84)</li>
-<li>
-<strong>Redirect page for /certs/ directory</strong>: Visiting <code>/register/certs/</code> without a certificate ID now redirects to the main register page instead of showing a 404 error (codecheckers/register#166)</li>
-<li>
-<strong>Rich logging with cli</strong>: Register rendering now uses the <code>cli</code> package for structured, colored output with progress bars, section headers, and semantic alerts (success/info/warning/danger). Pandoc verbose output from <code><a href="https://pkgs.rstudio.com/rmarkdown/reference/render.html" class="external-link">rmarkdown::render()</a></code> is suppressed by default; pass <code>verbose = TRUE</code> to <code><a href="../reference/register_render.html">register_render()</a></code> to enable detailed debugging output</li>
-<li>
-<strong>Warnings captured and shown as log entries</strong>: All R warnings emitted during <code><a href="../reference/register_render.html">register_render()</a></code> are now captured and displayed as structured <code>cli</code> warning entries at the end of rendering, deduplicated with occurrence counts. This replaces R’s default “There were N warnings (use warnings() to see them)” prompt which was impossible to act on after the R session ended</li>
+<ul><li>New <code>register-full.json</code> and <code>register-full.csv</code> exports contain the complete certificate metadata, including authors, codecheckers, and abstracts (closes codecheckers/register#57).</li>
+<li>New <code><a href="../reference/register_render_cert.html">register_render_cert()</a></code> renders a single certificate by ID without re-rendering the whole register (closes codecheckers/codecheck#84).</li>
+<li>Visiting <code>/register/certs/</code> without a certificate ID now redirects to the main register page instead of showing a 404 (closes codecheckers/register#166).</li>
+<li>Rendering output now uses structured, colored logging with progress bars and section headers.</li>
+<li>Warnings raised during rendering are now collected and shown as a deduplicated summary at the end of the run.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-25-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-25-0"></a></h3>
-<ul><li>
-<strong>Fixed stray libs/ folders from parallel rendering</strong>: Parallel certificate rendering (<code>mclapply</code> forking) could leave behind stray <code>libs/</code> directories in certificate folders due to pandoc temp file conflicts between forked processes sharing the same <code>/tmp</code> directory. A post-render cleanup sweep now automatically removes these stray folders after parallel rendering completes</li>
-<li>
-<strong>Fixed navigation links on venue type pages</strong>: Corrected navigation menu links on venue type-specific pages (e.g., <code>/venues/institutions/</code>, <code>/venues/communities/</code>). The “All Venues” link now correctly points to <code>../index.html</code> (one level up), and “All Codecheckers” link points to <code>../../codecheckers/index.html</code> (up two levels then into codecheckers). Previously these links were broken because they were using the generic base_path calculation</li>
-<li>
-<strong>Fixed navigation and logo paths on venue type pages</strong>: Corrected base path calculation for venue type-specific pages (e.g., <code>/venues/institutions/</code>, <code>/venues/journals/</code>). These pages are two levels deep, but were incorrectly treated as one level deep, causing broken logo and navigation links. The <code><a href="../reference/calculate_breadcrumb_base_path.html">calculate_breadcrumb_base_path()</a></code> function now correctly handles non-register table pages with subcategories</li>
-<li>
-<strong>Removed venue label column from venue type pages</strong>: The “venue label” column (showing GitHub issue labels) is no longer displayed on venue type-specific pages (institutions, journals, conferences, communities) as it provides no useful information when all venues are of the same type. The column is still shown on the “all venues” page where it helps distinguish between different venue types</li>
+<ul><li>Fixed stray <code>libs/</code> folders left behind by parallel rendering.</li>
+<li>Fixed broken navigation links on venue type pages.</li>
+<li>Fixed broken navigation and logo paths on venue type pages.</li>
+<li>Removed the redundant venue label column from venue type pages.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="performance--scalability-0-25-0">Performance &amp; Scalability<a class="anchor" aria-label="anchor" href="#performance--scalability-0-25-0"></a></h3>
-<ul><li>
-<strong>Certificate identifier prefixes in logs</strong>: All log messages during certificate rendering operations now include the certificate identifier as a prefix (e.g., “2020-001 | Downloaded successfully”). This makes logs much easier to understand when rendering is executed in parallel, as messages from different certificates can be easily distinguished and tracked</li>
+<ul><li>Log messages during certificate rendering are now prefixed with the certificate ID, making parallel-render logs easier to follow.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.24.0" id="codecheck-0240">codecheck 0.24.0<a class="anchor" aria-label="anchor" href="#codecheck-0240"></a></h2>
 <div class="section level3">
 <h3 id="register-enhancements-0-24-0">Register Enhancements<a class="anchor" aria-label="anchor" href="#register-enhancements-0-24-0"></a></h3>
-<ul><li>
-<strong>Relative paths for localhost development</strong>: All internal navigation links in register tables and certificate pages now use relative paths instead of absolute URLs pointing to codecheck.org.uk. This enables seamless development and testing on localhost. Includes certificate links, venue links, venue type links, and codechecker links throughout the register. JSON and CSV exports continue to use absolute URLs for external consumption</li>
-<li>
-<strong>Optimized table column widths</strong>: Paper Title column width has been doubled for better readability, while the Report column has been significantly reduced. Report links now display shortened URLs (removing “<a href="http://" class="external-link uri">http://</a>” and “<a href="https://" class="external-link uri">https://</a>” prefixes) while maintaining full URLs in the underlying links. These changes improve the visual balance and readability of register tables</li>
-<li>
-<strong>Expanded certificate page text sections</strong>: Certificate pages now display full abstract and summary text without scrollable containers, allowing the “paper details” section to grow naturally to accommodate all content. This improves readability by eliminating the need to scroll within small text boxes</li>
-<li>
-<strong>Auto-pagination for certificate images</strong>: Certificate pages now automatically advance through certificate preview images every 5 seconds when the page loads. Auto-pagination stops when users interact with the page (clicks or keyboard navigation), providing a helpful preview without interfering with manual navigation</li>
-<li>
-<strong>Full-width certificate pages</strong>: Certificate pages now use the full viewport width instead of being constrained to 1200px, providing more space for the two-column layout with certificate images and details. The header and footer maintain their 1200px max-width for consistency with other pages</li>
-<li>
-<strong>Improved header logo alignment</strong>: Navigation header logo is now flush left-aligned with no left margin or padding, matching the alignment of footer elements for visual consistency across all pages</li>
-<li>
-<strong>Consistent sorting across all outputs</strong>: All register outputs (HTML, Markdown, JSON) are now consistently sorted by certificate identifier for predictable ordering. The exception is featured.json which remains sorted by check date (most recent first) to highlight the latest codechecks (addresses codecheckers/register#160)</li>
-<li>
-<strong>Citation generator on certificate pages</strong>: Certificate landing pages now include an interactive citation generator powered by citation.js. Users can select from multiple citation formats (APA, Vancouver, Harvard, BibTeX, BibLaTeX, RIS) using a dropdown menu, with BibTeX as the default format. The citation preview updates automatically and includes a “Copy to clipboard” button for easy copying. Citations are generated from the certificate DOI, with metadata retrieved from data.crosscite.org (this is noted transparently on the page). (addresses codecheckers/register#82)</li>
-<li>
-<strong>Selective meta generator tags</strong>: Meta generator tags now show different levels of detail based on page type. Overview/list pages (main register, all venues, all codecheckers) display full version information (e.g., “codecheck 0.23.0, register commit abc123”). Individual detail pages (specific certificates, venues, and codecheckers) show only “codecheck” without version information. This parallels the existing approach for build metadata and avoids confusion about page freshness for individual resource pages</li>
-<li>
-<strong>Centralized JavaScript libraries</strong>: All JavaScript code is now centralized in dedicated files (<code>cert-utils.js</code>, <code>cert-citation.js</code>) loaded from <code>docs/libs/codecheck/</code>. This eliminates code duplication across certificate templates, improves maintainability, and ensures consistent behavior. The citation.js library is now bundled locally instead of loading from CDN, improving reliability and page load times</li>
-<li>
-<strong>Improved navigation visibility</strong>: Top-right navigation menu font size doubled for better readability. Active page link (All Venues or All Codecheckers) is now highlighted with bold font. Breadcrumb navigation font size increased by 20% for improved visibility</li>
-<li>
-<strong>Centralized breadcrumb styling</strong>: Breadcrumb container styling has been moved from inline styles to the central CSS file (<code>.breadcrumb-container</code> class). Left and right padding has been removed for cleaner alignment with page content</li>
+<ul><li>Internal navigation links now use relative paths, enabling local development and testing.</li>
+<li>The Paper Title column is wider and the Report column narrower, with shortened displayed URLs.</li>
+<li>Certificate abstract and summary text now display in full, without a scrollable container.</li>
+<li>Certificate preview images now auto-paginate every 5 seconds, pausing on user interaction.</li>
+<li>Certificate pages now use the full viewport width.</li>
+<li>All register outputs (HTML, Markdown, JSON) are now consistently sorted by certificate ID, except <code>featured.json</code>, which stays sorted by check date (closes codecheckers/register#160).</li>
+<li>Certificate pages now include an interactive citation generator (APA, Vancouver, Harvard, BibTeX, BibLaTeX, RIS) (closes codecheckers/register#82).</li>
+<li>JavaScript is now centralized into dedicated files, and the citation library is bundled locally instead of loaded from a CDN.</li>
+<li>Navigation and breadcrumb text sizes were increased for readability.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="performance--scalability-0-24-0">Performance &amp; Scalability<a class="anchor" aria-label="anchor" href="#performance--scalability-0-24-0"></a></h3>
-<ul><li>
-<strong>Parallel certificate rendering</strong>: Certificate HTML pages can now be rendered in parallel using multiple CPU cores for significant performance improvements. The <code><a href="../reference/register_render.html">register_render()</a></code> function accepts two new parameters: <code>parallel</code> (logical, defaults to FALSE) and <code>ncores</code> (integer, auto-detects available cores minus 1 if NULL). On an 8-core machine, parallel rendering provides approximately 5-6x speedup for certificate generation. Platform-specific implementation uses <code><a href="https://rdrr.io/r/parallel/mclapply.html" class="external-link">parallel::mclapply()</a></code> on Unix/Mac (memory-efficient forking) and <code><a href="https://rdrr.io/r/parallel/clusterApply.html" class="external-link">parallel::parLapply()</a></code> on Windows (cluster-based). Enhanced error handling ensures individual certificate failures don’t stop the entire render. Timing statistics now include theoretical speedup and parallel efficiency metrics. Usage: <code>register_render(parallel = TRUE)</code> or <code>register_render(parallel = TRUE, ncores = 4)</code>
-</li>
-<li>
-<strong>Timing instrumentation for performance analysis</strong>: Added comprehensive timing instrumentation to all rendering functions (<code><a href="../reference/render_cert_htmls.html">render_cert_htmls()</a></code>, <code><a href="../reference/create_register_files.html">create_register_files()</a></code>, <code><a href="../reference/create_non_register_files.html">create_non_register_files()</a></code>). Each function now logs start/end times with millisecond precision, individual item rendering times, and summary statistics (total time, average time per item). This enables performance profiling and identification of bottlenecks. Log output includes timestamps in ISO 8601 format for easy parsing and analysis</li>
-<li>
-<strong>Parallelization analysis and implementation guide</strong>: Created comprehensive documentation (<code>inst/extdata/docs/PARALLELIZATION_ANALYSIS.md</code>) analyzing parallelization opportunities for certificate and register page rendering. Includes detailed analysis of current architecture, timing analysis methodology, three prioritized parallelization strategies, implementation recommendations using R’s <code>parallel</code> package, expected performance gains (6x speedup for certificates on 8-core machine), and complete working example (<code>inst/extdata/scripts/parallel_render_example.R</code>). Documentation guides through measuring current performance, implementing parallel execution, testing strategies, and tuning for optimal performance</li>
+<ul><li>Certificate HTML can now be rendered in parallel across CPU cores via <code>register_render(parallel = TRUE)</code>, roughly 5-6x faster on 8 cores.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-24-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-24-0"></a></h3>
-<ul><li>
-<strong>Fixed duplicate certificates in NA codechecker pages</strong>: When multiple codecheckers without ORCID work on the same certificate, the certificate now appears only once in the NA codechecker page instead of once per NA codechecker. Implemented deduplication by keeping one row per unique combination of Certificate ID and Codechecker identifier (addresses codecheckers/register#153)</li>
-<li>
-<strong>Codecheckers without ORCID now appear on “All codecheckers” page</strong>: Fixed issue where codecheckers without ORCID identifiers were excluded from the main codecheckers listing. These codecheckers now appear with the label “Codecheckers without ORCID”, with an empty ORCID column, and link to the <code>/codecheckers/NA/</code> page showing all their codechecks. If a codechecker has a GitHub username registered in the codecheckers repository, that username is used as their identifier instead of “NA”</li>
-<li>
-<strong>Fixed NA check date handling in schema.org metadata</strong>: Added <code>!is.na()</code> check in <code><a href="../reference/generate_codechecker_schema_org.html">generate_codechecker_schema_org()</a></code> to prevent “missing value where TRUE/FALSE needed” error when Check date column contains NA values</li>
-<li>
-<strong>Exported <code><a href="../reference/generate_cert_json.html">generate_cert_json()</a></code> function</strong>: Fixed test failures by adding <code>@export</code> tag to make the <code><a href="../reference/generate_cert_json.html">generate_cert_json()</a></code> function available for testing and external use. The function generates index.json files for certificate pages containing all certificate metadata in machine-readable format</li>
-<li>
-<strong>Fixed citation generator loading</strong>: Completely rewrote the citation library loading system to be simpler and more reliable. Created <code>citation-wrapper.js</code> to expose the Cite object globally from the browserify bundle (citation.js from npm uses CommonJS modules and doesn’t expose globals). Simplified initialization code by removing complex polling mechanism - Cite is now immediately available after wrapper loads. Added comprehensive documentation (<code>inst/extdata/scripts/JAVASCRIPT_LIBRARIES.md</code>) and download script (<code>inst/extdata/scripts/download-js-libraries.sh</code>) for managing JavaScript libraries locally without CDN dependencies. This fixes the “Loading citation…” indefinitely issue</li>
+<ul><li>Fixed duplicate certificates appearing on the “no ORCID” codechecker page (closes codecheckers/register#153).</li>
+<li>Codecheckers without an ORCID now appear on the “All codecheckers” page.</li>
+<li>Fixed a crash from missing check dates in Schema.org metadata.</li>
+<li>Fixed the certificate JSON page generator not being available for external use.</li>
+<li>Fixed the citation generator, which previously loaded indefinitely.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.23.0" id="codecheck-0230-2025-11-12">codecheck 0.23.0 (2025-11-12)<a class="anchor" aria-label="anchor" href="#codecheck-0230-2025-11-12"></a></h2>
 <div class="section level3">
 <h3 id="register-enhancements-0-23-0">Register Enhancements<a class="anchor" aria-label="anchor" href="#register-enhancements-0-23-0"></a></h3>
-<ul><li>
-<strong>Navigation header with logo</strong>: All register pages now feature a navigation header with the CODECHECK logo in the top left, which serves as a home link back to the main register. Overview pages (main register, all venues, all codecheckers) include a menu in the top right with links to “All Venues”, “All Codecheckers”, and “About” (linking to the main CODECHECK website) for quick navigation</li>
-<li>
-<strong>Breadcrumb navigation</strong>: All register pages now include breadcrumb navigation at the top, enabling easy navigation from detail pages back to overview pages. Breadcrumbs show hierarchical paths (e.g., CODECHECK Register &gt; Venues &gt; Journals &gt; GigaScience) with clickable links to parent pages (addresses codecheckers/register#108)</li>
-<li>
-<strong>JSON data export for certificates</strong>: Certificate landing pages now include an <code>index.json</code> file containing all metadata displayed on the page in machine-readable format. The JSON structure includes certificate details, paper information (title, authors with ORCID, reference, abstract), and CODECHECK details (codecheckers with ORCID, check time, repository, report, type, venue, summary, manifest). A link to the JSON file is displayed at the bottom of each certificate page for programmatic access (addresses codecheckers/register#143)</li>
-<li>
-<strong>Schema.org metadata for certificates</strong>: Certificate landing pages now include structured Schema.org JSON-LD metadata in the HTML header. The certificate is represented as a Review entity with the paper as a ScholarlyArticle entity (via itemReviewed property). Includes all available information: paper title/authors/abstract/DOI, codecheckers with ORCID, check date, summary, and certificate PDF URL (as MediaObject). Metadata validates successfully with validator.schema.org. Enables better discoverability by search engines and tools that consume schema.org metadata (addresses codecheckers/register#182)</li>
-<li>
-<strong>Schema.org metadata for codechecker pages</strong>: Codechecker profile pages now include structured Schema.org JSON-LD metadata in the HTML header. The codechecker is represented as a Person entity with an array of Review entities representing all their codechecks. Each Review includes the certificate details and optionally includes the paper being reviewed (ScholarlyArticle with title, authors, DOI). Person entity includes ORCID identifier and optional GitHub profile link (via sameAs property). Enables better discoverability of codechecker profiles and their work by search engines and research tools</li>
-<li>
-<strong>Configurable field ordering</strong>: Register views now support per-filter column configuration, allowing different field orders and selections for main register vs. filtered views (venues, codecheckers). Main register now displays columns in the order: Certificate, Report, Title, Venue, Type, Check date (addresses <a href="https://github.com/codecheckers/codecheck/issues/101" class="external-link">#101</a>)</li>
-<li>
-<strong>Context-aware field filtering</strong>: Filtered views automatically exclude redundant fields (e.g., venue/type columns hidden on venue-specific pages, codechecker column hidden on codechecker pages)</li>
-<li>
-<strong>Hierarchical column configuration</strong>: New <code>CONFIG$REGISTER_COLUMNS</code> structure with filter-specific overrides and automatic fallback to defaults for maximum flexibility</li>
-<li>
-<strong>Enhanced CSV file fields</strong>: CSV files now include all available fields matching JSON output (Certificate ID, Certificate Link, Repository, Repository Link, Report, Title, Paper reference, Type, Venue, Check date). Previously CSV files only contained Certificate and Repository columns. This provides more complete data for programmatic access and analysis</li>
-<li>
-<strong>SEO support with sitemap.xml and robots.txt</strong>: Register rendering now automatically generates sitemap.xml and robots.txt files for improved search engine optimization and discoverability. Sitemap includes all generated pages (main register, venue pages, codechecker pages, certificate pages) with appropriate priorities and change frequencies. Robots.txt allows all search engines to crawl the register (addresses codecheckers/register#126)</li>
-<li>
-<strong>GitHub username support for codecheckers without ORCID</strong>: Codecheckers without ORCID now get their own pages using their GitHub username as the identifier (e.g., <code>/codecheckers/username/</code>). For codecheckers with ORCID, a redirect page is automatically created at their GitHub username URL that redirects to their ORCID-based page. This ensures all codecheckers are listed in the register regardless of whether they have an ORCID. Redirect pages use the main CSS and include the standard header/footer for consistent branding (addresses codecheckers/register#130)</li>
-<li>
-<strong>Relative asset links</strong>: Favicon and CSS stylesheet links in HTML headers now use relative paths calculated based on each page’s depth, eliminating hard-coded absolute URLs and improving portability</li>
-<li>
-<strong>Build metadata in footer</strong>: Overview/listing pages (main register, all venues list, all codecheckers list) now display build information in muted text at the bottom of the footer, including timestamp, package version, codecheck package commit, and register commit with GitHub links. Build info is intentionally omitted from individual certificate, venue, and codechecker pages to avoid confusion about page freshness (addresses <a href="https://github.com/codecheckers/codecheck/issues/105" class="external-link">#105</a>)</li>
-<li>
-<strong>Dual commit tracking</strong>: Footer now displays both codecheck package commit and register repository commit as clickable links to respective GitHub commits</li>
-<li>
-<strong>Meta generator tag</strong>: HTML pages now include a properly formatted <code>&lt;meta name="generator"&gt;</code> tag with package version and commit information (fixed display issue)</li>
-<li>
-<strong>Build metadata JSON</strong>: A <code>.meta.json</code> file is now generated at the root of the docs directory containing build metadata for both repositories</li>
-<li>
-<strong>Icon font usage</strong>: Replaced inline SVG logos with academicons and Font Awesome icon fonts for ORCID, GitHub, and Zenodo for cleaner HTML and easier maintenance</li>
-<li>
-<strong>Template-based HTML generation</strong>: Moved HTML structure from R functions to template files, keeping R code focused on data preparation</li>
-<li>
-<strong>Codechecker profile links</strong>: Individual codechecker pages now display ORCID and GitHub profile links above the table, pulling data from the codecheckers/codecheckers repository (addresses <a href="https://github.com/codecheckers/codecheck/issues/73" class="external-link">#73</a>)</li>
-<li>
-<strong>ORCID branding compliance</strong>: Codechecker pages now use the official ORCID iD logo and display full ORCID URLs (<a href="https://orcid.org/" class="external-link uri">https://orcid.org/</a>…) as required by ORCID brand guidelines</li>
-<li>
-<strong>Simplified codechecker titles</strong>: Removed ORCID identifier from codechecker page titles for cleaner display (titles now show just “Codechecks by [Name]”)</li>
-<li>
-<strong>Zenodo community link</strong>: Added link to CODECHECK Zenodo Community in footer of all register pages alongside the GitHub organization link</li>
+<ul><li>Added a navigation header with the CODECHECK logo, and an overview menu on the main register pages.</li>
+<li>Added breadcrumb navigation to all register pages (closes codecheckers/register#108).</li>
+<li>Certificate pages now include a machine-readable <code>index.json</code> (closes codecheckers/register#143).</li>
+<li>Certificate pages now include Schema.org JSON-LD metadata for search engines (closes codecheckers/register#182).</li>
+<li>Codechecker profile pages now include Schema.org JSON-LD metadata.</li>
+<li>Column ordering in register tables is now configurable per view (addresses <a href="https://github.com/codecheckers/codecheck/issues/101" class="external-link">#101</a>).</li>
+<li>CSV exports now include all fields available in the JSON output.</li>
+<li>Added <code>sitemap.xml</code> and <code>robots.txt</code> for search engine discoverability (closes codecheckers/register#126).</li>
+<li>Codecheckers without an ORCID now get their own page, keyed by GitHub username (closes codecheckers/register#130).</li>
+<li>Overview pages now show build metadata (timestamp, version, commit) in the footer (closes <a href="https://github.com/codecheckers/codecheck/issues/105" class="external-link">#105</a>).</li>
+<li>Replaced inline SVG icons with icon fonts for ORCID, GitHub, and Zenodo.</li>
+<li>Codechecker pages now display ORCID and GitHub profile links (closes <a href="https://github.com/codecheckers/codecheck/issues/73" class="external-link">#73</a>).</li>
+<li>Added a Zenodo community link to the footer.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-23-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-23-0"></a></h3>
-<ul><li>
-<strong>Fixed venue label error</strong>: Resolved “venue_label must be size 1, not 12” error by ungrouping data frame before venue_label mutation in <code><a href="../reference/create_all_venues_table.html">create_all_venues_table()</a></code>
-</li>
-<li>
-<strong>Fixed NA codechecker handling</strong> (superseded in development version): Codecheckers without ORCID identifiers were temporarily filtered out during register rendering to prevent duplicate entries. This has been replaced with proper deduplication logic in the development version</li>
-<li>
-<strong>Fixed NULL paper title handling</strong>: Added NULL check in <code><a href="../reference/set_paper_title_references_csv.html">set_paper_title_references_csv()</a></code> to prevent “missing value where TRUE/FALSE needed” error when paper titles are NULL during CSV generation</li>
-<li>
-<strong>Fixed icon font paths</strong>: Icon font CSS links (academicons, font-awesome) in HTML header now use <code>{{base_path}}</code> variable for correct relative paths on all pages (root, venue, codechecker pages). Previously hardcoded <code>libs/</code> path only worked on root index page</li>
-<li>
-<strong>Fixed JavaScript/CSS loading</strong>: Fixed two critical bugs in <code><a href="../reference/edit_html_lib_paths.html">edit_html_lib_paths()</a></code>:
-<ol style="list-style-type: decimal"><li>Updated regex pattern to match any relative path to libs folder (libs/, ../libs/, ../../libs/, etc.) instead of only matching exact “libs/”</li>
-<li>Added filtering of empty path components caused by double slashes (e.g., “docs/codecheckers/ID//index.html”) which caused incorrect relative path calculation (../../../ instead of ../../) These fixes resolve “$ is not defined” errors and broken CSS styling on venue, codechecker, and certificate pages</li>
-</ol></li>
-<li>
-<strong>Fixed navbar logo paths</strong>: Navigation header logo now correctly handles relative paths on all pages. For root page, logo path is now <code>codecheck_logo.svg</code> instead of <code>./codecheck_logo.svg</code> to avoid browser compatibility issues. Deeper pages use proper relative paths (<code>../codecheck_logo.svg</code>, <code>../../codecheck_logo.svg</code>, etc.)</li>
-</ul></div>
-<div class="section level3">
-<h3 id="new-functions-0-23-0">New Functions<a class="anchor" aria-label="anchor" href="#new-functions-0-23-0"></a></h3>
-<ul><li>
-<strong><code><a href="../reference/generate_navigation_header.html">generate_navigation_header()</a></code></strong>: Generates navigation header HTML with CODECHECK logo and conditional menu (menu shown only on main register page)</li>
-<li>
-<strong><code><a href="../reference/generate_breadcrumb.html">generate_breadcrumb()</a></code></strong>: Generates Bootstrap-styled breadcrumb navigation HTML based on page context (filter type, table details, and relative path)</li>
-<li>
-<strong><code><a href="../reference/calculate_breadcrumb_base_path.html">calculate_breadcrumb_base_path()</a></code></strong>: Calculates relative path to register root based on page depth for breadcrumb links</li>
-<li>
-<strong><code><a href="../reference/get_build_metadata.html">get_build_metadata()</a></code></strong>: Retrieves build metadata including timestamp, package version, and git commit information from both register and codecheck package repositories</li>
-<li>
-<strong><code><a href="../reference/generate_meta_generator_content.html">generate_meta_generator_content()</a></code></strong>: Creates meta generator content value (replaces <code>generate_meta_generator_tag()</code> to separate content from HTML structure)</li>
-<li>
-<strong><code><a href="../reference/generate_footer_build_info.html">generate_footer_build_info()</a></code></strong>: Generates HTML for displaying build information in page footers including both codecheck and register commits with GitHub links</li>
-<li>
-<strong><code><a href="../reference/write_meta_json.html">write_meta_json()</a></code></strong>: Writes build metadata to .meta.json file in specified directory</li>
-<li>
-<strong><code><a href="../reference/get_codecheckers_data.html">get_codecheckers_data()</a></code></strong>: Fetches and caches codecheckers registry from codecheckers/codecheckers repository</li>
-<li>
-<strong><code><a href="../reference/get_codechecker_profile.html">get_codechecker_profile()</a></code></strong>: Retrieves profile information (name, GitHub handle, ORCID, fields, languages) by ORCID</li>
-<li>
-<strong><code><a href="../reference/generate_codechecker_profile_links.html">generate_codechecker_profile_links()</a></code></strong>: Generates HTML for horizontal list of profile links with icons</li>
-<li>
-<strong><code><a href="../reference/add_repository_links_csv.html">add_repository_links_csv()</a></code></strong>: Adds “Repository Link” column to register table for CSV export, converting platform specs (e.g., “github::org/repo”) to full URLs</li>
-<li>
-<strong><code><a href="../reference/set_paper_title_references_csv.html">set_paper_title_references_csv()</a></code></strong>: Extracts plain text “Title” and “Paper reference” columns from hyperlinked “Paper Title” for CSV export</li>
-<li>
-<strong><code><a href="../reference/generate_sitemap.html">generate_sitemap()</a></code></strong>: Generates sitemap.xml file listing all register pages with priorities and change frequencies for search engine optimization</li>
-<li>
-<strong><code><a href="../reference/generate_robots_txt.html">generate_robots_txt()</a></code></strong>: Generates robots.txt file allowing all search engines to crawl the register and referencing the sitemap</li>
-<li>
-<strong><code><a href="../reference/get_codechecker_profile_by_handle.html">get_codechecker_profile_by_handle()</a></code></strong>: Retrieves codechecker profile information by GitHub username (handle)</li>
-<li>
-<strong><code><a href="../reference/get_github_handle_by_name.html">get_github_handle_by_name()</a></code></strong>: Looks up GitHub username for a codechecker by their full name from the codecheckers registry</li>
-<li>
-<strong><code><a href="../reference/generate_codechecker_redirect.html">generate_codechecker_redirect()</a></code></strong>: Creates HTML redirect page at GitHub username URL that redirects to ORCID-based page for codecheckers with both identifiers</li>
-<li>
-<strong><code><a href="../reference/generate_codechecker_redirects.html">generate_codechecker_redirects()</a></code></strong>: Iterates through all codecheckers in register and creates redirect pages for those with both ORCID and GitHub username</li>
-<li>
-<strong><code><a href="../reference/generate_cert_json.html">generate_cert_json()</a></code></strong>: Generates index.json file for certificate landing pages containing all metadata in machine-readable format (certificate, paper, CODECHECK details including abstract, summary, and manifest)</li>
-<li>
-<strong><code><a href="../reference/generate_cert_schema_org.html">generate_cert_schema_org()</a></code></strong>: Generates Schema.org JSON-LD for certificate landing pages, representing the CODECHECK certificate as a Review of a ScholarlyArticle with all available metadata (paper title/authors/abstract/DOI, codecheckers with ORCID, check date, summary, certificate PDF URL)</li>
-<li>
-<strong><code><a href="../reference/generate_codechecker_schema_org.html">generate_codechecker_schema_org()</a></code></strong>: Generates Schema.org JSON-LD for codechecker profile pages, representing the codechecker as a Person with an array of Review entities for all their codechecks. Each Review optionally includes the paper being reviewed (ScholarlyArticle). Supports optional GitHub profile link via sameAs property</li>
-</ul></div>
-<div class="section level3">
-<h3 id="tests-0-23-0">Tests<a class="anchor" aria-label="anchor" href="#tests-0-23-0"></a></h3>
-<ul><li>
-<strong>Schema.org metadata generation for certificates</strong>: Added comprehensive test suite (<code>test_schema_org_generation.R</code>) with 43 test cases covering:
-<ul><li>JSON-LD structure and validity</li>
-<li>Review and ScholarlyArticle types</li>
-<li>Author/codechecker handling with and without ORCID</li>
-<li>Paper metadata (title, abstract, DOI)</li>
-<li>Optional fields (summary, abstract, report URL)</li>
-<li>Date parsing and formatting</li>
-<li>Edge cases (single author, missing fields, empty strings)</li>
-</ul></li>
-<li>
-<strong>Schema.org metadata generation for codecheckers</strong>: Added comprehensive test suite (<code>test_schema_org_codechecker.R</code>) with 17 test cases covering:
-<ul><li>Person entity structure with ORCID <a href="https://github.com/id" class="external-link">@id</a></li>
-<li>Review array generation from register table</li>
-<li>GitHub sameAs link handling (NULL, empty string, “NA”)</li>
-<li>Check date parsing and formatting</li>
-<li>Single and multiple codechecks</li>
-<li>Edge cases (missing dates, empty tables)</li>
-<li>JSON-LD validity for schema.org validator</li>
-<li>Schema.org validator compliance</li>
-</ul></li>
-</ul></div>
-<div class="section level3">
-<h3 id="documentation-0-23-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-23-0"></a></h3>
-<ul><li>
-<strong>Comprehensive register rendering documentation</strong>: Expanded CLAUDE.md with detailed documentation of the register rendering system, including:
-<ul><li>Complete rendering pipeline flow</li>
-<li>Detailed descriptions of all 13 utility files</li>
-<li>Configuration system documentation</li>
-<li>Template system details</li>
-<li>Output directory structure</li>
-<li>Important implementation details</li>
-</ul></li>
-<li>
-<strong>Version management guide</strong>: Added version management section to CLAUDE.md with procedures for bumping versions and release workflow</li>
+<ul><li>Fixed a grouping error in the venue table.</li>
+<li>Fixed a crash from a missing paper title during CSV generation.</li>
+<li>Fixed icon font, JavaScript, CSS, and logo paths on nested pages.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
 <div class="section level3">
 <h3 id="certificate-page-improvements-development-version">Certificate Page Improvements<a class="anchor" aria-label="anchor" href="#certificate-page-improvements-development-version"></a></h3>
-<ul><li>
-<strong>Fixed codechecker links</strong>: Codechecker names on certificate pages now link to their register landing pages (e.g., <code>/register/codecheckers/0000-0001-2345-6789/</code>) instead of ORCID profiles, making it easier to see all codechecks by that person (fixes <a href="https://github.com/codecheckers/codecheck/issues/141" class="external-link">#141</a>)</li>
-<li>
-<strong>Added Type and Venue links</strong>: Certificate pages now display clickable links for both the venue type and venue name in the CODECHECK Details section, enabling easier navigation to filtered register views (e.g., <code>/register/venues/journals/</code> and <code>/register/venues/journals/gigascience/</code>) (fixes <a href="https://github.com/codecheckers/codecheck/issues/142" class="external-link">#142</a>)</li>
-<li>
-<strong>Venue-based breadcrumb navigation</strong>: Certificate pages now include breadcrumb navigation showing the venue hierarchy (e.g., CODECHECK Register &gt; Venues &gt; Journals &gt; GigaScience &gt; 2024-001), enabling easy navigation to the venue’s register page with a single click</li>
+<ul><li>Codechecker names on certificate pages now link to their register page rather than their ORCID profile (closes <a href="https://github.com/codecheckers/codecheck/issues/141" class="external-link">#141</a>).</li>
+<li>Certificate pages now link the venue type and venue name (closes <a href="https://github.com/codecheckers/codecheck/issues/142" class="external-link">#142</a>).</li>
+<li>Certificate pages now include venue-based breadcrumb navigation.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="visual-improvements-development-version">Visual Improvements<a class="anchor" aria-label="anchor" href="#visual-improvements-development-version"></a></h3>
-<ul><li>
-<strong>ORCID brand color</strong>: ORCID icons on codechecker profile pages now display in the official ORCID green (#A6CE39) for proper brand compliance</li>
-<li>
-<strong>Updated Zenodo icon</strong>: Replaced the Zenodo icon with the official blue “Z” SVG from EPFL, providing a more recognizable and polished appearance in register page footers</li>
-<li>
-<strong>Improved icon alignment</strong>: Applied vertical alignment adjustments (<code>-5px</code>) to Zenodo, GitHub, and ORCID icons across all register pages for better alignment with adjacent text</li>
+<ul><li>ORCID icons now use the official ORCID brand color.</li>
+<li>Updated the Zenodo icon to the official logo.</li>
+<li>Improved icon alignment across register pages.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="infrastructure-improvements-development-version">Infrastructure Improvements<a class="anchor" aria-label="anchor" href="#infrastructure-improvements-development-version"></a></h3>
-<ul><li>
-<strong>Cleaner output directories</strong>: Temporary HTML section files (index_header.html, index_prefix.html, index_postfix.html, html_document.yml) are now automatically removed after rendering, as their content is already embedded in the final index.html file</li>
-<li>
-<strong>Separated CSS styles</strong>: Moved all register-specific CSS styles from inline <code>&lt;style&gt;</code> tags to a dedicated <code>codecheck-register.css</code> file in <code>docs/assets/</code>, improving maintainability and reducing HTML file sizes. The CSS file is automatically copied from package templates during register rendering.</li>
-<li>
-<strong>Improved path construction</strong>: Replaced string concatenation (<code>paste0</code>) with <code><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path()</a></code> for all file system path construction throughout the codebase, ensuring cross-platform compatibility and following R best practices (addresses codecheckers/register#70)</li>
-<li>
-<strong>Local library management</strong>: Removed all external CDN dependencies (Bootstrap, Font Awesome, Academicons) and implemented local library management system</li>
-<li>
-<strong>New function</strong>: Added <code><a href="../reference/setup_external_libraries.html">setup_external_libraries()</a></code> to download and install CSS/JS libraries locally in <code>docs/libs/</code>, ensuring reproducibility and offline capability</li>
-<li>
-<strong>Provenance tracking</strong>: All external libraries now include comprehensive provenance information (version, license, date configured) stored in <code>docs/libs/PROVENANCE.csv</code>
-</li>
-<li>
-<strong>Automatic setup</strong>: Libraries are automatically downloaded during register rendering if not already present</li>
-<li>
-<strong>Documentation</strong>: Generated README.md in <code>docs/libs/</code> documenting all installed libraries and their licenses</li>
+<ul><li>Temporary HTML section files are now cleaned up after rendering.</li>
+<li>Register CSS moved out of inline styles into a dedicated stylesheet.</li>
+<li>External libraries (Bootstrap, Font Awesome, Academicons) are now managed locally instead of via CDN, with provenance tracking.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>
-<strong>Fixed register rendering error</strong>: Fixed “missing value where TRUE/FALSE needed” error when rendering register pages by adding proper NULL check for table_details[[“name”]]</li>
-<li>
-<strong>Fixed venue type hyperlinks</strong>: Fixed venue type links in venue lists that were rendering as Markdown syntax instead of proper HTML links due to missing closing parenthesis</li>
+<ul><li>Fixed a rendering error from a missing table details name.</li>
+<li>Fixed broken venue type hyperlinks.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="venue-configuration-and-label-integration-development-version">Venue Configuration and Label Integration<a class="anchor" aria-label="anchor" href="#venue-configuration-and-label-integration-development-version"></a></h3>
-<ul><li>
-<strong>Dynamic venue configuration</strong>: Venue information is now loaded from a <code>venues.csv</code> file instead of being hardcoded in <code>config.R</code>, making it easier to add and manage venues</li>
-<li>
-<strong>GitHub label integration</strong>: Venue lists now include GitHub issue labels for each venue, enabling direct links to open checks</li>
-<li>
-<strong>Enhanced JSON output</strong>: The venues JSON at <code>/register/venues/index.json</code> now includes an “Issue label” field for each venue</li>
-<li>
-<strong>Open checks links</strong>: Venue HTML pages now display links to view open GitHub issues for each venue using their corresponding label</li>
-<li>
-<strong>New function</strong>: Added <code><a href="../reference/load_venues_config.html">load_venues_config()</a></code> to load venue configuration from CSV files with columns: <code>name</code>, <code>longname</code>, and <code>label</code>
-</li>
-<li>
-<strong>Register repository</strong>: Created <code>venues.csv</code> in the register repository to store venue metadata and GitHub labels</li>
-<li>
-<strong>Test updates</strong>: All tests updated to work with the new venue configuration system using test fixtures</li>
-<li>
-<strong>Breaking change</strong>: <code><a href="../reference/register_render.html">register_render()</a></code> now requires a <code>venues_file</code> parameter (defaults to “venues.csv” in the working directory)</li>
+<ul><li>Venue information now loads from <code>venues.csv</code> instead of being hardcoded.</li>
+<li>Venue pages now link to their open GitHub issues.</li>
+<li>Breaking change: <code><a href="../reference/register_render.html">register_render()</a></code> now requires a <code>venues_file</code> parameter.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="github-issue-validation-development-version">GitHub Issue Validation<a class="anchor" aria-label="anchor" href="#github-issue-validation-development-version"></a></h3>
-<ul><li>
-<strong>New validation function</strong>: Added <code><a href="../reference/validate_certificate_github_issue.html">validate_certificate_github_issue()</a></code> to verify that certificate identifiers exist in the codecheckers/register GitHub repository</li>
-<li>
-<strong>Issue state checking</strong>: Warns if the certificate’s GitHub issue is closed (indicating the CODECHECK is already complete and published)</li>
-<li>
-<strong>Assignment validation</strong>: Warns if the certificate’s GitHub issue is unassigned (no codechecker assigned yet)</li>
-<li>
-<strong>Strict mode</strong>: Optional strict mode (<code>strict = TRUE</code>) treats warnings as errors, stopping certificate processing if issues are found</li>
-<li>
-<strong>Placeholder handling</strong>: Automatically skips validation for placeholder certificate identifiers</li>
-<li>
-<strong>Comprehensive error handling</strong>: Provides clear error messages for missing issues, API rate limits, and authentication problems</li>
-<li>
-<strong>GitHub Actions integration</strong>: Updated R-CMD-check workflow to include GITHUB_PAT token for API access during testing</li>
+<ul><li>Certificates are now validated against their GitHub issue: a missing issue fails validation, a closed or unassigned issue raises a warning.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="orcid-validation-improvements-development-version">ORCID Validation Improvements<a class="anchor" aria-label="anchor" href="#orcid-validation-improvements-development-version"></a></h3>
-<ul><li>
-<strong>Graceful authentication handling</strong>: ORCID validation functions now handle authentication failures gracefully with clear error messages instead of requiring interactive login</li>
-<li>
-<strong>New <code>skip_on_auth_error</code> parameter</strong>: Added to <code><a href="../reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> and <code><a href="../reference/validate_contents_references.html">validate_contents_references()</a></code> to control behavior when ORCID authentication is unavailable. By default (<code>FALSE</code>), functions require authentication. Set to <code>TRUE</code> to skip validation when authentication is not available (useful for CI/CD pipelines and test environments).</li>
-<li>
-<strong>Enhanced error messages</strong>: Clear guidance provided when ORCID authentication is needed, with instructions for setting <code>ORCID_TOKEN</code> environment variable or running <code><a href="https://rdrr.io/pkg/rorcid/man/orcid_auth.html" class="external-link">rorcid::orcid_auth()</a></code>
-</li>
-<li>
-<strong>Opt-in skipping</strong>: Certificate authors can choose to skip ORCID validation by setting <code>skip_on_auth_error = TRUE</code> in the certificate template</li>
-<li>
-<strong>Better feedback</strong>: Functions now return a <code>skipped</code> field indicating whether validation was skipped due to authentication issues</li>
+<ul><li>ORCID validation now handles authentication failures gracefully, with a new <code>skip_on_auth_error</code> option for CI and offline use.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="manifest-rendering-enhancements-development-version">Manifest Rendering Enhancements<a class="anchor" aria-label="anchor" href="#manifest-rendering-enhancements-development-version"></a></h3>
-<ul><li>
-<strong>Expanded format support</strong>: Certificates can now render additional file formats in the manifest section:
-<ul><li>Image formats: TIF, TIFF, GIF, EPS, and SVG (with automatic conversion)</li>
-<li>Data formats: JSON (with pretty-printing and configurable line limits) and TSV (tab-separated values)</li>
-<li>Multi-page PDFs are now fully supported with automatic page detection</li>
-</ul></li>
-<li>
-<strong>GIF format support</strong>: GIF images are now automatically converted to PNG during certificate rendering. pdflatex does not natively support GIF format, so conversion is required.</li>
-<li>
-<strong>TIF/TIFF format support</strong>: TIF and TIFF images are now automatically converted to PNG during certificate rendering.</li>
-<li>
-<strong>New dependency</strong>: Added <code>magick</code> package as a required dependency for image format conversion (TIF/TIFF/GIF to PNG). Previously this was optional, but is now mandatory for proper image format support.</li>
-<li>
-<strong>Graceful error handling</strong>: Missing, corrupted, or unsupported manifest files no longer fail the entire certificate rendering:
-<ul><li>
-<code><a href="../reference/copy_manifest_files.html">copy_manifest_files()</a></code> now warns about missing files instead of stopping execution, allowing the certificate to render with available files</li>
-<li>Each problematic file displays a formatted error message in the PDF output, helping codecheckers identify and fix issues</li>
-<li>File-level error handling prevents individual file failures from blocking the entire certificate generation</li>
-<li>Error messages include the filename and specific error reason for easier debugging</li>
-</ul></li>
-</ul></div>
-<div class="section level3">
-<h3 id="git-integration-development-version">Git Integration<a class="anchor" aria-label="anchor" href="#git-integration-development-version"></a></h3>
-<ul><li>
-<strong>New function</strong>: Added <code><a href="../reference/get_git_info.html">get_git_info()</a></code> to retrieve git commit information from a repository path</li>
-<li>
-<strong>Proper dependency handling</strong>: git2r dependency is now properly handled through the package function rather than inline template code</li>
-<li>
-<strong>Template simplification</strong>: Certificate templates now use <code><a href="../reference/get_git_info.html">get_git_info()</a></code> instead of inline git2r calls, improving maintainability and error handling</li>
-<li>
-<strong>File existence checks</strong>: All manifest rendering functions now check for file existence before processing and display helpful error messages.</li>
-<li>
-<strong>Improved error messages</strong>: Error messages are now displayed as formatted LaTeX boxes in the rendered PDF with specific information about what went wrong (e.g., “File not found”, “Failed to convert GIF image”, “Unsupported file format (.xyz)”).</li>
-<li>
-<strong>Improved maintainability</strong>: Manifest rendering code refactored into modular, testable components</li>
-<li>
-<strong>Comprehensive testing</strong>: Added extensive test suite covering all supported formats including GIF with test fixtures</li>
+<ul><li>Certificates can now render more file formats in the manifest section, including TIF, GIF, EPS, SVG, JSON, TSV, and multi-page PDFs.</li>
+<li>A missing or unsupported manifest file no longer fails the whole certificate; it now shows an error message in the PDF instead.</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.22.0" id="codecheck-0220">codecheck 0.22.0<a class="anchor" aria-label="anchor" href="#codecheck-0220"></a></h2>
 <div class="section level3">
 <h3 id="certificate-automation-and-validation-0-22-0">Certificate Automation and Validation<a class="anchor" aria-label="anchor" href="#certificate-automation-and-validation-0-22-0"></a></h3>
-<ul><li>
-<strong>Automatic certificate ID retrieval</strong>: Certificate IDs can now be automatically retrieved from GitHub issues by searching the codecheckers/register repository by author names. The certificate template attempts this automatically during rendering.</li>
+<ul><li>Certificate IDs can now be retrieved automatically from the matching GitHub issue.</li>
 <li>
-<strong>YAML validation and field completion</strong>: The codecheck.yml file can now be validated for syntax errors and automatically completed with missing mandatory/optional fields.</li>
-<li>
-<strong>External metadata validation</strong>: Paper metadata can be validated against CrossRef, and author/codechecker names can be validated against ORCID records. Strict mode fails rendering on mismatches.</li>
-<li>
-<strong>Placeholder detection</strong>: Placeholder certificate IDs and report DOIs are automatically detected and display visual warnings in rendered PDFs.</li>
+<code>codecheck.yml</code> can now be validated for syntax errors and auto-completed with missing fields.</li>
+<li>Paper and author/codechecker metadata can now be validated against CrossRef and ORCID records.</li>
+<li>Placeholder certificate IDs and report DOIs are now flagged with a visible warning in rendered PDFs.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="lifecycle-journal-integration-0-22-0">Lifecycle Journal Integration<a class="anchor" aria-label="anchor" href="#lifecycle-journal-integration-0-22-0"></a></h3>
-<ul><li>
-<strong>Automatic metadata population</strong>: Article metadata from Lifecycle Journal can be automatically retrieved and used to populate codecheck.yml fields (addresses <a href="https://github.com/codecheckers/codecheck/issues/82" class="external-link">#82</a>). Smart field updates with preview mode and diff view before applying changes.</li>
+<ul><li>Article metadata can now be retrieved automatically from Lifecycle Journal to populate <code>codecheck.yml</code> (closes <a href="https://github.com/codecheckers/codecheck/issues/82" class="external-link">#82</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-22-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-22-0"></a></h3>
-<ul><li>
-<strong>Critical fix</strong>: Fixed Zenodo certificate upload to use correct zen4R API signatures (fixes “cannot coerce type ‘environment’ to vector of type ‘character’” error)</li>
-<li>Fixed ORCID icon hyperlinks in PDF certificates - icons are now clickable links that work reliably across PDF viewers</li>
-<li>Fixed handling of NULL/empty fields in certificate rendering</li>
-<li>
-<strong>Critical fix</strong>: Fixed Zenodo metadata upload to properly set alternate identifiers per Zenodo curation policy (certificate ID now correctly added as alternate identifiers with proper URL and Other schemas)</li>
-<li>Fixed R CMD check warnings related to variable bindings</li>
-<li>Reorganized package structure into focused files for better maintainability</li>
+<ul><li>Fixed Zenodo certificate upload failing due to an API signature change.</li>
+<li>Fixed ORCID icon links in PDF certificates.</li>
+<li>Fixed handling of NULL/empty fields during certificate rendering.</li>
+<li>Fixed Zenodo alternate identifiers not being set per the curation policy.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="enhancements-0-22-0">Enhancements<a class="anchor" aria-label="anchor" href="#enhancements-0-22-0"></a></h3>
-<ul><li>
-<strong>Enhanced Zenodo certificate upload</strong>: Can now upload additional files alongside the certificate, including automatic upload of certificate source files (.Rmd or .qmd). Smart detection of existing files with user prompts before replacement. Backward compatible via alias.</li>
-<li>
-<strong>Automatic YAML updating</strong>: When creating new Zenodo records, the codecheck.yml file is automatically updated with the Zenodo DOI. Detects and replaces placeholder values, asks for confirmation on non-placeholder updates.</li>
-<li>
-<strong>Automatic CODECHECK community submission</strong>: Newly created Zenodo records are automatically submitted to the CODECHECK community (<a href="https://zenodo.org/communities/codecheck/" class="external-link uri">https://zenodo.org/communities/codecheck/</a>) ensuring discoverability.</li>
-<li>
-<strong>Zenodo curation policy compliance</strong>: Metadata uploads now fully comply with CODECHECK Zenodo community curation policy (correct publisher, resource type, alternate identifiers, and related identifiers with automatic repository type detection).</li>
-<li>Zenodo functions now load metadata from codecheck.yml by default</li>
-<li>DOI validation is now platform-agnostic (Zenodo, OSF, ResearchEquals, etc.)</li>
-<li>Enhanced error messages with clearer guidance</li>
-<li>Added ~230 new tests across all features</li>
+<ul><li>Zenodo certificate upload can now include additional files, including the certificate source (<code>.Rmd</code>/<code>.qmd</code>).</li>
+<li>A new Zenodo record’s DOI is now written back to <code>codecheck.yml</code> automatically, and the record is submitted to the CODECHECK community.</li>
+<li>Zenodo metadata uploads now comply with the CODECHECK curation policy (publisher, resource type, identifiers).</li>
+<li>DOI validation is now platform-agnostic (Zenodo, OSF, ResearchEquals, …).</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.21.0" id="codecheck-0210">codecheck 0.21.0<a class="anchor" aria-label="anchor" href="#codecheck-0210"></a></h2>
-<ul><li>Added pkgdown configuration and workflow for documentation site</li>
-<li>Added CLAUDE.md with comprehensive guidance for AI-assisted development</li>
-<li>Fixed typo in abstract text retrieval</li>
-<li>Fixed test file error handling for missing config files</li>
-<li>Fixed variable scoping issues in test suite</li>
-<li>Added launch pad link to documentation</li>
-<li>Added clarifying comments in core functions</li>
-<li>
-<strong>Bug fix</strong>: Fixed repository URL validation to properly check HTTP responses</li>
+<ul><li>Added a pkgdown documentation site.</li>
+<li>Fixed a typo in abstract text retrieval.</li>
+<li>Fixed repository URL validation to properly check HTTP responses.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.20.0" id="codecheck-0200">codecheck 0.20.0<a class="anchor" aria-label="anchor" href="#codecheck-0200"></a></h2>
-<ul><li>Renamed fields in register output for consistency</li>
-<li>Updated footer with improved contact information</li>
-<li>Removed individual maintainer references from footer</li>
+<ul><li>Renamed fields in register output for consistency.</li>
+<li>Updated footer contact information and removed individual maintainer references.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.19.0" id="codecheck-0190">codecheck 0.19.0<a class="anchor" aria-label="anchor" href="#codecheck-0190"></a></h2>
-<ul><li>Fixed namespace issues</li>
-<li>Added support for specifying from-to range when rendering register</li>
+<ul><li>Fixed namespace issues.</li>
+<li>Added support for specifying a from/to range when rendering the register.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.18.0" id="codecheck-0180">codecheck 0.18.0<a class="anchor" aria-label="anchor" href="#codecheck-0180"></a></h2>
-<ul><li>Added validation of certificate identifier format in <code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code>
-</li>
-<li>Ensures certificate IDs follow the NNNN-NNN pattern (e.g., “2024-001”)</li>
+<ul><li>Added validation of the certificate identifier format (<code>NNNN-NNN</code>, e.g. “2024-001”) in <code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code>.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.17.0" id="codecheck-0170">codecheck 0.17.0<a class="anchor" aria-label="anchor" href="#codecheck-0170"></a></h2>
-<ul><li>Added support for certificate download from ResearchEquals platform</li>
-<li>Extended <code><a href="../reference/get_cert_link.html">get_cert_link()</a></code> to handle ResearchEquals DOIs</li>
+<ul><li>Added support for downloading certificates from the ResearchEquals platform.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.16.0" id="codecheck-0160">codecheck 0.16.0<a class="anchor" aria-label="anchor" href="#codecheck-0160"></a></h2>
-<ul><li>Added support for sub-paths within GitHub repositories to access codecheck.yml</li>
-<li>Enables accessing codecheck.yml files in subdirectories using <code>github::org/repo|subpath</code> syntax</li>
-<li>Updated check template</li>
-<li>Added TL;DR section to README for template usage</li>
+<ul><li>Added support for accessing <code>codecheck.yml</code> in a subdirectory of a GitHub repository via <code>github::org/repo|subpath</code>.</li>
+<li>Added a TL;DR section to the README for template usage.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.15.0" id="codecheck-0150">codecheck 0.15.0<a class="anchor" aria-label="anchor" href="#codecheck-0150"></a></h2>
-<ul><li>Added handling for PDF import in template certificate</li>
-<li>Improved certificate template generation</li>
+<ul><li>Improved handling of PDF import in the certificate template.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.14.0" id="codecheck-0140">codecheck 0.14.0<a class="anchor" aria-label="anchor" href="#codecheck-0140"></a></h2>
-<ul><li>Added TU Delft Data Champion Centre (DCC) as venue</li>
-<li>Added eLife journal as venue</li>
-<li>Removed unused venue entries</li>
-<li>Fixed Zenodo hyperlinks in register output</li>
-<li>Hardened code for missing ORCIDs in codechecker field</li>
-<li>Added venue hyperlinks to register pages</li>
-<li>Fixed issue with missing codechecks column</li>
-<li>Reordered fields in the UI for better usability</li>
+<ul><li>Added TU Delft Data Champion Centre (DCC) and eLife as venues; removed unused venue entries.</li>
+<li>Fixed Zenodo hyperlinks in register output.</li>
+<li>Hardened handling of missing ORCIDs in the codechecker field.</li>
+<li>Added venue hyperlinks to register pages.</li>
+<li>Fixed a missing codechecks column.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.12.0" id="codecheck-0120">codecheck 0.12.0<a class="anchor" aria-label="anchor" href="#codecheck-0120"></a></h2>
-<ul><li>Added support for retrieving codecheck.yml files from Zenodo records</li>
-<li>New repository specification: <code>zenodo::1234567</code> and <code>zenodo-sandbox::1234567</code>
-</li>
-<li>Fixed various warnings and notes from R CMD check</li>
+<ul><li>Added support for retrieving <code>codecheck.yml</code> from Zenodo records via <code>zenodo::1234567</code> and <code>zenodo-sandbox::1234567</code>.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.6" id="codecheck-0116">codecheck 0.11.6<a class="anchor" aria-label="anchor" href="#codecheck-0116"></a></h2>
-<ul><li>Fixed JSON output to not include markdown hyperlinks</li>
-<li>Added tests for rendering functions</li>
+<ul><li>Fixed JSON output including markdown hyperlinks by mistake.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.5" id="codecheck-0115">codecheck 0.11.5<a class="anchor" aria-label="anchor" href="#codecheck-0115"></a></h2>
-<ul><li>Fixed imports to reflect API changes in zen4R package</li>
-<li>Added templates for the codecheck report</li>
+<ul><li>Fixed imports to reflect API changes in the zen4R package.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.4" id="codecheck-0114">codecheck 0.11.4<a class="anchor" aria-label="anchor" href="#codecheck-0114"></a></h2>
-<ul><li>Replaced custom <code>url_exists()</code> with <code><a href="https://httr.r-lib.org/reference/http_error.html" class="external-link">httr::http_error()</a></code>
-</li>
-<li>Improved URL validation</li>
+<ul><li>Replaced a custom URL-check helper with <code><a href="https://httr.r-lib.org/reference/http_error.html" class="external-link">httr::http_error()</a></code>, improving URL validation.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.3" id="codecheck-0113">codecheck 0.11.3<a class="anchor" aria-label="anchor" href="#codecheck-0113"></a></h2>
-<ul><li>Added missing import in DESCRIPTION</li>
-<li>Added logging of cache usage for check and render operations</li>
+<ul><li>Added logging of cache usage for check and render operations.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.2" id="codecheck-0112">codecheck 0.11.2<a class="anchor" aria-label="anchor" href="#codecheck-0112"></a></h2>
-<ul><li>Fixed codechecker hyperlink generation when ORCID ID is missing</li>
+<ul><li>Fixed codechecker hyperlink generation when the ORCID ID is missing.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.1" id="codecheck-0111">codecheck 0.11.1<a class="anchor" aria-label="anchor" href="#codecheck-0111"></a></h2>
-<ul><li>Fixed certificate pages that have no certificate preview available</li>
+<ul><li>Fixed certificate pages that have no certificate preview available.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.0" id="codecheck-0110">codecheck 0.11.0<a class="anchor" aria-label="anchor" href="#codecheck-0110"></a></h2>
-<ul><li>Added generation of individual certificate HTML pages</li>
-<li>New function <code><a href="../reference/create_cert_md.html">create_cert_md()</a></code> for certificate markdown generation</li>
-<li>Added abstract retrieval from CrossRef and OpenAlex APIs</li>
+<ul><li>Added individual certificate HTML pages.</li>
+<li>Added abstract retrieval from CrossRef and OpenAlex.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.1" id="codecheck-0101">codecheck 0.10.1<a class="anchor" aria-label="anchor" href="#codecheck-0101"></a></h2>
-<ul><li>Fixed venue type page hyperlinks</li>
+<ul><li>Fixed venue type page hyperlinks.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.0" id="codecheck-0100">codecheck 0.10.0<a class="anchor" aria-label="anchor" href="#codecheck-0100"></a></h2>
-<ul><li>Fixed URL links in venues and venue type tables</li>
-<li>Made non-register venue tables use plural naming</li>
-<li>Improved hyperlink consistency across all outputs</li>
+<ul><li>Fixed URL links in venue and venue type tables.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9.0" id="codecheck-090--080">codecheck 0.9.0 / 0.8.0<a class="anchor" aria-label="anchor" href="#codecheck-090--080"></a></h2>
-<ul><li>Replaced repository column in register with platform-prefixed specifications</li>
-<li>Added support for multiple repository platforms (GitHub, OSF, GitLab, Zenodo)</li>
+<ul><li>Replaced the repository column in the register with platform-prefixed specifications (GitHub, OSF, GitLab, Zenodo).</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="codecheck-070">codecheck 0.7.0<a class="anchor" aria-label="anchor" href="#codecheck-070"></a></h2>
-<ul><li>Added Amsterdam UMC as venue</li>
-<li>Added codecheckers extra text section</li>
-<li>Improved venue management</li>
+<ul><li>Added Amsterdam UMC as a venue.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="codecheck-060">codecheck 0.6.0<a class="anchor" aria-label="anchor" href="#codecheck-060"></a></h2>
-<ul><li>Split register by type (journal, conference, community, institution)</li>
-<li>Created filtered CSV files by venue and codechecker</li>
-<li>Refactored register rendering architecture</li>
-<li>Updated column width configurations</li>
-<li>Moved hyperlinks configuration to config.R</li>
+<ul><li>Split the register by type (journal, conference, community, institution).</li>
+<li>Added filtered CSV files by venue and codechecker.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.0" id="codecheck-050">codecheck 0.5.0<a class="anchor" aria-label="anchor" href="#codecheck-050"></a></h2>
-<ul><li>Initial support for multiple output formats (HTML, JSON, Markdown)</li>
-<li>Added JSON register output</li>
-<li>Improved register table rendering</li>
+<ul><li>Added support for multiple output formats (HTML, JSON, Markdown).</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="codecheck-040">codecheck 0.4.0<a class="anchor" aria-label="anchor" href="#codecheck-040"></a></h2>
-<ul><li>Enhanced register filtering capabilities</li>
-<li>Added codechecker-specific register views</li>
+<ul><li>Added codechecker-specific register views.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="codecheck-030">codecheck 0.3.0<a class="anchor" aria-label="anchor" href="#codecheck-030"></a></h2>
-<ul><li>Improved register preprocessing</li>
-<li>Added remote configuration retrieval</li>
+<ul><li>Added remote configuration retrieval.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="codecheck-020">codecheck 0.2.0<a class="anchor" aria-label="anchor" href="#codecheck-020"></a></h2>
-<ul><li>Added register rendering functionality</li>
-<li>Support for multiple venues and codecheckers</li>
+<ul><li>Added register rendering functionality, supporting multiple venues and codecheckers.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="codecheck-010">codecheck 0.1.0<a class="anchor" aria-label="anchor" href="#codecheck-010"></a></h2>
-<ul><li>Initial release</li>
-<li>Basic CODECHECK workspace creation</li>
-<li>Certificate generation support</li>
-<li>Integration with Zenodo for certificate uploads</li>
+<ul><li>Initial release: basic CODECHECK workspace creation, certificate generation, and Zenodo integration.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.0.90" id="codecheck-00090xx">codecheck 0.0.0.90xx<a class="anchor" aria-label="anchor" href="#codecheck-00090xx"></a></h2>
-<ul><li>Added tests using <code>tinytest</code>
-</li>
-<li>Added a <code>NEWS.md</code> file to track changes to the package</li>
+<ul><li>Added a <code>NEWS.md</code> file to track changes to the package.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
