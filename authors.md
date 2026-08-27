@@ -14,7 +14,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/codecheckers/codecheck/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/codecheckers/codecheck/blob/0.26.0/DESCRIPTION)
 
 Eglen S, Nuest D, Momin A, Langton S (2026). *codecheck: Helper
 Functions for CODECHECK Project*. R package version 0.26.0,
