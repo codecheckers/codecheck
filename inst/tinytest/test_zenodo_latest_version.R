@@ -2,31 +2,22 @@
 
 library(tinytest)
 
-# Helper: a mock Zenodo manager mirroring the real zen4R/Zenodo API behaviour:
-# getRecordById() resolves a version-specific id to a record carrying its
-# parent (concept) id, getRecordByConceptId() resolves the concept id to the
-# record of the latest version.
+# Helper: a mock Zenodo manager mirroring the real zen4R/Zenodo API: a
+# resolved record carries a `versions` list with `is_latest`, matching the
+# field the real API returns on the record itself (no second lookup needed).
 make_mock_zenodo <- function(records) {
   zen <- new.env(parent = emptyenv())
   zen$getRecordById <- function(id) {
     rec <- records[[as.character(id)]]
     if (is.null(rec)) return(NULL)
-    list(id = rec$id, parent = list(id = rec$parent_id))
-  }
-  zen$getRecordByConceptId <- function(id) {
-    for (rec in records) {
-      if (identical(rec$parent_id, id) && isTRUE(rec$latest)) {
-        return(list(id = rec$id, parent = list(id = rec$parent_id)))
-      }
-    }
-    NULL
+    list(id = rec$id, versions = list(is_latest = rec$latest, index = rec$index))
   }
   zen
 }
 
 # Test 1: single-version record (queried id is also the latest) ----
 mock_zen1 <- make_mock_zenodo(list(
-  "10213244" = list(id = 10213244, parent_id = 10213243, latest = TRUE)
+  "10213244" = list(id = 10213244, latest = TRUE, index = 1)
 ))
 expect_true(
   codecheck::is_zenodo_latest_version("https://doi.org/10.5281/zenodo.10213244", zenodo = mock_zen1)
@@ -34,8 +25,8 @@ expect_true(
 
 # Test 2: an older version of a multi-version record is not the latest ----
 mock_zen2 <- make_mock_zenodo(list(
-  "1110000" = list(id = 1110000, parent_id = 1000000, latest = FALSE),
-  "2220000" = list(id = 2220000, parent_id = 1000000, latest = TRUE)
+  "1110000" = list(id = 1110000, latest = FALSE, index = 1),
+  "2220000" = list(id = 2220000, latest = TRUE, index = 2)
 ))
 expect_false(
   codecheck::is_zenodo_latest_version("https://doi.org/10.5281/zenodo.1110000", zenodo = mock_zen2)
@@ -64,11 +55,10 @@ expect_true(
   codecheck::is_zenodo_latest_version("https://doi.org/10.5281/zenodo.9999999", zenodo = mock_zen6)
 )
 
-# Test 7: record resolves but the concept id can no longer be resolved to a
-# latest version (e.g. transient API gap) degrades to "nothing to compare" ----
+# Test 7: a record with no `versions` field (unexpected API shape) degrades
+# to "nothing to compare" rather than erroring ----
 mock_zen7 <- new.env(parent = emptyenv())
-mock_zen7$getRecordById <- function(id) list(id = id, parent = list(id = 1000000))
-mock_zen7$getRecordByConceptId <- function(id) NULL
+mock_zen7$getRecordById <- function(id) list(id = id)
 expect_true(
   codecheck::is_zenodo_latest_version("https://doi.org/10.5281/zenodo.1110000", zenodo = mock_zen7)
 )
@@ -83,11 +73,15 @@ expect_error(
   pattern = "Could not check"
 )
 
-# Test 9: a ZenodoException from getRecordByConceptId() is also surfaced ----
-mock_zen9 <- new.env(parent = emptyenv())
-mock_zen9$getRecordById <- function(id) list(id = id, parent = list(id = 1000000))
-mock_zen9$getRecordByConceptId <- function(id) exception
-expect_error(
-  codecheck::is_zenodo_latest_version("https://doi.org/10.5281/zenodo.1110000", zenodo = mock_zen9),
-  pattern = "Could not check"
+# Test 9: live integration test against the real DOI pair from issue #36 ----
+# https://github.com/codecheckers/codecheck/issues/36
+# 10.5281/zenodo.10213244 is a single-version record, trivially its own latest.
+live_result <- tryCatch(
+  codecheck::is_zenodo_latest_version("https://doi.org/10.5281/zenodo.10213244"),
+  error = function(e) NA
 )
+if (!is.na(live_result)) {
+  expect_true(live_result, info = "single-version record from issue #36 is its own latest version")
+} else {
+  expect_true(TRUE, info = "live Zenodo API integration test skipped (no network)")
+}

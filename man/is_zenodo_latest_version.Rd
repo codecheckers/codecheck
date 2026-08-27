@@ -12,9 +12,10 @@ is_zenodo_latest_version(report, sandbox = FALSE, zenodo = NULL, logger = NULL)
 \item{sandbox}{connect with the Zenodo Sandbox instead of the real service}
 
 \item{zenodo}{An object from zen4R to connect with Zenodo (or a mock with
-compatible `getRecordById()` and `getRecordByConceptId()` methods, for
-testing). Defaults to a new `ZenodoManager` connected to the production
-(or sandbox) service. When supplied, `logger` is ignored - configure
+a compatible `getRecordById()` method, for testing) whose record carries
+a `versions` list with an `is_latest` field, matching the real Zenodo
+API. Defaults to a new `ZenodoManager` connected to the production (or
+sandbox) service. When supplied, `logger` is ignored - configure
 logging on the object you pass in instead.}
 
 \item{logger}{zen4R logger level for the default `ZenodoManager` created

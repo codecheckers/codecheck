@@ -15,6 +15,7 @@
 * `register_check()` no longer aborts the whole run when Zenodo's search endpoint rate-limits it; the underlying calls are now paced, share one connection per run instead of reconnecting for every entry, and are retried automatically.
 * `is_zenodo_concept_doi()` and `is_zenodo_latest_version()` no longer double-log every Zenodo API step.
 * `is_zenodo_concept_doi()` no longer misreports a rate-limited lookup as a concept DOI; both functions now use `ZENODO_TOKEN` when set for a higher rate limit.
+* `is_zenodo_latest_version()` no longer misreports a record's own latest version as outdated: it compared record IDs against a second, search-based lookup that is not reliably ordered by version, and could return a stale record even when the checked one was in fact current. It now reads the authoritative `is_latest` flag already present on the record itself, which is also one fewer request per check.
 * `rprojroot` is now declared as a package dependency, fixing a missing-function error on a clean install.
 
 # codecheck 0.25.0.9011

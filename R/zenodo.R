@@ -325,9 +325,10 @@ is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL, logger
 ##' @param report string containing the report DOI or URL on Zenodo.
 ##' @param sandbox connect with the Zenodo Sandbox instead of the real service
 ##' @param zenodo An object from zen4R to connect with Zenodo (or a mock with
-##'   compatible `getRecordById()` and `getRecordByConceptId()` methods, for
-##'   testing). Defaults to a new `ZenodoManager` connected to the production
-##'   (or sandbox) service. When supplied, `logger` is ignored - configure
+##'   a compatible `getRecordById()` method, for testing) whose record carries
+##'   a `versions` list with an `is_latest` field, matching the real Zenodo
+##'   API. Defaults to a new `ZenodoManager` connected to the production (or
+##'   sandbox) service. When supplied, `logger` is ignored - configure
 ##'   logging on the object you pass in instead.
 ##' @param logger zen4R logger level for the default `ZenodoManager` created
 ##'   when `zenodo` is not supplied; see [is_zenodo_concept_doi()] for what
@@ -356,24 +357,21 @@ is_zenodo_latest_version <- function(report, sandbox = FALSE, zenodo = NULL, log
     stop("Could not check whether ", report, " is the latest Zenodo version: ",
          record$message, call. = FALSE)
   }
-  if (is.null(record) || is.null(record$parent$id)) {
+  if (is.null(record) || is.null(record$versions$is_latest)) {
     # id did not resolve to a version-specific record (e.g. it is itself a
     # concept id, which is_zenodo_concept_doi() flags separately, or an
-    # invalid/withdrawn id); nothing to compare against.
+    # invalid/withdrawn id); nothing to compare against. Note: this used to
+    # cross-check via a second getRecordByConceptId() call and compare record
+    # ids, but that search-based lookup is not reliably ordered by version -
+    # it returned a stale, non-latest record for at least one real register
+    # entry (2025-004, zenodo.org/records/15527133) even though that record's
+    # own `versions$is_latest` correctly said TRUE. The record's own field is
+    # both more reliable and one fewer request against the rate-limited
+    # search endpoint.
     return(TRUE)
   }
 
-  if (own_zenodo) zenodo_throttle()
-  latest <- zenodo_call_retry(function() zenodo$getRecordByConceptId(record$parent$id))
-  if (inherits(latest, "ZenodoException")) {
-    stop("Could not check whether ", report, " is the latest Zenodo version: ",
-         latest$message, call. = FALSE)
-  }
-  if (is.null(latest)) {
-    return(TRUE)
-  }
-
-  identical(latest$id, record$id)
+  isTRUE(record$versions$is_latest)
 }
 
 #' Get the full Zenodo record from the metadata
