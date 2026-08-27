@@ -232,6 +232,81 @@ is_zenodo_concept_doi <- function(report, sandbox = FALSE, zenodo = NULL, logger
   !is.null(record)
 }
 
+##' Check whether a report DOI points to the latest version of a Zenodo record
+##'
+##' A Zenodo deposit can be updated over time by publishing a new version;
+##' each version gets its own version-specific DOI (see
+##' https://zenodo.org/help/versioning). A CODECHECK certificate's `report`
+##' field should always point at the version that was actually checked *and*
+##' still be the latest version of that deposit: if a newer version has since
+##' been published, the record's metadata is no longer guaranteed to reflect
+##' what the certificate checked, so the certificate should either be updated
+##' to reference a fresh check of the current version, or the outdated
+##' version should be flagged for transparency rather than silently accepted.
+##' This is a separate concern from [is_zenodo_concept_doi()]: a concept DOI
+##' is the wrong *kind* of identifier (it is never version-specific), while
+##' this function checks that a correctly version-specific DOI has not since
+##' been superseded by a newer version of the same record.
+##'
+##' @title Check whether a report DOI is the latest version of its Zenodo record
+##' @param report string containing the report DOI or URL on Zenodo.
+##' @param sandbox connect with the Zenodo Sandbox instead of the real service
+##' @param zenodo An object from zen4R to connect with Zenodo (or a mock with
+##'   compatible `getRecordById()` and `getRecordByConceptId()` methods, for
+##'   testing). Defaults to a new `ZenodoManager` connected to the production
+##'   (or sandbox) service. When supplied, `logger` is ignored - configure
+##'   logging on the object you pass in instead.
+##' @param logger zen4R logger level for the default `ZenodoManager` created
+##'   when `zenodo` is not supplied; see [is_zenodo_concept_doi()] for what
+##'   `NULL` (default), `"INFO"` and `"DEBUG"` do.
+##' @return `TRUE` if `report` is the latest version of its Zenodo record, or
+##'   is not a matchable/resolvable Zenodo DOI (nothing to compare against).
+##'   `FALSE` if a more recent version of the record exists.
+##' @author Daniel Nuest
+##' @importFrom zen4R ZenodoManager
+##' @export
+is_zenodo_latest_version <- function(report, sandbox = FALSE, zenodo = NULL, logger = NULL) {
+  id <- get_zenodo_id(report)
+  if (is.na(id)) {
+    return(TRUE)
+  }
+
+  if (is.null(zenodo)) {
+    token <- Sys.getenv("ZENODO_TOKEN")
+    # logger defaults to NULL: see the matching comment in
+    # is_zenodo_concept_doi() above.
+    zenodo <- ZenodoManager$new(
+      url = if (sandbox) "https://sandbox.zenodo.org/api" else "https://zenodo.org/api",
+      token = if (nzchar(token)) token else NULL,
+      sandbox = sandbox,
+      logger = logger
+    )
+  }
+
+  record <- zenodo$getRecordById(id)
+  if (inherits(record, "ZenodoException")) {
+    stop("Could not check whether ", report, " is the latest Zenodo version: ",
+         record$message, call. = FALSE)
+  }
+  if (is.null(record) || is.null(record$parent$id)) {
+    # id did not resolve to a version-specific record (e.g. it is itself a
+    # concept id, which is_zenodo_concept_doi() flags separately, or an
+    # invalid/withdrawn id); nothing to compare against.
+    return(TRUE)
+  }
+
+  latest <- zenodo$getRecordByConceptId(record$parent$id)
+  if (inherits(latest, "ZenodoException")) {
+    stop("Could not check whether ", report, " is the latest Zenodo version: ",
+         latest$message, call. = FALSE)
+  }
+  if (is.null(latest)) {
+    return(TRUE)
+  }
+
+  identical(latest$id, record$id)
+}
+
 #' Get the full Zenodo record from the metadata
 #'
 #' Retrieve the Zenodo record, if one exists. By default, loads metadata from
@@ -981,6 +1056,24 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
     add("community", if (in_community) "pass" else "fail",
         if (in_community) "member of the codecheck community"
         else "not a member of the Zenodo codecheck community (https://zenodo.org/communities/codecheck/)")
+  }
+
+  # Latest version: the checked record must be the current version of its
+  # Zenodo deposit, not one a newer version has since superseded (see #36).
+  # A certificate's report DOI is meant to be an immutable, permanent
+  # reference, but "permanent" here means "always the definitive record of
+  # what was checked" - if a newer version now exists, the checked metadata
+  # is no longer what a reader lands on, and a certificate that still checks
+  # out is preferable to one pointing at a stale record. `versions$is_latest`
+  # is only present in the InvenioRDM record representation, not in
+  # `metadata`, so this is only checked when the full record is supplied.
+  if (!is.null(record) && !is.null(record$versions$is_latest)) {
+    is_latest <- isTRUE(record$versions$is_latest)
+    add("latest version", if (is_latest) "pass" else "fail",
+        if (is_latest) "record is the latest version of its deposit"
+        else paste0("a newer version of this record exists on Zenodo - the report DOI ",
+                     "should point at the latest version, or a new check against the ",
+                     "current version is preferable for transparency"))
   }
 
   do.call(rbind, results)

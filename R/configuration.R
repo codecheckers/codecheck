@@ -579,6 +579,18 @@ validate_codecheck_yml <- function(configuration) {
                                          " is a Zenodo concept DOI, which always resolves to the ",
                                          "latest version (see https://zenodo.org/help/versioning). ",
                                          "Use the version-specific DOI for this report instead."))
+
+    # ... and it MUST be the latest version of that record: metadata should
+    # always point at the current version, and a newer version having since
+    # been published means the checked metadata may no longer be accurate,
+    # see #36. A new check against the current version is preferable for
+    # transparency to accepting an outdated report DOI.
+    assertthat::assert_that(is_zenodo_latest_version(codecheck_yml$report),
+                            msg = paste0(codecheck_yml$report,
+                                         " is not the latest version of its Zenodo record. ",
+                                         "A newer version has since been published; either update ",
+                                         "the report DOI to the latest version or check that version ",
+                                         "instead, for transparency."))
   }
 
   # Check if the paper_link contains a valid URL. We only check that it starts with https?://

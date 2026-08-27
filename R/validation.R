@@ -1172,14 +1172,22 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
 
   # Check if the report DOI is a Zenodo concept DOI rather than a version-specific DOI, see #36
   has_concept_doi <- FALSE
+  has_outdated_version <- FALSE
   if (check_concept_doi && !has_doi_placeholder &&
       isTRUE(grepl("zenodo", report_doi, ignore.case = TRUE))) {
     has_concept_doi <- isTRUE(tryCatch(is_zenodo_concept_doi(report_doi),
                                        error = function(e) FALSE))
+    # A version-specific DOI can still be outdated if a newer version of the
+    # record was since published; only worth checking when it is not already
+    # flagged as the wrong kind of DOI, see #36.
+    if (!has_concept_doi) {
+      has_outdated_version <- isTRUE(tryCatch(!is_zenodo_latest_version(report_doi),
+                                              error = function(e) FALSE))
+    }
   }
 
   # Check if any placeholder found
-  is_placeholder <- has_cert_placeholder || has_doi_placeholder || has_concept_doi
+  is_placeholder <- has_cert_placeholder || has_doi_placeholder || has_concept_doi || has_outdated_version
 
   if (is_placeholder) {
     cert_id <- if (is.null(metadata$certificate) || metadata$certificate == "") {
@@ -1219,6 +1227,18 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
                            paste0("Report DOI '", report_doi, "' is a Zenodo concept DOI, ",
                                   "which always resolves to the latest version; ",
                                   "use the version-specific DOI instead"))
+    }
+
+    if (has_outdated_version) {
+      warning_parts <- c(warning_parts,
+                        paste0("\\textbf{Report DOI is not the latest Zenodo version: \\texttt{",
+                               report_doi, "}}"))
+      console_warnings <- c(console_warnings,
+                           paste0("Report DOI '", report_doi, "' is not the latest version of its ",
+                                  "Zenodo record; a newer version has since been published, so the ",
+                                  "checked metadata may no longer be accurate. Update the report DOI ",
+                                  "to the latest version, or check that version instead, for ",
+                                  "transparency"))
     }
 
     # Display warning in PDF output if requested

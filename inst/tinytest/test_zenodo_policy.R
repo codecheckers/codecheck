@@ -398,6 +398,28 @@ no_comm <- list(parent = list())
 res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = no_comm)
 expect_equal(res$status[res$check == "community"], "fail")
 
+# ---------------------------------------------------------------- latest version
+
+# no `record` argument -> the check is not run at all
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files))
+expect_equal(sum(res$check == "latest version"), 0L)
+
+# `record` given but without a `versions` element (e.g. an older API
+# representation) -> the check is not run either, see #36
+no_versions <- list(parent = list())
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = no_versions)
+expect_equal(sum(res$check == "latest version"), 0L)
+
+# is_latest = TRUE -> pass
+latest <- list(versions = list(is_latest = TRUE))
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = latest)
+expect_equal(res$status[res$check == "latest version"], "pass")
+
+# is_latest = FALSE -> fail, a newer version exists
+outdated <- list(versions = list(is_latest = FALSE))
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = outdated)
+expect_equal(res$status[res$check == "latest version"], "fail")
+
 # ------------------------------------------------------------------ licence
 
 # CC-BY 4.0 must be present; further licences for other artefacts are fine
