@@ -468,11 +468,16 @@ researchequals_policy_check <- function(version, collections = NULL, venue = NUL
 
   # Related work: the checked paper. ResearchEquals keeps related work in a flat
   # list of references without relation types, so the check can only assert that
-  # the module points at something.
+  # the module points at something. Unlike on Zenodo, where the same requirement
+  # is a failure because the metadata of a published record can still be edited,
+  # this is only a warning: ResearchEquals references cannot be changed after
+  # publication, so a certificate missing them cannot be brought into line
+  # retroactively. They have to be set when the record is created.
   refs <- unlist(version$refs)
-  add("related work: paper", if (length(refs) > 0) "pass" else "fail",
+  add("related work: paper", if (length(refs) > 0) "pass" else "warn",
       if (length(refs) > 0) paste(refs, collapse = "; ")
-      else "no reference to the checked paper")
+      else paste0("no reference to the checked paper - references cannot be added ",
+                  "after publication, they must be set when the record is created"))
 
   # Collection membership: the module must be part of each collection listed in
   # RESEARCHEQUALS_COLLECTIONS that applies to it, the counterpart of the Zenodo

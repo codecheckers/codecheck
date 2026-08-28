@@ -148,11 +148,15 @@ expect_equal(agile_entry$check[agile_entry$status == "fail"],
 
 # the record as it stands on ResearchEquals, checked as an AGILEGIS entry: it is
 # in the CODECHECK collection but not in the Reproducible AGILE one, and lists
-# no reference to the paper
+# no reference to the paper - which is only a warning, since ResearchEquals
+# references cannot be added after publication
 as_published <- researchequals_policy_check(version, collections = collections,
                                             venue = agile_venue)
-expect_equal(sort(as_published$check[as_published$status == "fail"]),
-             sort(c("related work: paper", "collection: Reproducible AGILE")))
+expect_equal(as_published$check[as_published$status == "fail"],
+             "collection: Reproducible AGILE")
+expect_equal(status_of(as_published, "related work: paper"), "warn")
+expect_true(grepl("cannot be added after publication",
+                  detail_of(as_published, "related work: paper")))
 expect_equal(status_of(as_published, "collection: CODECHECK"), "pass")
 
 # ------------------------------------------- collection membership: not a member
@@ -206,9 +210,10 @@ result <- researchequals_policy_check(broken, collections = in_both,
                                      venue = agile_venue)
 expect_equal(sort(result$check[result$status == "fail"]),
              sort(c("title", "description", "license", "module type", "language",
-                    "published", "related work: paper")))
+                    "published")))
 expect_equal(status_of(result, "contributors"), "warn")
 expect_equal(status_of(result, "certificate PDF"), "warn")
+expect_equal(status_of(result, "related work: paper"), "warn")
 
 # the older title convention is a warning, not a failure
 older_title <- version

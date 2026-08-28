@@ -7,6 +7,7 @@
 
 ## Bug Fixes
 
+* `researchequals_policy_check()` reports a missing reference to the checked paper as a warning instead of a failure: unlike Zenodo relations, ResearchEquals references cannot be added after publication, so the reference has to be set when the record is created (documented in the [codechecker workflow](https://codecheck.org.uk/guide/community-workflow-codechecker)).
 * Certificates whose ResearchEquals main file is a document written in that platform's editor (`application/x-blocknote`) are downloaded correctly again: such a document can *embed* the certificate PDF rather than be it, and `get_researchequals_cert_link()` returned the document, so the JSON was saved as `cert.pdf` and could not be converted (affects certificate 2026-014). New internal `researchequals_main_file()` resolves the embedded PDF.
 * Codechecker pages' Schema.org JSON-LD now actually includes each certificate's paper title and URL again. `render_html()` was handed the already column-filtered register table, which no longer carries `Repository`, so every lookup silently failed with `Unknown or uninitialised column: 'Repository'`.
 * `render_cert_htmls()` no longer emits a spurious `file("") only supports open = "w+"...` warning on every render: it read a `cert_page_template` HTML template that no longer ships with the package (the value was never used afterward), and `system.file()` silently returns `""` for a resource that doesn't exist. Removed the dead read and the stale `CONFIG$CERTS_DIR[["cert_page_template"]]` entry.
