@@ -9,7 +9,7 @@ and stores full venue information including labels."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +36,7 @@ and stores full venue information including labels."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Load venues configuration from CSV file</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/configuration.R" class="external-link"><code>R/configuration.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/configuration.R" class="external-link"><code>R/configuration.R</code></a></small>
       <div class="d-none name"><code>load_venues_config.Rd</code></div>
     </div>
 
@@ -61,7 +61,10 @@ and stores full venue information including labels.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with columns: name, longname, label</p>
+    <p>A data frame with the required columns name, longname, label, plus
+  whatever optional metadata columns the file carries (e.g. logo_url,
+  website_url, policy_url, publisher) - passed through unchanged for
+  consumers like [compute_annual_stats()].</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

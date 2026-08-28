@@ -9,7 +9,7 @@ paper, authors, codecheck information, and the certificate images if available. 
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +36,7 @@ paper, authors, codecheck information, and the certificate images if available. 
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Generates a Markdown file for a certificate based on a specified template, filling in details about the paper, authors, codecheck information, and the certificate images if available. The resulting Markdown file is later rendered to HTML.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/utils_render_cert_md.R" class="external-link"><code>R/utils_render_cert_md.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/utils_render_cert_md.R" class="external-link"><code>R/utils_render_cert_md.R</code></a></small>
       <div class="d-none name"><code>create_cert_md.Rd</code></div>
     </div>
 
@@ -47,7 +47,15 @@ paper, authors, codecheck information, and the certificate images if available. 
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create_cert_md</span><span class="op">(</span><span class="va">cert_id</span>, <span class="va">repo_link</span>, <span class="va">download_cert_status</span>, <span class="va">cert_type</span>, <span class="va">cert_venue</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create_cert_md</span><span class="op">(</span></span>
+<span>  <span class="va">cert_id</span>,</span>
+<span>  <span class="va">repo_link</span>,</span>
+<span>  <span class="va">download_cert_status</span>,</span>
+<span>  <span class="va">cert_type</span>,</span>
+<span>  <span class="va">cert_venue</span>,</span>
+<span>  openalex_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  abstract_data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,6 +80,15 @@ paper, authors, codecheck information, and the certificate images if available. 
 
 <dt id="arg-cert-venue">cert_venue<a class="anchor" aria-label="anchor" href="#arg-cert-venue"></a></dt>
 <dd><p>A character string containing the venue name.</p></dd>
+
+
+<dt id="arg-openalex-id">openalex_id<a class="anchor" aria-label="anchor" href="#arg-openalex-id"></a></dt>
+<dd><p>Optional pre-resolved OpenAlex ID (see <code><a href="resolve_external_field.html">resolve_external_field</a></code>);
+when `NULL`, looked up here directly.</p></dd>
+
+
+<dt id="arg-abstract-data">abstract_data<a class="anchor" aria-label="anchor" href="#arg-abstract-data"></a></dt>
+<dd><p>Optional pre-resolved abstract; when `NULL`, looked up here directly.</p></dd>
 
 </dl></div>
 

@@ -30,4 +30,4 @@ render_register_json(
 - full_register_table:
 
   Optional full preprocessed register table for computing annual
-  statistics (only used for the main register stats.json)
+  statistics (only used for the main register statistics.json)

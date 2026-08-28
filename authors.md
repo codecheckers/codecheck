@@ -14,16 +14,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/codecheckers/codecheck/blob/0.26.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/codecheckers/codecheck/blob/master/DESCRIPTION)
 
 Eglen S, Nuest D, Momin A, Langton S (2026). *codecheck: Helper
-Functions for CODECHECK Project*. R package version 0.26.0,
+Functions for CODECHECK Project*. R package version 0.26.0.9000,
 <http://codecheck.org.uk/codecheck/>.
 
     @Manual{,
       title = {codecheck: Helper Functions for CODECHECK Project},
       author = {Stephen Eglen and Daniel Nuest and Angelina Momin and Sam Langton},
       year = {2026},
-      note = {R package version 0.26.0},
+      note = {R package version 0.26.0.9000},
       url = {http://codecheck.org.uk/codecheck/},
     }

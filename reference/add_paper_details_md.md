@@ -6,7 +6,12 @@ codechecked paper.
 ## Usage
 
 ``` r
-add_paper_details_md(md_content, repo_link, download_cert_status)
+add_paper_details_md(
+  md_content,
+  repo_link,
+  openalex_id = NULL,
+  abstract_data = NULL
+)
 ```
 
 ## Arguments
@@ -21,10 +26,15 @@ add_paper_details_md(md_content, repo_link, download_cert_status)
   A character string containing the repository link associated with the
   certificate.
 
-- download_cert_status:
+- openalex_id:
 
-  An integer (0 or 1) indicating whether the certificate PDF was
-  downloaded (1) or not (0).
+  Optional pre-resolved OpenAlex ID; when \`NULL\`, looked up here
+  directly.
+
+- abstract_data:
+
+  Optional pre-resolved abstract; when \`NULL\`, looked up here
+  directly.
 
 ## Value
 

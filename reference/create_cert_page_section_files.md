@@ -11,7 +11,10 @@ create_cert_page_section_files(
   cert_id = NULL,
   cert_type = NULL,
   cert_venue = NULL,
-  repo_link = NULL
+  repo_link = NULL,
+  openalex_id = NULL,
+  abstract_data = NULL,
+  cert_title = NULL
 )
 ```
 
@@ -39,3 +42,17 @@ create_cert_page_section_files(
 
   Repository link to fetch codecheck.yml for Schema.org metadata
   generation (default: NULL)
+
+- openalex_id:
+
+  Optional pre-resolved OpenAlex ID
+
+- abstract_data:
+
+  Optional pre-resolved abstract
+
+- cert_title:
+
+  Optional pre-resolved title of the certificate's record on its
+  publication platform, see
+  [`resolve_cert_title`](http://codecheck.org.uk/codecheck/reference/resolve_cert_title.md)

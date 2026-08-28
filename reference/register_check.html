@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Function for checking all entries in the register</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/register.R" class="external-link"><code>R/register.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/register.R" class="external-link"><code>R/register.R</code></a></small>
       <div class="d-none name"><code>register_check.Rd</code></div>
     </div>
 
@@ -48,7 +48,8 @@
 <span>  register <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"register.csv"</span>, as.is <span class="op">=</span> <span class="cn">TRUE</span>, comment.char <span class="op">=</span> <span class="st">"#"</span><span class="op">)</span>,</span>
 <span>  from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">register</span><span class="op">)</span>,</span>
 <span>  to <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  check_zenodo_policy <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  check_zenodo_policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  check_researchequals_policy <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -70,6 +71,10 @@
 
 <dt id="arg-check-zenodo-policy">check_zenodo_policy<a class="anchor" aria-label="anchor" href="#arg-check-zenodo-policy"></a></dt>
 <dd><p>Logical; if TRUE (the default), also audits the Zenodo records against the CODECHECK community curation policy</p></dd>
+
+
+<dt id="arg-check-researchequals-policy">check_researchequals_policy<a class="anchor" aria-label="anchor" href="#arg-check-researchequals-policy"></a></dt>
+<dd><p>Logical; if TRUE (the default), also audits the certificates published on ResearchEquals against the CODECHECK curation policy, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -7,7 +7,7 @@ an empty string is inserted in place of the abstract content.
 ## Usage
 
 ``` r
-add_abstract(repo_link, md_content)
+add_abstract(repo_link, md_content, abstract_data = NULL)
 ```
 
 ## Arguments
@@ -21,6 +21,12 @@ add_abstract(repo_link, md_content)
 
   A character string containing the Markdown content with placeholders
   for abstract details.
+
+- abstract_data:
+
+  Optional pre-resolved abstract (list with \`source\`/\`text\`, see
+  [`resolve_external_field`](http://codecheck.org.uk/codecheck/reference/resolve_external_field.md));
+  when \`NULL\`, looked up here directly.
 
 ## Value
 

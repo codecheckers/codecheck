@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/utils_render_cert_htmls.R" class="external-link"><code>R/utils_render_cert_htmls.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/utils_render_cert_htmls.R" class="external-link"><code>R/utils_render_cert_htmls.R</code></a></small>
       <div class="d-none name"><code>create_cert_page_section_files.Rd</code></div>
     </div>
 
@@ -49,7 +49,10 @@
 <span>  cert_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cert_type <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cert_venue <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  repo_link <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  repo_link <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  openalex_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  abstract_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cert_title <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -75,6 +78,19 @@
 
 <dt id="arg-repo-link">repo_link<a class="anchor" aria-label="anchor" href="#arg-repo-link"></a></dt>
 <dd><p>Repository link to fetch codecheck.yml for Schema.org metadata generation (default: NULL)</p></dd>
+
+
+<dt id="arg-openalex-id">openalex_id<a class="anchor" aria-label="anchor" href="#arg-openalex-id"></a></dt>
+<dd><p>Optional pre-resolved OpenAlex ID</p></dd>
+
+
+<dt id="arg-abstract-data">abstract_data<a class="anchor" aria-label="anchor" href="#arg-abstract-data"></a></dt>
+<dd><p>Optional pre-resolved abstract</p></dd>
+
+
+<dt id="arg-cert-title">cert_title<a class="anchor" aria-label="anchor" href="#arg-cert-title"></a></dt>
+<dd><p>Optional pre-resolved title of the certificate's record on
+its publication platform, see <code><a href="resolve_cert_title.html">resolve_cert_title</a></code></p></dd>
 
 </dl></div>
 

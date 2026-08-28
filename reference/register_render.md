@@ -20,7 +20,9 @@ register_render(
   ncores = NULL,
   verbose = FALSE,
   check_zenodo_policy = TRUE,
-  prune_unreferenced_libs = TRUE
+  check_researchequals_policy = TRUE,
+  prune_unreferenced_libs = TRUE,
+  prune_unavailable_metadata = FALSE
 )
 ```
 
@@ -83,6 +85,15 @@ register_render(
   cached, so only a cold render pays for the extra requests; set to
   FALSE to skip them entirely.
 
+- check_researchequals_policy:
+
+  Logical; if TRUE (the default), audits all certificates published on
+  ResearchEquals against the CODECHECK curation policy after rendering,
+  including membership in the CODECHECK collection and, for AGILEGIS
+  certificates, in the Reproducible AGILE collection, and reports the
+  findings on the console. Never fails a render. Results are cached like
+  the Zenodo ones; set to FALSE to skip them entirely.
+
 - prune_unreferenced_libs:
 
   Logical; if TRUE (the default), removes directories under
@@ -93,6 +104,17 @@ register_render(
   failures; otherwise the step is skipped with a message, since a
   partial render can leave HTML that still references a directory this
   would delete.
+
+- prune_unavailable_metadata:
+
+  Logical; if TRUE, a certificate's OpenAlex ID or abstract that this
+  render's live lookup conclusively confirms is no longer available (as
+  opposed to a lookup that simply failed - network error, rate limit) is
+  actually removed from the rendered output. Defaults to FALSE: such a
+  confirmed absence is more often a query problem than a real removal
+  upstream, so by default the previously rendered value is kept, and a
+  lookup failure never removes anything regardless of this flag. See
+  \[resolve_external_field()\].
 
 ## Value
 

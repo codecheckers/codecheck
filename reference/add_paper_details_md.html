@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Populates an existing markdown content template with details about the codechecked paper.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/utils_render_cert_md.R" class="external-link"><code>R/utils_render_cert_md.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/utils_render_cert_md.R" class="external-link"><code>R/utils_render_cert_md.R</code></a></small>
       <div class="d-none name"><code>add_paper_details_md.Rd</code></div>
     </div>
 
@@ -44,7 +44,12 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_paper_details_md</span><span class="op">(</span><span class="va">md_content</span>, <span class="va">repo_link</span>, <span class="va">download_cert_status</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_paper_details_md</span><span class="op">(</span></span>
+<span>  <span class="va">md_content</span>,</span>
+<span>  <span class="va">repo_link</span>,</span>
+<span>  openalex_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  abstract_data <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,8 +64,12 @@
 <dd><p>A character string containing the repository link associated with the certificate.</p></dd>
 
 
-<dt id="arg-download-cert-status">download_cert_status<a class="anchor" aria-label="anchor" href="#arg-download-cert-status"></a></dt>
-<dd><p>An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).</p></dd>
+<dt id="arg-openalex-id">openalex_id<a class="anchor" aria-label="anchor" href="#arg-openalex-id"></a></dt>
+<dd><p>Optional pre-resolved OpenAlex ID; when `NULL`, looked up here directly.</p></dd>
+
+
+<dt id="arg-abstract-data">abstract_data<a class="anchor" aria-label="anchor" href="#arg-abstract-data"></a></dt>
+<dd><p>Optional pre-resolved abstract; when `NULL`, looked up here directly.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -9,7 +9,7 @@ If no abstract is found, an empty string is inserted in place of the abstract co
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +36,7 @@ If no abstract is found, an empty string is inserted in place of the abstract co
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Inserts the abstract text and source link into the Markdown content if an abstract is found for the given repository. If no abstract is found, an empty string is inserted in place of the abstract content.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/utils_render_cert_md.R" class="external-link"><code>R/utils_render_cert_md.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/utils_render_cert_md.R" class="external-link"><code>R/utils_render_cert_md.R</code></a></small>
       <div class="d-none name"><code>add_abstract.Rd</code></div>
     </div>
 
@@ -47,7 +47,7 @@ If no abstract is found, an empty string is inserted in place of the abstract co
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_abstract</span><span class="op">(</span><span class="va">repo_link</span>, <span class="va">md_content</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_abstract</span><span class="op">(</span><span class="va">repo_link</span>, <span class="va">md_content</span>, abstract_data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -60,6 +60,11 @@ If no abstract is found, an empty string is inserted in place of the abstract co
 
 <dt id="arg-md-content">md_content<a class="anchor" aria-label="anchor" href="#arg-md-content"></a></dt>
 <dd><p>A character string containing the Markdown content with placeholders for abstract details.</p></dd>
+
+
+<dt id="arg-abstract-data">abstract_data<a class="anchor" aria-label="anchor" href="#arg-abstract-data"></a></dt>
+<dd><p>Optional pre-resolved abstract (list with `source`/`text`, see
+<code><a href="resolve_external_field.html">resolve_external_field</a></code>); when `NULL`, looked up here directly.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Function for rendering the register into different view</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/register.R" class="external-link"><code>R/register.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/register.R" class="external-link"><code>R/register.R</code></a></small>
       <div class="d-none name"><code>register_render.Rd</code></div>
     </div>
 
@@ -57,7 +57,9 @@
 <span>  ncores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  check_zenodo_policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  prune_unreferenced_libs <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  check_researchequals_policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prune_unreferenced_libs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prune_unavailable_metadata <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -113,8 +115,16 @@
 <dd><p>Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.</p></dd>
 
 
+<dt id="arg-check-researchequals-policy">check_researchequals_policy<a class="anchor" aria-label="anchor" href="#arg-check-researchequals-policy"></a></dt>
+<dd><p>Logical; if TRUE (the default), audits all certificates published on ResearchEquals against the CODECHECK curation policy after rendering, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection, and reports the findings on the console. Never fails a render. Results are cached like the Zenodo ones; set to FALSE to skip them entirely.</p></dd>
+
+
 <dt id="arg-prune-unreferenced-libs">prune_unreferenced_libs<a class="anchor" aria-label="anchor" href="#arg-prune-unreferenced-libs"></a></dt>
 <dd><p>Logical; if TRUE (the default), removes directories under `docs/libs` that no rendered HTML file references any more (see [prune_libs()] and codecheckers/codecheck#89) once rendering finishes. Only actually runs after a complete, unfiltered render (`from`/`to` covering the whole register) with no certificate failures; otherwise the step is skipped with a message, since a partial render can leave HTML that still references a directory this would delete.</p></dd>
+
+
+<dt id="arg-prune-unavailable-metadata">prune_unavailable_metadata<a class="anchor" aria-label="anchor" href="#arg-prune-unavailable-metadata"></a></dt>
+<dd><p>Logical; if TRUE, a certificate's OpenAlex ID or abstract that this render's live lookup conclusively confirms is no longer available (as opposed to a lookup that simply failed - network error, rate limit) is actually removed from the rendered output. Defaults to FALSE: such a confirmed absence is more often a query problem than a real removal upstream, so by default the previously rendered value is kept, and a lookup failure never removes anything regardless of this flag. See [resolve_external_field()].</p></dd>
 
 </dl></div>
     <div class="section level2">

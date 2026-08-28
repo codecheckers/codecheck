@@ -8,7 +8,15 @@ Markdown file is later rendered to HTML.
 ## Usage
 
 ``` r
-create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue)
+create_cert_md(
+  cert_id,
+  repo_link,
+  download_cert_status,
+  cert_type,
+  cert_venue,
+  openalex_id = NULL,
+  abstract_data = NULL
+)
 ```
 
 ## Arguments
@@ -36,3 +44,14 @@ create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue)
 - cert_venue:
 
   A character string containing the venue name.
+
+- openalex_id:
+
+  Optional pre-resolved OpenAlex ID (see
+  [`resolve_external_field`](http://codecheck.org.uk/codecheck/reference/resolve_external_field.md));
+  when \`NULL\`, looked up here directly.
+
+- abstract_data:
+
+  Optional pre-resolved abstract; when \`NULL\`, looked up here
+  directly.

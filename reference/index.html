@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -223,6 +223,13 @@
 
         <dt>
 
+          <code><a href="cached_lookup_result.html">cached_lookup_result()</a></code>
+
+        </dt>
+        <dd>Same as <code>cached_lookup</code>, but returns the full result</dd>
+
+        <dt>
+
           <code><a href="calculate_breadcrumb_base_path.html">calculate_breadcrumb_base_path()</a></code>
 
         </dt>
@@ -248,6 +255,13 @@
 
         </dt>
         <dd>Function issue status. If the issue is not closed a warning is thrown stating that the issue is still open.</dd>
+
+        <dt>
+
+          <code><a href="check_register_researchequals_policy.html">check_register_researchequals_policy()</a></code>
+
+        </dt>
+        <dd>Check a register's ResearchEquals certificates against the CODECHECK curation policy</dd>
 
         <dt>
 
@@ -293,6 +307,13 @@
 
         <dt>
 
+          <code><a href="check_researchequals_record.html">check_researchequals_record()</a></code>
+
+        </dt>
+        <dd>Audit a ResearchEquals certificate against the CODECHECK curation policy</dd>
+
+        <dt>
+
           <code><a href="check_zenodo_record.html">check_zenodo_record()</a></code>
 
         </dt>
@@ -307,10 +328,24 @@
 
         <dt>
 
+          <code><a href="classify_poppler_log.html">classify_poppler_log()</a></code>
+
+        </dt>
+        <dd>Poppler (via pdftools) reports PDF parsing problems by printing "PDF error: ..." lines directly to R's message connection rather than raising a condition on them, so they bypass ordinary error handling and, uncaptured, flood the console - one line per malformed glyph or object, sometimes hundreds per certificate. This splits captured poppler output into messages that mean the PDF is genuinely broken (unparsable, not really a PDF) versus cosmetic rendering quirks that poppler recovers from on its own (e.g. malformed embedded fonts) and that don't affect the resulting page images.</dd>
+
+        <dt>
+
           <code><a href="clear_cert_link_cache.html">clear_cert_link_cache()</a></code>
 
         </dt>
         <dd>Clear the in-session cache of resolved certificate download links</dd>
+
+        <dt>
+
+          <code><a href="clear_researchequals_policy_cache.html">clear_researchequals_policy_cache()</a></code>
+
+        </dt>
+        <dd>Drop the cached policy metadata of one ResearchEquals module</dd>
 
         <dt>
 
@@ -366,7 +401,7 @@
           <code><a href="convert_cert_pdf_to_png.html">convert_cert_pdf_to_png()</a></code>
 
         </dt>
-        <dd>Converts each page of a certificate PDF to JPEG format images, saving them in the specified certificate directory.</dd>
+        <dd>Converts each page of a certificate PDF to PNG images, saving them in the specified certificate directory.</dd>
 
         <dt>
 
@@ -563,6 +598,13 @@
 
         </dt>
         <dd>Generate breadcrumb navigation HTML</dd>
+
+        <dt>
+
+          <code><a href="generate_cert_citation_meta.html">generate_cert_citation_meta()</a></code>
+
+        </dt>
+        <dd>Generate Highwire citation meta tags for a certificate page</dd>
 
         <dt>
 
@@ -937,6 +979,27 @@
 
         <dt>
 
+          <code><a href="get_researchequals_collection.html">get_researchequals_collection()</a></code>
+
+        </dt>
+        <dd>Retrieve a collection on ResearchEquals</dd>
+
+        <dt>
+
+          <code><a href="get_researchequals_collections.html">get_researchequals_collections()</a></code>
+
+        </dt>
+        <dd>Retrieve the collections a certificate must be part of</dd>
+
+        <dt>
+
+          <code><a href="get_researchequals_version_metadata.html">get_researchequals_version_metadata()</a></code>
+
+        </dt>
+        <dd>Retrieve a ResearchEquals version's metadata</dd>
+
+        <dt>
+
           <code><a href="get_zenodo_cert_link.html">get_zenodo_cert_link()</a></code>
 
         </dt>
@@ -1094,7 +1157,7 @@
           <code><a href="register_update_stats.html">register_update_stats()</a></code>
 
         </dt>
-        <dd>Regenerate all stats.json files from existing register.json files</dd>
+        <dd>Regenerate all statistics files from existing register.json files</dd>
 
         <dt>
 
@@ -1161,10 +1224,38 @@
 
         <dt>
 
+          <code><a href="render_statistics_page.html">render_statistics_page()</a></code>
+
+        </dt>
+        <dd>Render the register-wide statistics dashboard page</dd>
+
+        <dt>
+
+          <code><a href="report_researchequals_policy_findings.html">report_researchequals_policy_findings()</a></code>
+
+        </dt>
+        <dd>Report ResearchEquals curation policy findings</dd>
+
+        <dt>
+
           <code><a href="report_zenodo_policy_findings.html">report_zenodo_policy_findings()</a></code>
 
         </dt>
         <dd>Report curation policy findings</dd>
+
+        <dt>
+
+          <code><a href="researchequals_policy_check.html">researchequals_policy_check()</a></code>
+
+        </dt>
+        <dd>Check a ResearchEquals module against the CODECHECK curation policy</dd>
+
+        <dt>
+
+          <code><a href="resolve_researchequals_version_id.html">resolve_researchequals_version_id()</a></code>
+
+        </dt>
+        <dd>Resolve a certificate ID or ResearchEquals reference to a version ID</dd>
 
         <dt>
 

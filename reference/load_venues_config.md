@@ -18,7 +18,10 @@ load_venues_config(venues_file = NULL)
 
 ## Value
 
-A data frame with columns: name, longname, label
+A data frame with the required columns name, longname, label, plus
+whatever optional metadata columns the file carries (e.g. logo_url,
+website_url, policy_url, publisher) - passed through unchanged for
+consumers like \[compute_annual_stats()\].
 
 ## Author
 

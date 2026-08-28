@@ -15,7 +15,8 @@ register_render_cert(
   venues_file = "venues.csv",
   force_download = TRUE,
   download_and_convert = TRUE,
-  verbose = FALSE
+  verbose = FALSE,
+  prune_unavailable_metadata = FALSE
 )
 ```
 
@@ -53,6 +54,10 @@ register_render_cert(
 
   Logical; if TRUE, shows detailed output including pandoc commands from
   rmarkdown::render(). Defaults to FALSE.
+
+- prune_unavailable_metadata:
+
+  Logical; see \[register_render()\]. Defaults to FALSE.
 
 ## Value
 

@@ -13,7 +13,7 @@ register re-render."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@ register re-render."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Render a single certificate page by its ID</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.26.0/R/register.R" class="external-link"><code>R/register.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/register.R" class="external-link"><code>R/register.R</code></a></small>
       <div class="d-none name"><code>register_render_cert.Rd</code></div>
     </div>
 
@@ -60,7 +60,8 @@ register re-render.</p>
 <span>  venues_file <span class="op">=</span> <span class="st">"venues.csv"</span>,</span>
 <span>  force_download <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  download_and_convert <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  prune_unavailable_metadata <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,6 +100,10 @@ certificate PDF to PNG images. Defaults to TRUE.</p></dd>
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical; if TRUE, shows detailed output including pandoc
 commands from rmarkdown::render(). Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-prune-unavailable-metadata">prune_unavailable_metadata<a class="anchor" aria-label="anchor" href="#arg-prune-unavailable-metadata"></a></dt>
+<dd><p>Logical; see [register_render()]. Defaults to FALSE.</p></dd>
 
 </dl></div>
     <div class="section level2">
