@@ -11,7 +11,8 @@ create_cert_page_section_files(
   cert_venue = NULL,
   repo_link = NULL,
   openalex_id = NULL,
-  abstract_data = NULL
+  abstract_data = NULL,
+  cert_title = NULL
 )
 }
 \arguments{
@@ -24,6 +25,13 @@ create_cert_page_section_files(
 \item{cert_venue}{The venue name for breadcrumb generation}
 
 \item{repo_link}{Repository link to fetch codecheck.yml for Schema.org metadata generation (default: NULL)}
+
+\item{openalex_id}{Optional pre-resolved OpenAlex ID}
+
+\item{abstract_data}{Optional pre-resolved abstract}
+
+\item{cert_title}{Optional pre-resolved title of the certificate's record on
+its publication platform, see \code{\link{resolve_cert_title}}}
 }
 \description{
 Generates section files for a certificate HTML page, including prefix, postfix, and header HTML components.

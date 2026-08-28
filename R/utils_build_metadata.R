@@ -147,10 +147,14 @@ write_meta_json <- function(metadata, output_path = ".") {
 #' @param openalex_id Optional pre-resolved OpenAlex ID (see \code{\link{resolve_external_field}}).
 #'   `NULL` means "not looked up here" and omits the field, matching the
 #'   pre-existing behaviour of this function for callers that don't pass one.
+#' @param cert_title Title of the certificate's record on the platform it is
+#'   published on, see \code{\link{resolve_cert_title}}; falls back to the
+#'   constructed "CODECHECK Certificate <ID>" when not given
 #' @return JSON-LD string ready to be embedded in HTML <script type="application/ld+json">
 #' @importFrom jsonlite toJSON
 #' @export
-generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL, openalex_id = NULL) {
+generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL,
+                                     openalex_id = NULL, cert_title = NULL) {
 
   # Build the ScholarlyArticle (paper being checked)
   paper <- list(
@@ -208,8 +212,13 @@ generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL, 
     `@context` = "https://schema.org",
     `@type` = "Review",
     `@id` = cert_url,
-    name = paste("CODECHECK Certificate", config_yml$certificate),
+    name = if (is_nonempty_string(cert_title)) cert_title else default_cert_title(cert_id),
     url = cert_url,
+    inLanguage = CONFIG$CERT_LANGUAGE,
+    publisher = list(
+      `@type` = "Organization",
+      name = CONFIG$CERT_PUBLISHER
+    ),
     author = lapply(config_yml$codechecker, function(checker) {
       person <- list(
         `@type` = "Person",
@@ -237,12 +246,32 @@ generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL, 
     }
   }
 
-  # Add associatedMedia (certificate PDF from Zenodo)
+  # Add the archived record: its DOI identifies the certificate, and the deposit
+  # itself is the media object. The archive may be Zenodo, OSF or ResearchEquals.
   if (!is.null(config_yml$report) && config_yml$report != "") {
+    doi <- bare_doi(config_yml$report)
+    if (!is.null(doi)) {
+      review$identifier <- list(
+        `@type` = "PropertyValue",
+        propertyID = "DOI",
+        value = doi
+      )
+    }
+
     review$associatedMedia <- list(
       `@type` = "MediaObject",
       encodingFormat = "application/pdf",
       url = config_yml$report
+    )
+  }
+
+  # The certificate PDF as served from the register itself, alongside the
+  # archived copy above
+  if (file.exists(file.path(CONFIG$CERTS_DIR[["cert"]], cert_id, "cert.pdf"))) {
+    review$encoding <- list(
+      `@type` = "MediaObject",
+      encodingFormat = "application/pdf",
+      contentUrl = paste0(cert_url, "cert.pdf")
     )
   }
 
@@ -370,4 +399,238 @@ generate_codechecker_schema_org <- function(codechecker_orcid, codechecker_name,
   json_ld <- jsonlite::toJSON(schema_org, pretty = TRUE, auto_unbox = TRUE)
 
   return(as.character(json_ld))
+}
+
+#' Escape a value for use in an HTML attribute
+#'
+#' The values of `<meta>` tags are HTML attributes, and Google Scholar's
+#' indexing guidelines are explicit that they have to be escaped,
+#' <https://scholar.google.com/intl/en/scholar/inclusion.html#indexing>.
+#' Certificate metadata routinely contains ampersands and quotes, in paper
+#' titles as much as in the free text summary of a check.
+#'
+#' @param x A character value
+#' @return The value with `&`, `<`, `>`, `"` and `'` replaced by entities
+#' @keywords internal
+escape_html_attribute <- function(x) {
+  x <- as.character(x)
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  x <- gsub(">", "&gt;", x, fixed = TRUE)
+  x <- gsub("\"", "&quot;", x, fixed = TRUE)
+  x <- gsub("'", "&#39;", x, fixed = TRUE)
+  x
+}
+
+#' Is this a usable single non-empty string?
+#'
+#' @param x A value from a parsed codecheck.yml, which may be NULL, NA or ""
+#' @return TRUE if `x` can be rendered into a meta tag
+#' @keywords internal
+is_nonempty_string <- function(x) {
+  is.character(x) && length(x) == 1 && !is.na(x) && nzchar(trimws(x))
+}
+
+#' A DOI without its resolver prefix
+#'
+#' `citation_doi` takes the bare DOI, while the `report` field of a
+#' codecheck.yml is usually a DOI URL.
+#'
+#' @param x A DOI, DOI URL or `doi:` reference
+#' @return The bare DOI, or NULL if `x` is not a DOI
+#' @keywords internal
+bare_doi <- function(x) {
+  if (!is_nonempty_string(x)) return(NULL)
+  doi <- trimws(x)
+  doi <- sub("^https?://(dx\\.)?doi\\.org/", "", doi, ignore.case = TRUE)
+  doi <- sub("^doi:", "", doi, ignore.case = TRUE)
+  if (grepl("^10\\.[0-9]{4,}/", doi)) doi else NULL
+}
+
+#' Generate Highwire citation meta tags for a certificate page
+#'
+#' Builds the `citation_*` meta tags that make a certificate page citable by
+#' Google Scholar and identifiable by Zotero (codecheckers/register#52).
+#'
+#' The tags describe the **certificate**, not the paper that was checked: the
+#' paper has its own landing page at its DOI, and describing it here would make
+#' Scholar treat the certificate page as a duplicate of the paper and make
+#' Zotero save the wrong item. The link to the checked paper is expressed in the
+#' schema.org metadata instead, as the `itemReviewed` of the review, see
+#' \code{\link{generate_cert_schema_org}}.
+#'
+#' Only the Highwire scheme is emitted, not Dublin Core: Google Scholar calls DC
+#' a last resort that "works poorly for journal papers", and Zotero's Embedded
+#' Metadata translator derives the item type from the Highwire tags -
+#' `citation_technical_report_institution` is what makes a certificate a
+#' `report` rather than an untyped web page.
+#'
+#' @param cert_id Certificate ID (e.g. "2020-018")
+#' @param config_yml Parsed codecheck.yml configuration
+#' @param cert_title Title of the certificate's record on the platform it is
+#'   published on, see \code{\link{resolve_cert_title}}; falls back to the
+#'   constructed "CODECHECK Certificate <ID>" when not given
+#' @param cert_venue Venue name of the certificate, added to the keywords
+#' @param has_pdf Whether `cert.pdf` exists next to the page, i.e. whether a
+#'   `citation_pdf_url` can be offered
+#' @return HTML string of `<meta>` tags, one per line
+#' @export
+generate_cert_citation_meta <- function(cert_id, config_yml, cert_title = NULL,
+                                        cert_venue = NULL, has_pdf = FALSE) {
+  tags <- list()
+  add <- function(name, value) {
+    if (!is_nonempty_string(value)) return(invisible(NULL))
+    tags[[length(tags) + 1]] <<- sprintf('<meta name="%s" content="%s">',
+                                         name, escape_html_attribute(trimws(value)))
+  }
+
+  cert_url <- paste0(CONFIG$HYPERLINKS[["certs"]], cert_id, "/")
+
+  # Required by Google Scholar: without title, author and publication date the
+  # page is processed as if it had no meta tags at all
+  add("citation_title", if (is_nonempty_string(cert_title)) cert_title else default_cert_title(cert_id))
+
+  for (checker in config_yml$codechecker) {
+    add("citation_author", checker$name)
+  }
+
+  if (is_nonempty_string(config_yml$check_time)) {
+    check_date <- parsedate::parse_date(config_yml$check_time)
+    if (!is.na(check_date)) {
+      # the format Google Scholar documents, e.g. "2019/2/14"
+      add("citation_publication_date", format(check_date, "%Y/%m/%d"))
+    }
+  }
+
+  # what makes Zotero read the page as a report rather than a web page
+  add("citation_technical_report_institution", CONFIG$CERT_PUBLISHER)
+  add("citation_technical_report_number", cert_id)
+  add("citation_publisher", CONFIG$CERT_PUBLISHER)
+
+  add("citation_doi", bare_doi(config_yml$report))
+  add("citation_abstract", config_yml$summary)
+
+  # only offered when the PDF really sits next to the page: Scholar expects an
+  # absolute, crawlable URL, and Zotero attaches it as the full text
+  if (isTRUE(has_pdf)) {
+    add("citation_pdf_url", paste0(cert_url, "cert.pdf"))
+  }
+
+  add("citation_fulltext_html_url", cert_url)
+  add("citation_public_url", cert_url)
+  add("citation_language", CONFIG$CERT_LANGUAGE)
+
+  keywords <- CONFIG$CERT_KEYWORDS
+  if (is_nonempty_string(cert_venue)) {
+    keywords <- c(keywords, trimws(cert_venue))
+  }
+  add("citation_keywords", paste(keywords, collapse = "; "))
+
+  paste(unlist(tags), collapse = "\n")
+}
+
+#' Generate the OpenGraph and Twitter card tags of a certificate page
+#'
+#' The shared page header describes the register as a whole, which on a
+#' certificate page means every certificate advertised itself as "CODECHECK
+#' Register" at the register's own URL. These tags describe the certificate
+#' itself, and are read by Zotero's Embedded Metadata translator as well as by
+#' the social previews they are named for.
+#'
+#' @inheritParams generate_cert_citation_meta
+#' @param has_preview Whether `cert_1.png`, the first page of the certificate
+#'   PDF, exists next to the page and can be used as the preview image
+#' @return Named list with `og_title`, `og_url`, `og_description`, `og_type`
+#'   and `og_image`, ready to render into the header template
+#' @keywords internal
+generate_cert_opengraph <- function(cert_id, config_yml, cert_title = NULL,
+                                    has_preview = FALSE) {
+  cert_url <- paste0(CONFIG$HYPERLINKS[["certs"]], cert_id, "/")
+
+  title <- if (is_nonempty_string(cert_title)) cert_title else default_cert_title(cert_id)
+
+  description <- if (is_nonempty_string(config_yml$summary)) {
+    truncate_text(config_yml$summary, 300)
+  } else if (is_nonempty_string(config_yml$paper$title)) {
+    paste0("CODECHECK of “", config_yml$paper$title, "”")
+  } else {
+    "CODECHECK is a process for independent execution of computations underlying scholarly research articles."
+  }
+
+  list(
+    og_title = escape_html_attribute(title),
+    og_url = escape_html_attribute(cert_url),
+    og_description = escape_html_attribute(description),
+    og_type = "article",
+    og_image = if (isTRUE(has_preview)) escape_html_attribute(paste0(cert_url, "cert_1.png")) else ""
+  )
+}
+
+#' Shorten text to a maximum length, at a word boundary
+#'
+#' @param x The text
+#' @param max_chars Maximum number of characters
+#' @return The text, shortened and suffixed with a horizontal ellipsis if needed
+#' @keywords internal
+truncate_text <- function(x, max_chars) {
+  x <- trimws(gsub("\\s+", " ", as.character(x)))
+  if (nchar(x) <= max_chars) return(x)
+
+  shortened <- substr(x, 1, max_chars)
+  last_space <- regexpr("\\s[^\\s]*$", shortened, perl = TRUE)
+  if (last_space > 1) {
+    shortened <- substr(shortened, 1, last_space - 1)
+  }
+  paste0(trimws(shortened), "…")
+}
+
+#' The page-level metadata of a register page
+#'
+#' The defaults the shared header template is filled with, describing the
+#' register as a whole. Certificate pages override them with
+#' \code{\link{generate_cert_opengraph}} and add their citation metadata, see
+#' \code{\link{generate_cert_citation_meta}}.
+#'
+#' @return Named list of template values
+#' @keywords internal
+register_page_header_data <- function() {
+  list(
+    page_author = "Stephen Eglen &amp; Daniel Nüst",
+    og_title = "CODECHECK Register",
+    og_url = CONFIG$HYPERLINKS[["register"]],
+    og_description = "CODECHECK is a process for independent execution of computations underlying scholarly research articles.",
+    og_type = "website",
+    og_image = "",
+    citation_meta = ""
+  )
+}
+
+#' Assemble the values the shared page header template is rendered with
+#'
+#' The template switches optional blocks on explicit `has_*` flags rather than
+#' on the values themselves: whisker treats the empty string as *true*, so a
+#' page without an og:image or without Schema.org metadata would otherwise emit
+#' an empty `<meta property="og:image" content="">` and an empty
+#' `<script type="application/ld+json"></script>` instead of nothing and the
+#' generic website metadata.
+#'
+#' @param page_metadata Page-level values, from
+#'   \code{\link{register_page_header_data}} or, for a certificate page,
+#'   \code{\link{generate_cert_opengraph}} plus its citation metadata
+#' @param meta_generator Content of the generator meta tag
+#' @param base_path Relative path from the page to the docs root
+#' @param schema_org_jsonld Schema.org JSON-LD, or "" for none
+#' @return Named list ready for `whisker.render()`
+#' @keywords internal
+header_template_data <- function(page_metadata, meta_generator, base_path,
+                                 schema_org_jsonld = "") {
+  c(page_metadata,
+    list(
+      meta_generator = meta_generator,
+      base_path = base_path,
+      schema_org_jsonld = schema_org_jsonld,
+      has_schema_org_jsonld = is_nonempty_string(schema_org_jsonld),
+      has_og_image = is_nonempty_string(page_metadata$og_image),
+      has_citation_meta = is_nonempty_string(page_metadata$citation_meta)
+    ))
 }

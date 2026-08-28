@@ -10,7 +10,8 @@ generate_cert_json(
   cert_type,
   cert_venue,
   openalex_id = NULL,
-  abstract_data = NULL
+  abstract_data = NULL,
+  cert_title = NULL
 )
 }
 \arguments{
@@ -26,6 +27,10 @@ generate_cert_json(
 when `NULL`, looked up here directly.}
 
 \item{abstract_data}{Optional pre-resolved abstract; when `NULL`, looked up here directly.}
+
+\item{cert_title}{Optional pre-resolved title of the certificate's record on
+its publication platform; when `NULL`, looked up here directly, see
+\code{\link{resolve_cert_title}}.}
 }
 \description{
 Creates an index.json file containing all information displayed on the

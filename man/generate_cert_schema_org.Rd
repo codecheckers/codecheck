@@ -8,7 +8,8 @@ generate_cert_schema_org(
   cert_id,
   config_yml,
   abstract_data = NULL,
-  openalex_id = NULL
+  openalex_id = NULL,
+  cert_title = NULL
 )
 }
 \arguments{
@@ -21,6 +22,10 @@ generate_cert_schema_org(
 \item{openalex_id}{Optional pre-resolved OpenAlex ID (see \code{\link{resolve_external_field}}).
 `NULL` means "not looked up here" and omits the field, matching the
 pre-existing behaviour of this function for callers that don't pass one.}
+
+\item{cert_title}{Title of the certificate's record on the platform it is
+published on, see \code{\link{resolve_cert_title}}; falls back to the
+constructed "CODECHECK Certificate <ID>" when not given}
 }
 \value{
 JSON-LD string ready to be embedded in HTML <script type="application/ld+json">

@@ -328,13 +328,20 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
     empty_value = list(source = NULL, text = NULL), prune_unavailable = prune_unavailable
   )
 
+  # The title of the record on the platform the certificate is published on -
+  # Zenodo, OSF or ResearchEquals - which is what the citation metadata has to
+  # show, see resolve_cert_title() (register#52).
+  cert_title <- resolve_cert_title(cert_id, config_yml$report,
+                                   prune_unavailable = prune_unavailable)
+
   create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue, openalex_id, abstract_data)
 
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")
 
   # Creating html document yml with breadcrumbs and schema.org metadata
-  create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue, repo_link, openalex_id, abstract_data)
+  create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue, repo_link, openalex_id,
+                                 abstract_data, cert_title)
   generate_html_document_yml(output_dir)
 
   # Schedule cleanup of temporary files so they are removed even if render() fails
@@ -367,7 +374,7 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
   unlink(file.path(output_dir, "libs"), recursive = TRUE)
 
   # Generate JSON file with certificate metadata
-  generate_cert_json(cert_id, repo_link, cert_type, cert_venue, openalex_id, abstract_data)
+  generate_cert_json(cert_id, repo_link, cert_type, cert_venue, openalex_id, abstract_data, cert_title)
 }
 
 #' Generates a JSON file with all certificate metadata
@@ -382,10 +389,14 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
 #' @param openalex_id Optional pre-resolved OpenAlex ID (see \code{\link{resolve_external_field}});
 #'   when `NULL`, looked up here directly.
 #' @param abstract_data Optional pre-resolved abstract; when `NULL`, looked up here directly.
+#' @param cert_title Optional pre-resolved title of the certificate's record on
+#'   its publication platform; when `NULL`, looked up here directly, see
+#'   \code{\link{resolve_cert_title}}.
 #' @importFrom jsonlite write_json
 #' @export
 generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
-                               openalex_id = NULL, abstract_data = NULL) {
+                               openalex_id = NULL, abstract_data = NULL,
+                               cert_title = NULL) {
   # Get codecheck.yml metadata
   config_yml <- get_codecheck_yml(repo_link)
 
@@ -395,9 +406,17 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
   }
 
   # Build JSON structure matching the certificate landing page
+  # The title of the record on the platform the certificate is published on,
+  # which is also what the page's citation metadata shows (register#52)
+  if (is.null(cert_title)) {
+    cert_title <- resolve_cert_title(cert_id, config_yml$report,
+                                     prune_unavailable = isTRUE(CONFIG$PRUNE_UNAVAILABLE_METADATA))
+  }
+
   cert_json <- list(
     certificate = list(
       id = config_yml$certificate,
+      title = cert_title,
       url = paste0("https://codecheck.org.uk/register/certs/", cert_id, "/")
     ),
     paper = list(
@@ -481,9 +500,13 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
 #' @param cert_type The venue type (journal, conference, community, institution) for breadcrumb generation
 #' @param cert_venue The venue name for breadcrumb generation
 #' @param repo_link Repository link to fetch codecheck.yml for Schema.org metadata generation (default: NULL)
+#' @param openalex_id Optional pre-resolved OpenAlex ID
+#' @param abstract_data Optional pre-resolved abstract
+#' @param cert_title Optional pre-resolved title of the certificate's record on
+#'   its publication platform, see \code{\link{resolve_cert_title}}
 #' @importFrom whisker whisker.render
 create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type = NULL, cert_venue = NULL, repo_link = NULL,
-                                           openalex_id = NULL, abstract_data = NULL){
+                                           openalex_id = NULL, abstract_data = NULL, cert_title = NULL){
 
   # Create prefix with navigation header and breadcrumbs
   if (!is.null(cert_id) && !is.null(cert_type) && !is.null(cert_venue)) {
@@ -534,18 +557,54 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
   # Use "codecheck" only without version info on individual certificate pages
   meta_generator <- "codecheck"
 
-  # Generate Schema.org JSON-LD if repo_link is provided
+  # Generate the metadata of this certificate page: Schema.org JSON-LD, the
+  # Highwire citation tags Google Scholar and Zotero read (register#52), and
+  # OpenGraph tags describing the certificate rather than the register as a
+  # whole, which is what the shared header template defaults to.
+  page_metadata <- register_page_header_data()
   schema_org_jsonld <- ""
   if (!is.null(repo_link) && repo_link != "") {
-    tryCatch({
+    page_metadata <- tryCatch({
       config_yml <- get_codecheck_yml(repo_link)
       if (is.null(abstract_data)) {
         abstract_data <- get_abstract(repo_link)
       }
-      schema_org_jsonld <- generate_cert_schema_org(cert_id, config_yml, abstract_data, openalex_id)
+      # `<-` reaches this function's frame: the tryCatch expression is a promise
+      # evaluated in the calling frame, unlike the error handler below
+      schema_org_jsonld <- generate_cert_schema_org(cert_id, config_yml, abstract_data,
+                                                    openalex_id, cert_title = cert_title)
+
+      # the PDF and its first-page preview, if the download succeeded, sit next
+      # to the page being written
+      cert_dir <- output_dir
+      opengraph <- generate_cert_opengraph(
+        cert_id, config_yml,
+        cert_title = cert_title,
+        has_preview = file.exists(file.path(cert_dir, "cert_1.png"))
+      )
+
+      citation_meta <- generate_cert_citation_meta(
+        cert_id, config_yml,
+        cert_title = cert_title,
+        cert_venue = cert_venue,
+        has_pdf = file.exists(file.path(cert_dir, "cert.pdf"))
+      )
+
+      # the codecheckers authored the certificate; the register-wide default
+      # names the register editors, which is wrong on a certificate page
+      checkers <- vapply(config_yml$codechecker,
+                         function(checker) as.character(checker$name), character(1))
+      page_author <- if (length(checkers) > 0) {
+        escape_html_attribute(paste(checkers, collapse = ", "))
+      } else {
+        page_metadata$page_author
+      }
+
+      c(opengraph, list(page_author = page_author, citation_meta = citation_meta))
     }, error = function(e) {
-      warning(cert_id, " | Failed to generate Schema.org metadata: ", e$message)
-      schema_org_jsonld <- ""
+      warning(cert_id, " | Failed to generate certificate page metadata: ", e$message)
+      schema_org_jsonld <<- ""
+      register_page_header_data()
     })
   }
 
@@ -562,9 +621,9 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
     base_path <- paste(rep("../", depth), collapse = "")
   }
 
-  output <- whisker.render(paste(header_template, collapse = "\n"),
-                          list(meta_generator = meta_generator,
-                               base_path = base_path,
-                               schema_org_jsonld = schema_org_jsonld))
+  template_data <- header_template_data(page_metadata, meta_generator, base_path,
+                                        schema_org_jsonld)
+
+  output <- whisker.render(paste(header_template, collapse = "\n"), template_data)
   writeLines(output, file.path(output_dir, "index_header.html"))
 }

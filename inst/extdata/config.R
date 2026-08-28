@@ -243,6 +243,21 @@ CONFIG$CERT_LINKS <- list(
 )
 
 CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"
+
+# CITATION METADATA OF CERTIFICATE PAGES
+# The publisher of a CODECHECK certificate as a work, used for the Highwire
+# citation_publisher/citation_technical_report_institution tags and the
+# schema.org publisher of a certificate page. Deliberately *not* the publisher
+# the Zenodo curation policy prescribes for the record ("CODECHECK Community on
+# Zenodo", see R/zenodo.R): that names one archived copy, while certificates are
+# also published on OSF and ResearchEquals.
+CONFIG$CERT_PUBLISHER <- "CODECHECK Initiative"
+
+# Keywords every certificate page carries, joined with the certificate's venue
+CONFIG$CERT_KEYWORDS <- c("CODECHECK", "reproducibility", "code execution")
+
+# Language of the certificate pages, for citation_language and inLanguage
+CONFIG$CERT_LANGUAGE <- "en"
 CONFIG$CERT_DPI <- 72
 
 CONFIG$CERT_DOWNLOAD_AND_CONVERT <- TRUE

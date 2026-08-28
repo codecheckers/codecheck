@@ -126,10 +126,12 @@ create_index_header_html <- function(output_dir, schema_org_jsonld = "", include
 
   # Render the template with meta generator tag, base path, and optional schema.org
   # If schema_org_jsonld is empty string, template will use generic fallback
-  output <- whisker.render(paste(header_template, collapse = "\n"),
-                          list(meta_generator = meta_generator,
-                               base_path = base_path,
-                               schema_org_jsonld = schema_org_jsonld))
+  # register and overview pages describe the register itself; certificate pages
+  # override these in create_cert_index_header_html()
+  template_data <- header_template_data(register_page_header_data(),
+                                        meta_generator, base_path, schema_org_jsonld)
+
+  output <- whisker.render(paste(header_template, collapse = "\n"), template_data)
 
   writeLines(output, file.path(output_dir, "index_header.html"))
 }
