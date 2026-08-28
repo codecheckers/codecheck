@@ -215,7 +215,11 @@ create_index_section_files <- function(output_dir, filter, table_details, schema
 #' @param table The table to render to HTML
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
-render_html <- function(table, table_details, filter){
+#' @param full_register_table Optional table for this filter group with all register columns
+#'        retained (i.e. before [filter_and_drop_register_columns()] ran on `table`). Used for
+#'        Schema.org generation on codechecker pages, which needs the Repository column that
+#'        the HTML column set does not include.
+render_html <- function(table, table_details, filter, full_register_table = NULL){
 
   # Creating md file from which HTML file is made
   if (table_details[["is_reg_table"]]){
@@ -237,12 +241,21 @@ render_html <- function(table, table_details, filter){
     codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[[codechecker_orcid]]
     if (is.null(codechecker_name)) codechecker_name <- codechecker_orcid
 
+    # Repository is not part of the HTML column set (see filter_and_drop_register_columns()),
+    # but generate_codechecker_schema_org() needs it to look up each paper's codecheck.yml.
+    # Fall back to `table` if the full table wasn't supplied, in which case that lookup is
+    # simply skipped for each row.
+    repo_lookup_table <- table
+    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
+      repo_lookup_table <- full_register_table
+    }
+
     # Generate Schema.org JSON-LD for this codechecker
     schema_org_jsonld <- generate_codechecker_schema_org(
       codechecker_orcid = codechecker_orcid,
       codechecker_name = codechecker_name,
       codechecker_github = NULL,  # GitHub handles not currently in register
-      register_table = table
+      register_table = repo_lookup_table
     )
   }
 

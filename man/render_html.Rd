@@ -4,7 +4,7 @@
 \alias{render_html}
 \title{Renders html for a single table}
 \usage{
-render_html(table, table_details, filter)
+render_html(table, table_details, filter, full_register_table = NULL)
 }
 \arguments{
 \item{table}{The table to render to HTML}
@@ -12,6 +12,11 @@ render_html(table, table_details, filter)
 \item{table_details}{List containing details such as the table name, subcat name.}
 
 \item{filter}{The filter}
+
+\item{full_register_table}{Optional table for this filter group with all register columns
+retained (i.e. before [filter_and_drop_register_columns()] ran on `table`). Used for
+Schema.org generation on codechecker pages, which needs the Repository column that
+the HTML column set does not include.}
 }
 \description{
 This function can be used to render both register and non-register tables

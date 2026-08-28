@@ -279,7 +279,7 @@ create_register_files <- function(register_table, filter_by, outputs){
         table_details <- generate_table_details(register_key, filtered_table, filter)
 
         start_time_item <- Sys.time()
-        render_register(filtered_table, table_details, filter, output_type)
+        render_register(filtered_table, table_details, filter, output_type, full_register_table = filtered_table)
         elapsed_item <- as.numeric(difftime(Sys.time(), start_time_item, units = "secs"))
         cli::cli_alert_success("Rendered {filter} {.val {register_key}} ({output_type}) in {sprintf('%.2f', elapsed_item)}s")
       }
@@ -409,16 +409,22 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
 #' @return None. The function generates a file in the specified format.
 render_register <- function(register_table, table_details, filter = NA, output_type, full_register_table = NULL){
   # Sort by certificate identifier for consistent ordering across all outputs
-  # (addresses codecheckers/register#160)
+  # (addresses codecheckers/register#160). full_register_table is sorted the
+  # same way so its rows still line up positionally with register_table after
+  # filter_and_drop_register_columns() below removes columns like Repository
+  # that some output types still need (e.g. HTML's Schema.org generation).
   if ("Certificate" %in% names(register_table)) {
     register_table <- register_table %>% arrange(Certificate)
+  }
+  if (!is.null(full_register_table) && "Certificate" %in% names(full_register_table)) {
+    full_register_table <- full_register_table %>% arrange(Certificate)
   }
 
   register_table <- filter_and_drop_register_columns(register_table, filter, output_type)
 
   switch(output_type,
     "md" = render_register_md(register_table, table_details, filter),
-    "html" = render_html(register_table, table_details, filter),
+    "html" = render_html(register_table, table_details, filter, full_register_table),
     "json" = render_register_json(register_table, table_details, filter, full_register_table)
   )
 }

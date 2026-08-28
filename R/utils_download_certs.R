@@ -357,21 +357,92 @@ extract_cert_pdf_from_zip <- function(zip_download_url, cert_sub_dir, cert_id){
     }
 }
 
-#' Converts each page of a certificate PDF to JPEG format images, saving them in the specified certificate directory. 
+#' Poppler (via pdftools) reports PDF parsing problems by printing "PDF error: ..."
+#' lines directly to R's message connection rather than raising a condition on them,
+#' so they bypass ordinary error handling and, uncaptured, flood the console - one
+#' line per malformed glyph or object, sometimes hundreds per certificate. This
+#' splits captured poppler output into messages that mean the PDF is genuinely
+#' broken (unparsable, not really a PDF) versus cosmetic rendering quirks that
+#' poppler recovers from on its own (e.g. malformed embedded fonts) and that don't
+#' affect the resulting page images.
 #'
-#' @importFrom pdftools pdf_info
+#' @param lines Character vector of captured message-stream output; only lines
+#'   starting with "PDF error" are considered, everything else is ignored.
+#' @return A list with `fatal` (unique messages indicating the PDF could not really
+#'   be parsed, character(0) if none) and `cosmetic_count` (number of suppressed
+#'   non-fatal poppler messages).
+classify_poppler_log <- function(lines) {
+  pdf_error_lines <- grep("^PDF error", lines, value = TRUE)
+
+  # Substrings that mean poppler could not really make sense of the file, as
+  # opposed to a rendering quirk it recovers from on its own.
+  fatal_substrings <- c(
+    "Couldn't find trailer dictionary",
+    "Couldn't read xref table",
+    "May not be a PDF file",
+    "Illegal character",
+    "Damaged PDF file"
+  )
+
+  is_fatal <- vapply(pdf_error_lines, function(line) {
+    any(vapply(fatal_substrings, grepl, logical(1), x = line, fixed = TRUE))
+  }, logical(1))
+
+  list(
+    fatal = unique(sub("^PDF error( \\(\\d+\\))?: ", "", pdf_error_lines[is_fatal])),
+    cosmetic_count = sum(!is_fatal)
+  )
+}
+
+#' Converts each page of a certificate PDF to PNG images, saving them in the specified certificate directory.
+#'
+#' Captures poppler's PDF parsing diagnostics (see [classify_poppler_log()]) instead
+#' of letting them print raw to the console, and returns a compact, structured
+#' status instead of throwing - so a caller running this inside a parallel worker
+#' (where a plain `warning()` never reaches the coordinating process) still gets
+#' an accurate, actionable signal back through the ordinary return value.
+#'
+#' @importFrom pdftools pdf_info pdf_convert
 #' @param cert_id The certificate identifier. This ID is used to locate the PDF and save the resulting images.
+#' @return A list with `success` (logical), `pages` (page count, `NA` on failure),
+#'   `error` (the caught error message, or `NULL`), `fatal` (unique fatal poppler
+#'   messages, `character(0)` if none) and `cosmetic_count` (number of suppressed
+#'   cosmetic poppler messages).
 convert_cert_pdf_to_png <- function(cert_id){
   # Checking if the certs dir exist
-  cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id) 
-
-  # Get the number of pages in the PDF
+  cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   cert_pdf_path <- file.path(cert_dir, "cert.pdf")
-  num_pages <- pdftools::pdf_info(cert_pdf_path)$pages
 
-  # Create image filenames
-  image_filenames <- sapply(1:num_pages, function(page) file.path(cert_dir, paste0("cert_", page, ".png")))
-  
-  # Read and convert PDF to PNG images
-  pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = CONFIG$CERT_DPI)
+  poppler_log <- character(0)
+  log_con <- textConnection("poppler_log", open = "w", local = TRUE)
+  sink(log_con, type = "message")
+  outcome <- tryCatch({
+    # Get the number of pages in the PDF
+    num_pages <- pdftools::pdf_info(cert_pdf_path)$pages
+
+    # Create image filenames
+    image_filenames <- sapply(1:num_pages, function(page) file.path(cert_dir, paste0("cert_", page, ".png")))
+
+    # Read and convert PDF to PNG images. verbose = FALSE suppresses the
+    # per-page "Converting page X to Y... done!" progress text; callers that
+    # want a progress indicator report the page count themselves instead.
+    pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames,
+                          dpi = CONFIG$CERT_DPI, verbose = FALSE)
+
+    list(success = TRUE, pages = num_pages, error = NULL)
+  }, error = function(e) {
+    list(success = FALSE, pages = NA_integer_, error = conditionMessage(e))
+  })
+  sink(type = "message")
+  close(log_con)
+
+  classified <- classify_poppler_log(poppler_log)
+
+  list(
+    success = outcome$success,
+    pages = outcome$pages,
+    error = outcome$error,
+    fatal = classified$fatal,
+    cosmetic_count = classified$cosmetic_count
+  )
 }

@@ -138,7 +138,10 @@ importFrom(osfr,
   osf_retrieve_node
 )
 importFrom(parsedate,parse_date)
-importFrom(pdftools,pdf_info)
+importFrom(pdftools,
+  pdf_convert,
+  pdf_info
+)
 importFrom(readxl,read_excel)
 importFrom(rmarkdown,render)
 importFrom(rorcid,

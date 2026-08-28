@@ -305,12 +305,14 @@ register_render_cert <- function(cert_id,
       )
 
       if (download_cert_status == 1) {
-        tryCatch(
-          convert_cert_pdf_to_png(cert_id),
-          error = function(e) {
-            cli::cli_alert_warning("{cert_id} | Error converting PDF: {e$message}")
-          }
-        )
+        conversion <- convert_cert_pdf_to_png(cert_id)
+        if (!conversion$success) {
+          cli::cli_alert_danger("{cert_id} | PDF could not be converted: {conversion$error} - inspect {.path {pdf_path}}")
+        } else if (length(conversion$fatal) > 0) {
+          cli::cli_alert_danger("{cert_id} | PDF could not be fully parsed ({paste(conversion$fatal, collapse = '; ')}) - inspect {.path {pdf_path}}")
+        } else if (conversion$cosmetic_count > 0) {
+          cli::cli_alert_info("{cert_id} | Suppressed {conversion$cosmetic_count} cosmetic poppler warning{?s}")
+        }
       }
     } else {
       download_cert_status <- 1

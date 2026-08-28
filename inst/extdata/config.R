@@ -248,7 +248,6 @@ CONFIG$CERT_DOWNLOAD_AND_CONVERT <- TRUE
 
 # DIRECTORIES
 CONFIG$CERTS_DIR <- list(
-  cert_page_template = system.file("extdata", "templates/cert/template_cert_page.html", package = "codecheck"),
   cert = "docs/certs"
 )
 

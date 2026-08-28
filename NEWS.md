@@ -5,6 +5,13 @@
 * Certificates published on ResearchEquals are now audited against the CODECHECK curation policy, including membership in the CODECHECK collection (<https://researchequals.com/collections/720ac28c-07a1-40c3-a098-c77443e5de96>) for every certificate and in the Reproducible AGILE collection (<https://researchequals.com/collections/aad8e6af-bd94-47f3-b215-c68d31687c74>) for certificates of the AGILEGIS venue, each reported as its own finding. New `researchequals_policy_check()`, `check_researchequals_record()` for a single certificate, and `check_register_researchequals_policy()`/`report_researchequals_policy_findings()` for a whole register.
 * `register_render()` and `register_check()` gained `check_researchequals_policy` (default `TRUE`), the ResearchEquals counterpart of `check_zenodo_policy`.
 
+## Bug Fixes
+
+* Codechecker pages' Schema.org JSON-LD now actually includes each certificate's paper title and URL again. `render_html()` was handed the already column-filtered register table, which no longer carries `Repository`, so every lookup silently failed with `Unknown or uninitialised column: 'Repository'`.
+* `render_cert_htmls()` no longer emits a spurious `file("") only supports open = "w+"...` warning on every render: it read a `cert_page_template` HTML template that no longer ships with the package (the value was never used afterward), and `system.file()` silently returns `""` for a resource that doesn't exist. Removed the dead read and the stale `CONFIG$CERTS_DIR[["cert_page_template"]]` entry.
+* Poppler's PDF parsing diagnostics ("PDF error: ...") are now captured and classified instead of printing raw to the console - `convert_cert_pdf_to_png()` returns a structured status (`success`, `fatal`, `cosmetic_count`) so a genuinely unparsable certificate PDF (e.g. a non-PDF file served with a misleading content type) is reported once, clearly, with the certificate ID and file path, while cosmetic poppler warnings (e.g. malformed embedded fonts) are condensed to a single count. This also fixes such issues going unreported under parallel rendering, where a plain `warning()` raised inside a forked worker never reached the coordinating process.
+* Removed a duplicate definition of `convert_cert_pdf_to_png()` that existed identically in both `utils_download_certs.R` and `utils_render_cert_htmls.R`; whichever file R happened to load last silently won.
+
 # codecheck 0.26.0
 
 ## New Features

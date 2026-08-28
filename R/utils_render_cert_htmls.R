@@ -29,9 +29,6 @@ generate_certs_redirect <- function() {
 #' @param parallel Logical; if TRUE, renders certificates in parallel using multiple cores. Defaults to FALSE.
 #' @param ncores Integer; number of CPU cores to use for parallel rendering. If NULL, automatically detects available cores minus 1. Defaults to NULL.
 render_cert_htmls <- function(register_table, force_download = FALSE, parallel = FALSE, ncores = NULL){
-  # Read template
-  html_template <- readLines(CONFIG$CERTS_DIR[["cert_page_template"]])
-
   # Auto-detect cores if not specified
   if (is.null(ncores)) {
     ncores <- max(1, parallel::detectCores() - 1)
@@ -70,6 +67,8 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
       abstract <- get_abstract(repo_link)
 
       download_cert_status <- NA
+      pdf_issue <- NULL
+      pdf_cosmetic_count <- 0
 
       # PDF download and conversion
       if (CONFIG$CERT_DOWNLOAD_AND_CONVERT) {
@@ -86,14 +85,21 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
             }
           )
 
-          # Convert PDF to PNG (CPU/I/O-bound)
+          # Convert PDF to PNG (CPU/I/O-bound). Poppler's own parsing diagnostics
+          # are captured and classified by convert_cert_pdf_to_png() rather than
+          # printed raw to the console; a genuinely broken PDF is reported below
+          # via the returned pdf_issue, which (unlike warning()) survives being
+          # returned from a parallel worker back to the coordinating process.
           if (download_cert_status == 1) {
-            tryCatch(
-              convert_cert_pdf_to_png(cert_id),
-              error = function(e) {
-                warning(cert_id, " | Error converting PDF: ", e$message)
-              }
-            )
+            conversion <- convert_cert_pdf_to_png(cert_id)
+            pdf_cosmetic_count <- conversion$cosmetic_count
+            if (!conversion$success || length(conversion$fatal) > 0) {
+              pdf_issue <- list(
+                cert_id = cert_id,
+                pdf_path = pdf_path,
+                detail = if (!conversion$success) conversion$error else paste(conversion$fatal, collapse = "; ")
+              )
+            }
           }
 
           # Rate limiting - only in sequential mode
@@ -124,7 +130,9 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
         index = i,
         elapsed = elapsed_cert,
         success = TRUE,
-        error = NULL
+        error = NULL,
+        pdf_issue = pdf_issue,
+        pdf_cosmetic_count = pdf_cosmetic_count
       )
 
     }, error = function(e) {
@@ -134,7 +142,9 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
         index = i,
         elapsed = elapsed_cert,
         success = FALSE,
-        error = conditionMessage(e)
+        error = conditionMessage(e),
+        pdf_issue = NULL,
+        pdf_cosmetic_count = 0
       )
     })
   }
@@ -227,6 +237,30 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
     }
   }
 
+  # Report certificate PDFs poppler could not really parse (see
+  # convert_cert_pdf_to_png()) - these still produce a certificate page, but
+  # with missing or unreliable page images, so they need a human to look at
+  # the source PDF. Built from each certificate's returned result rather than
+  # warning(), so it surfaces the same way under parallel and sequential
+  # rendering.
+  pdf_issues <- Filter(Negate(is.null), lapply(results, function(r) r$pdf_issue))
+  if (length(pdf_issues) > 0) {
+    cli::cli_alert_danger("{length(pdf_issues)} certificate PDF{?s} could not be fully parsed - inspect the source file:")
+    for (issue in pdf_issues) {
+      cli::cli_alert_danger("  {issue$cert_id} | {.path {issue$pdf_path}}: {issue$detail}")
+    }
+  }
+
+  # Cosmetic poppler warnings (e.g. malformed embedded fonts) don't affect the
+  # rendered pages, so they are condensed to a single count instead of the raw
+  # per-line poppler output.
+  total_cosmetic <- sum(sapply(results, function(r) {
+    if (is.null(r$pdf_cosmetic_count)) 0 else r$pdf_cosmetic_count
+  }))
+  if (total_cosmetic > 0) {
+    cli::cli_alert_info("Suppressed {total_cosmetic} cosmetic poppler warning{?s} (e.g. malformed embedded fonts) across all certificate PDFs")
+  }
+
   if (parallel && ncores > 1) {
     theoretical_speedup <- nrow(register_table) * avg_time / elapsed_total
     efficiency <- theoretical_speedup / ncores
@@ -260,26 +294,6 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
   }
 
   invisible(list(n = nrow(register_table), failures = failures))
-}
-
-#'
-#' Converts each page of a certificate PDF to JPEG format images, saving them in the specified certificate directory. 
-#'
-#' @importFrom pdftools pdf_info
-#' @param cert_id The certificate identifier. This ID is used to locate the PDF and save the resulting images.
-convert_cert_pdf_to_png <- function(cert_id){
-  # Checking if the certs dir exist
-  cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id) 
-
-  # Get the number of pages in the PDF
-  cert_pdf_path <- file.path(cert_dir, "cert.pdf")
-  num_pages <- pdftools::pdf_info(cert_pdf_path)$pages
-
-  # Create image filenames
-  image_filenames <- sapply(1:num_pages, function(page) file.path(cert_dir, paste0("cert_", page, ".png")))
-  
-  # Read and convert PDF to PNG images
-  pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames, dpi = CONFIG$CERT_DPI)
 }
 
 #' Renders an HTML certificate file from a Markdown template for a specific certificate.
