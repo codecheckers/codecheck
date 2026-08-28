@@ -43,7 +43,7 @@ empty_row <- data.frame(name = "X", longname = "X", label = "journal", stringsAs
 # even for a venue with no other metadata at all.
 empty_html <- codecheck:::generate_venue_metadata_html(empty_row)
 expect_true(grepl("venue-metadata", empty_html, fixed = TRUE))
-expect_true(grepl('API &amp; statistics:</span> <a href="statistics.json">statistics.json</a>', empty_html, fixed = TRUE))
+expect_true(grepl('API &amp; statistics:</span> <a href="index.json">index.json</a>', empty_html, fixed = TRUE))
 expect_true(grepl('<i class="fa fa-cog"></i>', empty_html, fixed = TRUE))
 expect_false(grepl("CODECHECK contact", empty_html, fixed = TRUE))
 
@@ -167,10 +167,12 @@ expect_false(grepl('href="https://codecheck.org.uk/register/venues/conferences/a
 expect_false(grepl('href="https://codecheck.org.uk/register/venues/conferences/agilegis/register.md"', agile_html, fixed = TRUE))
 expect_true(grepl("raw.githubusercontent.com", agile_html, fixed = TRUE))
 
-# statistics.json carries the same structured metadata as the landing page
+# index.json (not stats.json/statistics.json - it carries more than
+# statistics) carries the same structured metadata as the landing page
 # panel (register#183) - the venue's own JSON representation, not
 # register.json (which is the list of certificates).
-agile_stats <- jsonlite::read_json(file.path("docs", "venues", "conferences", "agilegis", "statistics.json"))
+expect_false(file.exists(file.path("docs", "venues", "conferences", "agilegis", "statistics.json")))
+agile_stats <- jsonlite::read_json(file.path("docs", "venues", "conferences", "agilegis", "index.json"))
 expect_equal(agile_stats$venue$name, "AGILEGIS")
 expect_equal(agile_stats$venue$venue_type, "conference")
 expect_equal(agile_stats$venue$website_url, "https://agile-gi.eu")
@@ -185,7 +187,7 @@ expect_equal(agile_stats$venue$identifiers[[2]]$name, "ISSN")
 expect_equal(agile_stats$venue$identifiers[[2]]$url, "https://portal.issn.org/resource/ISSN/1234-5678")
 
 # GigaByte has no venues.csv metadata, but the venue type is always present
-gigabyte_stats <- jsonlite::read_json(file.path("docs", "venues", "journals", "gigabyte", "statistics.json"))
+gigabyte_stats <- jsonlite::read_json(file.path("docs", "venues", "journals", "gigabyte", "index.json"))
 expect_equal(gigabyte_stats$venue$venue_type, "journal")
 expect_true(is.null(gigabyte_stats$venue$website_url))
 expect_equal(length(gigabyte_stats$venue$identifiers), 0)
@@ -193,6 +195,30 @@ expect_equal(length(gigabyte_stats$venue$identifiers), 0)
 # The main register's statistics.json and non-venue pages carry no "venue" key
 main_stats <- jsonlite::read_json(file.path("docs", "statistics.json"))
 expect_true(is.null(main_stats$venue))
+
+# register_update_stats() (the fast stats-only path) also writes a venue's
+# index.json with the same structured venue metadata, recovered from the
+# docs/venues/<type_plural>/<slug> path since the venue-specific
+# register.json view has no Venue/Type columns to read it from directly.
+file.remove(file.path("docs", "venues", "conferences", "agilegis", "index.json"))
+expect_silent({ capture.output(
+  {
+    register_update_stats(venues_file = venues_path)
+  },
+  type = "message"
+  )
+  })
+expect_true(file.exists(file.path("docs", "venues", "conferences", "agilegis", "index.json")))
+updated_stats <- jsonlite::read_json(file.path("docs", "venues", "conferences", "agilegis", "index.json"))
+expect_equal(updated_stats$venue$name, "AGILEGIS")
+expect_equal(updated_stats$venue$venue_type, "conference")
+expect_equal(updated_stats$venue$identifiers[[1]]$name, "ROR")
+# codechecker sub-registers are unaffected: still stats.json, no "venue" key
+cc_stats_path <- Sys.glob(file.path("docs", "codecheckers", "*", "stats.json"))
+if (length(cc_stats_path) > 0) {
+  cc_stats <- jsonlite::read_json(cc_stats_path[1])
+  expect_true(is.null(cc_stats$venue))
+}
 
 # clean up
 expect_equal(unlink("docs", recursive = TRUE), 0)

@@ -549,8 +549,9 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   # Add the venue's structured metadata (the same information shown on its
   # landing page's metadata panel, via the shared get_venue_metadata_fields())
   # for individual venue pages (addresses register#183).
-  if (filter == "venues" && isTRUE(table_details[["is_reg_table"]]) &&
-      !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+  is_venue_page <- filter == "venues" && isTRUE(table_details[["is_reg_table"]]) &&
+    !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
+  if (is_venue_page) {
     venue_row <- lookup_venue_row(table_details[["name"]])
     fields <- get_venue_metadata_fields(venue_row, table_details[["subcat"]])
     nullable <- function(x) if (is.null(x)) NA_character_ else x
@@ -583,7 +584,17 @@ render_register_json <- function(register_table, table_details, filter, full_reg
     annual <- compute_annual_stats(full_register_table)
     stats_data <- c(stats_data, annual)
   }
-  stats_filename <- if (is_main_register) "statistics.json" else "stats.json"
+  # A venue page's file carries structured venue metadata (name, type,
+  # contact, description, identifiers, ...) alongside cert_count/source, not
+  # just statistics - index.json (matching index.html) rather than
+  # stats.json/statistics.json (addresses register#84 followup).
+  stats_filename <- if (is_venue_page) {
+    "index.json"
+  } else if (is_main_register) {
+    "statistics.json"
+  } else {
+    "stats.json"
+  }
 
   jsonlite::write_json(
     stats_data,

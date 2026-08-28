@@ -350,9 +350,10 @@ register_render_cert <- function(cert_id,
 #' Fast alternative to a full re-render when only the stats computation has
 #' changed. Reads the already-generated register.json files under `docs/` and
 #' rewrites `docs/statistics.json` (the main register's file, read by
-#' [render_statistics_page()]) and every sub-register's `stats.json`, with
-#' up-to-date statistics (including annual and cumulative breakdowns for the
-#' main file).
+#' [render_statistics_page()]) and every sub-register's `stats.json`
+#' (`index.json` for a venue, which also gets its structured venue metadata),
+#' with up-to-date statistics (including annual and cumulative breakdowns for
+#' the main file).
 #'
 #' @param docs_dir Path to the docs output directory (default: "docs")
 #' @param config Path to the config.R file
@@ -417,12 +418,60 @@ register_update_stats <- function(docs_dir = "docs",
       cert_count = nrow(sub_data)
     )
 
+    # A venue's file carries structured venue metadata alongside
+    # cert_count/source, not just statistics - index.json rather than
+    # stats.json (matching the full render path, addresses register#84
+    # followup). The venue-specific register.json view drops the
+    # (redundant, on that page) Venue/Type columns, so the venue's name and
+    # type are recovered from the path instead: docs/venues/<type_plural>/<slug>.
+    path_parts <- strsplit(rel_path, "/", fixed = TRUE)[[1]]
+    is_venue_dir <- length(path_parts) == 3 && path_parts[1] == "venues"
+    stats_filename <- "stats.json"
+    if (is_venue_dir) {
+      type_plural <- path_parts[2]
+      slug <- path_parts[3]
+      venue_type <- names(CONFIG$VENUE_SUBCAT_PLURAL)[
+        vapply(CONFIG$VENUE_SUBCAT_PLURAL, identical, logical(1), type_plural)
+      ]
+      venue_type <- if (length(venue_type) > 0) venue_type[1] else NA_character_
+      # Recover the venues.csv-cased name from the lowercased slug
+      # (register#192); fall back to the slug itself for a venue not (yet)
+      # listed in venues.csv.
+      venue_name <- slug
+      if (exists("VENUE_DATA", envir = CONFIG) && !is.null(CONFIG$VENUE_DATA)) {
+        candidate_slugs <- gsub(" ", "_", tolower(CONFIG$VENUE_DATA$name))
+        match_idx <- which(candidate_slugs == tolower(slug))
+        if (length(match_idx) > 0) venue_name <- CONFIG$VENUE_DATA$name[match_idx[1]]
+      }
+
+      venue_row <- lookup_venue_row(venue_name)
+      fields <- get_venue_metadata_fields(venue_row, venue_type)
+      nullable <- function(x) if (is.null(x)) NA_character_ else x
+      sub_stats$venue <- list(
+        name = venue_name,
+        longname = if ("longname" %in% names(venue_row)) venue_row[["longname"]][1] else NA_character_,
+        venue_type = fields$venue_type,
+        logo_url = fields$logo_url,
+        website_url = fields$website_url,
+        contact_name = fields$contact_name,
+        contact_email = fields$contact_email,
+        description = fields$description,
+        identifiers = lapply(fields$identifiers, function(i) list(
+          name = i$name,
+          icon = nullable(i$icon),
+          value = i$value,
+          url = nullable(i$link)
+        ))
+      )
+      stats_filename <- "index.json"
+    }
+
     jsonlite::write_json(sub_stats, auto_unbox = TRUE,
-                         path = file.path(sub_dir, "stats.json"), pretty = TRUE)
+                         path = file.path(sub_dir, stats_filename), pretty = TRUE, na = "null")
     updated <- updated + 1L
   }
 
-  cli::cli_alert_success("Updated {updated} sub-register stats.json files")
+  cli::cli_alert_success("Updated {updated} sub-register stats.json/index.json files")
 
   tryCatch(
     render_statistics_page(docs_dir),

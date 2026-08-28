@@ -13,13 +13,13 @@ row of venues.csv).}
 \item{venue_type}{See [get_venue_metadata_fields()]. `NULL`/`NA` omits the row.}
 }
 \value{
-An HTML string (never `""` - the statistics.json link always renders).
+An HTML string (never `""` - the index.json link always renders).
 }
 \description{
 Renders venue type, contact, website, a link to the venue's own
-statistics.json, description and identifiers for a venue via the
+index.json, description and identifiers for a venue via the
 `venue_metadata.html` whisker template. Fields sourced from venues.csv are
-omitted when missing rather than shown empty; the statistics.json link is
+omitted when missing rather than shown empty; the index.json link is
 always shown, since that file is always generated alongside this page.
 }
 \keyword{internal}

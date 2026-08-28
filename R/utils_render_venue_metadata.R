@@ -114,16 +114,16 @@ get_venue_metadata_fields <- function(venue_row, venue_type = NULL) {
 #' Generate the venue metadata HTML block for an individual venue landing page
 #'
 #' Renders venue type, contact, website, a link to the venue's own
-#' statistics.json, description and identifiers for a venue via the
+#' index.json, description and identifiers for a venue via the
 #' `venue_metadata.html` whisker template. Fields sourced from venues.csv are
-#' omitted when missing rather than shown empty; the statistics.json link is
+#' omitted when missing rather than shown empty; the index.json link is
 #' always shown, since that file is always generated alongside this page.
 #'
 #' @param venue_row A single-row data frame from CONFIG$VENUE_DATA (i.e. one
 #'   row of venues.csv).
 #' @param venue_type See [get_venue_metadata_fields()]. `NULL`/`NA` omits the row.
 #'
-#' @return An HTML string (never `""` - the statistics.json link always renders).
+#' @return An HTML string (never `""` - the index.json link always renders).
 #' @keywords internal
 #' @importFrom whisker whisker.render
 generate_venue_metadata_html <- function(venue_row, venue_type = NULL) {
@@ -153,10 +153,11 @@ generate_venue_metadata_html <- function(venue_row, venue_type = NULL) {
     # The venue detail page always lives at docs/venues/<type_plural>/<slug>/,
     # so the type's listing page is always exactly one level up.
     venue_type_url = "../index.html",
-    # The venue's own stats.json/statistics.json is always generated
-    # alongside this page (register_render() always writes it for a venue
-    # page), so the link to it is unconditional - unlike the other rows.
-    api_stats_url = "statistics.json",
+    # The venue's own index.json (structured metadata + cert_count/source,
+    # not just statistics - hence "index" rather than "stats", matching
+    # index.html) is always generated alongside this page, so the link to
+    # it is unconditional - unlike the other rows.
+    api_stats_url = "index.json",
     # Always TRUE: the API & statistics link above alone is always enough
     # to render the properties list, so the panel is never truly empty.
     has_properties = TRUE,
