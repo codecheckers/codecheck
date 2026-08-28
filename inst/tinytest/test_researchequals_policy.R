@@ -13,8 +13,26 @@ fixture <- function(name) {
 }
 
 version <- fixture("researchequals_version_2020-007.json")
+blocknote_version <- fixture("researchequals_version_2026-014.json")
 codecheck_collection <- fixture("researchequals_collection.json")
 agile_collection <- fixture("researchequals_collection_agile.json")
+
+fixture_path <- function(name) {
+  path <- system.file("tinytest", "fixtures", name, package = "codecheck")
+  if (path == "") path <- file.path("fixtures", name)
+  path
+}
+
+# an httr response carrying a fixture as its body, enough for httr::content()
+json_response <- function(url, name, status = 200L) {
+  body <- paste(readLines(fixture_path(name), warn = FALSE), collapse = "\n")
+  structure(list(url = url,
+                 status_code = as.integer(status),
+                 headers = list(`content-type` = "application/json"),
+                 all_headers = list(),
+                 content = charToRaw(body)),
+            class = "response")
+}
 
 # the collections a certificate must be part of, as get_researchequals_collections()
 # returns them
@@ -201,6 +219,99 @@ expect_equal(status_of(researchequals_policy_check(older_title), "title"), "warn
 superseded <- version
 superseded$version_history <- list(list(version = 1), list(version = 2))
 expect_equal(status_of(researchequals_policy_check(superseded), "latest version"), "fail")
+
+# ------------------------------------------------------------ main file resolution
+
+# a plainly deposited PDF is used as it is, without any further request
+plain <- codecheck:::researchequals_main_file(version)
+expect_equal(plain$mediatype, "application/pdf")
+expect_equal(plain$url,
+             "https://researchequals.com/api/files/fbdeef1a-eec8-46bb-9131-939a5e8d4f52")
+expect_null(plain$name)
+
+# a version without a deposited file has no main file at all
+expect_null(codecheck:::researchequals_main_file(list(content_s3 = NULL)))
+
+# a document written in the ResearchEquals editor may embed the certificate PDF,
+# which is what must be downloaded - not the document holding it
+with_mocked_codecheck(
+  list(codecheck_GET_retry = function(url, ...)
+    json_response(url, "researchequals_blocknote_2026-014.json")),
+  {
+    embedded <- codecheck:::researchequals_main_file(blocknote_version, "2026-014")
+  })
+expect_equal(embedded$mediatype, "application/pdf")
+expect_equal(embedded$url,
+             "https://researchequals.com/api/files/a2e7a5bb-64bc-4930-bf2c-562d66f90074")
+expect_equal(embedded$name, "agile-2026_reproducibility-review_026.pdf")
+
+# blocks nest, and a certificate named after the policy wins over another PDF
+nested <- list(
+  list(type = "paragraph", props = list(), children = list(
+    list(type = "file", props = list(url = "https://example.com/figure.pdf",
+                                     name = "figure.pdf"), children = list()),
+    list(type = "pdf", props = list(url = "https://example.com/codecheck.pdf",
+                                    name = "codecheck.pdf"), children = list()))))
+expect_equal(length(codecheck:::blocknote_pdf_blocks(nested)), 2L)
+with_mocked_codecheck(
+  list(codecheck_GET_retry = function(url, ...) {
+    structure(list(url = url, status_code = 200L,
+                   headers = list(`content-type` = "application/json"),
+                   all_headers = list(),
+                   content = charToRaw(jsonlite::toJSON(nested, auto_unbox = TRUE))),
+              class = "response")
+  }),
+  {
+    preferred <- codecheck:::researchequals_main_file(blocknote_version)
+  })
+expect_equal(preferred$name, "codecheck.pdf")
+
+# a text document without any PDF stays what it is, and so does one that cannot
+# be fetched: the caller then sees the unresolved main file, as before
+with_mocked_codecheck(
+  list(codecheck_GET_retry = function(url, ...) {
+    structure(list(url = url, status_code = 200L,
+                   headers = list(`content-type` = "application/json"),
+                   all_headers = list(), content = charToRaw("[]")),
+              class = "response")
+  }),
+  {
+    text_only <- codecheck:::researchequals_main_file(blocknote_version)
+  })
+expect_equal(text_only$mediatype, "application/x-blocknote")
+expect_equal(text_only$url,
+             "https://researchequals.com/api/files/949c04ca-90f4-499e-882f-dc17ca9c19d2")
+
+with_mocked_codecheck(
+  list(codecheck_GET_retry = function(url, ...) NULL),
+  {
+    expect_warning(unreachable <- codecheck:::researchequals_main_file(blocknote_version))
+  })
+expect_equal(unreachable$mediatype, "application/x-blocknote")
+
+# ------------------------------------------- certificate PDF: resolved main file
+
+# with the resolved main file the embedded PDF is what the policy judges
+resolved <- blocknote_version
+resolved$main_file <- list(url = "https://researchequals.com/api/files/a2e7a5bb",
+                           mediatype = "application/pdf",
+                           name = "agile-2026_reproducibility-review_026.pdf")
+result_pdf <- researchequals_policy_check(resolved)
+expect_equal(status_of(result_pdf, "certificate PDF"), "pass")
+expect_true(grepl("agile-2026_reproducibility-review_026.pdf",
+                  detail_of(result_pdf, "certificate PDF"), fixed = TRUE))
+
+# a text-only certificate is still only a warning
+text_certificate <- blocknote_version
+text_certificate$main_file <- list(url = "https://researchequals.com/api/files/949c04ca",
+                                   mediatype = "application/x-blocknote", name = NULL)
+expect_equal(status_of(researchequals_policy_check(text_certificate), "certificate PDF"),
+             "warn")
+
+# without a resolved main file the deposited media type is used, as before
+expect_equal(status_of(researchequals_policy_check(blocknote_version), "certificate PDF"),
+             "warn")
+expect_equal(status_of(researchequals_policy_check(version), "certificate PDF"), "pass")
 
 # --------------------------------------------------------- register-wide check
 

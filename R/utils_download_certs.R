@@ -279,7 +279,9 @@ get_researchequals_cert_link <- function(report_link, cert_id) {
   # gives the key of the deposited file:
   #   GET /api/versions/<version id>  ->  content_s3, content_mediatype
   #   GET /api/files/<content_s3>     ->  the file itself
-  # The older /api/modules/main/<DOI suffix> endpoint no longer exists.
+  # The older /api/modules/main/<DOI suffix> endpoint no longer exists. When the
+  # main file is a document written in the ResearchEquals editor it can embed the
+  # certificate PDF instead of being it, which researchequals_main_file() resolves.
   response <- codecheck_GET_retry(report_link)
   if (is.null(response)) {
     warning(cert_id, " | Could not resolve report link ", report_link)
@@ -298,17 +300,17 @@ get_researchequals_cert_link <- function(report_link, cert_id) {
   }
 
   version <- httr::content(version_response, as = "parsed", type = "application/json")
-  file_key <- version$content_s3
-  if (is.null(file_key)) {
+  main_file <- researchequals_main_file(version, cert_id)
+  if (is.null(main_file)) {
     warning(cert_id, " | ResearchEquals version ", version_id, " has no deposited file")
     return(NULL)
   }
-  if (!identical(version$content_mediatype, "application/pdf")) {
+  if (!identical(main_file$mediatype, "application/pdf")) {
     warning(cert_id, " | ResearchEquals version ", version_id, " is not a PDF but ",
-            toString(version$content_mediatype))
+            toString(main_file$mediatype))
   }
 
-  return(paste0(api, "files/", file_key))
+  return(main_file$url)
 }
 
 

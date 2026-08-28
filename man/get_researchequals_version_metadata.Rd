@@ -10,10 +10,15 @@ get_researchequals_version_metadata(version_id)
 \item{version_id}{the ResearchEquals version ID}
 }
 \value{
-the parsed API response as a list
+the parsed API response as a list, plus the element `main_file`
 }
 \description{
 Retrieve the metadata of a ResearchEquals module version
+}
+\details{
+The main file is resolved with [researchequals_main_file()] and added as the
+element `main_file`, so that [researchequals_policy_check()] can judge the
+deposited certificate without doing any network access of its own.
 }
 \author{
 Daniel Nuest

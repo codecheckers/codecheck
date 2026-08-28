@@ -1,0 +1,54 @@
+{
+  "id": "116c857f-62fe-4ee3-94bd-a31dcb8aafd0",
+  "output_id": "62c20474-0616-4f51-9db2-8c9f702c668b",
+  "version": 1,
+  "version_label": "1.0.0",
+  "changelog": "",
+  "created_at": "2026-05-12T09:58:13",
+  "updated_at": "2026-06-29T06:29:43",
+  "published_at": "2026-06-11T11:04:46",
+  "title": "Reproducibility review of: Food Insecurity Projections for Anticipatory Action: A Comparative Spatiotemporal Analysis of FEWS NET and the IPC in Somalia",
+  "description": "The article presents a comparative spatio-temporal analysis of food insecurity projections in Somalia. A workflow is provided as a collection of scripts and the environment is a Docker compose configuration. This workflow as described could be executed and all figures and maps from the article were recreated with the code and data provided. **The reproduction is fully successful.**\n",
+  "content_s3": "949c04ca-90f4-499e-882f-dc17ca9c19d2",
+  "refs": [],
+  "supporting_files": [
+    {
+      "name": "agile-2026_reproducibility-review_026.Rmd",
+      "s3": "a6ef7b0e-8b8d-477f-817a-f84fb2498341",
+      "type": "text/x-rmarkdown"
+    }
+  ],
+  "published": true,
+  "type_id": "Q116740071",
+  "license_id": "Q20007257",
+  "language": "en",
+  "contributors": [
+    {
+      "role": "author",
+      "position": 1,
+      "given_name": "Daniel",
+      "surname": "Nüst",
+      "username": "nuest",
+      "orcid": "0000-0002-0024-5046"
+    }
+  ],
+  "pids": [
+    "doi:10.53962/pdw8-n5v0"
+  ],
+  "output_pids": [
+    "doi:10.53962/pej6-gx0c"
+  ],
+  "version_history": [
+    {
+      "id": "116c857f-62fe-4ee3-94bd-a31dcb8aafd0",
+      "version": 1,
+      "version_label": "1.0.0",
+      "changelog": "",
+      "published_at": "2026-06-11T11:04:46",
+      "pids": [
+        "doi:10.53962/pdw8-n5v0"
+      ]
+    }
+  ],
+  "content_mediatype": "application/x-blocknote"
+}

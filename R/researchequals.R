@@ -138,11 +138,114 @@ get_researchequals_version_id <- function(report_link) {
 }
 
 
+#' The file a ResearchEquals module version actually offers for download
+#'
+#' A module's main file is usually the deposited file itself, `content_s3` with
+#' the media type `content_mediatype`. It can also be a document written in
+#' ResearchEquals' own editor, `application/x-blocknote`, which is a JSON array
+#' of blocks that may *contain* the certificate PDF rather than be it, as for
+#' certificate 2026-014:
+#'
+#' ```
+#' [{"type":"pdf","props":{"url":".../api/files/<key>","name":"...pdf"},"children":[]}]
+#' ```
+#'
+#' Returning the BlockNote document as the certificate download means saving
+#' that JSON as `cert.pdf`, so this resolves one level further and returns the
+#' embedded PDF. Blocks nest, so the document is walked recursively.
+#'
+#' Needs the network only for a BlockNote main file; when that fetch fails the
+#' unresolved main file is returned, which is what the caller would have used
+#' anyway.
+#'
+#' @param version version metadata as returned by the ResearchEquals API
+#' @param cert_id ID of the certificate, used for warnings, optional
+#' @return a list with `url`, `mediatype` and `name` (NULL unless the file came
+#'   from a BlockNote block), or NULL when the version has no main file
+#' @keywords internal
+researchequals_main_file <- function(version, cert_id = NULL) {
+  file_key <- version$content_s3
+  if (is.null(file_key) || !nzchar(file_key)) return(NULL)
+
+  main_file <- list(url = paste0(RESEARCHEQUALS_API, "files/", file_key),
+                    mediatype = version$content_mediatype,
+                    name = NULL)
+
+  if (!identical(version$content_mediatype, "application/x-blocknote")) {
+    return(main_file)
+  }
+
+  response <- codecheck_GET_retry(main_file$url)
+  if (is.null(response) || httr::status_code(response) != 200) {
+    warning(cert_id, " | Could not read the ResearchEquals text document of version ",
+            version$id)
+    return(main_file)
+  }
+
+  document <- tryCatch(
+    httr::content(response, as = "parsed", type = "application/json"),
+    error = function(e) NULL)
+  if (is.null(document)) {
+    warning(cert_id, " | Could not parse the ResearchEquals text document of version ",
+            version$id)
+    return(main_file)
+  }
+
+  pdfs <- blocknote_pdf_blocks(document)
+  if (length(pdfs) == 0) return(main_file)
+
+  # a certificate deposited under its policy name wins over any other PDF the
+  # document embeds, e.g. a figure or the checked paper
+  named <- vapply(pdfs, function(p) if (is.null(p$name)) "" else p$name, character(1))
+  preferred <- which(grepl("codecheck", named, ignore.case = TRUE))
+  chosen <- pdfs[[if (length(preferred) > 0) preferred[1] else 1]]
+
+  list(url = chosen$url, mediatype = "application/pdf", name = chosen$name)
+}
+
+
+#' The PDF blocks of a BlockNote document
+#'
+#' Walks the blocks recursively, `children` included, and returns those that
+#' carry a downloadable PDF.
+#'
+#' @param blocks a parsed BlockNote document, or the `children` of one block
+#' @return a list of lists with `url` and `name`
+#' @keywords internal
+blocknote_pdf_blocks <- function(blocks) {
+  found <- list()
+  if (!is.list(blocks)) return(found)
+
+  for (block in blocks) {
+    if (!is.list(block)) next
+
+    url <- block$props$url
+    name <- block$props$name
+    is_pdf <- identical(block$type, "pdf") ||
+      (identical(block$type, "file") &&
+         (grepl("\\.pdf$", if (is.null(name)) "" else name, ignore.case = TRUE) ||
+            grepl("\\.pdf$", if (is.null(url)) "" else url, ignore.case = TRUE)))
+
+    if (is_pdf && !is.null(url) && nzchar(url)) {
+      found[[length(found) + 1]] <- list(url = url, name = name)
+    }
+
+    found <- c(found, blocknote_pdf_blocks(block$children))
+  }
+
+  found
+}
+
+
 #' Retrieve the metadata of a ResearchEquals module version
+#'
+#' The main file is resolved with [researchequals_main_file()] and added as the
+#' element `main_file`, so that [researchequals_policy_check()] can judge the
+#' deposited certificate without doing any network access of its own.
 #'
 #' @title Retrieve a ResearchEquals version's metadata
 #' @param version_id the ResearchEquals version ID
-#' @return the parsed API response as a list
+#' @return the parsed API response as a list, plus the element `main_file`
 #' @author Daniel Nuest
 #' @importFrom httr content stop_for_status
 #' @export
@@ -152,7 +255,10 @@ get_researchequals_version_metadata <- function(version_id) {
     stop("Could not access the ResearchEquals API for version ", version_id)
   }
   httr::stop_for_status(response)
-  httr::content(response, as = "parsed", type = "application/json")
+  version <- httr::content(response, as = "parsed", type = "application/json")
+
+  version$main_file <- researchequals_main_file(version)
+  version
 }
 
 
@@ -341,12 +447,18 @@ researchequals_policy_check <- function(version, collections = NULL, venue = NUL
       if (isTRUE(version$published)) "published"
       else "the module is not published, so the certificate is not publicly available")
 
-  # The certificate itself. ResearchEquals modules can hold a PDF or text
-  # written in its own editor; the policy asks for the certificate PDF, so
-  # anything else is a warning rather than a failure.
-  mediatype <- version$content_mediatype
+  # The certificate itself. ResearchEquals modules can hold a PDF, or text
+  # written in its own editor - which may in turn embed the certificate PDF, see
+  # researchequals_main_file(); the policy asks for the certificate PDF, so a
+  # text-only certificate is a warning rather than a failure. The resolved main
+  # file is used when the caller supplied it, so that this stays a pure function.
+  main_file <- version$main_file
+  mediatype <- if (!is.null(main_file)) main_file$mediatype else version$content_mediatype
   if (identical(mediatype, "application/pdf")) {
-    add("certificate PDF", "pass", "application/pdf")
+    add("certificate PDF", "pass",
+        if (!is.null(main_file$name))
+          paste0("application/pdf, embedded in the module text as ", main_file$name)
+        else "application/pdf")
   } else if (is.null(mediatype) || !nzchar(mediatype)) {
     add("certificate PDF", "fail", "no main file deposited")
   } else {
