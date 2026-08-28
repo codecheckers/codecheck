@@ -74,19 +74,7 @@ get_build_metadata <- function(register_repo_path = ".", codecheck_repo_path = N
 #' @return String with generator content (without HTML tags)
 #' @export
 generate_meta_generator_content <- function(metadata) {
-  parts <- c(sprintf("codecheck %s", metadata$package_version))
-
-  # Add register commit info
-  if (!is.null(metadata$register_commit_short)) {
-    parts <- c(parts, sprintf("register commit %s", metadata$register_commit_short))
-  }
-
-  # Add codecheck commit info if available
-  if (!is.null(metadata$codecheck_commit_short)) {
-    parts <- c(parts, sprintf("package commit %s", metadata$codecheck_commit_short))
-  }
-
-  return(paste(parts, collapse=", "))
+  sprintf("codecheck %s", metadata$package_version)
 }
 
 #' Generate Footer Build Information HTML
