@@ -126,6 +126,15 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       create_register_files(register_table, filter_by, outputs)
       create_non_register_files(register_table, filter_by)
 
+      # Render the statistics dashboard (addresses register#33, register#48).
+      # Reads the docs/statistics.json just written above, so must run after it.
+      if ("html" %in% outputs) {
+        tryCatch(
+          render_statistics_page("docs"),
+          error = function(e) cli::cli_alert_warning("Could not render statistics page: {conditionMessage(e)}")
+        )
+      }
+
       # Generate redirect pages for codecheckers with ORCID
       if ("codecheckers" %in% filter_by) {
         generate_codechecker_redirects(register_table)
@@ -330,22 +339,28 @@ register_render_cert <- function(cert_id,
   invisible(cert_id)
 }
 
-#' Regenerate all stats.json files from existing register.json files
+#' Regenerate all statistics files from existing register.json files
 #'
 #' Fast alternative to a full re-render when only the stats computation has
 #' changed. Reads the already-generated register.json files under `docs/` and
-#' rewrites every stats.json with up-to-date statistics (including annual and
-#' cumulative breakdowns).
+#' rewrites `docs/statistics.json` (the main register's file, read by
+#' [render_statistics_page()]) and every sub-register's `stats.json`, with
+#' up-to-date statistics (including annual and cumulative breakdowns for the
+#' main file).
 #'
 #' @param docs_dir Path to the docs output directory (default: "docs")
 #' @param config Path to the config.R file
+#' @param venues_file Path to the venues.csv file containing venue names, labels
+#'   and optional metadata (logo_url, website_url, policy_url, publisher)
 #'
 #' @author Daniel Nuest
 #' @export
 register_update_stats <- function(docs_dir = "docs",
-                                  config = system.file("extdata", "config.R", package = "codecheck")) {
+                                  config = system.file("extdata", "config.R", package = "codecheck"),
+                                  venues_file = "venues.csv") {
   cli::cli_h1("CODECHECK Stats Update")
   source(config)
+  load_venues_config(venues_file)
 
   main_json_path <- file.path(docs_dir, "register.json")
   if (!file.exists(main_json_path)) {
@@ -371,8 +386,8 @@ register_update_stats <- function(docs_dir = "docs",
   }
 
   jsonlite::write_json(stats_data, auto_unbox = TRUE,
-                       path = file.path(docs_dir, "stats.json"), pretty = TRUE)
-  cli::cli_alert_success("Updated {.path {file.path(docs_dir, 'stats.json')}} ({nrow(main_data)} certs)")
+                       path = file.path(docs_dir, "statistics.json"), pretty = TRUE)
+  cli::cli_alert_success("Updated {.path {file.path(docs_dir, 'statistics.json')}} ({nrow(main_data)} certs)")
 
   # --- Sub-register stats (venues, codecheckers, etc.) ---
   sub_jsons <- list.files(docs_dir, pattern = "^register\\.json$",
@@ -402,6 +417,11 @@ register_update_stats <- function(docs_dir = "docs",
   }
 
   cli::cli_alert_success("Updated {updated} sub-register stats.json files")
+
+  tryCatch(
+    render_statistics_page(docs_dir),
+    error = function(e) cli::cli_alert_warning("Could not render statistics page: {conditionMessage(e)}")
+  )
 }
 
 #' Function for checking all entries in the register

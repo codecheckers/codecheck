@@ -6,13 +6,17 @@
 \usage{
 register_update_stats(
   docs_dir = "docs",
-  config = system.file("extdata", "config.R", package = "codecheck")
+  config = system.file("extdata", "config.R", package = "codecheck"),
+  venues_file = "venues.csv"
 )
 }
 \arguments{
 \item{docs_dir}{Path to the docs output directory (default: "docs")}
 
 \item{config}{Path to the config.R file}
+
+\item{venues_file}{Path to the venues.csv file containing venue names, labels
+and optional metadata (logo_url, website_url, policy_url, publisher)}
 }
 \description{
 Fast alternative to a full re-render when only the stats computation has

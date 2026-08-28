@@ -279,7 +279,7 @@ detect_report_platform <- function(url) {
 #' Compute annual statistics from the register table
 #'
 #' Computes per-year breakdowns of checks, venues, codecheckers, and report
-#' platforms. Used to enrich stats.json (addresses register#144).
+#' platforms. Used to enrich statistics.json (addresses register#144).
 #'
 #' @param register_table The full preprocessed register table (before column filtering)
 #' @return A list of annual statistics
@@ -305,6 +305,18 @@ compute_annual_stats <- function(register_table) {
       type_venue_df <- data.frame(type = type_vec, venue = venue_vec, stringsAsFactors = FALSE)
       venues_per_type <- tapply(type_venue_df$venue, type_venue_df$type, function(v) length(unique(v)))
       stats$venues_per_type <- as.list(venues_per_type[order(names(venues_per_type))])
+
+      # --- Checks per year, per venue type (non-cumulative) ---
+      yr_vec_type <- years[valid]
+      type_year_df <- data.frame(year = yr_vec_type, type = type_vec, stringsAsFactors = FALSE)
+      checks_per_type_per_year <- list()
+      for (y in all_years) {
+        sub <- type_year_df$type[type_year_df$year == y]
+        if (length(sub) > 0) {
+          checks_per_type_per_year[[y]] <- as.list(table(sub)[order(names(table(sub)))])
+        }
+      }
+      stats$checks_per_type_per_year <- checks_per_type_per_year
     }
   }
 
@@ -400,6 +412,89 @@ compute_annual_stats <- function(register_table) {
     stats$platform_cumulative <- platform_cumulative
   }
 
+  # --- Per-venue detail (metadata + cert count) and publisher grouping
+  # (addresses register#33, register#48) ---
+  if ("Venue" %in% names(register_table) && !is.null(CONFIG$VENUE_DATA)) {
+    venue_vec <- register_table$Venue[valid]
+    cert_counts <- table(venue_vec)
+    venue_data <- CONFIG$VENUE_DATA
+
+    # The venue overview pages under docs/venues/ are grouped by each
+    # certificate's own `Type` column (community/journal/conference/institution),
+    # not by venues.csv's `label` (which can carry other values, e.g. "check-nl",
+    # used only for the GitHub issue label). To link a venue card to its actual
+    # rendered page, resolve the page's type/slug from `Type` the same way, using
+    # each venue's most common Type in case of any drift between the two.
+    page_type_by_venue <- NULL
+    if ("Type" %in% names(register_table)) {
+      type_vec <- register_table$Type[valid]
+      page_type_by_venue <- tapply(type_vec, venue_vec, function(t) names(sort(table(t), decreasing = TRUE))[1])
+    }
+
+    # First/last year a certificate was checked for each venue, e.g. "2021" or
+    # "2021-2024", shown on the venue card.
+    year_range_by_venue <- tapply(years[valid], venue_vec, function(y) {
+      yy <- sort(unique(y))
+      if (length(yy) == 0) NA_character_
+      else if (length(yy) == 1) yy[1]
+      else paste0(yy[1], "-", yy[length(yy)])
+    })
+
+    venues_detail <- lapply(seq_len(nrow(venue_data)), function(i) {
+      row <- venue_data[i, ]
+      count <- if (row$name %in% names(cert_counts)) as.integer(cert_counts[[row$name]]) else 0L
+      page_type <- if (!is.null(page_type_by_venue) && row$name %in% names(page_type_by_venue)) {
+        page_type_by_venue[[row$name]]
+      } else {
+        NA_character_
+      }
+      year_range <- if (row$name %in% names(year_range_by_venue)) year_range_by_venue[[row$name]] else NA_character_
+      list(
+        name = row$name,
+        longname = row$longname,
+        year_range = year_range,
+        label = row$label,
+        cert_count = count,
+        page_type = page_type,
+        page_type_plural = if (!is.na(page_type) && page_type %in% names(CONFIG$VENUE_SUBCAT_PLURAL)) {
+          CONFIG$VENUE_SUBCAT_PLURAL[[page_type]]
+        } else {
+          NA_character_
+        },
+        # generate_table_details() (utils_render_register_general.R) uses the
+        # venue name as-is (not slugified/lowercased) for the actual output
+        # directory under docs/venues/ - URL-encode it (spaces -> %20) for the href.
+        page_slug = utils::URLencode(row$name),
+        # NA_character_ rather than NULL: jsonlite serializes a NULL list element as
+        # `{}`, while NA_character_ becomes proper JSON `null` - easier for any
+        # consumer (including render_statistics_page()) to check for a missing value.
+        logo_url = if (!is.null(row$logo_url) && !is.na(row$logo_url) && nchar(row$logo_url) > 0) row$logo_url else NA_character_,
+        website_url = if (!is.null(row$website_url) && !is.na(row$website_url) && nchar(row$website_url) > 0) row$website_url else NA_character_,
+        policy_url = if (!is.null(row$policy_url) && !is.na(row$policy_url) && nchar(row$policy_url) > 0) row$policy_url else NA_character_,
+        publisher = if (!is.null(row$publisher) && !is.na(row$publisher) && nchar(row$publisher) > 0) row$publisher else NA_character_
+      )
+    })
+    # Only keep venues actually used in this register slice
+    venues_detail <- Filter(function(v) v$cert_count > 0, venues_detail)
+    stats$venues_detail <- venues_detail
+
+    if ("publisher" %in% names(venue_data)) {
+      publisher_key <- vapply(venues_detail, function(v) {
+        if (is.null(v$publisher) || is.na(v$publisher)) "unknown" else v$publisher
+      }, character(1))
+      split_venues <- split(venues_detail, publisher_key)
+      publishers <- Map(function(pub_name, vs) {
+        list(
+          name = pub_name,
+          venue_count = length(vs),
+          cert_count = sum(vapply(vs, function(v) v$cert_count, integer(1)))
+        )
+      }, names(split_venues), split_venues)
+      names(publishers) <- NULL
+      stats$publishers <- publishers[order(vapply(publishers, function(p) p$name, character(1)))]
+    }
+  }
+
   return(stats)
 }
 
@@ -409,7 +504,7 @@ compute_annual_stats <- function(register_table) {
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
 #' @param full_register_table Optional full preprocessed register table for computing
-#'   annual statistics (only used for the main register stats.json)
+#'   annual statistics (only used for the main register statistics.json)
 render_register_json <- function(register_table, table_details, filter, full_register_table = NULL) {
   register_table_json <- add_repository_links_json(register_table)
 
@@ -451,16 +546,23 @@ render_register_json <- function(register_table, table_details, filter, full_reg
     cert_count = nrow(register_table_json)
   )
 
-  # Add annual statistics for the main register (addresses register#144)
-  if (!is.null(full_register_table)) {
+  # Add annual statistics for the main register (addresses register#144).
+  # Named statistics.json rather than stats.json for this one file - it is the
+  # file the statistics dashboard (render_statistics_page()) reads and links
+  # to, so its name should match the page's. Sub-register files (per venue,
+  # per codechecker) carry no annual breakdown and are not read by that page,
+  # so they keep the shorter stats.json name.
+  is_main_register <- !is.null(full_register_table)
+  if (is_main_register) {
     annual <- compute_annual_stats(full_register_table)
     stats_data <- c(stats_data, annual)
   }
+  stats_filename <- if (is_main_register) "statistics.json" else "stats.json"
 
   jsonlite::write_json(
     stats_data,
     auto_unbox = TRUE,
-    path = file.path(output_dir, "stats.json"),
+    path = file.path(output_dir, stats_filename),
     pretty = TRUE
   )
 }

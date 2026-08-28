@@ -76,6 +76,20 @@ external_library_specs <- function() {
           "academicons.woff"
         )
       )
+    ),
+
+    chartjs = list(
+      name = "Chart.js",
+      version = "4.4.4",
+      license = "MIT",
+      license_url = "https://github.com/chartjs/Chart.js/blob/v4.4.4/LICENSE.md",
+      description = "Charting library used by the statistics dashboard",
+      urls = list(
+        js = "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+      ),
+      files = list(
+        js = "chartjs/chart.umd.min.js"
+      )
     )
   )
 }

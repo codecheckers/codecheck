@@ -656,7 +656,10 @@ validate_codecheck_yml <- function(configuration) {
 #'
 #' @param venues_file Path to the venues.csv file. If NULL, defaults to
 #'   "venues.csv" in the current working directory.
-#' @return A data frame with columns: name, longname, label
+#' @return A data frame with the required columns name, longname, label, plus
+#'   whatever optional metadata columns the file carries (e.g. logo_url,
+#'   website_url, policy_url, publisher) - passed through unchanged for
+#'   consumers like [compute_annual_stats()].
 #' @author Daniel Nuest
 #' @importFrom utils read.csv
 #' @export

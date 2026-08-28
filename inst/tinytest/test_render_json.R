@@ -15,10 +15,10 @@ capture.output(
 # file generation ----
 expect_true(file.exists(file.path("docs/register.json")))
 expect_true(file.exists(file.path("docs/featured.json")))
-expect_true(file.exists(file.path("docs/stats.json")))
+expect_true(file.exists(file.path("docs/statistics.json")))
 
 # stats ----
-stats <- jsonlite::read_json("docs/stats.json")
+stats <- jsonlite::read_json("docs/statistics.json")
 expect_equal(stats$cert_count, nrow(test_register))
 expect_equal(stats$source, paste0(CONFIG$HREF_DETAILS$json$base_url, "register.json"))
 

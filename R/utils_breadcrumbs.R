@@ -25,6 +25,8 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
     # Check if this is an overview page (not a specific venue/codechecker page)
     is_overview <- !isTRUE(table_details$is_reg_table)
     show_menu <- is_overview
+  } else if (filter == "statistics") {
+    show_menu <- TRUE
   }
 
   menu_html <- ""
@@ -33,26 +35,32 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
     if (base_path == ".") {
       venues_path <- "venues/index.html"
       codecheckers_path <- "codecheckers/index.html"
+      statistics_path <- "statistics/index.html"
     } else {
       # Special handling for venue type pages (e.g., /venues/communities/)
       # These are within the venues directory, so "All Venues" is just ../index.html
       if (filter == "venues" && "subcat" %in% names(table_details)) {
         venues_path <- "../index.html"
         codecheckers_path <- "../../codecheckers/index.html"
+        statistics_path <- "../../statistics/index.html"
       } else {
         venues_path <- paste0(base_path, "/venues/index.html")
         codecheckers_path <- paste0(base_path, "/codecheckers/index.html")
+        statistics_path <- paste0(base_path, "/statistics/index.html")
       }
     }
 
     # Determine which page is active based on filter
     venues_active <- ""
     codecheckers_active <- ""
+    statistics_active <- ""
     if (!is.na(filter)) {
       if (filter == "venues") {
         venues_active <- " active"
       } else if (filter == "codecheckers") {
         codecheckers_active <- " active"
+      } else if (filter == "statistics") {
+        statistics_active <- " active"
       }
     }
 
@@ -60,6 +68,7 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
     <nav class="navbar-menu">
       <a href="', venues_path, '" class="nav-link', venues_active, '">All Venues</a>
       <a href="', codecheckers_path, '" class="nav-link', codecheckers_active, '">All Codecheckers</a>
+      <a href="', statistics_path, '" class="nav-link', statistics_active, '">Statistics</a>
       <a href="https://codecheck.org.uk/" class="nav-link">About</a>
     </nav>')
   }
@@ -180,6 +189,10 @@ generate_breadcrumb <- function(filter = NA, table_details = list(), base_path =
     } else {
       items[[2]]$active <- TRUE
     }
+
+  } else if (filter == "statistics") {
+    # Statistics dashboard page
+    items[[2]] <- list(label = "Statistics", url = NULL, active = TRUE)
   }
 
   # Generate Bootstrap breadcrumb HTML
