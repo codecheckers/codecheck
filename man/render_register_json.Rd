@@ -19,7 +19,7 @@ render_register_json(
 \item{filter}{The filter}
 
 \item{full_register_table}{Optional full preprocessed register table for computing
-annual statistics (only used for the main register stats.json)}
+annual statistics (only used for the main register statistics.json)}
 }
 \description{
 Renders register json for a single register_table

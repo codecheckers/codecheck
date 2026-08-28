@@ -5,7 +5,15 @@
 \title{Generates a Markdown file for a certificate based on a specified template, filling in details about the
 paper, authors, codecheck information, and the certificate images if available. The resulting Markdown file is later rendered to HTML.}
 \usage{
-create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue)
+create_cert_md(
+  cert_id,
+  repo_link,
+  download_cert_status,
+  cert_type,
+  cert_venue,
+  openalex_id = NULL,
+  abstract_data = NULL
+)
 }
 \arguments{
 \item{cert_id}{A character string representing the unique identifier of the certificate.}
@@ -17,6 +25,11 @@ create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue)
 \item{cert_type}{A character string containing the venue type (journal, conference, community, institution).}
 
 \item{cert_venue}{A character string containing the venue name.}
+
+\item{openalex_id}{Optional pre-resolved OpenAlex ID (see \code{\link{resolve_external_field}});
+when `NULL`, looked up here directly.}
+
+\item{abstract_data}{Optional pre-resolved abstract; when `NULL`, looked up here directly.}
 }
 \description{
 Generates a Markdown file for a certificate based on a specified template, filling in details about the

@@ -5,12 +5,15 @@
 \title{Inserts the abstract text and source link into the Markdown content if an abstract is found for the given repository. 
 If no abstract is found, an empty string is inserted in place of the abstract content.}
 \usage{
-add_abstract(repo_link, md_content)
+add_abstract(repo_link, md_content, abstract_data = NULL)
 }
 \arguments{
 \item{repo_link}{A character string containing the repository link from which to retrieve the abstract.}
 
 \item{md_content}{A character string containing the Markdown content with placeholders for abstract details.}
+
+\item{abstract_data}{Optional pre-resolved abstract (list with `source`/`text`, see
+\code{\link{resolve_external_field}}); when `NULL`, looked up here directly.}
 }
 \value{
 The markdown content with filled abstract placeholder

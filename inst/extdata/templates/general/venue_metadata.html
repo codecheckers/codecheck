@@ -1,0 +1,27 @@
+<div class="venue-metadata">
+{{#has_logo}}
+<img class="venue-metadata-logo" src="{{logo_url}}" alt="{{longname}} logo">
+{{/has_logo}}
+<div class="venue-metadata-text">
+{{#has_properties}}
+<ul class="venue-metadata-list">
+{{#has_contact}}
+<li><span class="venue-metadata-label">CODECHECK contact:</span> {{#has_contact_name}}{{contact_name}} {{/has_contact_name}}{{#has_contact_email}}<a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/has_contact_email}}</li>
+{{/has_contact}}
+{{#has_website}}
+<li><span class="venue-metadata-label">Website:</span> <a href="{{website_url}}" target="_blank" rel="noopener">{{website_url}}</a></li>
+{{/has_website}}
+{{#has_venue_type}}
+<li><span class="venue-metadata-label">Venue type:</span> <a href="{{venue_type_url}}">{{venue_type}}</a></li>
+{{/has_venue_type}}
+<li><i class="fa fa-cog"></i> <span class="venue-metadata-label">API &amp; statistics:</span> <a href="{{api_stats_url}}">{{api_stats_url}}</a></li>
+{{#identifiers}}
+<li>{{#icon}}<i class="fa {{icon}}"></i> {{/icon}}<span class="venue-metadata-label">{{name}}:</span> {{#link}}<a href="{{link}}" target="_blank" rel="noopener">{{value}}</a>{{/link}}{{^link}}{{value}}{{/link}}</li>
+{{/identifiers}}
+</ul>
+{{/has_properties}}
+{{#has_description}}
+<p class="venue-metadata-description">{{{description}}}</p>
+{{/has_description}}
+</div>
+</div>

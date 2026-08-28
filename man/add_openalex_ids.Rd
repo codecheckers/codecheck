@@ -15,5 +15,12 @@ add_openalex_ids(register_table, register)
 The register table with added "OpenAlex" column
 }
 \description{
-Add OpenAlex work IDs to the register table (addresses register#185)
+Unlike the per-certificate index.json (rendered via
+\code{\link{resolve_external_field}}), this table feeds the aggregate
+outputs (docs/register.json and the venue-filtered json/csv) directly, so
+it needs the same protection: a lookup that merely failed this run (rate
+limit, network blip) must fall back to the certificate's existing
+index.json rather than overwrite a previously-known-good ID with NA - the
+same regression \code{\link{resolve_external_field}} exists to prevent,
+just reached through a different render path.
 }

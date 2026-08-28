@@ -18,7 +18,8 @@ register_render(
   verbose = FALSE,
   check_zenodo_policy = TRUE,
   check_researchequals_policy = TRUE,
-  prune_unreferenced_libs = TRUE
+  prune_unreferenced_libs = TRUE,
+  prune_unavailable_metadata = FALSE
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ register_render(
 \item{check_researchequals_policy}{Logical; if TRUE (the default), audits all certificates published on ResearchEquals against the CODECHECK curation policy after rendering, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection, and reports the findings on the console. Never fails a render. Results are cached like the Zenodo ones; set to FALSE to skip them entirely.}
 
 \item{prune_unreferenced_libs}{Logical; if TRUE (the default), removes directories under `docs/libs` that no rendered HTML file references any more (see [prune_libs()] and codecheckers/codecheck#89) once rendering finishes. Only actually runs after a complete, unfiltered render (`from`/`to` covering the whole register) with no certificate failures; otherwise the step is skipped with a message, since a partial render can leave HTML that still references a directory this would delete.}
+
+\item{prune_unavailable_metadata}{Logical; if TRUE, a certificate's OpenAlex ID or abstract that this render's live lookup conclusively confirms is no longer available (as opposed to a lookup that simply failed - network error, rate limit) is actually removed from the rendered output. Defaults to FALSE: such a confirmed absence is more often a query problem than a real removal upstream, so by default the previously rendered value is kept, and a lookup failure never removes anything regardless of this flag. See [resolve_external_field()].}
 }
 \value{
 A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories

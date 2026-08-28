@@ -14,5 +14,5 @@ A list of annual statistics
 }
 \description{
 Computes per-year breakdowns of checks, venues, codecheckers, and report
-platforms. Used to enrich stats.json (addresses register#144).
+platforms. Used to enrich statistics.json (addresses register#144).
 }

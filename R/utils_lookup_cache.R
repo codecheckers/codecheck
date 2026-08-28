@@ -20,12 +20,24 @@
 #' @importFrom R.cache loadCache saveCache
 #' @return The `value` element of the lookup result
 cached_lookup <- function(key, dirs, lookup) {
+  cached_lookup_result(key, dirs, lookup)$value
+}
+
+#' Same as \code{\link{cached_lookup}}, but returns the full result
+#'
+#' Callers that need to tell a confirmed "absent" apart from an inconclusive
+#' "failed" lookup (see \code{\link{resolve_external_field}}) need the status,
+#' not just the value \code{\link{cached_lookup}} returns.
+#'
+#' @inheritParams cached_lookup
+#' @return A list with `status` ("found", "absent" or "failed") and `value`
+cached_lookup_result <- function(key, dirs, lookup) {
   cached <- tryCatch(R.cache::loadCache(key = key, dirs = dirs),
                      error = function(e) NULL)
 
   # only results written by this function are usable, anything else is ignored
   if (is.list(cached) && !is.null(cached$status)) {
-    return(cached$value)
+    return(cached)
   }
 
   result <- lookup()
@@ -37,5 +49,5 @@ cached_lookup <- function(key, dirs, lookup) {
              })
   }
 
-  return(result$value)
+  return(result)
 }

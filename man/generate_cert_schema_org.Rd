@@ -4,7 +4,12 @@
 \alias{generate_cert_schema_org}
 \title{Generate Schema.org JSON-LD for Certificate Page}
 \usage{
-generate_cert_schema_org(cert_id, config_yml, abstract_data = NULL)
+generate_cert_schema_org(
+  cert_id,
+  config_yml,
+  abstract_data = NULL,
+  openalex_id = NULL
+)
 }
 \arguments{
 \item{cert_id}{Certificate ID (e.g., "2025-028")}
@@ -12,6 +17,10 @@ generate_cert_schema_org(cert_id, config_yml, abstract_data = NULL)
 \item{config_yml}{Parsed codecheck.yml configuration}
 
 \item{abstract_data}{Abstract data from get_abstract() with text and source fields}
+
+\item{openalex_id}{Optional pre-resolved OpenAlex ID (see \code{\link{resolve_external_field}}).
+`NULL` means "not looked up here" and omits the field, matching the
+pre-existing behaviour of this function for callers that don't pass one.}
 }
 \value{
 JSON-LD string ready to be embedded in HTML <script type="application/ld+json">

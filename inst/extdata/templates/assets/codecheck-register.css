@@ -407,3 +407,53 @@ h1 {
         font-size: 1.2rem;
     }
 }
+
+/* ====================
+   Venue Metadata Panel
+   ==================== */
+
+.venue-metadata {
+    background-color: #f6f8f6;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 2rem;
+    overflow: hidden; /* contain the floated logo */
+}
+
+.venue-metadata-logo {
+    float: right;
+    max-width: 400px;
+    max-height: 140px;
+    margin: 0 0 1rem 1.5rem;
+}
+
+.venue-metadata-text {
+    text-align: left;
+}
+
+.venue-metadata-list {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.venue-metadata-list li {
+    margin: 0 0 0.45rem;
+}
+
+.venue-metadata-label {
+    color: #6c757d;
+}
+
+.venue-metadata-description {
+    color: #6c757d;
+    margin: 0.9rem 0 1rem;
+    max-width: 58ch;
+}
+
+@media (max-width: 600px) {
+    .venue-metadata-logo {
+        float: none;
+        display: block;
+        margin: 0 0 1rem;
+    }
+}

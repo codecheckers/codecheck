@@ -133,25 +133,13 @@ generate_table_details_non_reg <- function(table, filter, subcat = NULL){
 #' @param filter The filter being used such as "venues" or "codecheckers"
 #' @param table_details A list of metadata about the table (e.g., title, subtext, extra text).
 #' @return A list of the hrefs.
-generate_html_postfix_hrefs_non_reg <- function(filter, table_details){  
-  # Case we do not have subcat
-  if ("subcat" %in% names(table_details)){
-    subcat <- table_details[["subcat"]]
-    # If subcat is venue type, we pluralize the venue names
-    if (subcat %in% names(CONFIG$VENUE_SUBCAT_PLURAL)){
-      subcat <- CONFIG$VENUE_SUBCAT_PLURAL[[subcat]]
-    }
-    hrefs <- list(
-      json_href = paste0(CONFIG$HYPERLINKS[["register"]], filter, "/", subcat,"/index.json")
-    )
-  }
-
-  # Case with subcat
-  else{
-    hrefs <- list(
-      json_href = paste0(CONFIG$HYPERLINKS[["register"]], filter, "/index.json")
-    )
-  }
+generate_html_postfix_hrefs_non_reg <- function(filter, table_details){
+  # index.json always sits right next to this index.html in the same output
+  # directory (regardless of subcat), so link to it relatively rather than
+  # via the absolute codecheck.org.uk URL.
+  hrefs <- list(
+    json_href = "index.json"
+  )
 
   return(hrefs)
 }

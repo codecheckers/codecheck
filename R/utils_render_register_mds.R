@@ -53,6 +53,25 @@ render_register_md <- function(register_table, table_details, filter) {
   }
   md_table <- gsub("\\$profile_links\\$", profile_links, md_table)
 
+  # Add venue metadata for individual venue pages: as an HTML block in the
+  # body for the HTML-rendered page (temp.md, fed to pandoc), but as YAML
+  # frontmatter for the plain register.md export - register.md is served as
+  # a markdown/API text file, not HTML, so an embedded HTML div there is
+  # wrong (register#84 followup).
+  venue_metadata <- ""
+  venue_frontmatter <- ""
+  if (filter == "venues" && isTRUE(table_details[["is_reg_table"]]) &&
+      !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+    venue_row <- lookup_venue_row(table_details[["name"]])
+    if ("for_html_file" %in% names(table_details)) {
+      venue_metadata <- generate_venue_metadata_html(venue_row, venue_type = table_details[["subcat"]])
+    } else {
+      venue_frontmatter <- generate_venue_metadata_yaml(venue_row, venue_type = table_details[["subcat"]])
+    }
+  }
+  md_table <- gsub("\\$venue_metadata\\$", venue_metadata, md_table)
+  md_table <- gsub("\\$venue_frontmatter\\$", venue_frontmatter, md_table)
+
   output_dir <- table_details[["output_dir"]]
 
   # Saving the md file

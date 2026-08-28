@@ -63,9 +63,6 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
     cert_venue <- cert_row$Venue
 
     tryCatch({
-      # Get abstract
-      abstract <- get_abstract(repo_link)
-
       download_cert_status <- NA
       pdf_issue <- NULL
       pdf_cosmetic_count <- 0
@@ -304,13 +301,40 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
 #' @param cert_type A character string containing the venue type (journal, conference, community, institution).
 #' @param cert_venue A character string containing the venue name.
 render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type, cert_venue){
-  create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue)
+  # Resolve the externally enriched fields once per certificate (rather than
+  # once per output format below), so a single OpenAlex/CrossRef request
+  # covers markdown, JSON and Schema.org, and a transient failure this run
+  # falls back to the certificate's existing index.json instead of dropping
+  # the field - see resolve_external_field() (register#185 and its regression).
+  config_yml <- get_codecheck_yml(repo_link)
+  first_author_name <- if (length(config_yml$paper$authors) > 0) config_yml$paper$authors[[1]]$name else NULL
+  prune_unavailable <- isTRUE(CONFIG$PRUNE_UNAVAILABLE_METADATA)
+
+  openalex_lookup <- tryCatch(
+    get_openalex_id_cached_result(config_yml$paper$reference, config_yml$paper$title, first_author_name),
+    error = function(e) list(status = "failed", value = NA_character_)
+  )
+  openalex_id <- resolve_external_field(
+    cert_id, c("paper", "openalex"), openalex_lookup$status, openalex_lookup$value,
+    empty_value = NA_character_, prune_unavailable = prune_unavailable
+  )
+
+  abstract_lookup <- tryCatch(
+    get_abstract_cached_result(repo_link),
+    error = function(e) list(status = "failed", value = list(source = NULL, text = NULL))
+  )
+  abstract_data <- resolve_external_field(
+    cert_id, c("paper", "abstract"), abstract_lookup$status, abstract_lookup$value,
+    empty_value = list(source = NULL, text = NULL), prune_unavailable = prune_unavailable
+  )
+
+  create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue, openalex_id, abstract_data)
 
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")
 
   # Creating html document yml with breadcrumbs and schema.org metadata
-  create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue, repo_link)
+  create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue, repo_link, openalex_id, abstract_data)
   generate_html_document_yml(output_dir)
 
   # Schedule cleanup of temporary files so they are removed even if render() fails
@@ -343,7 +367,7 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
   unlink(file.path(output_dir, "libs"), recursive = TRUE)
 
   # Generate JSON file with certificate metadata
-  generate_cert_json(cert_id, repo_link, cert_type, cert_venue)
+  generate_cert_json(cert_id, repo_link, cert_type, cert_venue, openalex_id, abstract_data)
 }
 
 #' Generates a JSON file with all certificate metadata
@@ -355,14 +379,20 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
 #' @param repo_link A character string containing the repository link associated with the certificate.
 #' @param cert_type A character string containing the venue type (journal, conference, community, institution).
 #' @param cert_venue A character string containing the venue name.
+#' @param openalex_id Optional pre-resolved OpenAlex ID (see \code{\link{resolve_external_field}});
+#'   when `NULL`, looked up here directly.
+#' @param abstract_data Optional pre-resolved abstract; when `NULL`, looked up here directly.
 #' @importFrom jsonlite write_json
 #' @export
-generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue) {
+generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
+                               openalex_id = NULL, abstract_data = NULL) {
   # Get codecheck.yml metadata
   config_yml <- get_codecheck_yml(repo_link)
 
   # Get abstract
-  abstract_data <- get_abstract(repo_link)
+  if (is.null(abstract_data)) {
+    abstract_data <- get_abstract(repo_link)
+  }
 
   # Build JSON structure matching the certificate landing page
   cert_json <- list(
@@ -416,14 +446,16 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue) {
   }
 
   # Add OpenAlex link (addresses register#185)
-  openalex_id <- tryCatch(
-    get_openalex_id_cached(
-      config_yml$paper$reference,
-      paper_title = config_yml$paper$title,
-      first_author_name = if (length(config_yml$paper$authors) > 0) config_yml$paper$authors[[1]]$name else NULL
-    ),
-    error = function(e) NA_character_
-  )
+  if (is.null(openalex_id)) {
+    openalex_id <- tryCatch(
+      get_openalex_id_cached(
+        config_yml$paper$reference,
+        paper_title = config_yml$paper$title,
+        first_author_name = if (length(config_yml$paper$authors) > 0) config_yml$paper$authors[[1]]$name else NULL
+      ),
+      error = function(e) NA_character_
+    )
+  }
   if (!is.na(openalex_id)) {
     cert_json$paper$openalex <- openalex_id
   }
@@ -450,7 +482,8 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue) {
 #' @param cert_venue The venue name for breadcrumb generation
 #' @param repo_link Repository link to fetch codecheck.yml for Schema.org metadata generation (default: NULL)
 #' @importFrom whisker whisker.render
-create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type = NULL, cert_venue = NULL, repo_link = NULL){
+create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type = NULL, cert_venue = NULL, repo_link = NULL,
+                                           openalex_id = NULL, abstract_data = NULL){
 
   # Create prefix with navigation header and breadcrumbs
   if (!is.null(cert_id) && !is.null(cert_type) && !is.null(cert_venue)) {
@@ -506,8 +539,10 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
   if (!is.null(repo_link) && repo_link != "") {
     tryCatch({
       config_yml <- get_codecheck_yml(repo_link)
-      abstract_data <- get_abstract(repo_link)
-      schema_org_jsonld <- generate_cert_schema_org(cert_id, config_yml, abstract_data)
+      if (is.null(abstract_data)) {
+        abstract_data <- get_abstract(repo_link)
+      }
+      schema_org_jsonld <- generate_cert_schema_org(cert_id, config_yml, abstract_data, openalex_id)
     }, error = function(e) {
       warning(cert_id, " | Failed to generate Schema.org metadata: ", e$message)
       schema_org_jsonld <- ""

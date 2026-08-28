@@ -546,6 +546,32 @@ render_register_json <- function(register_table, table_details, filter, full_reg
     cert_count = nrow(register_table_json)
   )
 
+  # Add the venue's structured metadata (the same information shown on its
+  # landing page's metadata panel, via the shared get_venue_metadata_fields())
+  # for individual venue pages (addresses register#183).
+  if (filter == "venues" && isTRUE(table_details[["is_reg_table"]]) &&
+      !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+    venue_row <- lookup_venue_row(table_details[["name"]])
+    fields <- get_venue_metadata_fields(venue_row, table_details[["subcat"]])
+    nullable <- function(x) if (is.null(x)) NA_character_ else x
+    stats_data$venue <- list(
+      name = table_details[["name"]],
+      longname = if ("longname" %in% names(venue_row)) venue_row[["longname"]][1] else NA_character_,
+      venue_type = fields$venue_type,
+      logo_url = fields$logo_url,
+      website_url = fields$website_url,
+      contact_name = fields$contact_name,
+      contact_email = fields$contact_email,
+      description = fields$description,
+      identifiers = lapply(fields$identifiers, function(i) list(
+        name = i$name,
+        icon = nullable(i$icon),
+        value = i$value,
+        url = nullable(i$link)
+      ))
+    )
+  }
+
   # Add annual statistics for the main register (addresses register#144).
   # Named statistics.json rather than stats.json for this one file - it is the
   # file the statistics dashboard (render_statistics_page()) reads and links
@@ -563,6 +589,7 @@ render_register_json <- function(register_table, table_details, filter, full_reg
     stats_data,
     auto_unbox = TRUE,
     path = file.path(output_dir, stats_filename),
-    pretty = TRUE
+    pretty = TRUE,
+    na = "null"
   )
 }

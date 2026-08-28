@@ -62,6 +62,23 @@ get_abstract <- function(register_repo) {
   )
 }
 
+#' Cached version of get_abstract, with the lookup status
+#'
+#' Same lookup as \code{\link{get_abstract}}, but returns the full
+#' `{status, value}` result so a caller can distinguish a confirmed absence
+#' from an inconclusive failure, see \code{\link{resolve_external_field}}.
+#'
+#' @param register_repo URL or path to the repository containing the paper's configuration.
+#' @return A list with `status` ("found", "absent" or "failed") and `value`
+#' @noRd
+get_abstract_cached_result <- function(register_repo) {
+  cached_lookup_result(
+    key = list("abstract", register_repo),
+    dirs = c("codecheck", "abstract"),
+    lookup = function() get_abstract_result(register_repo)
+  )
+}
+
 #' Retrieves the abstract and reports whether the answer is conclusive
 #'
 #' Same lookup as \code{\link{get_abstract}} without the caching, and with the
@@ -291,6 +308,25 @@ get_openalex_id_cached <- function(paper_reference, paper_title = NULL, first_au
   )
 }
 
+#' Cached version of get_openalex_id, with the lookup status
+#'
+#' Same lookup as \code{\link{get_openalex_id_cached}}, but returns the full
+#' `{status, value}` result so a caller can distinguish a confirmed absence
+#' from an inconclusive failure, see \code{\link{resolve_external_field}}.
+#'
+#' @inheritParams get_openalex_id_result
+#' @return A list with `status` ("found", "absent" or "failed") and `value`
+#' @noRd
+get_openalex_id_cached_result <- function(paper_reference, paper_title = NULL, first_author_name = NULL) {
+  cached_lookup_result(
+    key = list("openalex_id", paper_reference, paper_title, first_author_name),
+    dirs = c("codecheck", "openalex_id"),
+    lookup = function() {
+      get_openalex_id_result(paper_reference, paper_title, first_author_name)
+    }
+  )
+}
+
 #' Extracts the paper DOI from the config_yml of the paper,
 #' constructs a CrossRef API request, and returns the abstract text if available.
 #'
@@ -360,10 +396,12 @@ get_abstract_text_crossref_result <- function(register_repo) {
 #'
 #' @param repo_link A character string containing the repository link from which to retrieve the abstract.
 #' @param md_content A character string containing the Markdown content with placeholders for abstract details.
+#' @param abstract_data Optional pre-resolved abstract (list with `source`/`text`, see
+#'   \code{\link{resolve_external_field}}); when `NULL`, looked up here directly.
 #' @return The markdown content with filled abstract placeholder
-add_abstract <- function(repo_link, md_content){
-  abstract <- get_abstract(repo_link)
-  
+add_abstract <- function(repo_link, md_content, abstract_data = NULL){
+  abstract <- if (is.null(abstract_data)) get_abstract(repo_link) else abstract_data
+
   # No abstract found so we add empty string
   if (is.null(abstract$text)) {  
     md_content <- gsub("\\$abstract_content\\$", "", md_content)
@@ -387,7 +425,11 @@ add_abstract <- function(repo_link, md_content){
 #' @param download_cert_status An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).
 #' @param cert_type A character string containing the venue type (journal, conference, community, institution).
 #' @param cert_venue A character string containing the venue name.
-create_cert_md <- function(cert_id, repo_link, download_cert_status, cert_type, cert_venue){
+#' @param openalex_id Optional pre-resolved OpenAlex ID (see \code{\link{resolve_external_field}});
+#'   when `NULL`, looked up here directly.
+#' @param abstract_data Optional pre-resolved abstract; when `NULL`, looked up here directly.
+create_cert_md <- function(cert_id, repo_link, download_cert_status, cert_type, cert_venue,
+                           openalex_id = NULL, abstract_data = NULL){
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   
   # Create the directory if it does not exist (e.g., because no PDFs are downloaded)
@@ -417,7 +459,7 @@ create_cert_md <- function(cert_id, repo_link, download_cert_status, cert_type, 
     md_content <- gsub("\\$codecheck_report_subtext\\$", report_hyperlink, md_content)
   }
 
-  md_content <- add_paper_details_md(md_content, repo_link)
+  md_content <- add_paper_details_md(md_content, repo_link, openalex_id = openalex_id, abstract_data = abstract_data)
   md_content <- add_codecheck_details_md(md_content, repo_link, cert_type, cert_venue)
 
   # Inserting the cert 
@@ -440,9 +482,10 @@ create_cert_md <- function(cert_id, repo_link, download_cert_status, cert_type, 
 #'
 #' @param md_content A character string containing the Markdown template content with placeholders.
 #' @param repo_link A character string containing the repository link associated with the certificate.
-#' @param download_cert_status An integer (0 or 1) indicating whether the certificate PDF was downloaded (1) or not (0).
+#' @param openalex_id Optional pre-resolved OpenAlex ID; when `NULL`, looked up here directly.
+#' @param abstract_data Optional pre-resolved abstract; when `NULL`, looked up here directly.
 #' @return The markdown content, with paper details placeholders filled.
-add_paper_details_md <- function(md_content, repo_link, download_cert_status){
+add_paper_details_md <- function(md_content, repo_link, openalex_id = NULL, abstract_data = NULL){
   config_yml <- get_codecheck_yml(repo_link)
 
   # Replacing the title
@@ -483,17 +526,19 @@ add_paper_details_md <- function(md_content, repo_link, download_cert_status){
   md_content <- gsub("\\$author_names_heading\\$", authors_heading, md_content)
 
   # Adding abstract
-  md_content <- add_abstract(repo_link, md_content)
+  md_content <- add_abstract(repo_link, md_content, abstract_data = abstract_data)
 
   # Adding OpenAlex link (addresses register#185)
-  openalex_id <- tryCatch(
-    get_openalex_id_cached(
-      config_yml$paper$reference,
-      paper_title = config_yml$paper$title,
-      first_author_name = if (length(config_yml$paper$authors) > 0) config_yml$paper$authors[[1]]$name else NULL
-    ),
-    error = function(e) NA_character_
-  )
+  if (is.null(openalex_id)) {
+    openalex_id <- tryCatch(
+      get_openalex_id_cached(
+        config_yml$paper$reference,
+        paper_title = config_yml$paper$title,
+        first_author_name = if (length(config_yml$paper$authors) > 0) config_yml$paper$authors[[1]]$name else NULL
+      ),
+      error = function(e) NA_character_
+    )
+  }
   if (!is.na(openalex_id)) {
     openalex_html <- paste0('<p><strong>OpenAlex</strong>: <a href="', openalex_id, '">', openalex_id, '</a></p>')
   } else {

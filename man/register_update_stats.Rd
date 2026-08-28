@@ -2,7 +2,7 @@
 % Please edit documentation in R/register.R
 \name{register_update_stats}
 \alias{register_update_stats}
-\title{Regenerate all stats.json files from existing register.json files}
+\title{Regenerate all statistics files from existing register.json files}
 \usage{
 register_update_stats(
   docs_dir = "docs",
@@ -21,8 +21,10 @@ and optional metadata (logo_url, website_url, policy_url, publisher)}
 \description{
 Fast alternative to a full re-render when only the stats computation has
 changed. Reads the already-generated register.json files under `docs/` and
-rewrites every stats.json with up-to-date statistics (including annual and
-cumulative breakdowns).
+rewrites `docs/statistics.json` (the main register's file, read by
+[render_statistics_page()]) and every sub-register's `stats.json`, with
+up-to-date statistics (including annual and cumulative breakdowns for the
+main file).
 }
 \author{
 Daniel Nuest

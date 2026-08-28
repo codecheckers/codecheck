@@ -24,7 +24,9 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
     # Main register and codecheckers: Certificate | Report | Paper Title | Venue | Type | Check date
     general = "|:-------|:--------------------------------------------------|:----------------------------------|:---------------|:---|:--------------------------|",
     # Venues filter: Certificate | Report | Paper Title | Check date
-    venues = "|:-------|:--------------------------------------------------|:------|:--------------------------|"
+    # Paper Title carries the most content (full titles), Report is just a
+    # short DOI/link - it previously had this backwards (register#84 followup).
+    venues = "|:--------|:------------|:-------------------------------------------------------|:---------------|"
   ),
 
   non_reg = list(
@@ -92,9 +94,8 @@ CONFIG$MD_TITLES <- list(
   },
 
   "venues" = function(table_details) {
-    venue_type <- table_details[["subcat"]]
     venue_name <- table_details[["name"]]
-    paste0("CODECHECK Register for ", venue_name, " (", venue_type, ")")
+    paste0("CODECHECKs for ", venue_name)
   },
 
   "certs" = "CODECHECK Certificate"

@@ -11,7 +11,8 @@ register_render_cert(
   venues_file = "venues.csv",
   force_download = TRUE,
   download_and_convert = TRUE,
-  verbose = FALSE
+  verbose = FALSE,
+  prune_unavailable_metadata = FALSE
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ certificate PDF to PNG images. Defaults to TRUE.}
 
 \item{verbose}{Logical; if TRUE, shows detailed output including pandoc
 commands from rmarkdown::render(). Defaults to FALSE.}
+
+\item{prune_unavailable_metadata}{Logical; see [register_render()]. Defaults to FALSE.}
 }
 \value{
 The certificate ID (invisibly).

@@ -4,10 +4,10 @@
 \alias{build_statistics_content_html}
 \title{Build the HTML body content of the statistics dashboard}
 \usage{
-build_statistics_content_html(stats)
+build_statistics_content_html(stats, base_path = "..")
 }
 \arguments{
-\item{stats}{The parsed contents of `stats.json` (a list)}
+\item{stats}{The parsed contents of `statistics.json` (a list)}
 }
 \value{
 A single HTML string, safe to embed as a pandoc raw-HTML block

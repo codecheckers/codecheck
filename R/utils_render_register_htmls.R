@@ -141,10 +141,15 @@ create_index_header_html <- function(output_dir, schema_org_jsonld = "", include
 #' @return A list with the hrefs
 generate_html_postfix_hrefs_reg <- function(filter, table_details) {
   hrefs <- list(
+    # CSV links point to GitHub (a different origin), so stay absolute.
     csv_source_href = generate_href(filter, table_details, "csv_source"),
     searchable_csv_href = generate_href(filter, table_details, "searchable_csv"),
-    json_href = generate_href(filter, table_details, "json"),
-    md_href = generate_href(filter, table_details, "md"),
+    # register.json/register.md always sit right next to this index.html in
+    # the same output directory, so link to them relatively rather than via
+    # the absolute codecheck.org.uk URL used elsewhere (e.g. stats.json's own
+    # "source" field, which does need an absolute URL for external consumers).
+    json_href = "register.json",
+    md_href = "register.md",
     # "Go to random certificate" button: only on the main, unfiltered register
     # page (all certificates), not on filtered venue/codechecker pages.
     show_random_cert = is.na(filter),

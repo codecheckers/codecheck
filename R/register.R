@@ -37,6 +37,7 @@ is_full_register_run <- function(from, to, n) {
 #' @param check_zenodo_policy Logical; if TRUE (the default), audits all Zenodo-hosted certificates against the CODECHECK community curation policy after rendering and reports the findings on the console. Never fails a render. Results are cached, so only a cold render pays for the extra requests; set to FALSE to skip them entirely.
 #' @param check_researchequals_policy Logical; if TRUE (the default), audits all certificates published on ResearchEquals against the CODECHECK curation policy after rendering, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection, and reports the findings on the console. Never fails a render. Results are cached like the Zenodo ones; set to FALSE to skip them entirely.
 #' @param prune_unreferenced_libs Logical; if TRUE (the default), removes directories under `docs/libs` that no rendered HTML file references any more (see [prune_libs()] and codecheckers/codecheck#89) once rendering finishes. Only actually runs after a complete, unfiltered render (`from`/`to` covering the whole register) with no certificate failures; otherwise the step is skipped with a message, since a partial render can leave HTML that still references a directory this would delete.
+#' @param prune_unavailable_metadata Logical; if TRUE, a certificate's OpenAlex ID or abstract that this render's live lookup conclusively confirms is no longer available (as opposed to a lookup that simply failed - network error, rate limit) is actually removed from the rendered output. Defaults to FALSE: such a confirmed absence is more often a query problem than a real removal upstream, so by default the previously rendered value is kept, and a lookup failure never removes anything regardless of this flag. See [resolve_external_field()].
 #'
 #' @return A `data.frame` of the register enriched with information from the configuration files of respective CODECHECKs from the online repositories
 #'
@@ -63,7 +64,8 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             verbose = FALSE,
                             check_zenodo_policy = TRUE,
                             check_researchequals_policy = TRUE,
-                            prune_unreferenced_libs = TRUE) {
+                            prune_unreferenced_libs = TRUE,
+                            prune_unavailable_metadata = FALSE) {
   cli::cli_h1("CODECHECK Register Rendering")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
 
@@ -95,6 +97,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       # Store verbosity setting in CONFIG for use by all rendering functions
       # (must be after config sourcing, which creates the CONFIG environment)
       CONFIG$VERBOSE <- verbose
+      CONFIG$PRUNE_UNAVAILABLE_METADATA <- prune_unavailable_metadata
 
       # Load venues configuration
       load_venues_config(venues_file)
@@ -231,6 +234,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
 #'   certificate PDF to PNG images. Defaults to TRUE.
 #' @param verbose Logical; if TRUE, shows detailed output including pandoc
 #'   commands from rmarkdown::render(). Defaults to FALSE.
+#' @param prune_unavailable_metadata Logical; see [register_render()]. Defaults to FALSE.
 #'
 #' @return The certificate ID (invisibly).
 #'
@@ -248,7 +252,8 @@ register_render_cert <- function(cert_id,
                                  venues_file = "venues.csv",
                                  force_download = TRUE,
                                  download_and_convert = TRUE,
-                                 verbose = FALSE) {
+                                 verbose = FALSE,
+                                 prune_unavailable_metadata = FALSE) {
   cli::cli_h1("CODECHECK Render Certificate {cert_id}")
 
   # See register_render() for why (codecheckers/codecheck#89).
@@ -282,6 +287,7 @@ register_render_cert <- function(cert_id,
     source(config[i])
   }
   CONFIG$VERBOSE <- verbose
+  CONFIG$PRUNE_UNAVAILABLE_METADATA <- prune_unavailable_metadata
 
   # Load venues configuration
   load_venues_config(venues_file)
