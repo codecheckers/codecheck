@@ -368,3 +368,42 @@ h1 {
     padding-left: 0;
     font-size: 0.9em;
 }
+
+/* ====================
+   Random Certificate Button
+   ==================== */
+
+.random-cert-fab {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background-color: #008033;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 1.4rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    transition: background-color 0.15s, transform 0.15s;
+    z-index: 100;
+}
+
+.random-cert-fab:hover {
+    background-color: #005522;
+    color: #ffffff;
+    transform: scale(1.06);
+}
+
+@media (max-width: 768px) {
+    .random-cert-fab {
+        bottom: 1rem;
+        right: 1rem;
+        width: 46px;
+        height: 46px;
+        font-size: 1.2rem;
+    }
+}

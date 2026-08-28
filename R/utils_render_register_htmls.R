@@ -144,7 +144,11 @@ generate_html_postfix_hrefs_reg <- function(filter, table_details) {
     csv_source_href = generate_href(filter, table_details, "csv_source"),
     searchable_csv_href = generate_href(filter, table_details, "searchable_csv"),
     json_href = generate_href(filter, table_details, "json"),
-    md_href = generate_href(filter, table_details, "md")
+    md_href = generate_href(filter, table_details, "md"),
+    # "Go to random certificate" button: only on the main, unfiltered register
+    # page (all certificates), not on filtered venue/codechecker pages.
+    show_random_cert = is.na(filter),
+    base_path = ""
   )
   return(hrefs)
 }
