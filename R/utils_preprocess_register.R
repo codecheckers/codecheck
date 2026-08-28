@@ -236,6 +236,15 @@ create_temp_register_with_codechecker <- function(register_table){
 
 #' Add OpenAlex work IDs to the register table (addresses register#185)
 #'
+#' Unlike the per-certificate index.json (rendered via
+#' \code{\link{resolve_external_field}}), this table feeds the aggregate
+#' outputs (docs/register.json and the venue-filtered json/csv) directly, so
+#' it needs the same protection: a lookup that merely failed this run (rate
+#' limit, network blip) must fall back to the certificate's existing
+#' index.json rather than overwrite a previously-known-good ID with NA - the
+#' same regression \code{\link{resolve_external_field}} exists to prevent,
+#' just reached through a different render path.
+#'
 #' @param register_table The register table
 #' @param register The register from the register.csv file
 #' @return The register table with added "OpenAlex" column
@@ -244,26 +253,33 @@ add_openalex_ids <- function(register_table, register) {
   openalex_ids <- c()
 
   for (i in seq_len(nrow(register))) {
-    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+    cert_id <- register[i, ]$Certificate
+    # A single flaky fetch (of 132+ external repos, across several hosts)
+    # must not abort the whole render - same reasoning as the OpenAlex
+    # lookup below, just one step earlier.
+    config_yml <- tryCatch(get_codecheck_yml(register[i, ]$Repo), error = function(e) NULL)
 
-    openalex_id <- NA_character_
-    if (!is.null(config_yml) && !is.null(config_yml$paper$reference)) {
+    lookup <- if (!is.null(config_yml) && !is.null(config_yml$paper$reference)) {
       first_author <- NULL
       if (!is.null(config_yml$paper$authors) && length(config_yml$paper$authors) > 0) {
         first_author <- config_yml$paper$authors[[1]]$name
       }
-      openalex_id <- tryCatch(
-        get_openalex_id_cached(
+      tryCatch(
+        get_openalex_id_cached_result(
           config_yml$paper$reference,
           paper_title = config_yml$paper$title,
           first_author_name = first_author
         ),
-        error = function(e) {
-          warning(register[i, ]$Certificate, " | OpenAlex lookup failed: ", e$message)
-          NA_character_
-        }
+        error = function(e) list(status = "failed", value = NA_character_)
       )
+    } else {
+      list(status = "failed", value = NA_character_)
     }
+
+    openalex_id <- resolve_external_field(
+      cert_id, c("paper", "openalex"), lookup$status, lookup$value,
+      empty_value = NA_character_, prune_unavailable = isTRUE(CONFIG$PRUNE_UNAVAILABLE_METADATA)
+    )
     openalex_ids <- c(openalex_ids, openalex_id)
   }
 

@@ -374,7 +374,16 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
   table_details[["name"]] <- table_key
   # Check if identifier is an ORCID (format: NNNN-NNNN-NNNN-NNNX) or GitHub username
   is_orcid <- grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", table_key)
-  if (is_orcid) {
+  if (filter == "venues") {
+    # Must match the slug computed by add_venue_type_hyperlinks_non_reg()
+    # (utils_render_table_venues.R), which is what cert pages, the venues
+    # index, and the sitemap link to - otherwise this directory and the
+    # linked-to directory diverge (codecheckers/register#192 - on a
+    # case-sensitive filesystem an uppercase venue name like "AGILEGIS"
+    # created a sibling directory instead of updating the lowercase one
+    # every other page already links to).
+    table_details[["slug_name"]] <- gsub(" ", "_", tolower(table_key))
+  } else if (is_orcid) {
     table_details[["slug_name"]] <- table_key  # Use ORCID as-is for directory
     table_details[["is_github_username"]] <- FALSE
   } else {
