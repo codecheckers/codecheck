@@ -10,9 +10,9 @@ get_codechecker_profile_by_handle(handle)
 \item{handle}{The GitHub handle (without @ prefix)}
 }
 \value{
-A list with profile information (name, handle, orcid, fields, languages)
-        or NULL if not found
+A list with profile information (name, github_handle, orcid, fields,
+        languages, source) or NULL if not found
 }
 \description{
-Retrieves profile information for a codechecker from the codecheckers registry.
+Searches all three codechecker lists, see [all_codechecker_records()].
 }

@@ -42,6 +42,10 @@ After a large or multi-file change, run the focused test files touched by the ch
 
 Always update `NEWS.md` when making changes. Follow the existing `# codecheck X.Y.Z` header format.
 
+**Match the length and level of detail of the existing entries.** An entry is one bullet of one sentence, typically 10-25 words: what changed from the user's point of view, the issue reference in parentheses (`closes codecheckers/codecheck#N`, `register#N`), and at most a short "New `some_function()`" clause for a new public function. Not the root cause, not the call sites, not the reasoning behind the design - that belongs in code comments, the commit message and the issue. One change that touches several user-visible things is several bullets, not one long one. Fixes go under `## Bug Fixes`, not `## New Features`.
+
+A longer entry is allowed where it genuinely earns it - a subtle bug whose *symptom* needs describing so somebody recognises it, or a change whose behaviour is surprising without a caveat. Propose it and say why rather than writing it silently, and keep it to two or three sentences.
+
 ## Design Principles
 
 ### Data vs. Presentation Separation

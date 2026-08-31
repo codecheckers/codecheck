@@ -1,125 +1,216 @@
-#' Fetch and cache codecheckers.csv data from GitHub
+#' The codechecker lists in the codecheckers/codecheckers repository
 #'
-#' This function downloads the codecheckers registry from the codecheckers/codecheckers
-#' repository and caches it for performance.
+#' Three CSVs record who conducts CODECHECKs, and a codechecker can appear in
+#' more than one of them:
 #'
-#' @param ... Additional arguments passed to the memoization mechanism
-#' @param envir Environment for memoization caching (default: parent.frame())
-#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages
-#' @importFrom utils read.csv
-#' @export
-get_codecheckers_data <- function() {
-  url <- "https://raw.githubusercontent.com/codecheckers/codecheckers/master/codecheckers.csv"
+#' - `codecheckers.csv` - the volunteers who signed up via the registration
+#'   issue. Carries `contact`, `fields` and `languages` as well.
+#' - `institutional-codecheckers.csv` - people who codecheck as part of their
+#'   job, onboarded with their institution rather than through the sign-up.
+#' - `agile-codecheckers.csv` - reviewers of the Reproducible AGILE initiative,
+#'   who check AGILE conference submissions rather than as volunteers.
+#'
+#' The register identifies a codechecker by the ORCID in `codecheck.yml`, so
+#' the two non-volunteer lists only became usable here once they carried an
+#' `ORCID` column - before that, an AGILE or institutional codechecker's page
+#' showed neither avatar nor GitHub link, however well known their handle was.
+#'
+#' @keywords internal
+CODECHECKER_LIST_URLS <- c(
+  volunteer = "https://raw.githubusercontent.com/codecheckers/codecheckers/master/codecheckers.csv",
+  institutional = "https://raw.githubusercontent.com/codecheckers/codecheckers/master/institutional-codecheckers.csv",
+  agile = "https://raw.githubusercontent.com/codecheckers/codecheckers/master/agile-codecheckers.csv"
+)
 
+#' The columns a codechecker list is normalised to
+#' @keywords internal
+CODECHECKER_LIST_COLUMNS <- c("name", "handle", "ORCID", "contact", "fields", "languages")
+
+#' Fetch one codechecker list from GitHub
+#'
+#' A failed fetch is a warning and an empty data frame, never an error: a
+#' render without network access should still produce pages, just without the
+#' profile panel. The same holds for a list that does not (yet) carry every
+#' column - see [normalize_codechecker_list()].
+#'
+#' @param url Raw URL of the CSV.
+#' @return A data frame with the columns of [CODECHECKER_LIST_COLUMNS].
+#' @importFrom utils read.csv
+#' @keywords internal
+fetch_codechecker_list <- function(url) {
   tryCatch({
-    codecheckers <- read.csv(url, stringsAsFactors = FALSE, strip.white = TRUE)
-    return(codecheckers)
+    normalize_codechecker_list(read.csv(url, stringsAsFactors = FALSE, strip.white = TRUE))
   }, error = function(e) {
-    warning("Failed to fetch codecheckers.csv: ", e$message)
-    return(data.frame(
-      name = character(0),
-      handle = character(0),
-      ORCID = character(0),
-      contact = character(0),
-      fields = character(0),
-      languages = character(0)
-    ))
+    warning("Failed to fetch ", basename(url), ": ", e$message)
+    normalize_codechecker_list(NULL)
   })
 }
 
-# Memoize the function for caching
-get_codecheckers_data <- R.cache::addMemoization(get_codecheckers_data)
+# Memoize the fetch for caching, so a render reads each list once
+fetch_codechecker_list <- R.cache::addMemoization(fetch_codechecker_list)
+
+#' Bring a codechecker list to a common set of columns
+#'
+#' The three lists differ: only `codecheckers.csv` has `contact`, `fields` and
+#' `languages`, and `institutional-codecheckers.csv` additionally has
+#' `institution`, which is of no interest here. Missing columns are filled with
+#' `NA` rather than treated as an error, so that a list whose columns change -
+#' or a list read before its `ORCID` column landed - degrades to "no profile
+#' information" instead of failing the render.
+#'
+#' @param codecheckers A data frame, or `NULL` for an empty one.
+#' @return A data frame with exactly the columns of [CODECHECKER_LIST_COLUMNS].
+#' @keywords internal
+normalize_codechecker_list <- function(codecheckers) {
+  columns <- rep(list(character(0)), length(CODECHECKER_LIST_COLUMNS))
+  names(columns) <- CODECHECKER_LIST_COLUMNS
+  empty <- as.data.frame(columns, stringsAsFactors = FALSE)
+  if (is.null(codecheckers) || nrow(codecheckers) == 0) {
+    return(empty)
+  }
+
+  for (column in CODECHECKER_LIST_COLUMNS) {
+    if (!column %in% names(codecheckers)) {
+      codecheckers[[column]] <- NA_character_
+    }
+  }
+
+  codecheckers[, CODECHECKER_LIST_COLUMNS, drop = FALSE]
+}
+
+#' Fetch and cache codecheckers.csv data from GitHub
+#'
+#' The volunteer codechecker list. See [CODECHECKER_LIST_URLS] for the other
+#' two lists and [all_codechecker_records()] for the three of them combined,
+#' which is what the profile lookups below search.
+#'
+#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages
+#' @export
+get_codecheckers_data <- function() {
+  fetch_codechecker_list(CODECHECKER_LIST_URLS[["volunteer"]])
+}
+
+#' Fetch and cache institutional-codecheckers.csv data from GitHub
+#'
+#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages
+#'   (the last three are `NA` - the institution is the point of contact)
+#' @export
+get_institutional_codecheckers_data <- function() {
+  fetch_codechecker_list(CODECHECKER_LIST_URLS[["institutional"]])
+}
+
+#' Fetch and cache agile-codecheckers.csv data from GitHub
+#'
+#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages
+#'   (the last three are `NA`)
+#' @export
+get_agile_codecheckers_data <- function() {
+  fetch_codechecker_list(CODECHECKER_LIST_URLS[["agile"]])
+}
+
+#' All codecheckers from all three lists, volunteers first
+#'
+#' Somebody may be in more than one list (a volunteer who later also codechecks
+#' for their institution, say), so the lookups below take the *first* match:
+#' `codecheckers.csv` is the richer record and wins, and the order of the other
+#' two only decides which `source` label a person in both gets.
+#'
+#' @return A data frame with the columns of [CODECHECKER_LIST_COLUMNS] plus
+#'   `source`, one of `volunteer`, `institutional` or `agile`.
+#' @keywords internal
+all_codechecker_records <- function() {
+  lists <- lapply(names(CODECHECKER_LIST_URLS), function(source) {
+    records <- fetch_codechecker_list(CODECHECKER_LIST_URLS[[source]])
+    records$source <- rep(source, nrow(records))
+    records
+  })
+
+  do.call(rbind, lists)
+}
+
+#' Turn one row of a codechecker list into a profile
+#'
+#' @param codechecker One row of [all_codechecker_records()].
+#' @return A profile list, see [get_codechecker_profile()].
+#' @keywords internal
+codechecker_record_to_profile <- function(codechecker) {
+  blank <- function(value) is.null(value) || is.na(value) || !nzchar(value)
+
+  github_handle <- gsub("^@", "", codechecker$handle)
+
+  list(
+    name = codechecker$name,
+    github_handle = if (blank(github_handle)) NULL else github_handle,
+    orcid = if (blank(codechecker$ORCID)) NULL else codechecker$ORCID,
+    fields = codechecker$fields,
+    languages = codechecker$languages,
+    source = codechecker$source
+  )
+}
 
 #' Get codechecker profile information by ORCID
 #'
-#' Retrieves profile information for a codechecker from the codecheckers registry.
+#' Searches all three codechecker lists, see [all_codechecker_records()].
 #'
 #' @param orcid The ORCID identifier (without URL prefix)
-#' @return A list with profile information (name, handle, orcid, fields, languages)
-#'         or NULL if not found
+#' @return A list with profile information (name, github_handle, orcid, fields,
+#'         languages, source) or NULL if not found
 #' @export
 get_codechecker_profile <- function(orcid) {
   if (is.null(orcid) || is.na(orcid) || orcid == "" || orcid == "0000-0000-0000-0000") {
     return(NULL)
   }
 
-  codecheckers <- get_codecheckers_data()
+  codecheckers <- all_codechecker_records()
 
-  if (nrow(codecheckers) == 0) {
-    return(NULL)
-  }
-
-  # Find the codechecker by ORCID
-  match_idx <- which(codecheckers$ORCID == orcid)
+  # Find the codechecker by ORCID. The checksum digit of an ORCID may be an
+  # "X", which the register writes uppercase but a list may not, so match
+  # case-insensitively rather than missing such a person.
+  match_idx <- which(toupper(codecheckers$ORCID) == toupper(orcid))
 
   if (length(match_idx) == 0) {
     return(NULL)
   }
 
-  codechecker <- codecheckers[match_idx[1], ]
-
-  # Extract GitHub handle (remove @ prefix if present)
-  github_handle <- gsub("^@", "", codechecker$handle)
-
-  profile <- list(
-    name = codechecker$name,
-    github_handle = if (github_handle != "" && !is.na(github_handle)) github_handle else NULL,
-    orcid = codechecker$ORCID,
-    fields = codechecker$fields,
-    languages = codechecker$languages
-  )
-
-  return(profile)
+  codechecker_record_to_profile(codecheckers[match_idx[1], ])
 }
 
 #' Get codechecker profile information by GitHub handle
 #'
-#' Retrieves profile information for a codechecker from the codecheckers registry.
+#' Searches all three codechecker lists, see [all_codechecker_records()].
 #'
 #' @param handle The GitHub handle (without @ prefix)
-#' @return A list with profile information (name, handle, orcid, fields, languages)
-#'         or NULL if not found
+#' @return A list with profile information (name, github_handle, orcid, fields,
+#'         languages, source) or NULL if not found
 #' @export
 get_codechecker_profile_by_handle <- function(handle) {
   if (is.null(handle) || is.na(handle) || handle == "") {
     return(NULL)
   }
 
-  codecheckers <- get_codecheckers_data()
-
-  if (nrow(codecheckers) == 0) {
-    return(NULL)
-  }
+  codecheckers <- all_codechecker_records()
 
   # Normalize handle (remove @ prefix if present)
   handle <- gsub("^@", "", handle)
 
-  # Find the codechecker by handle (try with and without @ prefix)
-  match_idx <- which(codecheckers$handle == handle | codecheckers$handle == paste0("@", handle))
+  # GitHub handles are case-insensitive, and the lists spell them as their
+  # owners do (@NinaWie, @EftyK), while a page identifier may not.
+  handles <- tolower(gsub("^@", "", codecheckers$handle))
+  match_idx <- which(handles == tolower(handle))
 
   if (length(match_idx) == 0) {
     return(NULL)
   }
 
-  codechecker <- codecheckers[match_idx[1], ]
-
-  # Extract GitHub handle (remove @ prefix if present)
-  github_handle <- gsub("^@", "", codechecker$handle)
-
-  profile <- list(
-    name = codechecker$name,
-    github_handle = if (github_handle != "" && !is.na(github_handle)) github_handle else NULL,
-    orcid = if (!is.na(codechecker$ORCID) && codechecker$ORCID != "") codechecker$ORCID else NULL,
-    fields = codechecker$fields,
-    languages = codechecker$languages
-  )
-
-  return(profile)
+  codechecker_record_to_profile(codecheckers[match_idx[1], ])
 }
 
 #' Get GitHub handle for a codechecker by name
 #'
-#' Looks up the GitHub handle for a codechecker by their name in the codecheckers registry.
+#' Looks up the GitHub handle for a codechecker by their name in all three
+#' codechecker lists, see [all_codechecker_records()]. Used for codecheckers
+#' whose `codecheck.yml` carries no ORCID, where the name is all there is to
+#' match on.
 #'
 #' @param name The full name of the codechecker
 #' @return The GitHub handle (without @ prefix) or NULL if not found
@@ -129,29 +220,15 @@ get_github_handle_by_name <- function(name) {
     return(NULL)
   }
 
-  codecheckers <- get_codecheckers_data()
+  codecheckers <- all_codechecker_records()
 
-  if (nrow(codecheckers) == 0) {
-    return(NULL)
-  }
-
-  # Find the codechecker by name
   match_idx <- which(codecheckers$name == name)
 
   if (length(match_idx) == 0) {
     return(NULL)
   }
 
-  codechecker <- codecheckers[match_idx[1], ]
-
-  # Extract GitHub handle (remove @ prefix if present)
-  github_handle <- gsub("^@", "", codechecker$handle)
-
-  if (github_handle == "" || is.na(github_handle)) {
-    return(NULL)
-  }
-
-  return(github_handle)
+  codechecker_record_to_profile(codecheckers[match_idx[1], ])$github_handle
 }
 
 #' Generate HTML redirect page for codechecker

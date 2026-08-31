@@ -4,17 +4,13 @@
 \alias{get_codecheckers_data}
 \title{Fetch and cache codecheckers.csv data from GitHub}
 \usage{
-get_codecheckers_data(..., envir = parent.frame())
-}
-\arguments{
-\item{...}{Additional arguments passed to the memoization mechanism}
-
-\item{envir}{Environment for memoization caching (default: parent.frame())}
+get_codecheckers_data()
 }
 \value{
 A data frame with columns: name, handle, ORCID, contact, fields, languages
 }
 \description{
-This function downloads the codecheckers registry from the codecheckers/codecheckers
-repository and caches it for performance.
+The volunteer codechecker list. See [CODECHECKER_LIST_URLS] for the other
+two lists and [all_codechecker_records()] for the three of them combined,
+which is what the profile lookups below search.
 }
