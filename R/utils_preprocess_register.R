@@ -17,6 +17,32 @@ register_clear_cache <- function() {
   clear_cert_link_cache()
 }
 
+#' Fetch a `codecheck.yml` without aborting the whole render
+#'
+#' The register is rendered from 130+ `codecheck.yml` files spread over
+#' GitHub, OSF, GitLab and Zenodo, and every one of them is a chance for a
+#' rate limit, an outage or a moved repository. A single such failure must
+#' degrade the one entry it concerns, not stop the render of all the others -
+#' so every enrichment loop below goes through this wrapper, which turns the
+#' error into a warning naming the certificate (`register_render()` collects
+#' and reports those at the end) and returns `NULL`, the same value the
+#' loops already handle for a repository without a `codecheck.yml`.
+#'
+#' @param repo The repository specification, i.e. the `Repository` column
+#' @param cert_id The certificate identifier, for the warning message
+#' @return The parsed `codecheck.yml`, or `NULL` if it could not be retrieved
+get_codecheck_yml_or_null <- function(repo, cert_id = NULL) {
+  tryCatch(
+    get_codecheck_yml(repo),
+    error = function(e) {
+      warning("Could not retrieve codecheck.yml from ", repo,
+              if (!is.null(cert_id)) paste0(" for certificate ", cert_id) else "",
+              ": ", conditionMessage(e))
+      NULL
+    }
+  )
+}
+
 #' Function for adding clickable links to the paper for each entry in the register table.
 #' 
 #' @param register_table The register table
@@ -28,7 +54,15 @@ add_paper_links <- function(register_table, register){
   # Looping over the entries in the register
   for (i in seq_len(nrow(register))) {
     # Retrieving the link to the paper 
-    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+    config_yml <- get_codecheck_yml_or_null(register[i, ]$Repo, register[i, ]$Certificate)
+
+    # Without the configuration there is neither a title nor a link, so the
+    # entry keeps its place in the table with an empty cell
+    if (is.null(config_yml)) {
+      list_hyperlinks <- c(list_hyperlinks, NA_character_)
+      next
+    }
+
     paper_link <- config_yml[["paper"]][["reference"]]
     paper_title <- config_yml[["paper"]][["title"]]
 
@@ -73,7 +107,7 @@ add_report_links <- function(register_table, register) {
   reports <- c()
 
   for (i in seq_len(nrow(register))) {
-    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+    config_yml <- get_codecheck_yml_or_null(register[i, ]$Repo, register[i, ]$Certificate)
 
     report <- NA
     if (!is.null(config_yml)) {
@@ -121,7 +155,7 @@ add_check_time <- function(register_table, register) {
 
   # Looping over the entries in the register
   for (i in seq_len(nrow(register))) {
-    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+    config_yml <- get_codecheck_yml_or_null(register[i, ]$Repo, register[i, ]$Certificate)
 
     check_time <- NA
     if (!is.null(config_yml)) {
@@ -146,7 +180,7 @@ add_codechecker <- function(register_table, register) {
 
   # Looping over the entries in the register
   for (i in seq_len(nrow(register))) {
-    config_yml <- get_codecheck_yml(register[i, ]$Repo)
+    config_yml <- get_codecheck_yml_or_null(register[i, ]$Repo, register[i, ]$Certificate)
 
     codechecker_ids <- c()
     if (!is.null(config_yml)  && !is.null(config_yml$codechecker)) {
@@ -247,7 +281,7 @@ add_openalex_ids <- function(register_table, register) {
     # A single flaky fetch (of 132+ external repos, across several hosts)
     # must not abort the whole render - same reasoning as the OpenAlex
     # lookup below, just one step earlier.
-    config_yml <- tryCatch(get_codecheck_yml(register[i, ]$Repo), error = function(e) NULL)
+    config_yml <- get_codecheck_yml_or_null(register[i, ]$Repo, cert_id)
 
     lookup <- if (!is.null(config_yml) && !is.null(config_yml$paper$reference)) {
       first_author <- NULL

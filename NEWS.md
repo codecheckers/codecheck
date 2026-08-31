@@ -24,6 +24,9 @@
 
 ## Bug Fixes
 
+* A `codecheck.yml` that cannot be retrieved no longer aborts the whole register render: the affected entry is rendered without the metadata and a warning names the certificate and the error, instead of the render stopping at the first rate limited or unreachable repository.
+* `register_render()` rejects an empty register, or a `from`/`to` selection outside it, up front with a message saying so, instead of carrying rows of `NA` into the enrichment steps and failing later with an unrelated error.
+* The download of a `codecheck.yml` from OSF is now retried like the two OSF API calls preceding it, so a rejection from OSF's file server (e.g. `Forbidden (HTTP 403)` when the anonymous quota is exhausted) no longer ends the render.
 * The Zenodo DOI badge in the page footer no longer renders its raw URL as visible link text next to the badge image.
 * Codechecker and venue pages' Schema.org `Review` entities no longer embed markdown link syntax in `@id`, `url` and `name`.
 * Pages without Schema.org metadata of their own no longer emit an empty `<script type="application/ld+json">`; they fall back to the generic CODECHECK website metadata as intended.

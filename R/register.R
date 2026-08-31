@@ -69,6 +69,19 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   cli::cli_h1("CODECHECK Register Rendering")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
 
+  # Reject a selection that no certificate can come out of before any of the
+  # enrichment runs: `register[(from:to), ]` happily returns rows of NA for
+  # out of bounds indices (an empty register with the default to = 0 being the
+  # obvious case), and those only surface much later as an obscure error from
+  # one of the rendering steps.
+  if (nrow(register) == 0) {
+    stop("The register is empty, there is nothing to render.")
+  }
+  if (from < 1 || to > nrow(register) || from > to) {
+    stop("Malformed selection of register entries: 'from' is ", from, " and 'to' is ", to,
+         ", but the register has ", nrow(register), " entries.")
+  }
+
   # rmarkdown versions the header-attrs HTML dependency with
   # packageVersion("rmarkdown"), so its directory name in docs/libs changes on
   # every rmarkdown release even though the file itself never does, and the

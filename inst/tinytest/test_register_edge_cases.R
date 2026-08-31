@@ -45,8 +45,11 @@ expect_error({
     )
   })
   unlink(test_dir, recursive = TRUE)
-}, pattern = "Malformed")
-# Empty register should error or handle gracefully
+}, pattern = "register is empty")
+# An empty register is rejected up front, with a message saying so - the
+# enrichment steps themselves tolerate an unreachable repository now, so they
+# would otherwise carry the empty selection's rows of NA a long way before
+# failing with an unrelated error.
 
 # Test 2: register_render() - single entry register ----
 single_register <- data.frame(

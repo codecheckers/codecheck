@@ -120,7 +120,12 @@ get_codecheck_yml_osf <- function(x) {
   
   if (nrow(repo_files) == 1) {
     temp_dir <- tempdir()
-    osfr::osf_download(repo_files, path = temp_dir)
+    # The download goes to OSF's file server (WaterButler), which rate limits
+    # anonymous requests independently of the API - a whole register render
+    # fetches one file per OSF entry, so this is the call most likely to be
+    # rejected, and it needs the same retry as the two API calls above.
+    retry_osf(function() osfr::osf_download(repo_files, path = temp_dir,
+                                            conflicts = "overwrite"))
     local_file <- file.path(temp_dir, "codecheck.yml")
     config_file <- yaml::read_yaml(file = local_file)
     file.remove(local_file)
