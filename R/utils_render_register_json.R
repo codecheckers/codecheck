@@ -573,6 +573,31 @@ render_register_json <- function(register_table, table_details, filter, full_reg
     )
   }
 
+  # Add the codechecker's identity and contributed-venues list (name, ORCID,
+  # GitHub username, venue_count, venues) to their own stats.json (addresses
+  # register#78). Shares get_codechecker_venues()/resolve_codechecker_profile()
+  # with the HTML contributed-venues list and metadata panel (register#74/
+  # #189/#83/#75), so the JSON and HTML views of the same facts agree.
+  is_codechecker_page <- filter == "codecheckers" &&
+    !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
+  if (is_codechecker_page) {
+    identifier <- table_details[["name"]]
+    profile <- resolve_codechecker_profile(identifier)
+    venues <- get_codechecker_venues(register_table)
+    nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
+    stats_data$codechecker <- list(
+      name = if (!is.null(profile$name)) profile$name else NA_character_,
+      orcid = nullable(profile$orcid),
+      github_username = nullable(profile$github_handle),
+      venue_count = nrow(venues),
+      venues = lapply(seq_len(nrow(venues)), function(i) list(
+        name = venues$Venue[i],
+        type = venues$Type[i],
+        cert_count = venues$cert_count[i]
+      ))
+    )
+  }
+
   # Add annual statistics for the main register (addresses register#144).
   # Named statistics.json rather than stats.json for this one file - it is the
   # file the statistics dashboard (render_statistics_page()) reads and links
@@ -588,8 +613,17 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   # contact, description, identifiers, ...) alongside cert_count/source, not
   # just statistics - index.json (matching index.html) rather than
   # stats.json/statistics.json (addresses register#84 followup).
+  # NOTE: full_register_table is passed non-NULL from every per-item render
+  # call (create_register_files()), not just the main register, so
+  # is_main_register alone cannot distinguish them - is_venue_page/
+  # is_codechecker_page take priority here for filename purposes (pre-existing
+  # behaviour, unrelated to register#78; also means every sub-register file
+  # picks up the main register's annual-stats fields alongside its own
+  # content, harmless but not cleaned up here as it is out of scope).
   stats_filename <- if (is_venue_page) {
     "index.json"
+  } else if (is_codechecker_page) {
+    "stats.json"
   } else if (is_main_register) {
     "statistics.json"
   } else {

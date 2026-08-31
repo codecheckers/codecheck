@@ -466,6 +466,30 @@ register_update_stats <- function(docs_dir = "docs",
       stats_filename <- "index.json"
     }
 
+    # A codechecker's stats.json carries their identity (name/ORCID/GitHub
+    # username) and contributed-venues list alongside cert_count/source
+    # (addresses register#78) - the codechecker-specific register.json view
+    # keeps Venue/Type columns (unlike the venue view), so
+    # get_codechecker_venues() applies directly to sub_data.
+    is_codechecker_dir <- length(path_parts) == 2 && path_parts[1] == "codecheckers"
+    if (is_codechecker_dir) {
+      identifier <- path_parts[2]
+      profile <- resolve_codechecker_profile(identifier)
+      venues <- get_codechecker_venues(sub_data)
+      nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
+      sub_stats$codechecker <- list(
+        name = if (!is.null(profile$name)) profile$name else NA_character_,
+        orcid = nullable(profile$orcid),
+        github_username = nullable(profile$github_handle),
+        venue_count = nrow(venues),
+        venues = lapply(seq_len(nrow(venues)), function(i) list(
+          name = venues$Venue[i],
+          type = venues$Type[i],
+          cert_count = venues$cert_count[i]
+        ))
+      )
+    }
+
     jsonlite::write_json(sub_stats, auto_unbox = TRUE,
                          path = file.path(sub_dir, stats_filename), pretty = TRUE, na = "null")
     updated <- updated + 1L

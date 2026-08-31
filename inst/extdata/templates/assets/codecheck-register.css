@@ -192,10 +192,6 @@ nav[aria-label="breadcrumb"] {
    Codechecker Profiles
    ==================== */
 
-.codechecker-profile-links {
-    margin-bottom: 1.5em;
-}
-
 .orcid-icon-large {
     font-size: 1.2em;
     color: #A6CE39;
@@ -456,4 +452,14 @@ h1 {
         display: block;
         margin: 0 0 1rem;
     }
+}
+
+/* ====================
+   Codechecker Metadata Panel
+   ==================== */
+
+.codechecker-metadata-avatar {
+    max-width: 96px;
+    max-height: 96px;
+    border-radius: 50%;
 }

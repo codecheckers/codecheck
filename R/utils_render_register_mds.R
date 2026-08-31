@@ -32,6 +32,23 @@ add_markdown_title <- function(table_details, md_table, filter){
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param filter The filter
 render_register_md <- function(register_table, table_details, filter) {
+  # Codechecker identity metadata and contributed-venues list (register#74/
+  # #189/#83/#75, all shown together in one panel) need the pristine
+  # per-codechecker register_table, before add_venue_hyperlinks_reg() below
+  # rewrites its Venue column into a markdown link - so compute them first.
+  profile_links <- ""
+  profile_frontmatter <- ""
+  is_codechecker_page <- filter == "codecheckers" &&
+    !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
+  if (is_codechecker_page) {
+    identifier <- table_details[["name"]]
+    if ("for_html_file" %in% names(table_details)) {
+      profile_links <- generate_codechecker_metadata_html(identifier, register_table, table_details)
+    } else {
+      profile_frontmatter <- generate_codechecker_metadata_yaml(identifier, register_table)
+    }
+  }
+
   # Convert certificate links to relative paths for HTML display
   # (JSON and CSV keep absolute URLs)
   register_table <- adjust_cert_links_relative(register_table, table_details)
@@ -45,13 +62,8 @@ render_register_md <- function(register_table, table_details, filter) {
   # Fill in the content
   md_table <- create_md_table(register_table, table_details, filter)
 
-  # Add profile links for codechecker pages
-  profile_links <- ""
-  if (filter == "codecheckers" && !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
-    orcid <- table_details[["name"]]
-    profile_links <- generate_codechecker_profile_links(orcid)
-  }
   md_table <- gsub("\\$profile_links\\$", profile_links, md_table)
+  md_table <- gsub("\\$profile_frontmatter\\$", profile_frontmatter, md_table)
 
   # Add venue metadata for individual venue pages: as an HTML block in the
   # body for the HTML-rendered page (temp.md, fed to pandoc), but as YAML

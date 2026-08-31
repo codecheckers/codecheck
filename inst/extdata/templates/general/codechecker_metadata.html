@@ -1,0 +1,18 @@
+<div class="venue-metadata codechecker-metadata">
+{{#has_github}}
+<img class="venue-metadata-logo codechecker-metadata-avatar" src="https://github.com/{{github_handle}}.png" alt="{{github_handle}} GitHub avatar">
+{{/has_github}}
+<div class="venue-metadata-text">
+<ul class="venue-metadata-list">
+{{#has_orcid}}
+<li><i class="ai ai-orcid"></i> <span class="venue-metadata-label">ORCID:</span> <a href="https://orcid.org/{{orcid}}" target="_blank" rel="noopener">{{orcid}}</a></li>
+{{/has_orcid}}
+{{#has_github}}
+<li><i class="fa fa-github"></i> <span class="venue-metadata-label">GitHub:</span> <a href="https://github.com/{{github_handle}}" target="_blank" rel="noopener">{{github_handle}}</a></li>
+{{/has_github}}
+{{#has_venues}}
+<li><i class="fa fa-check-square-o"></i> <span class="venue-metadata-label">Contributed checks:</span> {{{venues_html}}}</li>
+{{/has_venues}}
+</ul>
+</div>
+</div>
