@@ -2,6 +2,10 @@
 {{#has_github}}
 <img class="venue-metadata-logo codechecker-metadata-avatar" src="https://github.com/{{github_handle}}.png" alt="{{github_handle}} GitHub avatar">
 {{/has_github}}
+{{#has_type_chart}}
+{{{type_chart_svg}}}
+<script id="codechecker-types" type="application/json">{{{type_counts_json}}}</script>
+{{/has_type_chart}}
 <div class="venue-metadata-text">
 <ul class="venue-metadata-list">
 {{#has_orcid}}

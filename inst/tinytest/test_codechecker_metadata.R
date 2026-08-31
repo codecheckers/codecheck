@@ -90,3 +90,58 @@ if (!is.null(known_profile) && !is.null(known_profile$github_handle)) {
 } else {
   cat("Skipping live codecheckers.csv-dependent assertions (network unavailable or entry changed)\n")
 }
+
+# Unit tests: get_codechecker_type_counts() and the donut in the panel (register#207) ----
+
+expect_equal(length(codecheck:::get_codechecker_type_counts(empty_table)), 0)
+
+# reg_table has two AGILEGIS conference checks and one GigaByte journal check
+type_counts <- codecheck:::get_codechecker_type_counts(reg_table)
+expect_equal(as.integer(type_counts[["conference"]]), 2L)
+expect_equal(as.integer(type_counts[["journal"]]), 1L)
+# Ordered largest first, so the donut and the bar segment alike
+expect_equal(names(type_counts), c("conference", "journal"))
+
+# The panel carries the donut, one <path> per type, and the JSON twin
+expect_true(grepl("codechecker-type-chart", venues_only_html, fixed = TRUE))
+expect_equal(length(gregexpr("<path", venues_only_html)[[1]]), 2L)
+expect_true(grepl('id="codechecker-types"', venues_only_html, fixed = TRUE))
+expect_true(grepl('{"conference":2,"journal":1}', venues_only_html, fixed = TRUE))
+
+# Every slice's tooltip lists *every* type, so no hover shows a partial list.
+# The line breaks must be &#10; entities, not literal newlines: pandoc reflows
+# the whitespace of a raw HTML block and would collapse real ones into spaces.
+expect_false(grepl("<title>[^<]*\n", venues_only_html))
+slice_titles <- regmatches(
+  venues_only_html,
+  gregexpr("<title>[^<]*</title>", venues_only_html)
+)[[1]]
+expect_equal(length(slice_titles), 2L)
+for (title in slice_titles) {
+  expect_true(grepl("conference: 2 (67%)", title, fixed = TRUE))
+  expect_true(grepl("journal: 1 (33%)", title, fixed = TRUE))
+  expect_true(grepl("&#10;", title, fixed = TRUE))
+  # The indent is entities too, so pandoc cannot collapse it and leave the
+  # unmarked lines misaligned under the marked one
+  expect_true(grepl("&#160;&#160;", title, fixed = TRUE))
+}
+# ...each marking its own type
+expect_true(any(grepl("▸ conference", slice_titles, fixed = TRUE)))
+expect_true(any(grepl("▸ journal", slice_titles, fixed = TRUE)))
+
+# A single venue type is a stroked circle, not a degenerate 360-degree arc
+one_type_table <- data.frame(
+  Venue = c("AGILEGIS", "AGILEGIS"),
+  Type = c("conference", "conference"),
+  stringsAsFactors = FALSE
+)
+one_type_html <- codecheck:::generate_codechecker_metadata_html(
+  "0000-0000-0000-0001", one_type_table, table_details
+)
+expect_true(grepl("<circle", one_type_html, fixed = TRUE))
+expect_false(grepl("<path", one_type_html, fixed = TRUE))
+
+# The YAML export is unchanged by all of the above - it is a markdown/API file,
+# not HTML, and already carries venues[].type/cert_count
+expect_false(grepl("svg", venues_only_yaml, fixed = TRUE))
+expect_false(grepl("codechecker-type-chart", venues_only_yaml, fixed = TRUE))

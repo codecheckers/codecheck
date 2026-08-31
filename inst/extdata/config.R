@@ -32,7 +32,7 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
   non_reg = list(
     venues = "|:-----------|:---------------------|:----------|",
     venues_subcat = "|:---------------------|:----------|",
-    codecheckers = "|:-----------|:---------------------|:----------|"
+    codecheckers = "|:-----------|:---------------------|:----------|:------|"
   )
 )
 
@@ -135,6 +135,23 @@ CONFIG$VENUE_SUBCAT_PLURAL <- list(
   institution = "institutions"
 )
 
+# Stable venue-type -> colour map. The statistics page used to derive these by
+# position from the order the types happen to first appear in the data, which
+# silently reassigns colours as the register grows; the codecheckers table
+# (register#92) and the codechecker donut (register#207) need the same colours
+# as that page, so the mapping is pinned here by name. The values are the
+# colours the statistics page produced before this was pinned down.
+CONFIG$VENUE_TYPE_COLORS <- list(
+  journal = "#2c7a4b",
+  community = "#3f7fbf",
+  conference = "#c97a2c",
+  institution = "#8a4fbf"
+)
+
+# Used for any venue type not listed above, so a new type is visibly neutral
+# rather than borrowing another type's colour.
+CONFIG$VENUE_TYPE_COLOR_FALLBACK <- "#8a8a8a"
+
 # NON-REGISTER_TABLE
 CONFIG$NON_REG_TITLE_BASE <- "CODECHECK List of"
 CONFIG$NON_REG_TITLE_FNS <- list(
@@ -200,7 +217,8 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
   "codecheckers" = c(
     "codechecker_name" = "Codechecker name",
     "Codechecker" = "ORCID",
-    "no_codechecks" = "No. of codechecks"
+    "no_codechecks" = "No. of codechecks",
+    "check_types" = "Check types"
   ),
 
   "venues" = c(

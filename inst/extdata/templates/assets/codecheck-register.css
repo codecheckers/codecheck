@@ -463,3 +463,41 @@ h1 {
     max-height: 96px;
     border-radius: 50%;
 }
+
+/* ====================
+   Check-Type Visualisations
+   ==================== */
+
+/* Stacked bar in the codecheckers table (register#92). Segment widths are set
+   inline as percentages; colours come from CONFIG$VENUE_TYPE_COLORS. */
+.type-bar {
+    display: inline-flex;
+    width: 120px;
+    height: 12px;
+    border-radius: 3px;
+    overflow: hidden;
+    vertical-align: middle;
+    background: #e9ecea;
+}
+
+.type-bar i {
+    display: block;
+    height: 100%;
+}
+
+/* Donut beside the avatar on a codechecker's page (register#207), sized to
+   match .codechecker-metadata-avatar. */
+.codechecker-type-chart {
+    float: right;
+    width: 96px;
+    height: 96px;
+    margin: 0 0 1rem 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .codechecker-type-chart {
+        float: none;
+        display: block;
+        margin: 0 0 1rem;
+    }
+}

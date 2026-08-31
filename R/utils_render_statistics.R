@@ -105,6 +105,21 @@ render_statistics_page <- function(docs_dir = "docs") {
   invisible(html_file_path)
 }
 
+#' Colour for a venue type
+#'
+#' Named lookup in `CONFIG$VENUE_TYPE_COLORS`, so the statistics page, the
+#' codecheckers table (register#92) and the codechecker donut (register#207)
+#' all colour a given venue type the same way. Any type not in the map gets
+#' `CONFIG$VENUE_TYPE_COLOR_FALLBACK` rather than another type's colour.
+#'
+#' @param type A venue type, e.g. `"journal"`.
+#' @return A hex colour string.
+#' @keywords internal
+venue_type_color <- function(type) {
+  color <- CONFIG$VENUE_TYPE_COLORS[[type]]
+  if (is.null(color)) CONFIG$VENUE_TYPE_COLOR_FALLBACK else color
+}
+
 #' Build the HTML body content of the statistics dashboard
 #'
 #' @param stats The parsed contents of `statistics.json` (a list)
@@ -163,6 +178,11 @@ build_statistics_content_html <- function(stats, base_path = "..") {
   })
   names(venue_type_datasets) <- venue_type_names
 
+  # Keyed by type name (not by position) so the JS looks a colour up rather
+  # than indexing into an array whose order depends on the data.
+  venue_type_colors <- lapply(venue_type_names, venue_type_color)
+  names(venue_type_colors) <- venue_type_names
+
   charts_html <- paste0(
     '<div class="row stats-charts-row">\n',
     '  <div class="col-md-6"><h3>Checks and codecheckers over time</h3><canvas id="checksChart" height="220"></canvas>',
@@ -186,7 +206,8 @@ build_statistics_content_html <- function(stats, base_path = "..") {
     platform_years = platform_years,
     platform_datasets = platform_datasets,
     venue_type_years = venue_type_years,
-    venue_type_datasets = venue_type_datasets
+    venue_type_datasets = venue_type_datasets,
+    venue_type_colors = venue_type_colors
   ), auto_unbox = TRUE)
 
   script_html <- paste0(
@@ -266,9 +287,10 @@ build_statistics_content_html <- function(stats, base_path = "..") {
     '  function venueTypeLabel(key) {\n',
     '    return venueTypeNames[key] || (key.charAt(0).toUpperCase() + key.slice(1));\n',
     '  }\n',
-    '  var venueTypeColors = ["#2c7a4b", "#3f7fbf", "#c97a2c", "#8a4fbf"];\n',
-    '  var venueTypeDatasets = Object.keys(data.venue_type_datasets).map(function (name, i) {\n',
-    '    return { label: venueTypeLabel(name), data: data.venue_type_datasets[name], backgroundColor: venueTypeColors[i % venueTypeColors.length] };\n',
+    '  // Colours are resolved server-side from CONFIG$VENUE_TYPE_COLORS and keyed\n',
+    '  // by type name, so they no longer shift when a new type enters the data.\n',
+    '  var venueTypeDatasets = Object.keys(data.venue_type_datasets).map(function (name) {\n',
+    '    return { label: venueTypeLabel(name), data: data.venue_type_datasets[name], backgroundColor: data.venue_type_colors[name] };\n',
     '  });\n',
     '  var venueTypeChart = new Chart(document.getElementById("venueTypeChart"), {\n',
     '    type: "bar",\n',

@@ -307,6 +307,26 @@ get_codechecker_venues <- function(register_table) {
   as.data.frame(venues, stringsAsFactors = FALSE)
 }
 
+#' Aggregate a codechecker's checks from venues to venue types
+#'
+#' The per-type counts behind the stacked bar (register#92) and the donut
+#' (register#207). Built on [get_codechecker_venues()] so it counts exactly
+#' what the "Contributed checks" row lists, only grouped one level up.
+#'
+#' @param register_table See [get_codechecker_venues()].
+#' @return A named integer vector of checks per venue type, largest first;
+#'   length zero if there is nothing to count.
+#' @keywords internal
+get_codechecker_type_counts <- function(register_table) {
+  venues <- get_codechecker_venues(register_table)
+  if (nrow(venues) == 0) {
+    return(integer(0))
+  }
+
+  counts <- tapply(venues$cert_count, venues$Type, sum)
+  order_type_counts(counts[!is.na(counts)])
+}
+
 #' Turn a single markdown link into an HTML anchor tag
 #'
 #' The codechecker metadata panel is a raw HTML block passed through pandoc
@@ -375,6 +395,17 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
   venues_html <- if (!is.null(register_table)) generate_contributed_venues_html(register_table, table_details) else ""
   has_venues <- nzchar(venues_html)
 
+  # The donut visualises the same numbers the contributed-venues row spells out
+  # (register#207), aggregated from venue to venue type.
+  type_counts <- if (!is.null(register_table)) get_codechecker_type_counts(register_table) else integer(0)
+  donut_svg <- codechecker_type_donut_svg(type_counts)
+  has_type_chart <- nzchar(donut_svg)
+  type_counts_json <- if (has_type_chart) {
+    as.character(jsonlite::toJSON(as.list(type_counts), auto_unbox = TRUE))
+  } else {
+    ""
+  }
+
   if (!has_orcid && !has_github && !has_venues) {
     return("")
   }
@@ -388,7 +419,10 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
     has_orcid = has_orcid,
     orcid = if (has_orcid) profile$orcid else NULL,
     has_venues = has_venues,
-    venues_html = venues_html
+    venues_html = venues_html,
+    has_type_chart = has_type_chart,
+    type_chart_svg = donut_svg,
+    type_counts_json = type_counts_json
   )
 
   whisker.render(template, data)
@@ -431,4 +465,130 @@ generate_codechecker_metadata_yaml <- function(identifier, register_table = NULL
   }
 
   yaml::as.yaml(yaml_list, line.sep = "\n")
+}
+
+#' Escape text for inclusion in HTML/SVG
+#'
+#' Small local helper rather than a new dependency on htmltools - the only
+#' escaping the register needs is for the venue-type names and counts that go
+#' into the check-type visualisations.
+#'
+#' @param text The text to escape.
+#' @param attribute Whether the text goes into an attribute value (also escapes
+#'   quotes) rather than element content.
+#' @return The escaped text.
+#' @keywords internal
+html_escape <- function(text, attribute = FALSE) {
+  text <- gsub("&", "&amp;", text, fixed = TRUE)
+  text <- gsub("<", "&lt;", text, fixed = TRUE)
+  text <- gsub(">", "&gt;", text, fixed = TRUE)
+  if (attribute) {
+    text <- gsub('"', "&quot;", text, fixed = TRUE)
+    text <- gsub("'", "&#39;", text, fixed = TRUE)
+  }
+  text
+}
+
+#' Render a codechecker's checks-per-type as an SVG donut (register#207)
+#'
+#' Inline SVG rather than a charting library: the donut sits at 96px beside the
+#' avatar, and a Chart.js tooltip is painted *inside* its canvas, so a
+#' multi-line one is clipped at that size. Native SVG `<title>` tooltips are
+#' drawn by the browser outside the element and cannot be clipped - and they
+#' are the same hover mechanism as the stacked bar in the codecheckers table.
+#'
+#' Every slice's `<title>` lists *all* types (see [type_breakdown_text()]),
+#' marking its own, which is what lets the chart do without a legend.
+#'
+#' @param counts A named integer vector of checks per venue type.
+#' @return An SVG string, or `""` for no counts.
+#' @keywords internal
+codechecker_type_donut_svg <- function(counts) {
+  counts <- counts[!is.na(counts) & counts > 0]
+  if (length(counts) == 0) {
+    return("")
+  }
+
+  counts <- order_type_counts(counts)
+  total <- sum(counts)
+  types <- names(counts)
+  summary <- paste(sprintf("%d %s", counts, types), collapse = ", ")
+
+  # The line breaks have to be character references, not literal newlines:
+  # pandoc reflows the whitespace of a raw HTML block, which collapses real
+  # newlines inside <title> into spaces and turns the list back into one run-on
+  # line. An entity survives that untouched and the parser turns it back into a
+  # newline in the tooltip.
+  # Both the line breaks and the leading indent have to be character
+  # references, not literal characters: pandoc reflows the whitespace of a raw
+  # HTML block, collapsing real newlines into spaces and runs of spaces into
+  # one, which would both break the list apart and misalign the unmarked lines
+  # under the marked one. Entities survive that untouched.
+  title_for <- function(type) {
+    text <- html_escape(type_breakdown_text(counts, highlight = type))
+    text <- gsub("\n  ", "&#10;&#160;&#160;", text, fixed = TRUE)
+    gsub("\n", "&#10;", text, fixed = TRUE)
+  }
+
+  # A full circle makes an SVG arc degenerate (its start and end points
+  # coincide), so a codechecker with a single venue type - which most have -
+  # gets a stroked circle instead.
+  if (length(counts) == 1) {
+    shapes <- sprintf(
+      '<circle cx="%s" cy="%s" r="%s" fill="none" stroke="%s" stroke-width="%s"><title>%s</title></circle>',
+      DONUT_CENTER, DONUT_CENTER, (DONUT_R_OUTER + DONUT_R_INNER) / 2,
+      venue_type_color(types[1]), DONUT_R_OUTER - DONUT_R_INNER,
+      title_for(types[1])
+    )
+  } else {
+    angles <- -pi / 2 + 2 * pi * cumsum(c(0, counts)) / total
+    shapes <- vapply(seq_along(counts), function(i) {
+      sprintf(
+        '<path d="%s" fill="%s" stroke="#f6f8f6" stroke-width="1"><title>%s</title></path>',
+        donut_slice_path(angles[i], angles[i + 1]),
+        venue_type_color(types[i]),
+        title_for(types[i])
+      )
+    }, character(1))
+  }
+
+  paste0(
+    '<svg class="codechecker-type-chart" viewBox="0 0 96 96" role="img" aria-label="',
+    html_escape(summary, attribute = TRUE), '">',
+    paste(shapes, collapse = ""),
+    '</svg>'
+  )
+}
+
+#' Geometry of the codechecker donut, in the 96x96 user space of its viewBox
+#' @keywords internal
+DONUT_CENTER <- 48
+#' @rdname DONUT_CENTER
+#' @keywords internal
+DONUT_R_OUTER <- 46
+#' @rdname DONUT_CENTER
+#' @keywords internal
+DONUT_R_INNER <- 25
+
+#' Path data for one donut slice
+#'
+#' Outer arc clockwise from `start` to `end`, straight in to the inner radius,
+#' inner arc back again.
+#'
+#' @param start,end Angles in radians, 0 pointing right, measured clockwise.
+#' @return An SVG `d` attribute value.
+#' @keywords internal
+donut_slice_path <- function(start, end) {
+  point <- function(r, angle) {
+    sprintf("%.2f %.2f", DONUT_CENTER + r * cos(angle), DONUT_CENTER + r * sin(angle))
+  }
+  large_arc <- if ((end - start) > pi) 1 else 0
+
+  paste0(
+    "M", point(DONUT_R_OUTER, start),
+    "A", DONUT_R_OUTER, " ", DONUT_R_OUTER, " 0 ", large_arc, " 1 ", point(DONUT_R_OUTER, end),
+    "L", point(DONUT_R_INNER, end),
+    "A", DONUT_R_INNER, " ", DONUT_R_INNER, " 0 ", large_arc, " 0 ", point(DONUT_R_INNER, start),
+    "Z"
+  )
 }
