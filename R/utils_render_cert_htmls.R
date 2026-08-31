@@ -55,8 +55,7 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
 
     # Extract certificate information
     cert_row <- register_table[i, ]
-    cert_hyperlink <- cert_row$Certificate
-    cert_id <- sub("\\[(.*)\\]\\(.*\\)", "\\1", cert_hyperlink)
+    cert_id <- cert_row$Certificate
     report_link <- cert_row$Report
     repo_link <- cert_row$Repository
     cert_type <- cert_row$Type

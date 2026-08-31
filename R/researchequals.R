@@ -738,10 +738,7 @@ check_register_researchequals_policy <- function(
 
   rows <- list()
   for (i in seq_len(nrow(register_table))) {
-    # after preprocessing the Certificate column holds a markdown link, e.g.
-    # "[2026-023](https://codecheck.org.uk/...)", so reduce it to the bare ID
     cert <- as.character(register_table$Certificate[i])
-    cert <- sub("^\\[([^]]+)\\].*$", "\\1", cert)
     report <- reports[i]
 
     # entries not published on ResearchEquals (Zenodo, OSF, ...) are out of scope

@@ -2,6 +2,7 @@
 
 # Setup
 library(codecheck)
+source(system.file("extdata", "config.R", package = "codecheck"))
 
 # Test data - register table with multiple codechecks
 create_test_register <- function() {
@@ -333,3 +334,47 @@ for (i in 1:3) {
     info = paste0("Review ", i, " should have url")
   )
 }
+
+# Test 18: register_table$Certificate, as produced by the real add_cert_links()
+# preprocessing step, must stay a plain identifier - generate_codechecker_schema_org()
+# must not embed markdown link markup in @id/url/name (register regression: it
+# used to read a column add_cert_links() had rewritten into "[id](url)").
+table_via_add_cert_links <- codecheck:::add_cert_links(data.frame(
+  Certificate = "2025-401",
+  Repository = "github::test/repo1",
+  `Check date` = "2025-05-01",
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+))
+
+expect_equal(
+  table_via_add_cert_links$Certificate,
+  "2025-401",
+  info = "add_cert_links() must leave Certificate as the plain identifier"
+)
+
+json_ld_via_add_cert_links <- generate_codechecker_schema_org(
+  codechecker_orcid = codechecker_orcid,
+  codechecker_name = codechecker_name,
+  codechecker_github = NULL,
+  register_table = table_via_add_cert_links
+)
+
+parsed_via_add_cert_links <- jsonlite::fromJSON(json_ld_via_add_cert_links, simplifyVector = FALSE)
+review_via_add_cert_links <- parsed_via_add_cert_links$`@graph`[[2]]
+
+expect_equal(
+  review_via_add_cert_links$`@id`,
+  "https://codecheck.org.uk/register/certs/2025-401/",
+  info = "@id must be a plain certificate URL, not markdown link markup"
+)
+expect_equal(
+  review_via_add_cert_links$url,
+  "https://codecheck.org.uk/register/certs/2025-401/",
+  info = "url must be a plain certificate URL, not markdown link markup"
+)
+expect_equal(
+  review_via_add_cert_links$name,
+  "CODECHECK Certificate 2025-401",
+  info = "name must use the plain certificate identifier, not markdown link markup"
+)

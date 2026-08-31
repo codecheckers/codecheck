@@ -401,6 +401,161 @@ generate_codechecker_schema_org <- function(codechecker_orcid, codechecker_name,
   return(as.character(json_ld))
 }
 
+#' Map a CODECHECK venue type to the closest Schema.org entity type
+#'
+#' @param venue_type journal/conference/community/institution (register.csv `Type`)
+#' @return A Schema.org `@type` string
+#' @keywords internal
+venue_schema_org_type <- function(venue_type) {
+  switch(venue_type,
+    journal = "Periodical",
+    # A conference recurs across years - EventSeries is schema.org's type
+    # for a recurring event, as opposed to one dated Event.
+    conference = "EventSeries",
+    institution = ,
+    community = "Organization",
+    "Organization"
+  )
+}
+
+#' Generate Schema.org JSON-LD for venue pages
+#'
+#' Creates structured metadata using `@graph` to represent the venue (journal,
+#' conference, community or institution) as an appropriately-typed Schema.org
+#' entity - a `Periodical` for a journal, an `EventSeries` for a conference,
+#' `Organization` otherwise, carrying the same metadata as the venue's landing
+#' page panel (name, url, description, logo, identifiers as `PropertyValue`s,
+#' via [get_venue_metadata_fields()]) - together with a `Review` per checked
+#' paper, whose `itemReviewed` `ScholarlyArticle` links back to the venue via
+#' `isPartOf`. Mirrors [generate_codechecker_schema_org()]. Addresses register#183.
+#'
+#' @param venue_name The venue's name (register.csv `Venue` column / venues.csv `name`)
+#' @param venue_type The venue's type (register.csv `Type` column)
+#' @param register_table A data frame of all codechecks for this venue, needs
+#'   `Certificate`, `Repository` and `Check date` columns
+#'
+#' @return JSON-LD string with Schema.org metadata using `@graph`
+#' @export
+generate_venue_schema_org <- function(venue_name, venue_type, register_table) {
+  has_value <- function(x) !is.null(x) && !is.na(x) && nzchar(trimws(x))
+
+  venue_row <- lookup_venue_row(venue_name)
+  fields <- get_venue_metadata_fields(venue_row, venue_type)
+
+  venue_longname <- if ("longname" %in% names(venue_row) && has_value(venue_row[["longname"]][1])) {
+    venue_row[["longname"]][1]
+  } else {
+    venue_name
+  }
+
+  page_url <- NULL
+  if (has_value(fields$venue_type) && fields$venue_type %in% names(CONFIG$VENUE_SUBCAT_PLURAL)) {
+    # Slug must match generate_table_details()'s lowercased directory name
+    # (register#192 - a case-sensitive filesystem would otherwise create a
+    # sibling directory instead of linking to the one every other page uses).
+    slug <- gsub(" ", "_", tolower(venue_name))
+    page_url <- paste0(CONFIG$HYPERLINKS[["venues"]], CONFIG$VENUE_SUBCAT_PLURAL[[fields$venue_type]],
+                       "/", slug, "/")
+  }
+
+  # Prefer an external persistent identifier (ROR, ISSN Portal, ...) as the
+  # entity's @id when available - it is the canonical URI for this venue
+  # elsewhere on the web - falling back to the venue's own page.
+  venue_id <- NULL
+  for (identifier in fields$identifiers) {
+    if (!is.null(identifier$link)) {
+      venue_id <- identifier$link
+      break
+    }
+  }
+  if (is.null(venue_id)) venue_id <- page_url
+
+  venue_entity <- list(`@type` = venue_schema_org_type(fields$venue_type), name = venue_longname)
+  if (!is.null(venue_id)) venue_entity$`@id` <- venue_id
+  if (!is.null(page_url)) venue_entity$url <- page_url
+  if (has_value(fields$website_url)) venue_entity$sameAs <- fields$website_url
+  if (has_value(fields$description)) venue_entity$description <- fields$description
+  if (has_value(fields$logo_url)) {
+    venue_entity$logo <- list(`@type` = "ImageObject", url = fields$logo_url)
+  }
+  if (length(fields$identifiers) > 0) {
+    venue_entity$identifier <- lapply(fields$identifiers, function(i) {
+      property_value <- list(`@type` = "PropertyValue", propertyID = i$name, value = i$value)
+      if (!is.null(i$link)) property_value$url <- i$link
+      property_value
+    })
+  }
+
+  # Reference the venue by @id where one exists, to avoid repeating the full
+  # entity inside every paper's isPartOf.
+  venue_ref <- if (!is.null(venue_entity$`@id`)) list(`@id` = venue_entity$`@id`) else venue_entity
+
+  # Build array of Review entities (codechecks); same approach as
+  # generate_codechecker_schema_org(), except each paper links back to the
+  # venue instead of each review linking back to a codechecker.
+  reviews <- list()
+  n <- nrow(register_table)
+  if (n > 0) {
+    for (i in seq_len(n)) {
+      cert_id <- register_table$Certificate[i]
+      cert_url <- paste0("https://codecheck.org.uk/register/certs/", cert_id, "/")
+
+      paper_title <- NULL
+      paper_url <- NULL
+      tryCatch({
+        repo_link <- register_table$Repository[i]
+        if (!is.null(repo_link) && repo_link != "" && repo_link != "NA") {
+          config_yml <- get_codecheck_yml(repo_link)
+          if (!is.null(config_yml$paper$title)) paper_title <- config_yml$paper$title
+          if (!is.null(config_yml$paper$reference)) paper_url <- config_yml$paper$reference
+        }
+      }, error = function(e) {
+        # Silently skip if we can't get the config
+      })
+
+      review <- list(
+        `@type` = "Review",
+        `@id` = cert_url,
+        name = paste("CODECHECK Certificate", cert_id),
+        url = cert_url
+      )
+
+      if (!is.null(paper_title) || !is.null(paper_url)) {
+        paper <- list(`@type` = "ScholarlyArticle", isPartOf = venue_ref)
+        if (!is.null(paper_title)) paper$name <- paper_title
+        if (!is.null(paper_url)) {
+          paper$url <- paper_url
+          if (grepl("doi.org", paper_url)) paper$sameAs <- paper_url
+        }
+        review$itemReviewed <- paper
+      }
+
+      if ("Check date" %in% names(register_table) &&
+          !is.null(register_table$`Check date`[i]) &&
+          !is.na(register_table$`Check date`[i]) &&
+          register_table$`Check date`[i] != "") {
+        parsed_date <- parsedate::parse_date(register_table$`Check date`[i])
+        if (!is.na(parsed_date)) {
+          review$datePublished <- format(parsed_date, "%Y-%m-%d")
+        }
+      }
+
+      reviews[[i]] <- review
+    }
+  }
+
+  graph <- c(list(venue_entity), reviews)
+
+  schema_org <- list(
+    `@context` = "https://schema.org",
+    `@graph` = graph
+  )
+
+  json_ld <- jsonlite::toJSON(schema_org, pretty = TRUE, auto_unbox = TRUE)
+
+  return(as.character(json_ld))
+}
+
 #' Escape a value for use in an HTML attribute
 #'
 #' The values of `<meta>` tags are HTML attributes, and Google Scholar's

@@ -329,7 +329,7 @@ policy_old_root <- R.cache::getCacheRootPath()
 R.cache::setCacheRootPath(policy_cache_root)
 
 register_table <- data.frame(
-  Certificate = c("[2020-007](https://codecheck.org.uk/register/certs/2020-007/)", "2026-001"),
+  Certificate = c("2020-007", "2026-001"),
   Report = c("https://doi.org/10.53962/nsys-9a40", "https://doi.org/10.5281/zenodo.3865641"),
   Venue = c("AGILEGIS", "GigaScience"),
   stringsAsFactors = FALSE)

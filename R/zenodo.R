@@ -1628,10 +1628,7 @@ check_register_zenodo_policy <- function(register_table,
 
   rows <- list()
   for (i in seq_len(nrow(register_table))) {
-    # after preprocessing the Certificate column holds a markdown link, e.g.
-    # "[2026-023](https://codecheck.org.uk/...)", so reduce it to the bare ID
     cert <- as.character(register_table$Certificate[i])
-    cert <- sub("^\\[([^]]+)\\].*$", "\\1", cert)
     report <- as.character(register_table$Report[i])
     record_id <- get_zenodo_id(report)
 
@@ -1775,7 +1772,7 @@ curate_register_zenodo_records <- function(register_table,
   rows <- list()
 
   for (i in seq_len(nrow(register_table))) {
-    cert <- sub("^\\[([^]]+)\\].*$", "\\1", as.character(register_table$Certificate[i]))
+    cert <- as.character(register_table$Certificate[i])
     record_id <- get_zenodo_id(as.character(register_table$Report[i]))
     if (is.na(record_id)) next
 

@@ -1,19 +1,20 @@
-#' Convert certificate links from absolute to relative paths based on page depth
+#' Turn the plain Certificate column into a relative markdown link
 #'
-#' Transforms absolute certificate URLs to relative paths for HTML/Markdown display.
-#' The depth of the relative path is calculated based on the output directory structure.
-#' JSON and CSV exports retain absolute URLs as they don't call this function.
+#' `add_cert_links()` leaves `register_table$Certificate` as the plain
+#' identifier; this is the one place that turns it into the markdown link
+#' `[id](path)` that the md/HTML table rendering needs, using a relative path
+#' whose depth depends on the output directory. JSON and CSV exports don't
+#' call this function and keep the plain `Certificate ID`/absolute
+#' `Certificate Link` columns from `add_cert_links()` instead.
 #'
-#' @param register_table The register table with Certificate column containing absolute URLs
+#' @param register_table The register table with a plain Certificate column
 #' @param table_details List containing output directory and other metadata
-#' @return The adjusted register table with relative certificate links
+#' @return The adjusted register table with a markdown-linked Certificate column
 #'
 #' @examples
 #' \dontrun{
-#' # For root level (docs/index.html):
-#' #   https://codecheck.org.uk/register/certs/2020-001/ -> ./certs/2020-001/
-#' # For nested level (docs/venues/journals/gigascience/index.html):
-#' #   https://codecheck.org.uk/register/certs/2020-001/ -> ../../../certs/2020-001/
+#' # For root level (docs/index.html):        2020-001 -> [2020-001](./certs/2020-001/)
+#' # For nested level (docs/venues/.../...): 2020-001 -> [2020-001](../../../certs/2020-001/)
 #' }
 adjust_cert_links_relative <- function(register_table, table_details){
   # Early return if Certificate column doesn't exist
@@ -23,7 +24,7 @@ adjust_cert_links_relative <- function(register_table, table_details){
 
   # Early return if table_details or output_dir is missing
   if (is.null(table_details) || !("output_dir" %in% names(table_details))) {
-    warning("table_details or output_dir missing in adjust_cert_links_relative, keeping absolute URLs")
+    warning("table_details or output_dir missing in adjust_cert_links_relative, keeping plain Certificate IDs")
     return(register_table)
   }
 
@@ -46,23 +47,10 @@ adjust_cert_links_relative <- function(register_table, table_details){
     path_prefix <- paste0(paste(rep("../", depth), collapse = ""), "certs/")
   }
 
-  # Replace absolute URLs with relative paths in Certificate column
-  register_table$Certificate <- gsub(
-    CONFIG$HYPERLINKS[["certs"]],
-    path_prefix,
-    register_table$Certificate,
-    fixed = TRUE
+  # Build the markdown link from the plain certificate identifier
+  register_table$Certificate <- paste0(
+    "[", register_table$Certificate, "](", path_prefix, register_table$Certificate, "/)"
   )
-
-  # Also update Certificate Link column if it exists
-  if ("Certificate Link" %in% names(register_table)) {
-    register_table$`Certificate Link` <- gsub(
-      CONFIG$HYPERLINKS[["certs"]],
-      path_prefix,
-      register_table$`Certificate Link`,
-      fixed = TRUE
-    )
-  }
 
   return(register_table)
 }

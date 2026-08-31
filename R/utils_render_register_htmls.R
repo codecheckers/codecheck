@@ -270,6 +270,23 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
     )
   }
 
+  # Generate Schema.org metadata for venue pages (addresses register#183)
+  else if (!is.na(filter) && filter == "venues" && table_details[["is_reg_table"]] &&
+           !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+    # Repository is not part of the HTML column set (see filter_and_drop_register_columns()),
+    # but generate_venue_schema_org() needs it to look up each paper's codecheck.yml.
+    repo_lookup_table <- table
+    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
+      repo_lookup_table <- full_register_table
+    }
+
+    schema_org_jsonld <- generate_venue_schema_org(
+      venue_name = table_details[["name"]],
+      venue_type = table_details[["subcat"]],
+      register_table = repo_lookup_table
+    )
+  }
+
   # Creating the index section files and yml document
   create_index_section_files(output_dir, filter, table_details, schema_org_jsonld = schema_org_jsonld)
   generate_html_document_yml(output_dir)

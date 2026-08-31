@@ -189,31 +189,21 @@ add_codechecker <- function(register_table, register) {
   return(register_table)
 }
 
-#' Function for adding clickable links to the paper for each entry in the register table and add certificate identifier and link as extra columns
-#' 
+#' Function for adding certificate identifier and link as extra columns
+#'
+#' The `Certificate` column itself is left as the plain identifier - callers
+#' that need it as a markdown link (only the md/HTML table rendering does,
+#' via [adjust_cert_links_relative()]) build that themselves at render time.
+#' Every other consumer (JSON/CSV output, Schema.org generation, Zenodo/
+#' ResearchEquals policy checks, ...) can then read `Certificate` directly
+#' without having to strip markdown syntax back out of it first.
+#'
 #' @param register_table The register table to be adjusted.
-#' @return The adjusted register table with clickable Certificate links and new columns for certificate identifier and certificate URL
+#' @return The adjusted register table with new columns for certificate identifier and certificate URL
 add_cert_links <- function(register_table){
-  ids <- c()
-  links <- c()
-  
-  # Looping over the entries in the register
-  for (i in seq_len(nrow(register_table))) {
+  register_table$`Certificate ID` <- register_table$Certificate
+  register_table$`Certificate Link` <- paste0(CONFIG$HYPERLINKS[["certs"]], register_table$Certificate, "/")
 
-    cert_id <- register_table[i, ]$Certificate
-    cert_link <- paste0(CONFIG$HYPERLINKS[["certs"]], cert_id, "/")
-    
-    # Constructing the hyperlink
-    hyperlink <- paste0("[", cert_id, "](", cert_link, ")")
-    register_table[i, ]$Certificate <- hyperlink
-    
-    ids <- c(ids, cert_id)
-    links <- c(links, cert_link)
-  }
-
-  register_table$`Certificate ID` <- ids
-  register_table$`Certificate Link` <- links
-  
   return(register_table)
 }
 
