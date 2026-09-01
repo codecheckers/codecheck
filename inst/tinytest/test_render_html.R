@@ -73,6 +73,28 @@ cert_jsonld <- xml2::xml_text(xml2::xml_find_all(cert_head, "//script[@type='app
 expect_true(any(grepl("\"@type\": \"Review\"", cert_jsonld)),
             info = "the certificate page carries its own Review metadata")
 
+# sortable table headers (click-to-sort via stupidtable.js) ----
+
+th_data_sort <- function(doc, header_text) {
+  xml2::xml_attr(
+    xml2::xml_find_all(doc, paste0("//table/thead//th[normalize-space(text())='", header_text, "']")),
+    "data-sort"
+  )
+}
+
+expect_equal(th_data_sort(index_head, "Certificate"), "string")
+expect_equal(th_data_sort(index_head, "Venue"), "string")
+expect_equal(th_data_sort(index_head, "Type"), "string")
+expect_equal(th_data_sort(index_head, "Check date"), "string")
+expect_true(is.na(th_data_sort(index_head, "Report")),
+            info = "Report holds a link, not a sortable value")
+expect_true(is.na(th_data_sort(index_head, "Work")),
+            info = "Work holds a link, not a sortable value")
+
+postfix_scripts <- xml2::xml_attr(xml2::xml_find_all(index_head, "//script"), "src")
+expect_true(any(grepl("stupidtable.min.js", postfix_scripts, fixed = TRUE)))
+expect_true(any(grepl("table-sort-init.js", postfix_scripts, fixed = TRUE)))
+
 # TODO ----
 
 # clean up

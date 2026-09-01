@@ -481,3 +481,44 @@ h1 {
         margin: 0 0 1rem;
     }
 }
+
+/* ====================
+   Sortable Tables
+   ==================== */
+
+/* th[data-sort] is stupidtable.js's own opt-in marker (added at render
+   time by add_sortable_th_attributes()); a th with no data-sort attribute
+   is left as a plain, non-interactive header (e.g. Report, Work). */
+table thead th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 1.2em;
+}
+
+table thead th[data-sort]:hover {
+    background-color: #f5f5f5;
+}
+
+table thead th[data-sort]:focus {
+    outline: 2px solid #008033;
+    outline-offset: -2px;
+}
+
+table thead th[data-sort]::after {
+    content: "\21C5";
+    position: absolute;
+    right: 0.3em;
+    opacity: 0.35;
+    font-size: 0.85em;
+}
+
+table thead th[data-sort].sorting-asc::after {
+    content: "\2191";
+    opacity: 1;
+}
+
+table thead th[data-sort].sorting-desc::after {
+    content: "\2193";
+    opacity: 1;
+}

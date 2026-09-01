@@ -27,7 +27,7 @@ expect_true(
 )
 
 # Verify specific files exist
-expected_files <- c("citation.min.js", "cert-utils.js", "cert-citation.js")
+expected_files <- c("citation.min.js", "cert-utils.js", "cert-citation.js", "stupidtable.min.js", "table-sort-init.js")
 for (file in expected_files) {
   expect_true(
     file %in% js_files,

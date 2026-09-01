@@ -358,15 +358,65 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
     quiet = !isTRUE(CONFIG$VERBOSE)
   )
 
+  html_file_path <- file.path(output_dir, "index.html")
+
+  # Marking sortable columns for the stupidtable.js click-to-sort behaviour
+  # (see table-sort-init.js) - runs for every page, including the main
+  # register (filter is NA), unlike the libs path rewrite below.
+  add_sortable_th_attributes(html_file_path)
+
   # For all registered tables besides the original we change the html
   # file so that the path to the libs folder refers to the libs folder "docs/libs".
   # This is done to remove duplicates of "libs" folders.
   if (!is.na(filter)){
-    html_file_path <- file.path(output_dir, "index.html")
     edit_html_lib_paths(html_file_path)
     # Deleting the libs folder after changing the html lib path
     unlink(file.path(output_dir, "libs"), recursive = TRUE)
   }
+}
+
+#' Adds data-sort hints to <th> cells so stupidtable.js (see table-sort-init.js)
+#' knows which columns are sortable and how to compare their values.
+#'
+#' stupidtable.js treats a <th> with no data-sort attribute as unsortable, so
+#' this only needs to opt sortable columns in: "string" for plain text/ISO
+#' dates (which already sort correctly lexicographically), "int" for the
+#' known numeric count columns, and nothing at all for Report/Work, whose
+#' cells hold titles/links rather than sortable values.
+#'
+#' @param html_file_path The path to the rendered index.html file.
+add_sortable_th_attributes <- function(html_file_path) {
+  unsortable_headers <- c("Report", "Work")
+  numeric_headers <- c("No. of codechecks", "No. of checks", "Works authored", "Checks conducted")
+
+  html <- paste(readLines(html_file_path), collapse = "\n")
+
+  th_pattern <- "(<th[^>]*>)([^<]*)(</th>)"
+  matches <- gregexpr(th_pattern, html, perl = TRUE)
+
+  if (matches[[1]][1] != -1) {
+    regmatches(html, matches) <- lapply(regmatches(html, matches), function(th_tags) {
+      vapply(th_tags, function(th_tag) {
+        parts <- regmatches(th_tag, regexec(th_pattern, th_tag, perl = TRUE))[[1]]
+        open_tag <- parts[2]
+        # Pandoc's "abbreviations" markdown extension replaces the space
+        # after "No." with a non-breaking space (U+00A0) to avoid an
+        # awkward line break - normalise it away before comparing, so
+        # "No. of codechecks" still matches numeric_headers.
+        header_text <- gsub(" ", " ", trimws(parts[3]), fixed = TRUE)
+
+        if (header_text %in% unsortable_headers) {
+          return(th_tag)
+        }
+
+        datatype <- if (header_text %in% numeric_headers) "int" else "string"
+        open_tag <- sub(">$", paste0(' data-sort="', datatype, '">'), open_tag)
+        paste0(open_tag, parts[3], parts[4])
+      }, character(1), USE.NAMES = FALSE)
+    })
+  }
+
+  writeLines(unlist(strsplit(html, "\n", fixed = TRUE)), html_file_path)
 }
 
 #' Loads a html file and replaces the libs path in the html file to the libs folder in "docs/libs"
