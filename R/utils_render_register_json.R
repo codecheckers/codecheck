@@ -520,6 +520,16 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   # register table already has
   columns_to_keep <- intersect(CONFIG$JSON_COLUMNS, names(register_table_json))
 
+  # A person's register.json additionally keeps "Role" (author/codechecker) -
+  # not part of the global CONFIG$JSON_COLUMNS (every other filter's
+  # register.json would gain an irrelevant null "Role" column otherwise),
+  # but without it register_update_stats()'s fast re-derivation of
+  # works_authored/checks_conducted from a saved register.json would have no
+  # way to tell the two roles apart.
+  if (!is.na(filter) && filter == "persons" && "Role" %in% names(register_table_json)) {
+    columns_to_keep <- c(columns_to_keep, "Role")
+  }
+
   # Main register.json: sorted by certificate identifier (done in render_register())
   jsonlite::write_json(
     register_table_json[, columns_to_keep],
@@ -598,6 +608,62 @@ render_register_json <- function(register_table, table_details, filter, full_reg
     )
   }
 
+  # Add the work's identity (title, DOI, OpenAlex, venues, authors - the
+  # same fields shown on its landing page's metadata panel, via the shared
+  # get_work_metadata_fields()) to its own index.json (codecheckers/
+  # register#150's machine-readable representation: a GET on a checked DOI's
+  # index.json returns this).
+  is_work_page <- filter == "works" && isTRUE(table_details[["is_reg_table"]]) &&
+    !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
+  if (is_work_page) {
+    fields <- get_work_metadata_fields(table_details[["name"]], register_table)
+    nullable <- function(x) if (is.null(x) || (length(x) == 1 && is.na(x))) NA_character_ else x
+    stats_data$work <- list(
+      doi = fields$doi,
+      title = nullable(fields$title),
+      openalex = nullable(fields$openalex),
+      venues = fields$venues,
+      check_count = fields$check_count,
+      authors = lapply(fields$authors, function(a) list(
+        name = a$name,
+        orcid = nullable(a$orcid)
+      ))
+    )
+  }
+
+  # Add the person's identity and role counts (name, ORCID, GitHub username,
+  # works authored, checks conducted, contributed-venues list for the
+  # codechecker role) to their own stats.json - the #123 analogue of the
+  # codechecker block above, extended with the works-authored count a
+  # codechecker-only page never had.
+  is_person_page <- filter == "persons" &&
+    !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
+  if (is_person_page) {
+    orcid <- table_details[["name"]]
+    has_role <- "Role" %in% names(register_table)
+    authored_certs <- if (has_role) unique(register_table$`Certificate ID`[register_table$Role == "author"]) else character(0)
+    checked_table <- if (has_role) register_table[register_table$Role == "codechecker", , drop = FALSE] else register_table[0, , drop = FALSE]
+
+    profile <- resolve_codechecker_profile(orcid)
+    venues <- get_codechecker_venues(checked_table)
+    nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
+    person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
+    if (is.null(person_name)) person_name <- orcid
+
+    stats_data$person <- list(
+      name = person_name,
+      orcid = orcid,
+      github_username = nullable(profile$github_handle),
+      works_authored = length(authored_certs),
+      checks_conducted = nrow(checked_table),
+      venues = lapply(seq_len(nrow(venues)), function(i) list(
+        name = venues$Venue[i],
+        type = venues$Type[i],
+        cert_count = venues$cert_count[i]
+      ))
+    )
+  }
+
   # Add annual statistics for the main register (addresses register#144).
   # Named statistics.json rather than stats.json for this one file - it is the
   # file the statistics dashboard (render_statistics_page()) reads and links
@@ -620,9 +686,9 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   # behaviour, unrelated to register#78; also means every sub-register file
   # picks up the main register's annual-stats fields alongside its own
   # content, harmless but not cleaned up here as it is out of scope).
-  stats_filename <- if (is_venue_page) {
+  stats_filename <- if (is_venue_page || is_work_page) {
     "index.json"
-  } else if (is_codechecker_page) {
+  } else if (is_codechecker_page || is_person_page) {
     "stats.json"
   } else if (is_main_register) {
     "statistics.json"

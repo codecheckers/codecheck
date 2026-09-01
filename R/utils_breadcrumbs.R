@@ -1,9 +1,13 @@
 #' Generate navigation header with logo and menu
 #'
 #' Creates a header navigation bar with CODECHECK logo and optional menu.
-#' Logo links to register home. Menu appears on main register and overview pages.
+#' The logo links to register home, same as the "All Checks" menu item -
+#' kept as a second, explicit route to the same place since a logo-as-home
+#' link is a common web convention but not a self-explanatory one, and the
+#' logo also carries a hover title saying so.
 #'
-#' @param filter The filter type (NA for main register, "venues", "codecheckers", etc.)
+#' @param filter The filter type (NA for main register, "venues", "works",
+#'   "persons", "statistics", ...)
 #' @param base_path Relative path to register root for logo link
 #' @param table_details List containing page metadata to determine if it's an overview page
 #'
@@ -16,13 +20,13 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
 
   # Menu shown on:
   # - Main register page (is.na(filter))
-  # - Venues overview page (filter == "venues" && !table_details$is_reg_table)
-  # - Codecheckers overview page (filter == "codecheckers" && !table_details$is_reg_table)
+  # - A section's own overview page (filter %in% the sections below &&
+  #   !table_details$is_reg_table)
   show_menu <- FALSE
   if (is.na(filter)) {
     show_menu <- TRUE
-  } else if (filter %in% c("venues", "codecheckers")) {
-    # Check if this is an overview page (not a specific venue/codechecker page)
+  } else if (filter %in% c("venues", "works", "persons")) {
+    # Check if this is an overview page (not a specific venue/work/person page)
     is_overview <- !isTRUE(table_details$is_reg_table)
     show_menu <- is_overview
   } else if (filter == "statistics") {
@@ -34,31 +38,40 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
     # Calculate paths relative to base_path
     if (base_path == ".") {
       venues_path <- "venues/index.html"
-      codecheckers_path <- "codecheckers/index.html"
+      works_path <- "works/index.html"
+      persons_path <- "persons/index.html"
       statistics_path <- "statistics/index.html"
     } else {
-      # Special handling for venue type pages (e.g., /venues/communities/)
-      # These are within the venues directory, so "All Venues" is just ../index.html
+      # Special handling for venue type pages (e.g., /venues/communities/):
+      # these are one level *inside* the venues directory already, so "All
+      # Venues" is just one level up - works/persons/statistics are not
+      # nested that way, so they still need the full base_path distance
+      # back to the docs root.
       if (filter == "venues" && "subcat" %in% names(table_details)) {
         venues_path <- "../index.html"
-        codecheckers_path <- "../../codecheckers/index.html"
-        statistics_path <- "../../statistics/index.html"
+        works_path <- paste0(base_path, "/works/index.html")
+        persons_path <- paste0(base_path, "/persons/index.html")
+        statistics_path <- paste0(base_path, "/statistics/index.html")
       } else {
         venues_path <- paste0(base_path, "/venues/index.html")
-        codecheckers_path <- paste0(base_path, "/codecheckers/index.html")
+        works_path <- paste0(base_path, "/works/index.html")
+        persons_path <- paste0(base_path, "/persons/index.html")
         statistics_path <- paste0(base_path, "/statistics/index.html")
       }
     }
 
     # Determine which page is active based on filter
     venues_active <- ""
-    codecheckers_active <- ""
+    works_active <- ""
+    persons_active <- ""
     statistics_active <- ""
     if (!is.na(filter)) {
       if (filter == "venues") {
         venues_active <- " active"
-      } else if (filter == "codecheckers") {
-        codecheckers_active <- " active"
+      } else if (filter == "works") {
+        works_active <- " active"
+      } else if (filter == "persons") {
+        persons_active <- " active"
       } else if (filter == "statistics") {
         statistics_active <- " active"
       }
@@ -66,10 +79,12 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
 
     menu_html <- paste0('
     <nav class="navbar-menu">
-      <a href="', venues_path, '" class="nav-link', venues_active, '">All Venues</a>
-      <a href="', codecheckers_path, '" class="nav-link', codecheckers_active, '">All Codecheckers</a>
-      <a href="', statistics_path, '" class="nav-link', statistics_active, '">Statistics</a>
-      <a href="https://codecheck.org.uk/" class="nav-link">About</a>
+      <a href="', logo_link, '" class="nav-link" title="Browse all CODECHECK certificates">Checks</a>
+      <a href="', venues_path, '" class="nav-link', venues_active, '" title="Browse venues that have hosted a CODECHECK">Venues</a>
+      <a href="', works_path, '" class="nav-link', works_active, '" title="Browse checked papers">Works</a>
+      <a href="', persons_path, '" class="nav-link', persons_active, '" title="Browse people who authored or checked a paper">People</a>
+      <a href="', statistics_path, '" class="nav-link', statistics_active, '" title="View register statistics">Statistics</a>
+      <a href="https://codecheck.org.uk/" class="nav-link" title="About the CODECHECK project">About</a>
     </nav>')
   }
 
@@ -83,8 +98,8 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
   html <- paste0(
     '<div class="codecheck-navbar">\n',
     '  <div class="navbar-container">\n',
-    '    <a href="', logo_link, '" class="navbar-brand">\n',
-    '      <img src="', logo_path, '" alt="CODECHECK" class="navbar-logo">\n',
+    '    <a href="', logo_link, '" class="navbar-brand" title="Go to list of checks">\n',
+    '      <img src="', logo_path, '" alt="Go to list of checks" class="navbar-logo">\n',
     '    </a>\n',
     menu_html, '\n',
     '  </div>\n',
@@ -231,6 +246,17 @@ calculate_breadcrumb_base_path <- function(filter = NA, table_details = list()) 
   # Main register: base path is "."
   if (is.na(filter)) {
     return(".")
+  }
+
+  # Prefer deriving depth directly from the output directory when available -
+  # the filter-shape heuristic below assumes a directory nesting no deeper
+  # than "filter/subcat/slug/", which a DOI-keyed work page routinely
+  # exceeds (a DOI's own "/" characters become path segments, so
+  # "works/10.31222/osf.io/a8rmu/" is four levels deep, not two or three).
+  if (!is.null(table_details$output_dir)) {
+    rel_path <- gsub("^docs/|/$", "", table_details$output_dir)
+    depth <- if (nchar(rel_path) == 0) 0 else length(strsplit(rel_path, "/")[[1]])
+    return(if (depth == 0) "." else paste(rep("..", depth), collapse = "/"))
   }
 
   # Calculate depth based on filter and table type

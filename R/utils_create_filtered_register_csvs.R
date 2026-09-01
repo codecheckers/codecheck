@@ -90,7 +90,15 @@ set_paper_title_references_csv <- function(register_table){
 #' @importFrom utils write.csv
 #'
 create_filtered_reg_csvs <- function(register_table, filter_by){
-  for (filter in filter_by){
+  # A filtered register.csv is only linked to from the venue/codechecker
+  # detail-page footer - works/persons detail pages never show a "CSV
+  # source" link (see generate_html_postfix_hrefs_reg()'s has_csv), so
+  # there is nothing for this function to produce for those filters. Also
+  # guards against a real bug: this function writes register.csv straight
+  # into table_details$output_dir, which for any other filter is created
+  # later, by create_register_files() - running this first for e.g. "works"
+  # would fail with "cannot open the connection".
+  for (filter in intersect(filter_by, c("venues", "codecheckers"))){
     if (filter == "codecheckers"){
       # Using the temporary codechecker register (already preprocessed)
       register_table <- read.csv(CONFIG$DIR_TEMP_REGISTER_CODECHECKER, as.is = TRUE)

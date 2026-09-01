@@ -556,6 +556,152 @@ generate_venue_schema_org <- function(venue_name, venue_type, register_table) {
   return(as.character(json_ld))
 }
 
+#' Generate Schema.org JSON-LD for a work page (codecheckers/register#150)
+#'
+#' The `ScholarlyArticle` counterpart of [generate_venue_schema_org()]: the
+#' checked paper is the primary `@graph` entity (`@id` its DOI URL), carrying
+#' its title, `sameAs` its OpenAlex work ID, and an `author` array of
+#' `Person` nodes - `@id`'d by ORCID where known, so a search engine or a
+#' data consumer can follow straight from the paper to the person page
+#' (mirrors what the paper author links on the certificate page and the
+#' work page's own metadata panel already do in HTML - see
+#' [generate_work_metadata_html()]). One `Review` per certificate that
+#' checked it references the article back via `itemReviewed`.
+#'
+#' @param doi The work's DOI (`table_details[["name"]]` on a work page).
+#' @param register_table A data frame of all certificates for this DOI, needs
+#'   `Certificate`, `Repository` and `Check date` columns.
+#' @return JSON-LD string with Schema.org metadata using `@graph`.
+#' @export
+generate_work_schema_org <- function(doi, register_table) {
+  fields <- get_work_metadata_fields(doi, register_table)
+  article_id <- paste0(CONFIG$HYPERLINKS[["doi"]], doi)
+
+  article <- list(`@type` = "ScholarlyArticle", `@id` = article_id, url = article_id, sameAs = article_id)
+  if (!is.na(fields$title) && nzchar(fields$title)) article$name <- fields$title
+  if (!is.na(fields$openalex) && nzchar(fields$openalex)) {
+    article$sameAs <- c(article_id, fields$openalex)
+  }
+  if (length(fields$authors) > 0) {
+    article$author <- lapply(fields$authors, function(a) {
+      person <- list(`@type` = "Person", name = a$name)
+      if (!is.null(a$orcid)) person$`@id` <- paste0(CONFIG$HYPERLINKS[["orcid"]], a$orcid)
+      person
+    })
+  }
+
+  article_ref <- list(`@id` = article_id)
+
+  reviews <- list()
+  n <- nrow(register_table)
+  if (n > 0) {
+    for (i in seq_len(n)) {
+      cert_id <- register_table$Certificate[i]
+      cert_url <- paste0(CONFIG$HYPERLINKS[["certs"]], cert_id, "/")
+
+      review <- list(
+        `@type` = "Review",
+        `@id` = cert_url,
+        name = paste("CODECHECK Certificate", cert_id),
+        url = cert_url,
+        itemReviewed = article_ref
+      )
+
+      if ("Check date" %in% names(register_table) &&
+          !is.null(register_table$`Check date`[i]) &&
+          !is.na(register_table$`Check date`[i]) &&
+          register_table$`Check date`[i] != "") {
+        parsed_date <- parsedate::parse_date(register_table$`Check date`[i])
+        if (!is.na(parsed_date)) {
+          review$datePublished <- format(parsed_date, "%Y-%m-%d")
+        }
+      }
+
+      reviews[[i]] <- review
+    }
+  }
+
+  graph <- c(list(article), reviews)
+  schema_org <- list(`@context` = "https://schema.org", `@graph` = graph)
+  json_ld <- jsonlite::toJSON(schema_org, pretty = TRUE, auto_unbox = TRUE)
+  as.character(json_ld)
+}
+
+#' Generate Schema.org JSON-LD for a person page (codecheckers/register#123)
+#'
+#' Generalises [generate_codechecker_schema_org()] to a person's two
+#' possible roles: the `Person` entity still gets a `Review` per certificate
+#' they checked (identical to the codechecker version, `author` referencing
+#' the person by `@id`), and additionally a `ScholarlyArticle` per paper they
+#' authored, each with `author: {"@id": person_id}` pointing back the other
+#' way. A person with only one role simply has an empty list for the other.
+#'
+#' @param orcid The person's ORCID.
+#' @param name The person's name.
+#' @param github_handle Optional GitHub handle.
+#' @param register_table The person's exploded, per-role register rows (see
+#'   [explode_person_records()]), needs `Certificate`, `Repository`,
+#'   `Check date` and `Role` columns.
+#' @return JSON-LD string with Schema.org metadata using `@graph`.
+#' @export
+generate_person_schema_org <- function(orcid, name, github_handle = NULL, register_table) {
+  person_id <- paste0(CONFIG$HYPERLINKS[["orcid"]], orcid)
+  person <- list(`@type` = "Person", `@id` = person_id, name = name)
+  if (!is.null(github_handle) && nzchar(github_handle) && github_handle != "NA") {
+    person$sameAs <- paste0("https://github.com/", github_handle)
+  }
+
+  has_role <- "Role" %in% names(register_table)
+  checked <- if (has_role) register_table[register_table$Role == "codechecker", , drop = FALSE] else register_table[0, , drop = FALSE]
+  authored <- if (has_role) register_table[register_table$Role == "author", , drop = FALSE] else register_table[0, , drop = FALSE]
+
+  # Checks conducted: a Review per certificate, same shape as
+  # generate_codechecker_schema_org().
+  reviews <- list()
+  if (nrow(checked) > 0) {
+    for (i in seq_len(nrow(checked))) {
+      cert_id <- checked$Certificate[i]
+      cert_url <- paste0(CONFIG$HYPERLINKS[["certs"]], cert_id, "/")
+      review <- list(
+        `@type` = "Review", `@id` = cert_url,
+        name = paste("CODECHECK Certificate", cert_id), url = cert_url,
+        author = list(`@id` = person_id)
+      )
+      if ("Check date" %in% names(checked) && !is.na(checked$`Check date`[i]) && checked$`Check date`[i] != "") {
+        parsed_date <- parsedate::parse_date(checked$`Check date`[i])
+        if (!is.na(parsed_date)) review$datePublished <- format(parsed_date, "%Y-%m-%d")
+      }
+      reviews[[length(reviews) + 1]] <- review
+    }
+  }
+
+  # Works authored: one ScholarlyArticle per distinct DOI-keyed work (a
+  # certificate row, not a work - several certificates can share a DOI).
+  articles <- list()
+  if (nrow(authored) > 0 && "Work" %in% names(authored)) {
+    dois <- unique(authored$Work[!is.na(authored$Work)])
+    for (doi in dois) {
+      article <- list(
+        `@type` = "ScholarlyArticle",
+        `@id` = paste0(CONFIG$HYPERLINKS[["doi"]], doi),
+        url = paste0(CONFIG$HYPERLINKS[["doi"]], doi),
+        author = list(`@id` = person_id)
+      )
+      title_row <- authored[authored$Work == doi, , drop = FALSE][1, ]
+      if ("Paper Title" %in% names(title_row) && !is.na(title_row[["Paper Title"]])) {
+        title_cell <- title_row[["Paper Title"]]
+        article$name <- if (grepl("\\[.*\\]\\(.*\\)", title_cell)) sub("\\[(.*)\\]\\(.*\\)", "\\1", title_cell) else title_cell
+      }
+      articles[[length(articles) + 1]] <- article
+    }
+  }
+
+  graph <- c(list(person), reviews, articles)
+  schema_org <- list(`@context` = "https://schema.org", `@graph` = graph)
+  json_ld <- jsonlite::toJSON(schema_org, pretty = TRUE, auto_unbox = TRUE)
+  as.character(json_ld)
+}
+
 #' Escape a value for use in an HTML attribute
 #'
 #' The values of `<meta>` tags are HTML attributes, and Google Scholar's

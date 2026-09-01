@@ -52,7 +52,7 @@ is_full_register_run <- function(from, to, n) {
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
-                            filter_by = c("venues", "codecheckers"),
+                            filter_by = c("venues", "works", "persons"),
                             outputs = c("html", "md", "json"),
                             config = c(system.file("extdata", "config.R", package = "codecheck")),
                             venues_file = "venues.csv",
@@ -156,15 +156,34 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
         generate_codechecker_redirects(register_table)
       }
 
+      # Generate redirect pages for persons with a GitHub handle
+      # (codecheckers/register#123)
+      if ("persons" %in% filter_by) {
+        generate_person_redirects(register_table)
+      }
+
+      # /codecheckers/ is retired in favour of /persons/ (#123): a
+      # full/unfiltered render that does not itself ask for "codecheckers"
+      # removes any stale copy left by a previous render - docs/ is
+      # committed, so the old directory would otherwise persist forever. A
+      # partial render (e.g. register_render_cert(), or from/to a subset)
+      # never touches it, since it has no way to know the omission was
+      # deliberate rather than just outside its scope.
+      if (full_run && !("codecheckers" %in% filter_by) && dir.exists("docs/codecheckers")) {
+        unlink("docs/codecheckers", recursive = TRUE)
+        cli::cli_alert_info("Removed stale docs/codecheckers/ (retired in favour of /persons/)")
+      }
+
       # Generate redirect page for /certs/ (without certificate ID)
       generate_certs_redirect()
 
       # Write build metadata JSON file
       write_meta_json(build_metadata, "docs")
 
-      # Generate SEO files (sitemap.xml and robots.txt)
+      # Generate SEO files (sitemap.xml, robots.txt, 404 page)
       generate_sitemap(register_table, filter_by, output_dir = "docs")
       generate_robots_txt(output_dir = "docs")
+      generate_404_page(output_dir = "docs")
 
       register_table
     },
@@ -503,6 +522,57 @@ register_update_stats <- function(docs_dir = "docs",
       )
     }
 
+    # A work's index.json carries the same structured fields as the full
+    # render (codecheckers/register#150) - a work's directory is DOI-nested,
+    # so any depth starting with "works" qualifies, unlike every other
+    # filter's fixed depth.
+    is_work_dir <- length(path_parts) >= 2 && path_parts[1] == "works"
+    if (is_work_dir) {
+      doi <- paste(path_parts[-1], collapse = "/")
+      fields <- get_work_metadata_fields(doi, sub_data)
+      nullable <- function(x) if (is.null(x) || (length(x) == 1 && is.na(x))) NA_character_ else x
+      sub_stats$work <- list(
+        doi = fields$doi,
+        title = nullable(fields$title),
+        openalex = nullable(fields$openalex),
+        venues = fields$venues,
+        check_count = fields$check_count,
+        authors = lapply(fields$authors, function(a) list(name = a$name, orcid = nullable(a$orcid)))
+      )
+      stats_filename <- "index.json"
+    }
+
+    # A person's stats.json carries their role counts (codecheckers/
+    # register#123) - the #150/#123 analogue of the codechecker block above.
+    # "Role" survives in a person's saved register.json specifically so this
+    # re-derivation is possible (see render_register_json()).
+    is_person_dir <- length(path_parts) == 2 && path_parts[1] == "persons"
+    if (is_person_dir) {
+      orcid <- path_parts[2]
+      has_role <- "Role" %in% names(sub_data)
+      authored_certs <- if (has_role) unique(sub_data$`Certificate ID`[sub_data$Role == "author"]) else character(0)
+      checked_data <- if (has_role) sub_data[sub_data$Role == "codechecker", , drop = FALSE] else sub_data[0, , drop = FALSE]
+
+      profile <- resolve_codechecker_profile(orcid)
+      venues <- get_codechecker_venues(checked_data)
+      nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
+      person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
+      if (is.null(person_name)) person_name <- if (!is.null(profile$name)) profile$name else orcid
+
+      sub_stats$person <- list(
+        name = person_name,
+        orcid = orcid,
+        github_username = nullable(profile$github_handle),
+        works_authored = length(authored_certs),
+        checks_conducted = nrow(checked_data),
+        venues = lapply(seq_len(nrow(venues)), function(i) list(
+          name = venues$Venue[i],
+          type = venues$Type[i],
+          cert_count = venues$cert_count[i]
+        ))
+      )
+    }
+
     jsonlite::write_json(sub_stats, auto_unbox = TRUE,
                          path = file.path(sub_dir, stats_filename), pretty = TRUE, na = "null")
     updated <- updated + 1L
@@ -573,6 +643,17 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
   # The platform-specific policy checks pick their own entries from this table.
   report_entries <- list()
 
+  # Collected across the whole from:to range for the two cross-entry checks
+  # below (check_near_duplicate_works()/check_orcid_conflicts()) - both need
+  # to compare every entry against every other, not just validate one at a
+  # time like the checks above.
+  work_certs <- character(0)
+  work_keys <- character(0)
+  work_titles <- character(0)
+  person_certs <- character(0)
+  person_orcids <- character(0)
+  person_names <- character(0)
+
   for (i in seq(from = from, to = to)) {
     cat("Checking", toString(register[i, ]), "\n")
     entry <- register[i, ]
@@ -603,10 +684,41 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
         stringsAsFactors = FALSE)
     }
 
+    # Collect this entry's paper title/work key and ORCID-bearing
+    # authors/codecheckers, for the two cross-entry checks after the loop
+    # (codecheckers/register#150/#123).
+    if (!is.null(codecheck_yaml)) {
+      work_certs <- c(work_certs, as.character(entry$Certificate))
+      work_keys <- c(work_keys, normalize_work_key(codecheck_yaml$paper$reference))
+      work_titles <- c(work_titles, if (!is.null(codecheck_yaml$paper$title)) codecheck_yaml$paper$title else NA_character_)
+
+      for (author in codecheck_yaml$paper$authors) {
+        orcid <- normalize_orcid(author$ORCID)
+        if (is.na(orcid) || is.null(author$name)) next
+        person_certs <- c(person_certs, as.character(entry$Certificate))
+        person_orcids <- c(person_orcids, orcid)
+        person_names <- c(person_names, author$name)
+      }
+      for (checker in codecheck_yaml$codechecker) {
+        orcid <- normalize_orcid(checker$ORCID)
+        if (is.na(orcid) || is.null(checker$name)) next
+        person_certs <- c(person_certs, as.character(entry$Certificate))
+        person_orcids <- c(person_orcids, orcid)
+        person_names <- c(person_names, checker$name)
+      }
+    }
+
     cat("Completed checking registry entry", toString(register[i, "Certificate"]), "\n")
   }
 
   reports <- if (length(report_entries) > 0) do.call(rbind, report_entries) else NULL
+
+  tryCatch({
+    check_near_duplicate_works(work_certs, work_keys, work_titles)
+    check_orcid_conflicts(person_certs, person_orcids, person_names)
+  }, error = function(e) {
+    cli::cli_alert_info("Could not run the work/person consistency checks: {conditionMessage(e)}")
+  })
 
   if (check_zenodo_policy && !is.null(reports)) {
     tryCatch({

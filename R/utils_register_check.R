@@ -162,6 +162,143 @@ check_repository_topic <- function(entry, spec) {
   }
 }
 
+#' Normalize a paper title for near-duplicate comparison
+#'
+#' Case, punctuation and whitespace only - deliberately loose, since the
+#' point is to catch the same paper recorded twice with slightly different
+#' formatting (e.g. a certificate's own "Title" typed by hand rather than
+#' pasted), not to be a general string-similarity metric.
+#'
+#' @param title A paper title, or `NA`.
+#' @return The normalized title, or `NA_character_`.
+#' @keywords internal
+normalize_title_for_comparison <- function(title) {
+  if (is.null(title) || is.na(title) || !nzchar(trimws(title))) {
+    return(NA_character_)
+  }
+  title <- tolower(trimws(title))
+  title <- gsub("[[:punct:]]", "", title)
+  gsub("\\s+", " ", title)
+}
+
+#' Check for certificates that likely check the same paper without a shared work key
+#'
+#' codecheckers/register#150's flagship case (#133/#149, certificates
+#' 2024-017/2024-025): two certificates for the same paper, but one's
+#' `Paper reference` is a DOI and the other's is a preprint PDF URL, so
+#' [normalize_work_key()] gives them different (or missing) keys and they
+#' never land on the same `/works/` page. This is intentionally *not*
+#' resolved automatically - see the "Grouping" decision in the #150/#123
+#' implementation plan (group by DOI only, report near-duplicates) - a title
+#' match is exactly the kind of ambiguous signal that should be reviewed by
+#' hand, not merged silently.
+#'
+#' @param certs Character vector of certificate IDs.
+#' @param work_keys Character vector of normalized work keys (see
+#'   [normalize_work_key()]), same length/order as `certs`.
+#' @param titles Character vector of paper titles, same length/order.
+#' @return None; a `warning()` per group of near-duplicates found.
+#' @keywords internal
+check_near_duplicate_works <- function(certs, work_keys, titles) {
+  norm_titles <- vapply(titles, normalize_title_for_comparison, character(1))
+  usable <- !is.na(norm_titles)
+  if (!any(usable)) {
+    return(invisible(NULL))
+  }
+
+  groups <- split(which(usable), norm_titles[usable])
+  for (group in groups) {
+    if (length(group) < 2) next
+    keys <- work_keys[group]
+    if (length(unique(keys)) > 1) {
+      detail <- paste(
+        sprintf("%s (%s)", certs[group], ifelse(is.na(keys), "no DOI", keys)),
+        collapse = ", "
+      )
+      warning(
+        "Certificates share a paper title but not a DOI-normalized work key - ",
+        "possible same-paper duplicate that will render as separate /works/ ",
+        "pages: ", detail
+      )
+    }
+  }
+  invisible(NULL)
+}
+
+#' Normalize a person's name for conflict comparison
+#'
+#' Reduced to "first initial + surname" (the last whitespace-separated
+#' token, periods stripped) so that a spelled-out middle name, a missing
+#' middle initial, or a full given name vs. its initial (all routine
+#' transcription differences between a certificate's codecheck.yml and its
+#' co-authors' own spelling) do not read as a conflict - only a materially
+#' different name does. Not a general name-matching algorithm: a
+#' double-barrelled surname written with a space in one certificate and a
+#' hyphen in another can still produce a false positive here, and that is an
+#' accepted trade-off for a check that only needs to flag "look at this by
+#' hand", not adjudicate it.
+#'
+#' @param name A person's name.
+#' @return The normalized comparison key.
+#' @keywords internal
+normalize_name_for_comparison <- function(name) {
+  name <- tolower(trimws(name))
+  name <- gsub("\\.", "", name, fixed = FALSE)
+  tokens <- strsplit(name, "\\s+")[[1]]
+  tokens <- tokens[nzchar(tokens)]
+  if (length(tokens) == 0) return("")
+  if (length(tokens) == 1) return(tokens)
+  paste(substr(tokens[1], 1, 1), tokens[length(tokens)])
+}
+
+#' Check for ORCIDs and names used inconsistently across the register
+#'
+#' Surfaces the two shapes of data-entry error a person page would otherwise
+#' make visible only by an odd-looking page (codecheckers/register#123): the
+#' same ORCID attached to two different people's names (typically one
+#' certificate's data copied from another and only the name changed), or the
+#' same name attached to two different ORCIDs (typically a typo in the
+#' ORCID). Deliberately a warning, not a stop - the source `codecheck.yml`
+#' files are fixed by hand, separately, this only needs to point at them.
+#'
+#' @param certs,orcids,names Character vectors, same length/order: one row
+#'   per (certificate, ORCID-bearing person) pair, from either a paper
+#'   author or a codechecker (see [add_person_records()], whose per-row
+#'   logic this mirrors for the whole register at once).
+#' @return None; a `warning()` per conflict found.
+#' @keywords internal
+check_orcid_conflicts <- function(certs, orcids, names) {
+  if (length(orcids) == 0) {
+    return(invisible(NULL))
+  }
+
+  # `names` (the parameter) shadows base::names() for the rest of this
+  # function - every lookup of the *function* below must go through
+  # `base::names()` explicitly.
+  person_names <- names
+  norm_names <- vapply(person_names, normalize_name_for_comparison, character(1))
+
+  # Same ORCID, materially different names
+  by_orcid <- split(seq_along(orcids), orcids)
+  for (idx in by_orcid) {
+    if (length(unique(norm_names[idx])) > 1) {
+      detail <- paste(sprintf('"%s" (%s)', person_names[idx], certs[idx]), collapse = ", ")
+      warning("ORCID ", orcids[idx[1]], " is recorded under different names: ", detail)
+    }
+  }
+
+  # Same name, different ORCIDs
+  by_name <- split(seq_along(orcids), norm_names)
+  for (key in base::names(by_name)) {
+    idx <- by_name[[key]]
+    if (nzchar(key) && length(unique(orcids[idx])) > 1) {
+      detail <- paste(sprintf("%s (%s)", orcids[idx], certs[idx]), collapse = ", ")
+      warning("Name \"", person_names[idx[1]], "\" is recorded under different ORCIDs: ", detail)
+    }
+  }
+  invisible(NULL)
+}
+
 #' Function issue status. If the issue is not closed a warning is thrown
 #' stating that the issue is still open.
 #'

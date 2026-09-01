@@ -26,13 +26,19 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
     # Venues filter: Certificate | Report | Paper Title | Check date
     # Paper Title carries the most content (full titles), Report is just a
     # short DOI/link - it previously had this backwards (register#84 followup).
-    venues = "|:--------|:------------|:-------------------------------------------------------|:---------------|"
+    venues = "|:--------|:------------|:-------------------------------------------------------|:---------------|",
+    # Works filter: Certificate | Report | Venue | Type | Check date. The page's
+    # own h1 already names the work, so Paper Title is dropped (like Venue/Type
+    # are for venues above) - same as "general" minus that one column.
+    works = "|:-------|:--------------------------------------------------|:---------------|:---|:--------------------------|"
   ),
 
   non_reg = list(
     venues = "|:-----------|:---------------------|:----------|",
     venues_subcat = "|:---------------------|:----------|",
-    codecheckers = "|:-----------|:---------------------|:----------|:------|"
+    codecheckers = "|:-----------|:---------------------|:----------|:------|",
+    works = "|:---------------------------------------------|:---------------------------|:----------|",
+    persons = "|:-----------|:---------------------|:----------|:----------|"
   )
 )
 
@@ -64,14 +70,47 @@ CONFIG$REGISTER_COLUMNS <- list(
     md = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date"),
     csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date"),
     json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date")
+  ),
+
+  # Work-specific views (Paper Title is redundant - it's the page's own h1).
+  # "Repository" is kept in html/json (dropped again before the visible
+  # table is built, see create_persons_and_works_md()/render_register_json())
+  # purely so generate_work_metadata_html()/schema.org can look up each row's
+  # codecheck.yml without needing the un-dropped full_register_table.
+  works = list(
+    html = c("Certificate", "Report", "Venue", "Type", "Check date", "Repository"),
+    md = c("Certificate", "Report", "Venue", "Type", "Check date"),
+    csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date"),
+    json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date")
+  ),
+
+  # Person-specific views. "Role" (author/codechecker) is what
+  # create_persons_md_table() splits the two on-page tables by; every other
+  # column is the same set codecheckers uses so both role-tables can share
+  # one column subset. No "md" entry: see CONFIG$FILTERS_WITHOUT_MD.
+  persons = list(
+    html = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date", "Role"),
+    csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Role"),
+    json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Role")
   )
 )
 
 CONFIG$DIR_TEMP_REGISTER_CODECHECKER <- "docs/temp_register_codechecker.csv"
 CONFIG$FILTER_COLUMN_NAMES <- list(
   "venues" = "Venue",
-  "codecheckers" = "Codechecker"
+  "codecheckers" = "Codechecker",
+  "works" = "Work",
+  "persons" = "Person"
 )
+
+# register.md is only worth publishing for a page whose main content is one
+# table - venues, codecheckers and works all are, but a person page shows
+# two (works authored, checks conducted), and a single markdown table can't
+# represent that without collapsing the role distinction. Filters listed
+# here get every other output (html, json, csv) but no register.md, and the
+# HTML footer's "Markdown" link is omitted for them (see
+# generate_html_postfix_hrefs_reg()).
+CONFIG$FILTERS_WITHOUT_MD <- c("persons")
 
 CONFIG$NO_CODECHECKS_VENUE_TYPE <- list()
 
@@ -98,6 +137,26 @@ CONFIG$MD_TITLES <- list(
     paste0("CODECHECKs for ", venue_name)
   },
 
+  # table_details$title is set by generate_table_details()'s "works" branch,
+  # extracted from the group's own "Paper Title" column - the DOI itself
+  # (table_details$name) is the fallback for the rare case that column is
+  # missing.
+  "works" = function(table_details) {
+    title <- table_details[["title"]]
+    if (is.null(title) || is.na(title) || !nzchar(title)) title <- table_details[["name"]]
+    paste0("CODECHECKs of ", title)
+  },
+
+  # Bare name, not "Codechecks by X" - #123's person page covers both
+  # authoring and checking, so a role-specific title would be wrong for the
+  # ~79% of people who only ever appear as an author.
+  "persons" = function(table_details) {
+    orcid <- table_details[["name"]]
+    person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
+    if (is.null(person_name)) person_name <- orcid
+    person_name
+  },
+
   "certs" = "CODECHECK Certificate"
 )
 
@@ -114,6 +173,8 @@ CONFIG$HYPERLINKS <- list(
   venues = "https://codecheck.org.uk/register/venues/",
   register = "https://codecheck.org.uk/register/",
   codecheckers = "https://codecheck.org.uk/register/codecheckers/",
+  works = "https://codecheck.org.uk/register/works/",
+  persons = "https://codecheck.org.uk/register/persons/",
   orcid = "https://orcid.org/",
   osf = "https://osf.io/",
   gitlab = "https://gitlab.com/",
@@ -174,6 +235,16 @@ CONFIG$NON_REG_TITLE_FNS <- list(
       )
       return(paste("CODECHECK List of", plural_subcat))
     }
+  },
+
+  works = function(subcat = NULL) {
+    "All checked works"
+  },
+
+  # #123: the overview page's heading is "People", not "codecheckers" - it
+  # now covers paper authors as well as codecheckers.
+  persons = function(subcat = NULL) {
+    "People"
   }
 )
 
@@ -186,16 +257,16 @@ CONFIG$NON_REG_EXTRA_TEXT <- list(
 CONFIG$NON_REG_SUBTEXT <- list(
   codecheckers = function(table, subcat=NULL){
     no_codecheckers <- nrow(table)
-    return(paste("In total,", no_codecheckers, "codecheckers contributed", CONFIG$NO_CODECHECKS, "codechecks"))
+    return(paste0("In total, ", no_codecheckers, " codecheckers contributed ", CONFIG$NO_CODECHECKS, " codechecks."))
   },
 
   venues = function(table, subcat = NULL){
     # Case there are no subcategories
     if (is.null(subcat)){
       no_venues <- nrow(table)
-      return(paste("In total,", CONFIG$NO_CODECHECKS, "codechecks were completed for", no_venues, "venues"))
+      return(paste0("In total, ", CONFIG$NO_CODECHECKS, " codechecks were completed for ", no_venues, " venues."))
     }
-    
+
     # Case we have subcategories
     else{
       no_venues_subcat <- nrow(table)
@@ -207,8 +278,18 @@ CONFIG$NON_REG_SUBTEXT <- list(
       if (no_venues_subcat > 1){
         venue_name_subtext <- CONFIG$VENUE_SUBCAT_PLURAL[[subcat]]
       }
-      return(paste("In total,", total_codechecks, codecheck_word, "were completed for", no_venues_subcat, venue_name_subtext))
+      return(paste0("In total, ", total_codechecks, " ", codecheck_word, " were completed for ", no_venues_subcat, " ", venue_name_subtext, "."))
     }
+  },
+
+  works = function(table, subcat = NULL) {
+    no_works <- nrow(table)
+    paste0("In total, ", no_works, " checked works are listed here.")
+  },
+
+  persons = function(table, subcat = NULL) {
+    no_persons <- nrow(table)
+    paste0("In total, ", no_persons, " people have authored or checked a work in the register.")
   }
 )
 
@@ -226,6 +307,19 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
     "Type" = "Venue type",
     "no_codechecks" = "No. of codechecks",
     "venue_label" = "Issue label"
+  ),
+
+  "works" = c(
+    "Title" = "Work title",
+    "Work" = "DOI",
+    "no_checks" = "No. of checks"
+  ),
+
+  "persons" = c(
+    "person_name" = "Name",
+    "Person" = "ORCID",
+    "no_works" = "Works authored",
+    "no_checks" = "Checks conducted"
   )
 )
 

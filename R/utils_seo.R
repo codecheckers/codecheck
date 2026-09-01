@@ -1,10 +1,40 @@
+#' Generate the register's 404 page
+#'
+#' `docs/` is served as its own GitHub Pages project site (verified live:
+#' `codecheck.org.uk/register/<anything>` returns GitHub's stock 404 today,
+#' not the parent `codecheck.org.uk` site's Jekyll one), so a `docs/404.html`
+#' here is what every missing path under `/register/` gets shown.
+#'
+#' Reuses [generate_navigation_header()] for the nav bar - the same markup
+#' every other page's prefix uses - rather than duplicating it; there is no
+#' pandoc render step here, this is a small hand-built page like a
+#' codechecker/person redirect stub.
+#'
+#' @param output_dir Output directory (default: "docs")
+#' @return Invisibly returns the path to the generated 404.html
+#' @export
+generate_404_page <- function(output_dir = "docs") {
+  template_path <- system.file("extdata", "templates/general/404_template.html", package = "codecheck")
+  template <- paste(readLines(template_path, warn = FALSE), collapse = "\n")
+
+  nav_header_html <- generate_navigation_header(NA, ".", list())
+
+  output <- whisker::whisker.render(template, list(nav_header_html = nav_header_html))
+
+  page_path <- file.path(output_dir, "404.html")
+  writeLines(output, page_path)
+
+  cli::cli_alert_success("Generated 404 page at {.path {page_path}}")
+  invisible(page_path)
+}
+
 #' Generate sitemap.xml for the register
 #'
 #' Creates a sitemap.xml file listing all generated pages in the register
 #' for search engine optimization and crawling.
 #'
 #' @param register_table The preprocessed register table with all entries
-#' @param filter_by List of filters used (e.g., "venues", "codecheckers")
+#' @param filter_by List of filters used (e.g., "venues", "works", "persons")
 #' @param output_dir Output directory for the sitemap (default: "docs")
 #' @param base_url Base URL for the register (default: from CONFIG)
 #' @param lastmod Last modification date (default: current date in ISO 8601 format)
@@ -12,7 +42,7 @@
 #' @return Invisibly returns the path to the generated sitemap.xml
 #' @export
 generate_sitemap <- function(register_table,
-                             filter_by = c("venues", "codecheckers"),
+                             filter_by = c("venues", "works", "persons"),
                              output_dir = "docs",
                              base_url = CONFIG$HYPERLINKS[["register"]],
                              lastmod = format(Sys.Date(), "%Y-%m-%d")) {
@@ -83,7 +113,30 @@ generate_sitemap <- function(register_table,
     }
   }
 
-  # Codecheckers overview page
+  # Works overview page (codecheckers/register#150)
+  if ("works" %in% filter_by && "Work" %in% names(register_table)) {
+    urls[[length(urls) + 1]] <- list(
+      loc = paste0(base_url, "/works/"),
+      lastmod = lastmod,
+      changefreq = "weekly",
+      priority = "0.9"
+    )
+
+    works <- unique(register_table$Work[!is.na(register_table$Work)])
+    for (doi in works) {
+      urls[[length(urls) + 1]] <- list(
+        loc = paste0(base_url, "/works/", doi, "/"),
+        lastmod = lastmod,
+        changefreq = "monthly",
+        priority = "0.7"
+      )
+    }
+  }
+
+  # Codecheckers overview page - kept only for explicit backward-compat use
+  # of the "codecheckers" filter (e.g. an existing caller/test that still
+  # asks for it directly); the default filter_by no longer includes it,
+  # since #123's /persons/ pages replace /codecheckers/ in a normal render.
   if ("codecheckers" %in% filter_by) {
     urls[[length(urls) + 1]] <- list(
       loc = paste0(base_url, "/codecheckers/"),
@@ -92,18 +145,14 @@ generate_sitemap <- function(register_table,
       priority = "0.9"
     )
 
-    # Individual codechecker pages
     if ("Codechecker" %in% names(register_table)) {
-      # Unnest codecheckers list
       codecheckers_table <- register_table %>% tidyr::unnest(Codechecker)
       codecheckers <- unique(codecheckers_table$Codechecker)
 
       for (codechecker in codecheckers) {
         if (!is.na(codechecker) && codechecker != "NA" && codechecker != "") {
-          # Check if it's an ORCID (format: NNNN-NNNN-NNNN-NNNX) or GitHub username
           is_orcid <- grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", codechecker)
 
-          # Add main page URL (either ORCID or GitHub username)
           urls[[length(urls) + 1]] <- list(
             loc = paste0(base_url, "/codecheckers/", codechecker, "/"),
             lastmod = lastmod,
@@ -111,20 +160,46 @@ generate_sitemap <- function(register_table,
             priority = "0.7"
           )
 
-          # For ORCID-based codecheckers, also add redirect page if they have GitHub username
           if (is_orcid) {
             profile <- get_codechecker_profile(codechecker)
             if (!is.null(profile) && !is.null(profile$github_handle)) {
               urls[[length(urls) + 1]] <- list(
                 loc = paste0(base_url, "/codecheckers/", profile$github_handle, "/"),
                 lastmod = lastmod,
-                changefreq = "yearly",  # Redirects change less frequently
+                changefreq = "yearly",
                 priority = "0.5"
               )
             }
           }
         }
       }
+    }
+  }
+
+  # People overview page (codecheckers/register#123 - a full render lists
+  # "persons" in filter_by instead of "codecheckers", see above; a person's
+  # handle redirect at /persons/<handle>/ is a 404-page rule, not a sitemap
+  # entry - see generate_404_page() - since it exists only to catch stray
+  # inbound links, not to be discovered by a crawler).
+  if ("persons" %in% filter_by && "Person" %in% names(register_table)) {
+    urls[[length(urls) + 1]] <- list(
+      loc = paste0(base_url, "/persons/"),
+      lastmod = lastmod,
+      changefreq = "weekly",
+      priority = "0.9"
+    )
+
+    persons <- unique(unlist(lapply(register_table$Person, function(records) {
+      vapply(records, function(r) r$orcid, character(1))
+    })))
+
+    for (orcid in persons) {
+      urls[[length(urls) + 1]] <- list(
+        loc = paste0(base_url, "/persons/", orcid, "/"),
+        lastmod = lastmod,
+        changefreq = "monthly",
+        priority = "0.7"
+      )
     }
   }
 

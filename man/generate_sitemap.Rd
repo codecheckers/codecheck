@@ -6,7 +6,7 @@
 \usage{
 generate_sitemap(
   register_table,
-  filter_by = c("venues", "codecheckers"),
+  filter_by = c("venues", "works", "persons"),
   output_dir = "docs",
   base_url = CONFIG$HYPERLINKS[["register"]],
   lastmod = format(Sys.Date(), "\%Y-\%m-\%d")
@@ -15,7 +15,7 @@ generate_sitemap(
 \arguments{
 \item{register_table}{The preprocessed register table with all entries}
 
-\item{filter_by}{List of filters used (e.g., "venues", "codecheckers")}
+\item{filter_by}{List of filters used (e.g., "venues", "works", "persons")}
 
 \item{output_dir}{Output directory for the sitemap (default: "docs")}
 

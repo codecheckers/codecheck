@@ -492,17 +492,27 @@ add_paper_details_md <- function(md_content, repo_link, openalex_id = NULL, abst
   title <- paste(CONFIG$MD_TITLES[["certs"]], config_yml$certificate)
   md_content <- gsub("\\$title\\$", title, md_content)
 
-  # Formatting the paper title as hyperlink
-  paper_title_hyperlink <- paste0("[", config_yml$paper$title, "]", "(", config_yml$paper$reference, ")")
+  # Formatting the paper title as hyperlink: to its own /works/<DOI>/ landing
+  # page (codecheckers/register#150) when the reference is a DOI, since that
+  # page shows this certificate alongside any others checking the same
+  # paper; falls back to the external reference URL otherwise (no DOI means
+  # no work page, per #150).
+  work_key <- normalize_work_key(config_yml$paper$reference)
+  paper_title_url <- if (!is.na(work_key)) paste0("../../works/", work_key, "/") else config_yml$paper$reference
+  paper_title_hyperlink <- paste0("[", config_yml$paper$title, "]", "(", paper_title_url, ")")
   md_content <- gsub("\\$paper_title\\$", paper_title_hyperlink, md_content)
   # md_content <- gsub("\\$paper_link\\$", config_yml$paper$reference, md_content)
 
-  # Formatting the authors list
+  # Formatting the authors list: each ORCID-bearing author's name links to
+  # their own /persons/<ORCID>/ page (codecheckers/register#150's "we can
+  # link authors ... if we have the ORCID" - #123 gives every ORCID-bearing
+  # person a page now, not just codecheckers, so unlike #150's original text
+  # this is no longer conditional on also being a codechecker), plus the
+  # ORCID icon linking out to the ORCID record itself.
   paper_authors <- paste(lapply(config_yml$paper$authors, function(author) {
     if (!is.null(author$ORCID) && author$ORCID != "") {
-      # If ORCID exists, create a hyperlink and a clickable ORCID icon
-      paste0("[", author$name, "](",
-      CONFIG$HYPERLINKS[["orcid"]], author$ORCID, ") ",
+      # Certificate pages are at docs/certs/YYYY-NNN/, two levels above persons/
+      paste0("[", author$name, "](../../persons/", author$ORCID, "/) ",
       '<a href="', CONFIG$HYPERLINKS[["orcid"]], author$ORCID, '" title="ORCID iD">',
       '<i class="ai ai-orcid orcid-icon-large"></i></a>')
     }
@@ -540,7 +550,11 @@ add_paper_details_md <- function(md_content, repo_link, openalex_id = NULL, abst
     )
   }
   if (!is.na(openalex_id)) {
-    openalex_html <- paste0('<p><strong>OpenAlex</strong>: <a href="', openalex_id, '">', openalex_id, '</a></p>')
+    # mt-3 matches the top spacing of "Cite this certificate" in the
+    # CODECHECK details card - without it, this paragraph (a bare <p>, whose
+    # default top margin Bootstrap's reboot zeroes out) sits flush against
+    # the abstract box above it.
+    openalex_html <- paste0('<p class="mt-3"><strong>OpenAlex</strong>: <a href="', openalex_id, '">', openalex_id, '</a></p>')
   } else {
     openalex_html <- ""
   }
@@ -563,12 +577,13 @@ add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venu
   codechecker_names <- c()
 
   for (checker in config_yml$codechecker){
-    # Creating a hyperlink to codechecker landing page if ORCID ID available
+    # Creating a hyperlink to the codechecker's person landing page (#123
+    # replaces /codecheckers/ with /persons/) if ORCID ID available
     if ("ORCID" %in% names(checker)){
       # Use relative path: certificate pages are at docs/certs/YYYY-NNN/
-      # so we need to go up 2 levels to reach codecheckers/
+      # so we need to go up 2 levels to reach persons/
       # The icon links directly to the ORCID profile page.
-      codechecker <- paste0("[", checker$name, "](../../codecheckers/", checker$ORCID, "/) ",
+      codechecker <- paste0("[", checker$name, "](../../persons/", checker$ORCID, "/) ",
       '<a href="', CONFIG$HYPERLINKS[["orcid"]], checker$ORCID, '" title="ORCID iD">',
       '<i class="ai ai-orcid orcid-icon-large"></i></a>')
     }

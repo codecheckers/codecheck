@@ -152,6 +152,13 @@ generate_html_postfix_hrefs_reg <- function(filter, table_details) {
     # "source" field, which does need an absolute URL for external consumers).
     json_href = "register.json",
     md_href = "register.md",
+    # No register.md - and so no "Markdown" footer link - for a filter in
+    # CONFIG$FILTERS_WITHOUT_MD (e.g. persons: two tables, not one).
+    has_md = !(!is.na(filter) && filter %in% CONFIG$FILTERS_WITHOUT_MD),
+    # The CSV links only earn their place on the main register.csv, which is
+    # the one CSV export people actually reach for; a filtered page's CSV is
+    # a small subset of the same data already shown in the table above it.
+    has_csv = is.na(filter),
     # "Go to random certificate" button: only on the main, unfiltered register
     # page (all certificates), not on filtered venue/codechecker pages.
     show_random_cert = is.na(filter),
@@ -283,6 +290,46 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
     schema_org_jsonld <- generate_venue_schema_org(
       venue_name = table_details[["name"]],
       venue_type = table_details[["subcat"]],
+      register_table = repo_lookup_table
+    )
+  }
+
+  # Generate Schema.org metadata for work pages (codecheckers/register#150)
+  else if (!is.na(filter) && filter == "works" && table_details[["is_reg_table"]] &&
+           !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+    repo_lookup_table <- table
+    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
+      repo_lookup_table <- full_register_table
+    }
+
+    schema_org_jsonld <- generate_work_schema_org(
+      doi = table_details[["name"]],
+      register_table = repo_lookup_table
+    )
+  }
+
+  # Generate Schema.org metadata for person pages (codecheckers/register#123)
+  else if (!is.na(filter) && filter == "persons" && table_details[["is_reg_table"]] &&
+           !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+    orcid <- table_details[["name"]]
+    person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
+    if (is.null(person_name)) person_name <- orcid
+
+    # "Work" (needed for the works-authored articles) is not part of the
+    # persons HTML column set (see filter_and_drop_register_columns()) -
+    # fall back to `table` if the full table wasn't supplied, in which case
+    # that section is simply skipped.
+    repo_lookup_table <- table
+    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
+      repo_lookup_table <- full_register_table
+    }
+
+    profile <- resolve_codechecker_profile(orcid)
+
+    schema_org_jsonld <- generate_person_schema_org(
+      orcid = orcid,
+      name = person_name,
+      github_handle = if (!is.null(profile)) profile$github_handle else NULL,
       register_table = repo_lookup_table
     )
   }

@@ -31,16 +31,11 @@
    ==================== */
 
 /* Primary brand color - use throughout for consistency */
-.codecheck-green,
 .navbar-menu .nav-link,
 .redirect-title,
 .redirect-link,
 .redirect-footer-link {
     color: #008033;
-}
-
-.codecheck-green-bg {
-    background-color: #008033;
 }
 
 /* Border color for branding elements */
@@ -87,10 +82,13 @@
 }
 
 .navbar-menu .nav-link {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
     text-decoration: none;
-    font-weight: 500;
-    font-size: 2rem;
-    padding: 0.5rem 1rem;
+    font-weight: 700;
+    font-size: 1.20rem;
+    padding: 1rem 1rem 0.8rem;
     border-radius: 0.25rem;
     transition: background-color 0.2s, color 0.2s;
 }
@@ -98,10 +96,6 @@
 .navbar-menu .nav-link:hover {
     background-color: #f0f0f0;
     color: #005522;
-}
-
-.navbar-menu .nav-link.active {
-    font-weight: 700;
 }
 
 /* Responsive navigation */
@@ -277,19 +271,6 @@ h1 {
     }
 }
 
-/* Certificate image display */
-.img-background {
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
-    height: 100%;
-}
-
-.wrapper {
-    height: 80vh;
-    padding: 0;
-}
-
 .row {
     margin: 0;
 }
@@ -390,7 +371,6 @@ h1 {
 
 .random-cert-fab:hover {
     background-color: #005522;
-    color: #ffffff;
     transform: scale(1.06);
 }
 

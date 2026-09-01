@@ -1,12 +1,12 @@
-<p class="footer-links">
+<p class="footer-links">{{#has_csv}}
     <a href="{{csv_source_href}}"
         title="raw CSV of register">CSV source</a> | <a
         href="{{searchable_csv_href}}"
-        title="searchable CSV on GitHub">searchable CSV</a> | <a
+        title="CSV file on GitHub">CSV on GitHub</a> | {{/has_csv}}<a
         href="{{json_href}}"
-        title="JSON export of register">JSON</a> | <a
+        title="JSON export of register">JSON</a>{{#has_md}} | <a
         href="{{md_href}}"
-        title="Markdown rendering of register">Markdown</a>
+        title="Markdown rendering of register">Markdown</a>{{/has_md}}
 </p>
 
 <hr class="footer-separator" />

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <link rel="shortcut icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="assets/codecheck-register.css">
+  <title>Page not found - CODECHECK Register</title>
+</head>
+<body>
+{{{nav_header_html}}}
+  <div class="redirect-container">
+    <div class="redirect-message">
+      <h1 class="redirect-title" id="notfound-title">Page not found</h1>
+      <p class="redirect-text" id="notfound-text">
+        This page does not exist in the CODECHECK register.
+      </p>
+      <p class="redirect-text-small">
+        <a href="index.html" class="redirect-link">Go to the CODECHECK Register</a> &middot;
+        <a href="works/index.html" class="redirect-link">Browse checked works</a> &middot;
+        <a href="persons/index.html" class="redirect-link">Browse people</a> &middot;
+        <a href="venues/index.html" class="redirect-link">Browse venues</a>
+      </p>
+    </div>
+  </div>
+
+  <footer class="redirect-footer">
+    <div class="redirect-footer-container">
+      <p class="redirect-footer-text">
+        <a href="https://github.com/codecheckers" target="_blank" class="redirect-footer-link">GitHub Organization</a>
+        <a href="https://zenodo.org/communities/codecheck/" target="_blank" class="redirect-footer-link">Zenodo Community</a>
+        <a href="https://codecheck.org.uk/" target="_blank" class="redirect-footer-link">About CODECHECK</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    // No inference beyond the path itself - an unrecognised path always
+    // falls through to the generic static message above, never a guess.
+    var path = window.location.pathname;
+    var titleEl = document.getElementById("notfound-title");
+    var textEl = document.getElementById("notfound-text");
+
+    // /codecheckers/<X>/... has moved to /persons/<X>/ (codecheckers/register#123
+    // replaces the codechecker page with the person page); covers both the
+    // ORCID and GitHub-handle forms of <X> with one rule, since both moved
+    // the same way.
+    var codecheckerMatch = path.match(/\/codecheckers\/([^/]+)\/?/);
+    if (codecheckerMatch) {
+      window.location.replace(path.replace(/\/codecheckers\//, "/persons/"));
+      return;
+    }
+
+    // /works/<DOI> with no page: a routine "not checked (yet)" answer, not
+    // an error - codecheckers/register#150's "a negative HTTP response
+    // means there is no check", made legible for a human visitor.
+    var workMatch = path.match(/\/works\/(10\.\S+?)\/?$/);
+    if (workMatch) {
+      var doi = decodeURIComponent(workMatch[1]);
+      titleEl.textContent = "No CODECHECK registered for this DOI";
+      textEl.textContent = "No CODECHECK has been registered for DOI " + doi + ".";
+      return;
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -333,6 +333,13 @@ preprocess_register <- function(register, filter_by) {
     register_table <- add_paper_links(register_table, register)
     register_table <- add_openalex_ids(register_table, register)
 
+    if ("works" %in% filter_by){
+      register_table <- add_work_key(register_table, register)
+    }
+    if ("persons" %in% filter_by){
+      register_table <- add_person_records(register_table, register)
+    }
+
     # Create temp register CSV after all enrichment is complete
     # This ensures the CSV has all enriched columns for codechecker filtering
     if ("codecheckers" %in% filter_by){

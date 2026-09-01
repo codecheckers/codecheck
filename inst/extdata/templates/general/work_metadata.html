@@ -1,0 +1,19 @@
+<div class="venue-metadata">
+<div class="venue-metadata-text">
+<ul class="venue-metadata-list">
+<li><i class="ai ai-doi"></i> <span class="venue-metadata-label">DOI:</span> <a href="{{doi_url}}" target="_blank" rel="noopener">{{doi}}</a></li>
+{{#has_openalex}}
+<li><span class="venue-metadata-label">OpenAlex:</span> <a href="{{openalex}}" target="_blank" rel="noopener">{{openalex}}</a></li>
+{{/has_openalex}}
+{{#has_authors}}
+<li><span class="venue-metadata-label">Authors:</span> {{{authors_html}}}</li>
+{{/has_authors}}
+{{#has_venues}}
+<li><span class="venue-metadata-label">Venue:</span> {{venues}}</li>
+{{/has_venues}}
+{{#has_dates}}
+<li><span class="venue-metadata-label">Checked:</span> {{check_count}} time{{^single_check}}s{{/single_check}}{{^single_check}}, {{first_check_date}} to {{last_check_date}}{{/single_check}}{{#single_check}} on {{first_check_date}}{{/single_check}}</li>
+{{/has_dates}}
+</ul>
+</div>
+</div>

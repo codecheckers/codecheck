@@ -231,34 +231,63 @@ create_register_files <- function(register_table, filter_by, outputs){
       stop(paste("Unknown filter type:", filter))
     }
 
+    # Each filter groups a possibly-reshaped copy of register_table, never
+    # the outer variable itself - filter_by can list "works" and "persons"
+    # in either order (or without "codecheckers" at all, now that #123
+    # covers what it used to), so a filter must not permanently drop or
+    # explode rows the way a later filter in the same loop still needs them.
+    grouping_table <- register_table
+
     # For filter by codecheckers we need to unnest the column "codechecker"
     # As a result of unnesting, a row of data with multiple codecheckers will now
     # be split into multiple rows, one for each codechecker
     if (filter == "codecheckers"){
-      register_table <- register_table %>% tidyr::unnest(Codechecker)
-      register_table$Codechecker <- unlist(register_table$Codechecker)
+      grouping_table <- grouping_table %>% tidyr::unnest(Codechecker)
+      grouping_table$Codechecker <- unlist(grouping_table$Codechecker)
 
       # Deduplicate NA codecheckers: if a certificate has multiple codecheckers
       # without ORCID (all marked as NA), it should only appear once in the NA list
       # We keep one row per unique combination of Certificate ID and Codechecker
       # This ensures each certificate appears only once in the NA codechecker page
       # even if multiple codecheckers lack ORCID (fixes codecheckers/register#153)
-      register_table <- register_table %>%
+      grouping_table <- grouping_table %>%
         distinct(`Certificate ID`, Codechecker, .keep_all = TRUE)
+    }
+
+    # A certificate with no DOI-identified paper simply has no work page
+    # (#150) - dropped here, from the grouping copy only, so it still
+    # appears normally under every other filter.
+    else if (filter == "works") {
+      grouping_table <- grouping_table %>% filter(!is.na(Work))
+    }
+
+    # Explode the Person list column (one list of {orcid, name, role}
+    # records per certificate, see add_person_records()) into one row per
+    # record, keeping only the columns a person page's two role-tables need.
+    # A person who is both author and codechecker on the same certificate
+    # legitimately gets two rows here, one per role.
+    else if (filter == "persons") {
+      grouping_table <- explode_person_records(grouping_table)
     }
 
     # Group the register_table by the filter column and nest the resulting groups
     filter_col_name <- CONFIG$FILTER_COLUMN_NAMES[[filter]]
-    grouped_registers <- register_table %>%
-      group_by(across(all_of(filter_col_name))) 
+    grouped_registers <- grouping_table %>%
+      group_by(across(all_of(filter_col_name)))
 
     # Split into a list of data frames
     filtered_register_list <- grouped_registers %>% group_split()
 
     # Get the group names (keys) based on the filter names
     register_keys <- grouped_registers %>% group_keys()
+
+    # Some filters (see CONFIG$FILTERS_WITHOUT_MD) don't get a register.md -
+    # their main content is more than one table, which a single markdown
+    # table can't represent.
+    filter_outputs <- setdiff(outputs, if (filter %in% CONFIG$FILTERS_WITHOUT_MD) "md" else character(0))
+
     # Looping over each of the output types
-    for (output_type in outputs){
+    for (output_type in filter_outputs){
       for (i in seq_along(filtered_register_list)) {
         # Retrieving the register and its key
         register_key <- register_keys[[filter_col_name]][i]
@@ -371,6 +400,24 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
     # created a sibling directory instead of updating the lowercase one
     # every other page already links to).
     table_details[["slug_name"]] <- gsub(" ", "_", tolower(table_key))
+  } else if (filter == "works") {
+    # The DOI itself, already lowercased by normalize_work_key() - its own
+    # "/" characters become nested path segments (docs/works/10.1093/
+    # gigascience/giaa026/), which generate_output_dir()'s dir.create(...,
+    # recursive = TRUE) already handles with no change needed there.
+    table_details[["slug_name"]] <- table_key
+    # MD_TITLES$works reads this rather than re-deriving it, since it only
+    # ever receives table_details, not the register table itself - the
+    # column is markdown-hyperlinked ("[title](url)"), so the plain text is
+    # pulled out here.
+    if ("Paper Title" %in% names(table) && nrow(table) > 0) {
+      title_cell <- table[["Paper Title"]][1]
+      table_details[["title"]] <- if (!is.na(title_cell) && grepl("\\[.*\\]\\(.*\\)", title_cell)) {
+        sub("\\[(.*)\\]\\(.*\\)", "\\1", title_cell)
+      } else {
+        title_cell
+      }
+    }
   } else if (is_orcid) {
     table_details[["slug_name"]] <- table_key  # Use ORCID as-is for directory
     table_details[["is_github_username"]] <- FALSE

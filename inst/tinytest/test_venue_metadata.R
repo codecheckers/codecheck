@@ -133,8 +133,12 @@ expect_true(grepl("contact_name: Jane Doe", agile_md, fixed = TRUE))
 expect_true(grepl("contact_email: jane@example.org", agile_md, fixed = TRUE))
 expect_true(grepl("name: ROR", agile_md, fixed = TRUE))
 expect_true(grepl("url: https://ror.org/05wg1m734", agile_md, fixed = TRUE))
-# The venue type moved from the title into the metadata (register#84 followup)
-expect_true(grepl("title: CODECHECKs for AGILEGIS", agile_md, fixed = TRUE))
+# The venue type moved from the title into the metadata (register#84 followup).
+# The title is YAML-quoted (add_markdown_title()) so that a work page's title -
+# which can contain a colon ("svaRetro and svaNUMT: Modular packages...") -
+# doesn't break the frontmatter; every filter's title is quoted the same way
+# for consistency, this venue title included, even though it never needed it.
+expect_true(grepl('title: "CODECHECKs for AGILEGIS"', agile_md, fixed = TRUE))
 expect_false(grepl("(conference)", agile_md, fixed = TRUE))
 # Frontmatter is well-formed: still exactly two "---" delimiter lines
 frontmatter_lines <- readLines(file.path("docs", "venues", "conferences", "agilegis", "register.md"))
@@ -165,7 +169,11 @@ expect_true(grepl('href="register.json"', agile_html, fixed = TRUE))
 expect_true(grepl('href="register.md"', agile_html, fixed = TRUE))
 expect_false(grepl('href="https://codecheck.org.uk/register/venues/conferences/agilegis/register.json"', agile_html, fixed = TRUE))
 expect_false(grepl('href="https://codecheck.org.uk/register/venues/conferences/agilegis/register.md"', agile_html, fixed = TRUE))
-expect_true(grepl("raw.githubusercontent.com", agile_html, fixed = TRUE))
+# CSV links now show only on the main, unfiltered register page - every
+# filtered detail page's own CSV is a small subset of the same data already
+# in the table above it (generate_html_postfix_hrefs_reg()'s has_csv).
+expect_false(grepl("raw.githubusercontent.com", agile_html, fixed = TRUE))
+expect_false(grepl("CSV", agile_html, fixed = TRUE))
 
 # index.json (not stats.json/statistics.json - it carries more than
 # statistics) carries the same structured metadata as the landing page

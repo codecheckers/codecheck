@@ -20,7 +20,7 @@ create_non_register_files <- function(register_table, filter_by){
       table <- list_tables[[table_name]]
 
       # Table does not belong to a subcategory. Setting subcat to NULL
-      if (table_name %in% list("venues", "codecheckers")){
+      if (table_name %in% list("venues", "codecheckers", "works", "persons")){
         subcat <- NULL
       }
 
@@ -119,7 +119,9 @@ create_non_register_files <- function(register_table, filter_by){
 create_tables_non_register <- function(register_table, filter){
   list_tables <- switch(filter,
     "venues" = create_venues_tables(register_table),
-    "codecheckers" = create_all_codecheckers_table(register_table)
+    "codecheckers" = create_all_codecheckers_table(register_table),
+    "works" = create_all_works_table(register_table),
+    "persons" = create_all_persons_table(register_table)
   )
   return(list_tables)
 }
@@ -173,7 +175,9 @@ render_non_register_md <- function(table, table_details, filter){
   # Add hyperlinks
   table <- switch(filter,
     "venues" = add_venues_hyperlinks_non_reg(table, table_details[["subcat"]], table_details),
-    "codecheckers" = add_all_codecheckers_hyperlink(table, table_details)
+    "codecheckers" = add_all_codecheckers_hyperlink(table, table_details),
+    "works" = add_all_works_hyperlink(table, table_details),
+    "persons" = add_all_persons_hyperlink(table, table_details)
   )
 
   table <- kable(table, format = "markdown")
