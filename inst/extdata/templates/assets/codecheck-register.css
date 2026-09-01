@@ -38,19 +38,21 @@
     color: #008033;
 }
 
-/* Border color for branding elements */
-.codecheck-navbar,
-.footer-separator {
-    border-color: #008033;
-}
-
 /* ====================
    Navigation Header
    ==================== */
 
 .codecheck-navbar {
     background-color: #ffffff;
-    border-bottom: 2px solid;
+    /* Color must be in the shorthand itself, not a separate border-color
+       declaration - a later rule setting border-color would silently lose
+       to this shorthand resetting it to currentColor, which is exactly the
+       bug this replaced (border-color was set once here, in a combined
+       .codecheck-navbar, .footer-separator selector, and once via a plain
+       border-color declaration for .footer-separator - both were always
+       overridden by a border/border-bottom shorthand appearing later in
+       the cascade, so neither border ever actually rendered green). */
+    border-bottom: 2px solid #008033;
     padding: 0.75rem 0;
     margin-bottom: 0;
 }
@@ -138,7 +140,12 @@ nav[aria-label="breadcrumb"] {
     padding-left: 0;
     margin-left: 0;
     border-radius: 0;
-    font-size: 1.08rem;
+    /* Size, weight and colour match .navbar-menu .nav-link, so the
+       breadcrumb trail reads as part of the same navigation system as the
+       menu above it - regular content links elsewhere on the page are
+       untouched (still Bootstrap blue, e.g. .breadcrumb-item a below
+       explicitly overrides that shared default, everything else doesn't). */
+    font-size: 1.20rem;
 }
 
 .breadcrumb-item + .breadcrumb-item::before {
@@ -148,12 +155,13 @@ nav[aria-label="breadcrumb"] {
 }
 
 .breadcrumb-item a {
-    color: #007bff;
+    color: #008033;
+    font-weight: 700;
     text-decoration: none;
 }
 
 .breadcrumb-item a:hover {
-    color: #0056b3;
+    color: #005522;
     text-decoration: underline;
 }
 
@@ -170,7 +178,7 @@ nav[aria-label="breadcrumb"] {
 }
 
 .footer-separator {
-    border: 2px solid;
+    border: 2px solid #008033;
     margin-top: 2em;
 }
 

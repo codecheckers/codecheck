@@ -18,20 +18,14 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
   # Logo always links to register home
   logo_link <- paste0(base_path, "/index.html")
 
-  # Menu shown on:
-  # - Main register page (is.na(filter))
-  # - A section's own overview page (filter %in% the sections below &&
-  #   !table_details$is_reg_table)
-  show_menu <- FALSE
-  if (is.na(filter)) {
-    show_menu <- TRUE
-  } else if (filter %in% c("venues", "works", "persons")) {
-    # Check if this is an overview page (not a specific venue/work/person page)
-    is_overview <- !isTRUE(table_details$is_reg_table)
-    show_menu <- is_overview
-  } else if (filter == "statistics") {
-    show_menu <- TRUE
-  }
+  # The menu is on every page - it used to be gated to overview/listing
+  # pages only, leaving every detail page (a certificate, a specific venue,
+  # work or person) with just breadcrumbs, which forces a visitor there to
+  # go back to a section's overview before they can jump to a different
+  # section. base_path is already computed correctly for any page's depth
+  # before this function is called, so the menu's own link paths below need
+  # no special-casing to reach every page uniformly.
+  show_menu <- TRUE
 
   menu_html <- ""
   if (show_menu) {
@@ -42,12 +36,18 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
       persons_path <- "persons/index.html"
       statistics_path <- "statistics/index.html"
     } else {
-      # Special handling for venue type pages (e.g., /venues/communities/):
-      # these are one level *inside* the venues directory already, so "All
-      # Venues" is just one level up - works/persons/statistics are not
-      # nested that way, so they still need the full base_path distance
-      # back to the docs root.
-      if (filter == "venues" && "subcat" %in% names(table_details)) {
+      # Special handling for a venue *type* overview page (e.g.,
+      # /venues/communities/index.html): it is one level *inside* the
+      # venues directory already, so "All Venues" is just one level up -
+      # works/persons/statistics are not nested that way, so they still
+      # need the full base_path distance back to the docs root. A specific
+      # venue's own detail page (e.g. /venues/communities/gigascience/)
+      # also carries a "subcat" in table_details, but sits one level
+      # *deeper* than the type overview - excluding is_reg_table pages here
+      # is what keeps it out of this shortcut (it wants the general
+      # base_path-relative form below instead).
+      if (filter == "venues" && "subcat" %in% names(table_details) &&
+          !isTRUE(table_details$is_reg_table)) {
         venues_path <- "../index.html"
         works_path <- paste0(base_path, "/works/index.html")
         persons_path <- paste0(base_path, "/persons/index.html")
@@ -138,7 +138,18 @@ generate_breadcrumb <- function(filter = NA, table_details = list(), base_path =
     # Venues section
     venues_link <- paste0(base_path, "/venues/index.html")
 
-    if (!table_details$is_reg_table) {
+    if (!table_details$is_reg_table && "subcat" %in% names(table_details)) {
+      # Venue *type* overview page (e.g. /venues/journals/) - not a reg
+      # table itself, but still carries a subcat, one level below the top
+      # venues overview (which has neither is_reg_table nor subcat set).
+      subcat <- table_details$subcat
+      subcat_plural <- CONFIG$VENUE_SUBCAT_PLURAL[[subcat]]
+      subcat_label <- stringr::str_to_title(subcat_plural)
+
+      items[[2]] <- list(label = "Venues", url = venues_link, active = FALSE)
+      items[[3]] <- list(label = subcat_label, url = NULL, active = TRUE)
+
+    } else if (!table_details$is_reg_table) {
       # Venues overview page
       items[[2]] <- list(label = "Venues", url = venues_link, active = TRUE)
 

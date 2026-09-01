@@ -476,25 +476,7 @@ register_update_stats <- function(docs_dir = "docs",
         if (length(match_idx) > 0) venue_name <- CONFIG$VENUE_DATA$name[match_idx[1]]
       }
 
-      venue_row <- lookup_venue_row(venue_name)
-      fields <- get_venue_metadata_fields(venue_row, venue_type)
-      nullable <- function(x) if (is.null(x)) NA_character_ else x
-      sub_stats$venue <- list(
-        name = venue_name,
-        longname = if ("longname" %in% names(venue_row)) venue_row[["longname"]][1] else NA_character_,
-        venue_type = fields$venue_type,
-        logo_url = fields$logo_url,
-        website_url = fields$website_url,
-        contact_name = fields$contact_name,
-        contact_email = fields$contact_email,
-        description = fields$description,
-        identifiers = lapply(fields$identifiers, function(i) list(
-          name = i$name,
-          icon = nullable(i$icon),
-          value = i$value,
-          url = nullable(i$link)
-        ))
-      )
+      sub_stats$venue <- build_venue_stats_field(venue_name, venue_type)
       stats_filename <- "index.json"
     }
 
@@ -506,20 +488,7 @@ register_update_stats <- function(docs_dir = "docs",
     is_codechecker_dir <- length(path_parts) == 2 && path_parts[1] == "codecheckers"
     if (is_codechecker_dir) {
       identifier <- path_parts[2]
-      profile <- resolve_codechecker_profile(identifier)
-      venues <- get_codechecker_venues(sub_data)
-      nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
-      sub_stats$codechecker <- list(
-        name = if (!is.null(profile$name)) profile$name else NA_character_,
-        orcid = nullable(profile$orcid),
-        github_username = nullable(profile$github_handle),
-        venue_count = nrow(venues),
-        venues = lapply(seq_len(nrow(venues)), function(i) list(
-          name = venues$Venue[i],
-          type = venues$Type[i],
-          cert_count = venues$cert_count[i]
-        ))
-      )
+      sub_stats$codechecker <- build_codechecker_stats_field(identifier, sub_data)
     }
 
     # A work's index.json carries the same structured fields as the full
@@ -529,16 +498,7 @@ register_update_stats <- function(docs_dir = "docs",
     is_work_dir <- length(path_parts) >= 2 && path_parts[1] == "works"
     if (is_work_dir) {
       doi <- paste(path_parts[-1], collapse = "/")
-      fields <- get_work_metadata_fields(doi, sub_data)
-      nullable <- function(x) if (is.null(x) || (length(x) == 1 && is.na(x))) NA_character_ else x
-      sub_stats$work <- list(
-        doi = fields$doi,
-        title = nullable(fields$title),
-        openalex = nullable(fields$openalex),
-        venues = fields$venues,
-        check_count = fields$check_count,
-        authors = lapply(fields$authors, function(a) list(name = a$name, orcid = nullable(a$orcid)))
-      )
+      sub_stats$work <- build_work_stats_field(doi, sub_data)
       stats_filename <- "index.json"
     }
 
@@ -549,28 +509,7 @@ register_update_stats <- function(docs_dir = "docs",
     is_person_dir <- length(path_parts) == 2 && path_parts[1] == "persons"
     if (is_person_dir) {
       orcid <- path_parts[2]
-      has_role <- "Role" %in% names(sub_data)
-      authored_certs <- if (has_role) unique(sub_data$`Certificate ID`[sub_data$Role == "author"]) else character(0)
-      checked_data <- if (has_role) sub_data[sub_data$Role == "codechecker", , drop = FALSE] else sub_data[0, , drop = FALSE]
-
-      profile <- resolve_codechecker_profile(orcid)
-      venues <- get_codechecker_venues(checked_data)
-      nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
-      person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
-      if (is.null(person_name)) person_name <- if (!is.null(profile$name)) profile$name else orcid
-
-      sub_stats$person <- list(
-        name = person_name,
-        orcid = orcid,
-        github_username = nullable(profile$github_handle),
-        works_authored = length(authored_certs),
-        checks_conducted = nrow(checked_data),
-        venues = lapply(seq_len(nrow(venues)), function(i) list(
-          name = venues$Venue[i],
-          type = venues$Type[i],
-          cert_count = venues$cert_count[i]
-        ))
-      )
+      sub_stats$person <- build_person_stats_field(orcid, sub_data)
     }
 
     jsonlite::write_json(sub_stats, auto_unbox = TRUE,

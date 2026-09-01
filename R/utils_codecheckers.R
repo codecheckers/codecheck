@@ -467,6 +467,17 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
   profile <- resolve_codechecker_profile(identifier)
 
   has_orcid <- !is.null(profile$orcid) && nzchar(profile$orcid)
+  # `identifier` is well-formed ORCID but resolve_codechecker_profile()
+  # found no match - true for anyone not signed up in one of the three
+  # codechecker lists, which includes every author-only person on their own
+  # /persons/<ORCID>/ page (codecheckers/register#123). The ORCID itself is
+  # not actually unknown - it is this page's own identifier - so show it
+  # rather than silently dropping the only fact this function would
+  # otherwise have to display.
+  if (!has_orcid && grepl("^\\d{4}-\\d{4}-\\d{4}-\\d{3}[0-9X]$", identifier)) {
+    has_orcid <- TRUE
+    profile$orcid <- identifier
+  }
   has_github <- !is.null(profile$github_handle) && nzchar(profile$github_handle)
 
   venues_html <- if (!is.null(register_table)) generate_contributed_venues_html(register_table, table_details) else ""

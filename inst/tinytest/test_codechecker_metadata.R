@@ -41,18 +41,27 @@ expect_equal(codecheck:::generate_contributed_venues_html(empty_table, table_det
 # Unit tests: resolve_codechecker_profile() / generate_codechecker_metadata_html()/yaml() ----
 
 # An identifier with no matching entry in codecheckers.csv and no venues
-# renders nothing, regardless of network availability (get_codecheckers_data()
-# degrades to an empty data frame on a failed fetch).
-expect_equal(codecheck:::generate_codechecker_metadata_html("0000-0000-0000-0001"), "")
+# still renders an ORCID line when the identifier is itself a well-formed
+# ORCID - it is this person's own page identifier, not something that needs
+# a codecheckers.csv match to be "known" (an author-only person on their
+# own /persons/<ORCID>/ page is never in that list, and previously got no
+# metadata panel at all as a result - codecheckers/register#123 followup).
+# generate_codechecker_metadata_yaml() is unrelated to that page (persons
+# pages never emit register.md/YAML frontmatter) and keeps the old,
+# lookup-only behaviour.
+html_orcid_only <- codecheck:::generate_codechecker_metadata_html("0000-0000-0000-0001")
+expect_true(grepl("ORCID:", html_orcid_only, fixed = TRUE))
+expect_true(grepl("0000-0000-0000-0001", html_orcid_only, fixed = TRUE))
+expect_false(grepl("codechecker-metadata-avatar", html_orcid_only, fixed = TRUE))
 expect_equal(codecheck:::generate_codechecker_metadata_yaml("0000-0000-0000-0001"), "")
 
-# ...but the panel still renders for the contributed-venues row alone, even
-# with no ORCID/GitHub on file.
+# ...and the panel renders for the contributed-venues row alongside the
+# ORCID line, even with no GitHub handle on file.
 venues_only_html <- codecheck:::generate_codechecker_metadata_html("0000-0000-0000-0001", reg_table, table_details)
 expect_true(grepl("venue-metadata", venues_only_html, fixed = TRUE))
 expect_true(grepl("fa-check-square-o", venues_only_html, fixed = TRUE))
 expect_true(grepl("Contributed checks:", venues_only_html, fixed = TRUE))
-expect_false(grepl("ORCID:", venues_only_html, fixed = TRUE))
+expect_true(grepl("ORCID:", venues_only_html, fixed = TRUE))
 expect_false(grepl("codechecker-metadata-avatar", venues_only_html, fixed = TRUE))
 
 venues_only_yaml <- codecheck:::generate_codechecker_metadata_yaml("0000-0000-0000-0001", reg_table)

@@ -505,6 +505,132 @@ compute_annual_stats <- function(register_table) {
   return(stats)
 }
 
+#' Build a venue's structured stats.json/index.json "venue" field
+#'
+#' Shared by [render_register_json()] (a full render, which already knows
+#' the venue's name/type from `table_details`) and [register_update_stats()]
+#' (which recovers them by parsing the venue's own directory path, since it
+#' works from an already-rendered `register.json` with no `table_details` to
+#' hand it) - both then need the exact same fields, sourced from
+#' [get_venue_metadata_fields()], the same panel-and-JSON single source of
+#' truth the venue landing page's metadata panel uses.
+#'
+#' @param venue_name The venue's name (register.csv `Venue` column).
+#' @param venue_type The venue's type (register.csv `Type` column).
+#' @return A list suitable for `stats_data$venue`/`sub_stats$venue`.
+#' @keywords internal
+build_venue_stats_field <- function(venue_name, venue_type) {
+  venue_row <- lookup_venue_row(venue_name)
+  fields <- get_venue_metadata_fields(venue_row, venue_type)
+  nullable <- function(x) if (is.null(x)) NA_character_ else x
+  list(
+    name = venue_name,
+    longname = if ("longname" %in% names(venue_row)) venue_row[["longname"]][1] else NA_character_,
+    venue_type = fields$venue_type,
+    logo_url = fields$logo_url,
+    website_url = fields$website_url,
+    contact_name = fields$contact_name,
+    contact_email = fields$contact_email,
+    description = fields$description,
+    identifiers = lapply(fields$identifiers, function(i) list(
+      name = i$name,
+      icon = nullable(i$icon),
+      value = i$value,
+      url = nullable(i$link)
+    ))
+  )
+}
+
+#' Build a codechecker's structured stats.json "codechecker" field
+#'
+#' Shared by [render_register_json()] and [register_update_stats()] -
+#' see [build_venue_stats_field()] for why the same field needs building
+#' twice. Addresses register#78.
+#'
+#' @param identifier The codechecker's ORCID or GitHub handle.
+#' @param register_table The codechecker's register rows, needs `Venue`/`Type`.
+#' @return A list suitable for `stats_data$codechecker`/`sub_stats$codechecker`.
+#' @keywords internal
+build_codechecker_stats_field <- function(identifier, register_table) {
+  profile <- resolve_codechecker_profile(identifier)
+  venues <- get_codechecker_venues(register_table)
+  nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
+  list(
+    name = if (!is.null(profile$name)) profile$name else NA_character_,
+    orcid = nullable(profile$orcid),
+    github_username = nullable(profile$github_handle),
+    venue_count = nrow(venues),
+    venues = lapply(seq_len(nrow(venues)), function(i) list(
+      name = venues$Venue[i],
+      type = venues$Type[i],
+      cert_count = venues$cert_count[i]
+    ))
+  )
+}
+
+#' Build a work's structured index.json "work" field
+#'
+#' Shared by [render_register_json()] and [register_update_stats()] -
+#' see [build_venue_stats_field()] for why the same field needs building
+#' twice. Addresses codecheckers/register#150's machine-readable representation.
+#'
+#' @param doi The work's DOI.
+#' @param register_table The work's register rows, see [get_work_metadata_fields()].
+#' @return A list suitable for `stats_data$work`/`sub_stats$work`.
+#' @keywords internal
+build_work_stats_field <- function(doi, register_table) {
+  fields <- get_work_metadata_fields(doi, register_table)
+  nullable <- function(x) if (is.null(x) || (length(x) == 1 && is.na(x))) NA_character_ else x
+  list(
+    doi = fields$doi,
+    title = nullable(fields$title),
+    openalex = nullable(fields$openalex),
+    venues = fields$venues,
+    check_count = fields$check_count,
+    authors = lapply(fields$authors, function(a) list(
+      name = a$name,
+      orcid = nullable(a$orcid)
+    ))
+  )
+}
+
+#' Build a person's structured stats.json "person" field
+#'
+#' Shared by [render_register_json()] and [register_update_stats()] -
+#' see [build_venue_stats_field()] for why the same field needs building
+#' twice. The #123 analogue of [build_codechecker_stats_field()], extended
+#' with the works-authored count a codechecker-only page never had.
+#'
+#' @param orcid The person's ORCID.
+#' @param register_table The person's exploded, per-role register rows (see
+#'   [explode_person_records()]), needs a `Role` column.
+#' @return A list suitable for `stats_data$person`/`sub_stats$person`.
+#' @keywords internal
+build_person_stats_field <- function(orcid, register_table) {
+  has_role <- "Role" %in% names(register_table)
+  authored_certs <- if (has_role) unique(register_table$`Certificate ID`[register_table$Role == "author"]) else character(0)
+  checked_table <- if (has_role) register_table[register_table$Role == "codechecker", , drop = FALSE] else register_table[0, , drop = FALSE]
+
+  profile <- resolve_codechecker_profile(orcid)
+  venues <- get_codechecker_venues(checked_table)
+  nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
+  person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
+  if (is.null(person_name)) person_name <- if (!is.null(profile$name)) profile$name else orcid
+
+  list(
+    name = person_name,
+    orcid = orcid,
+    github_username = nullable(profile$github_handle),
+    works_authored = length(authored_certs),
+    checks_conducted = nrow(checked_table),
+    venues = lapply(seq_len(nrow(venues)), function(i) list(
+      name = venues$Venue[i],
+      type = venues$Type[i],
+      cert_count = venues$cert_count[i]
+    ))
+  )
+}
+
 #' Renders register json for a single register_table
 #'
 #' @param register_table The register table
@@ -569,25 +695,7 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   is_venue_page <- filter == "venues" && isTRUE(table_details[["is_reg_table"]]) &&
     !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
   if (is_venue_page) {
-    venue_row <- lookup_venue_row(table_details[["name"]])
-    fields <- get_venue_metadata_fields(venue_row, table_details[["subcat"]])
-    nullable <- function(x) if (is.null(x)) NA_character_ else x
-    stats_data$venue <- list(
-      name = table_details[["name"]],
-      longname = if ("longname" %in% names(venue_row)) venue_row[["longname"]][1] else NA_character_,
-      venue_type = fields$venue_type,
-      logo_url = fields$logo_url,
-      website_url = fields$website_url,
-      contact_name = fields$contact_name,
-      contact_email = fields$contact_email,
-      description = fields$description,
-      identifiers = lapply(fields$identifiers, function(i) list(
-        name = i$name,
-        icon = nullable(i$icon),
-        value = i$value,
-        url = nullable(i$link)
-      ))
-    )
+    stats_data$venue <- build_venue_stats_field(table_details[["name"]], table_details[["subcat"]])
   }
 
   # Add the codechecker's identity and contributed-venues list (name, ORCID,
@@ -598,21 +706,7 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   is_codechecker_page <- filter == "codecheckers" &&
     !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
   if (is_codechecker_page) {
-    identifier <- table_details[["name"]]
-    profile <- resolve_codechecker_profile(identifier)
-    venues <- get_codechecker_venues(register_table)
-    nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
-    stats_data$codechecker <- list(
-      name = if (!is.null(profile$name)) profile$name else NA_character_,
-      orcid = nullable(profile$orcid),
-      github_username = nullable(profile$github_handle),
-      venue_count = nrow(venues),
-      venues = lapply(seq_len(nrow(venues)), function(i) list(
-        name = venues$Venue[i],
-        type = venues$Type[i],
-        cert_count = venues$cert_count[i]
-      ))
-    )
+    stats_data$codechecker <- build_codechecker_stats_field(table_details[["name"]], register_table)
   }
 
   # Add the work's identity (title, DOI, OpenAlex, venues, authors - the
@@ -623,19 +717,7 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   is_work_page <- filter == "works" && isTRUE(table_details[["is_reg_table"]]) &&
     !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
   if (is_work_page) {
-    fields <- get_work_metadata_fields(table_details[["name"]], register_table)
-    nullable <- function(x) if (is.null(x) || (length(x) == 1 && is.na(x))) NA_character_ else x
-    stats_data$work <- list(
-      doi = fields$doi,
-      title = nullable(fields$title),
-      openalex = nullable(fields$openalex),
-      venues = fields$venues,
-      check_count = fields$check_count,
-      authors = lapply(fields$authors, function(a) list(
-        name = a$name,
-        orcid = nullable(a$orcid)
-      ))
-    )
+    stats_data$work <- build_work_stats_field(table_details[["name"]], register_table)
   }
 
   # Add the person's identity and role counts (name, ORCID, GitHub username,
@@ -646,29 +728,7 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   is_person_page <- filter == "persons" &&
     !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
   if (is_person_page) {
-    orcid <- table_details[["name"]]
-    has_role <- "Role" %in% names(register_table)
-    authored_certs <- if (has_role) unique(register_table$`Certificate ID`[register_table$Role == "author"]) else character(0)
-    checked_table <- if (has_role) register_table[register_table$Role == "codechecker", , drop = FALSE] else register_table[0, , drop = FALSE]
-
-    profile <- resolve_codechecker_profile(orcid)
-    venues <- get_codechecker_venues(checked_table)
-    nullable <- function(x) if (is.null(x) || !nzchar(x)) NA_character_ else x
-    person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
-    if (is.null(person_name)) person_name <- orcid
-
-    stats_data$person <- list(
-      name = person_name,
-      orcid = orcid,
-      github_username = nullable(profile$github_handle),
-      works_authored = length(authored_certs),
-      checks_conducted = nrow(checked_table),
-      venues = lapply(seq_len(nrow(venues)), function(i) list(
-        name = venues$Venue[i],
-        type = venues$Type[i],
-        cert_count = venues$cert_count[i]
-      ))
-    )
+    stats_data$person <- build_person_stats_field(table_details[["name"]], register_table)
   }
 
   # Add annual statistics for the main register (addresses register#144).
