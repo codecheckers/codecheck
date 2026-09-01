@@ -59,6 +59,7 @@ Semantic versioning. Use `usethis::use_version("patch"|"minor"|"major"|"dev")` t
 `use_version()` only touches `DESCRIPTION` and adds an empty `NEWS.md` heading above the accumulated dev-cycle entries; it does not consolidate them under the release heading, regenerate `man/`, or touch `CITATION.cff`. A release therefore also needs:
 
 * Merge the dev-cycle `# codecheck X.Y.Z.9NNN` sections `use_version()` leaves below the new heading into that heading's own `## New Features`/`## Bug Fixes` (etc.) lists, then delete the now-empty dev headings.
+* Align the merged entries' style, length, content and links with the historic entries below them: one or two sentences per bullet (per <https://style.tidyverse.org/news.html>, referenced in `CONTRIBUTING.md`), not a multi-paragraph writeup accumulated over a dev cycle - trim implementation narrative down to the user-facing change, and match how existing entries cite an issue (`(closes codecheckers/register#N)` / `(register#N)`) rather than a bare `#N` or no reference at all.
 * Run `devtools::document()` so `man/` reflects the current code (roxygen doesn't stamp the package version into `.Rd` files, but a stale `man/` from skipped `--no-docs` installs during iteration should not ship in a release).
 * Update the hardcoded `version:` and `date-released:` fields in `CITATION.cff` - nothing else touches this file, so it silently drifted for several releases (last correct at 0.21.0) before being caught at 0.26.0.
 
