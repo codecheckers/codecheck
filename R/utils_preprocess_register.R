@@ -322,10 +322,14 @@ add_openalex_ids <- function(register_table, register) {
 preprocess_register <- function(register, filter_by) {
     register_table <- register
 
-    if ("codecheckers" %in% filter_by){
-      # Adding the codechecker column which is needed for filtering by codechecker later
-      register_table <- add_codechecker(register_table, register)
-    }
+    # The Codechecker column is foundational, not just for the "codecheckers"
+    # filter's own output pages: compute_annual_stats() reads it for the main
+    # statistics.json and every venue's index.json, and the statistics
+    # dashboard reads those. It must be added unconditionally - gating it on
+    # "codecheckers" %in% filter_by silently dropped codechecker counts
+    # register-wide once register_render()'s default filter_by stopped
+    # including "codecheckers" (#123/#150).
+    register_table <- add_codechecker(register_table, register)
     register_table <- add_cert_links(register_table)
     register_table <- add_report_links(register_table, register)
     register_table <- add_issue_number_links(register_table, register)

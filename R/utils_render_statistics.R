@@ -132,7 +132,10 @@ build_statistics_content_html <- function(stats, base_path = "..") {
     '<div class="row stats-summary-row">\n',
     stats_summary_card("Certificates", num(stats$cert_count), paste0(base_path, "/index.html")),
     stats_summary_card("Venues", num(stats$venue_count), paste0(base_path, "/venues/index.html")),
-    stats_summary_card("Codecheckers", num(stats$codechecker_count), paste0(base_path, "/codecheckers/index.html")),
+    # /codecheckers/ is retired (#123) - the card still counts codecheckers
+    # (from the Codechecker column compute_annual_stats() reads), but now
+    # links to /persons/, which covers the same people plus paper authors.
+    stats_summary_card("Codecheckers", num(stats$codechecker_count), paste0(base_path, "/persons/index.html")),
     '</div>\n'
   )
 

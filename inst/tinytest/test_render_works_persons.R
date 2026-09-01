@@ -4,12 +4,37 @@ test_path <- "register/short.csv"
 test_register <- read.csv(test_path)
 venues_path <- "register/venues.csv"
 
-register_render(register = test_register, filter_by = c("works", "persons"),
+register_render(register = test_register, filter_by = c("venues", "works", "persons"),
                  outputs = c("html", "md", "json"),
                  config = c(system.file("extdata", "config.R", package = "codecheck"),
                             "config/render_html.R"),
                  venues_file = venues_path
 )
+
+# register#123/#150 dropped "codecheckers" from the default filter_by, which
+# silently broke the Codechecker column that compute_annual_stats() needs
+# for the *statistics* pages (not the retired per-codechecker pages) -
+# preprocess_register() must add it regardless of filter_by. Covers the main
+# statistics.json, a venue's own index.json (every per-item JSON carries the
+# same annual-stats block, see render_register_json()), and, transitively,
+# the numbers the statistics dashboard reads from both.
+main_stats <- jsonlite::fromJSON("docs/statistics.json")
+expect_true(!is.null(main_stats$codechecker_count) && main_stats$codechecker_count > 0,
+            info = "main statistics.json must carry a non-zero codechecker_count")
+expect_true(length(main_stats$codecheckers_per_year) > 0)
+
+venue_stats <- jsonlite::fromJSON("docs/venues/conferences/agilegis/index.json")
+expect_true(!is.null(venue_stats$codechecker_count) && venue_stats$codechecker_count > 0,
+            info = "a venue's index.json must carry a non-zero codechecker_count too")
+
+statistics_html <- paste(readLines("docs/statistics/index.html", warn = FALSE), collapse = "\n")
+# the summary card shows the real count, not the num()-default 0; pandoc
+# reflows the raw HTML block, so the number sits on its own line
+expect_true(grepl(paste0('>\\s*', main_stats$codechecker_count, '\\s*<'), statistics_html),
+            info = "statistics dashboard must display the non-zero codechecker count")
+# /codecheckers/ is retired - the card must link to /persons/ instead
+expect_true(grepl('href="../persons/index.html"', statistics_html, fixed = TRUE))
+expect_false(grepl("codecheckers/index.html", statistics_html, fixed = TRUE))
 
 # 2024-017's paper reference is a DOI (10.3397/IN_2024_3491) - work page exists
 work_dir <- "docs/works/10.3397/in_2024_3491"
