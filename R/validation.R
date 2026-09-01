@@ -512,7 +512,11 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
 ##' @keywords internal
 get_orcid_name_public <- function(orcid_id) {
   tryCatch({
-    resp <- httr::GET(
+    # codecheck_GET() (not a plain httr::GET()) so a request that never gets
+    # a response times out into this tryCatch instead of hanging - the
+    # existing status-code check below only guards against an *answered*
+    # request, not one ORCID's server never answers at all.
+    resp <- codecheck_GET(
       paste0("https://pub.orcid.org/v3.0/", orcid_id, "/person"),
       httr::add_headers(Accept = "application/json")
     )

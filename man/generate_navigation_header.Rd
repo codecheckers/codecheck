@@ -11,7 +11,8 @@ generate_navigation_header(
 )
 }
 \arguments{
-\item{filter}{The filter type (NA for main register, "venues", "codecheckers", etc.)}
+\item{filter}{The filter type (NA for main register, "venues", "works",
+"persons", "statistics", ...)}
 
 \item{base_path}{Relative path to register root for logo link}
 
@@ -22,5 +23,8 @@ HTML string with navigation header
 }
 \description{
 Creates a header navigation bar with CODECHECK logo and optional menu.
-Logo links to register home. Menu appears on main register and overview pages.
+The logo links to register home, same as the "All Checks" menu item -
+kept as a second, explicit route to the same place since a logo-as-home
+link is a common web convention but not a self-explanatory one, and the
+logo also carries a hover title saying so.
 }

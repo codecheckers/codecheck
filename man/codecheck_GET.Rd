@@ -2,14 +2,17 @@
 % Please edit documentation in R/globals.R
 \name{codecheck_GET}
 \alias{codecheck_GET}
-\title{Custom HTTP GET with proper User-Agent header}
+\title{Custom HTTP GET with proper User-Agent header and a bounded timeout}
 \usage{
-codecheck_GET(url, ...)
+codecheck_GET(url, ..., timeout_seconds = 30)
 }
 \arguments{
 \item{url}{The URL to request}
 
-\item{...}{Additional arguments passed to \code{httr::GET()}}
+\item{...}{Additional arguments passed to \code{httr::GET()} - a caller's
+own \code{httr::timeout()} here overrides the default.}
+
+\item{timeout_seconds}{Maximum time for the whole request/response cycle.}
 }
 \value{
 An \code{httr} response object
@@ -18,4 +21,16 @@ An \code{httr} response object
 Wraps \code{httr::GET()} with a descriptive User-Agent to avoid being
 blocked by services like Figshare that reject default libcurl requests,
 especially from CI runner IPs (e.g., GitHub Actions).
+}
+\details{
+Also bounds the request to \code{timeout_seconds}: plain \code{httr::GET()}
+has no timeout at all, so a server that accepts the connection but never
+answers (rather than erroring or rate-limiting, which
+\code{codecheck_GET_retry()} already handles) hangs the request - and with
+it, the whole single-threaded render - indefinitely. A render touches many
+certificates across several external APIs in one run, so any one of them
+having a bad moment stalls everything after it with no log output to say
+why. Bounding it here means the caller gets an error back to handle
+(`codecheck_GET_retry()` retries it; a bare `codecheck_GET()` caller sees a
+`try`/`tryCatch`-able failure) instead of a silent, unrecoverable hang.
 }

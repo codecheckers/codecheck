@@ -1234,7 +1234,15 @@ get_zenodo_record_metadata <- function(id, sandbox = FALSE) {
   } else {
     httr::add_headers(Accept = "application/vnd.inveniordm.v1+json")
   }
-  response <- httr::GET(paste0(host, "/api/records/", id), headers)
+  # codecheck_GET_retry() (not a plain httr::GET()) so this record fetch gets
+  # the same timeout and rate-limit backoff every other external call in the
+  # package does - resolve_cert_title() calls this once per certificate, and
+  # a single unresponsive record used to hang the whole render with no
+  # timeout to fall back on.
+  response <- codecheck_GET_retry(paste0(host, "/api/records/", id), headers)
+  if (is.null(response)) {
+    stop("Could not fetch Zenodo record ", id, ": request failed or timed out")
+  }
   httr::stop_for_status(response)
   record <- httr::content(response, as = "parsed", type = "application/json")
 

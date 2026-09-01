@@ -290,10 +290,17 @@ compute_annual_stats <- function(register_table) {
     return(stats)
   }
 
-  dates <- as.Date(register_table$`Check date`)
+  # register_table here is a filter group's full_register_table (see caller),
+  # which for a work/person page still carries the raw Work/Person list
+  # columns alongside "Check date" - as.character() defensively unwraps
+  # "Check date" itself to a plain vector before sort() touches it, in case
+  # some upstream step (or a future new column) leaves it list-like for a
+  # single-row group; sort() errors opaquely ("'x' must be atomic") rather
+  # than coercing, so this is worth being defensive about.
+  dates <- as.Date(as.character(register_table$`Check date`))
   years <- format(dates, "%Y")
   valid <- !is.na(years)
-  all_years <- sort(unique(years[valid]))
+  all_years <- sort(unique(as.character(years[valid])))
 
   # --- Total venue count and per-type breakdown (addresses register#76) ---
   if ("Venue" %in% names(register_table)) {
@@ -362,7 +369,7 @@ compute_annual_stats <- function(register_table) {
       stats$codecheckers_per_year <- as.list(codecheckers_by_year[all_years[all_years %in% names(codecheckers_by_year)]])
 
       # Cumulative unique codecheckers
-      cc_years <- sort(unique(pairs$year))
+      cc_years <- sort(unique(as.character(pairs$year)))
       cc_cumulative <- setNames(integer(length(cc_years)), cc_years)
       seen_cc <- character(0)
       for (y in cc_years) {

@@ -2,20 +2,34 @@
 #' @keywords internal
 "_PACKAGE"
 
-#' Custom HTTP GET with proper User-Agent header
+#' Custom HTTP GET with proper User-Agent header and a bounded timeout
 #'
 #' Wraps \code{httr::GET()} with a descriptive User-Agent to avoid being
 #' blocked by services like Figshare that reject default libcurl requests,
 #' especially from CI runner IPs (e.g., GitHub Actions).
 #'
+#' Also bounds the request to \code{timeout_seconds}: plain \code{httr::GET()}
+#' has no timeout at all, so a server that accepts the connection but never
+#' answers (rather than erroring or rate-limiting, which
+#' \code{codecheck_GET_retry()} already handles) hangs the request - and with
+#' it, the whole single-threaded render - indefinitely. A render touches many
+#' certificates across several external APIs in one run, so any one of them
+#' having a bad moment stalls everything after it with no log output to say
+#' why. Bounding it here means the caller gets an error back to handle
+#' (`codecheck_GET_retry()` retries it; a bare `codecheck_GET()` caller sees a
+#' `try`/`tryCatch`-able failure) instead of a silent, unrecoverable hang.
+#'
 #' @param url The URL to request
-#' @param ... Additional arguments passed to \code{httr::GET()}
+#' @param ... Additional arguments passed to \code{httr::GET()} - a caller's
+#'   own \code{httr::timeout()} here overrides the default.
+#' @param timeout_seconds Maximum time for the whole request/response cycle.
 #' @return An \code{httr} response object
-codecheck_GET <- function(url, ...) {
+codecheck_GET <- function(url, ..., timeout_seconds = 30) {
   ua <- paste0("codecheck/", utils::packageVersion("codecheck"),
                " (https://codecheck.org.uk; mailto:daniel.nuest@tu-dresden.de)")
   httr::GET(url,
     httr::user_agent(ua),
+    httr::timeout(timeout_seconds),
     ...
   )
 }
