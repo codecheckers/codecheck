@@ -9,7 +9,7 @@ for search engine optimization and crawling."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.27.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ for search engine optimization and crawling.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">generate_sitemap</span><span class="op">(</span></span>
 <span>  <span class="va">register_table</span>,</span>
-<span>  filter_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"venues"</span>, <span class="st">"codecheckers"</span><span class="op">)</span>,</span>
+<span>  filter_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"venues"</span>, <span class="st">"works"</span>, <span class="st">"persons"</span><span class="op">)</span>,</span>
 <span>  output_dir <span class="op">=</span> <span class="st">"docs"</span>,</span>
 <span>  base_url <span class="op">=</span> <span class="va">CONFIG</span><span class="op">$</span><span class="va">HYPERLINKS</span><span class="op">[[</span><span class="st">"register"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>  lastmod <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"%Y-%m-%d"</span><span class="op">)</span></span>
@@ -65,7 +65,7 @@ for search engine optimization and crawling.</p>
 
 
 <dt id="arg-filter-by">filter_by<a class="anchor" aria-label="anchor" href="#arg-filter-by"></a></dt>
-<dd><p>List of filters used (e.g., "venues", "codecheckers")</p></dd>
+<dd><p>List of filters used (e.g., "venues", "works", "persons")</p></dd>
 
 
 <dt id="arg-output-dir">output_dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>

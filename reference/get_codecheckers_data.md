@@ -1,23 +1,14 @@
 # Fetch and cache codecheckers.csv data from GitHub
 
-This function downloads the codecheckers registry from the
-codecheckers/codecheckers repository and caches it for performance.
+The volunteer codechecker list. See \[CODECHECKER_LIST_URLS\] for the
+other two lists and \[all_codechecker_records()\] for the three of them
+combined, which is what the profile lookups below search.
 
 ## Usage
 
 ``` r
-get_codecheckers_data(..., envir = parent.frame())
+get_codecheckers_data()
 ```
-
-## Arguments
-
-- ...:
-
-  Additional arguments passed to the memoization mechanism
-
-- envir:
-
-  Environment for memoization caching (default: parent.frame())
 
 ## Value
 

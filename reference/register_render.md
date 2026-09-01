@@ -9,7 +9,7 @@ https://github.com/settings/tokens.
 ``` r
 register_render(
   register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
-  filter_by = c("venues", "codecheckers"),
+  filter_by = c("venues", "works", "persons"),
   outputs = c("html", "md", "json"),
   config = c(system.file("extdata", "config.R", package = "codecheck")),
   venues_file = "venues.csv",

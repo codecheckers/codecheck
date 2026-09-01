@@ -74,6 +74,21 @@ focused tests can’t see.
 Always update `NEWS.md` when making changes. Follow the existing
 `# codecheck X.Y.Z` header format.
 
+**Match the length and level of detail of the existing entries.** An
+entry is one bullet of one sentence, typically 10-25 words: what changed
+from the user’s point of view, the issue reference in parentheses
+(`closes codecheckers/codecheck#N`, `register#N`), and at most a short
+“New `some_function()`” clause for a new public function. Not the root
+cause, not the call sites, not the reasoning behind the design - that
+belongs in code comments, the commit message and the issue. One change
+that touches several user-visible things is several bullets, not one
+long one. Fixes go under `## Bug Fixes`, not `## New Features`.
+
+A longer entry is allowed where it genuinely earns it - a subtle bug
+whose *symptom* needs describing so somebody recognises it, or a change
+whose behaviour is surprising without a caveat. Propose it and say why
+rather than writing it silently, and keep it to two or three sentences.
+
 ## Design Principles
 
 ### Data vs. Presentation Separation
@@ -98,6 +113,14 @@ them under the release heading, regenerate `man/`, or touch
   leaves below the new heading into that heading’s own
   `## New Features`/`## Bug Fixes` (etc.) lists, then delete the
   now-empty dev headings.
+- Align the merged entries’ style, length, content and links with the
+  historic entries below them: one or two sentences per bullet (per
+  <https://style.tidyverse.org/news.html>, referenced in
+  `CONTRIBUTING.md`), not a multi-paragraph writeup accumulated over a
+  dev cycle - trim implementation narrative down to the user-facing
+  change, and match how existing entries cite an issue
+  (`(closes codecheckers/register#N)` / `(register#N)`) rather than a
+  bare `#N` or no reference at all.
 - Run `devtools::document()` so `man/` reflects the current code
   (roxygen doesn’t stamp the package version into `.Rd` files, but a
   stale `man/` from skipped `--no-docs` installs during iteration should

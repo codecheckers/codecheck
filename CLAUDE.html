@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.27.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,6 +74,8 @@
 <div class="section level2">
 <h2 id="changelog">Changelog<a class="anchor" aria-label="anchor" href="#changelog"></a></h2>
 <p>Always update <code>NEWS.md</code> when making changes. Follow the existing <code># codecheck X.Y.Z</code> header format.</p>
+<p><strong>Match the length and level of detail of the existing entries.</strong> An entry is one bullet of one sentence, typically 10-25 words: what changed from the user’s point of view, the issue reference in parentheses (<code>closes codecheckers/codecheck#N</code>, <code>register#N</code>), and at most a short “New <code>some_function()</code>” clause for a new public function. Not the root cause, not the call sites, not the reasoning behind the design - that belongs in code comments, the commit message and the issue. One change that touches several user-visible things is several bullets, not one long one. Fixes go under <code>## Bug Fixes</code>, not <code>## New Features</code>.</p>
+<p>A longer entry is allowed where it genuinely earns it - a subtle bug whose <em>symptom</em> needs describing so somebody recognises it, or a change whose behaviour is surprising without a caveat. Propose it and say why rather than writing it silently, and keep it to two or three sentences.</p>
 </div>
 <div class="section level2">
 <h2 id="design-principles">Design Principles<a class="anchor" aria-label="anchor" href="#design-principles"></a></h2>
@@ -86,6 +88,7 @@
 <p>Semantic versioning. Use <code>usethis::use_version("patch"|"minor"|"major"|"dev")</code> to bump. If that fails (uncommitted changes), edit <code>DESCRIPTION</code> and <code>NEWS.md</code> manually.</p>
 <p><code>use_version()</code> only touches <code>DESCRIPTION</code> and adds an empty <code>NEWS.md</code> heading above the accumulated dev-cycle entries; it does not consolidate them under the release heading, regenerate <code>man/</code>, or touch <code>CITATION.cff</code>. A release therefore also needs:</p>
 <ul><li>Merge the dev-cycle <code># codecheck X.Y.Z.9NNN</code> sections <code>use_version()</code> leaves below the new heading into that heading’s own <code>## New Features</code>/<code>## Bug Fixes</code> (etc.) lists, then delete the now-empty dev headings.</li>
+<li>Align the merged entries’ style, length, content and links with the historic entries below them: one or two sentences per bullet (per <a href="https://style.tidyverse.org/news.html" class="external-link uri">https://style.tidyverse.org/news.html</a>, referenced in <code>CONTRIBUTING.md</code>), not a multi-paragraph writeup accumulated over a dev cycle - trim implementation narrative down to the user-facing change, and match how existing entries cite an issue (<code>(closes codecheckers/register#N)</code> / <code>(register#N)</code>) rather than a bare <code>#N</code> or no reference at all.</li>
 <li>Run <code>devtools::document()</code> so <code>man/</code> reflects the current code (roxygen doesn’t stamp the package version into <code>.Rd</code> files, but a stale <code>man/</code> from skipped <code>--no-docs</code> installs during iteration should not ship in a release).</li>
 <li>Update the hardcoded <code>version:</code> and <code>date-released:</code> fields in <code>CITATION.cff</code> - nothing else touches this file, so it silently drifted for several releases (last correct at 0.21.0) before being caught at 0.26.0.</li>
 </ul></div>

@@ -14,9 +14,7 @@
   : Add Hyperlinks to All Venues Table
 
 - [`add_cert_links()`](http://codecheck.org.uk/codecheck/reference/add_cert_links.md)
-  : Function for adding clickable links to the paper for each entry in
-  the register table and add certificate identifier and link as extra
-  columns
+  : Function for adding certificate identifier and link as extra columns
 
 - [`add_cert_pdf_links()`](http://codecheck.org.uk/codecheck/reference/add_cert_pdf_links.md)
   : Add certificate PDF download URLs to the register table
@@ -71,6 +69,11 @@
   : Function for adding repository links in the register table for the
   creation of the json file.
 
+- [`add_sortable_th_attributes()`](http://codecheck.org.uk/codecheck/reference/add_sortable_th_attributes.md)
+  : Adds data-sort hints to \<th\> cells so stupidtable.js (see
+  table-sort-init.js) knows which columns are sortable and how to
+  compare their values.
+
 - [`add_venue_hyperlinks_reg()`](http://codecheck.org.uk/codecheck/reference/add_venue_hyperlinks_reg.md)
   : Function for adding clickable links to the codecheck venue pages for
   each entry in the register table. Uses relative paths for HTML display
@@ -88,8 +91,7 @@
   : Add Hyperlinks to Venues Table
 
 - [`adjust_cert_links_relative()`](http://codecheck.org.uk/codecheck/reference/adjust_cert_links_relative.md)
-  : Convert certificate links from absolute to relative paths based on
-  page depth
+  : Turn the plain Certificate column into a relative markdown link
 
 - [`as_latex_url()`](http://codecheck.org.uk/codecheck/reference/as_latex_url.md)
   : Wrap URL for LaTeX
@@ -172,7 +174,7 @@
   : Drop the cached policy metadata of one Zenodo record
 
 - [`codecheck_GET()`](http://codecheck.org.uk/codecheck/reference/codecheck_GET.md)
-  : Custom HTTP GET with proper User-Agent header
+  : Custom HTTP GET with proper User-Agent header and a bounded timeout
 
 - [`codecheck_GET_openalex()`](http://codecheck.org.uk/codecheck/reference/codecheck_GET_openalex.md)
   : GET an OpenAlex API URL with the configured API key and retries
@@ -289,6 +291,9 @@
 - [`filter_and_drop_register_columns()`](http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.md)
   : Filter and Drop Columns from Register Table
 
+- [`generate_404_page()`](http://codecheck.org.uk/codecheck/reference/generate_404_page.md)
+  : Generate the register's 404 page
+
 - [`generate_breadcrumb()`](http://codecheck.org.uk/codecheck/reference/generate_breadcrumb.md)
   : Generate breadcrumb navigation HTML
 
@@ -304,8 +309,13 @@
 - [`generate_certs_redirect()`](http://codecheck.org.uk/codecheck/reference/generate_certs_redirect.md)
   : Generate redirect page for /certs/ directory
 
-- [`generate_codechecker_profile_links()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_profile_links.md)
-  : Generate HTML for codechecker profile links
+- [`generate_codechecker_metadata_html()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_metadata_html.md)
+  : Generate the codechecker metadata HTML panel (avatar + ORCID +
+  GitHub + venues)
+
+- [`generate_codechecker_metadata_yaml()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_metadata_yaml.md)
+  : Generate the codechecker metadata YAML frontmatter block for
+  register.md
 
 - [`generate_codechecker_redirect()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_redirect.md)
   : Generate HTML redirect page for codechecker
@@ -356,6 +366,10 @@
 - [`generate_output_dir()`](http://codecheck.org.uk/codecheck/reference/generate_output_dir.md)
   : Generate Output Directory Path
 
+- [`generate_person_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_person_schema_org.md)
+  : Generate Schema.org JSON-LD for a person page
+  (codecheckers/register#123)
+
 - [`generate_robots_txt()`](http://codecheck.org.uk/codecheck/reference/generate_robots_txt.md)
   : Generate robots.txt for the register
 
@@ -367,6 +381,13 @@
 
 - [`generate_table_details_non_reg()`](http://codecheck.org.uk/codecheck/reference/generate_table_details_non_reg.md)
   : Generate Table Details for Non-Register Files
+
+- [`generate_venue_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_venue_schema_org.md)
+  : Generate Schema.org JSON-LD for venue pages
+
+- [`generate_work_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_work_schema_org.md)
+  : Generate Schema.org JSON-LD for a work page
+  (codecheckers/register#150)
 
 - [`get_abstract()`](http://codecheck.org.uk/codecheck/reference/get_abstract.md)
   : Retrieves the abstract of a research paper from CrossRef or
@@ -389,6 +410,9 @@
 - [`get_abstract_text_openalex_result()`](http://codecheck.org.uk/codecheck/reference/get_abstract_text_openalex_result.md)
   : Retrieves the abstract from OpenAlex and reports whether the API
   answered
+
+- [`get_agile_codecheckers_data()`](http://codecheck.org.uk/codecheck/reference/get_agile_codecheckers_data.md)
+  : Fetch and cache agile-codecheckers.csv data from GitHub
 
 - [`get_build_metadata()`](http://codecheck.org.uk/codecheck/reference/get_build_metadata.md)
   : Get Build Metadata
@@ -414,6 +438,9 @@
 - [`get_codecheck_yml_gitlab()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_gitlab.md)
   : Retrieve a codecheck.yml file from an GitLab.com project
 
+- [`get_codecheck_yml_or_null()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_or_null.md)
+  : Fetch a \`codecheck.yml\` without aborting the whole render
+
 - [`get_codecheck_yml_osf()`](http://codecheck.org.uk/codecheck/reference/get_codecheck_yml_osf.md)
   : Retrieve a codecheck.yml file from an OSF project
 
@@ -428,6 +455,10 @@
 
 - [`get_codechecker_profile_by_handle()`](http://codecheck.org.uk/codecheck/reference/get_codechecker_profile_by_handle.md)
   : Get codechecker profile information by GitHub handle
+
+- [`get_codechecker_venues()`](http://codecheck.org.uk/codecheck/reference/get_codechecker_venues.md)
+  : Compute a codechecker's contributed venues, with per-venue check
+  counts
 
 - [`get_codecheckers_data()`](http://codecheck.org.uk/codecheck/reference/get_codecheckers_data.md)
   : Fetch and cache codecheckers.csv data from GitHub
@@ -449,6 +480,9 @@
 
 - [`get_gitlab_readme_raw()`](http://codecheck.org.uk/codecheck/reference/get_gitlab_readme_raw.md)
   : Retrieve the README of a GitLab.com project, as raw text
+
+- [`get_institutional_codecheckers_data()`](http://codecheck.org.uk/codecheck/reference/get_institutional_codecheckers_data.md)
+  : Fetch and cache institutional-codecheckers.csv data from GitHub
 
 - [`get_lifecycle_metadata()`](http://codecheck.org.uk/codecheck/reference/get_lifecycle_metadata.md)
   : Retrieve metadata from Lifecycle Journal
@@ -654,8 +688,32 @@
 - [`validate_contents_references()`](http://codecheck.org.uk/codecheck/reference/validate_contents_references.md)
   : Validate codecheck.yml metadata against external references
 
+- [`validate_wikidata_model()`](http://codecheck.org.uk/codecheck/reference/validate_wikidata_model.md)
+  : Check the model's invariants
+
 - [`validate_yaml_syntax()`](http://codecheck.org.uk/codecheck/reference/validate_yaml_syntax.md)
   : Validate YAML syntax of a codecheck.yml file
+
+- [`wikidata_creates()`](http://codecheck.org.uk/codecheck/reference/wikidata_creates.md)
+  : Whether the export may create this kind of entity on a target
+
+- [`wikidata_endpoint()`](http://codecheck.org.uk/codecheck/reference/wikidata_endpoint.md)
+  : The SPARQL endpoint serving a kind of entity
+
+- [`wikidata_entity_kinds()`](http://codecheck.org.uk/codecheck/reference/wikidata_entity_kinds.md)
+  : The entity kinds of the model
+
+- [`wikidata_model()`](http://codecheck.org.uk/codecheck/reference/wikidata_model.md)
+  : The CODECHECK Wikidata model
+
+- [`wikidata_pending()`](http://codecheck.org.uk/codecheck/reference/wikidata_pending.md)
+  : The statements waiting on an item that does not exist yet
+
+- [`wikidata_properties()`](http://codecheck.org.uk/codecheck/reference/wikidata_properties.md)
+  : Every property the model uses, as a flat table
+
+- [`wikidata_statements()`](http://codecheck.org.uk/codecheck/reference/wikidata_statements.md)
+  : The statement definitions of one entity kind
 
 - [`write_meta_json()`](http://codecheck.org.uk/codecheck/reference/write_meta_json.md)
   : Write Build Metadata to JSON File

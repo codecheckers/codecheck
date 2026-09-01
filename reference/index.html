@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.26.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.27.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@
           <code><a href="add_cert_links.html">add_cert_links()</a></code>
 
         </dt>
-        <dd>Function for adding clickable links to the paper for each entry in the register table and add certificate identifier and link as extra columns</dd>
+        <dd>Function for adding certificate identifier and link as extra columns</dd>
 
         <dt>
 
@@ -174,6 +174,13 @@
 
         <dt>
 
+          <code><a href="add_sortable_th_attributes.html">add_sortable_th_attributes()</a></code>
+
+        </dt>
+        <dd>Adds data-sort hints to &lt;th&gt; cells so stupidtable.js (see table-sort-init.js) knows which columns are sortable and how to compare their values.</dd>
+
+        <dt>
+
           <code><a href="add_venue_hyperlinks_reg.html">add_venue_hyperlinks_reg()</a></code>
 
         </dt>
@@ -205,7 +212,7 @@
           <code><a href="adjust_cert_links_relative.html">adjust_cert_links_relative()</a></code>
 
         </dt>
-        <dd>Convert certificate links from absolute to relative paths based on page depth</dd>
+        <dd>Turn the plain Certificate column into a relative markdown link</dd>
 
         <dt>
 
@@ -359,7 +366,7 @@
           <code><a href="codecheck_GET.html">codecheck_GET()</a></code>
 
         </dt>
-        <dd>Custom HTTP GET with proper User-Agent header</dd>
+        <dd>Custom HTTP GET with proper User-Agent header and a bounded timeout</dd>
 
         <dt>
 
@@ -594,6 +601,13 @@
 
         <dt>
 
+          <code><a href="generate_404_page.html">generate_404_page()</a></code>
+
+        </dt>
+        <dd>Generate the register's 404 page</dd>
+
+        <dt>
+
           <code><a href="generate_breadcrumb.html">generate_breadcrumb()</a></code>
 
         </dt>
@@ -629,10 +643,17 @@
 
         <dt>
 
-          <code><a href="generate_codechecker_profile_links.html">generate_codechecker_profile_links()</a></code>
+          <code><a href="generate_codechecker_metadata_html.html">generate_codechecker_metadata_html()</a></code>
 
         </dt>
-        <dd>Generate HTML for codechecker profile links</dd>
+        <dd>Generate the codechecker metadata HTML panel (avatar + ORCID + GitHub + venues)</dd>
+
+        <dt>
+
+          <code><a href="generate_codechecker_metadata_yaml.html">generate_codechecker_metadata_yaml()</a></code>
+
+        </dt>
+        <dd>Generate the codechecker metadata YAML frontmatter block for register.md</dd>
 
         <dt>
 
@@ -734,6 +755,13 @@
 
         <dt>
 
+          <code><a href="generate_person_schema_org.html">generate_person_schema_org()</a></code>
+
+        </dt>
+        <dd>Generate Schema.org JSON-LD for a person page (codecheckers/register#123)</dd>
+
+        <dt>
+
           <code><a href="generate_robots_txt.html">generate_robots_txt()</a></code>
 
         </dt>
@@ -759,6 +787,20 @@
 
         </dt>
         <dd>Generate Table Details for Non-Register Files</dd>
+
+        <dt>
+
+          <code><a href="generate_venue_schema_org.html">generate_venue_schema_org()</a></code>
+
+        </dt>
+        <dd>Generate Schema.org JSON-LD for venue pages</dd>
+
+        <dt>
+
+          <code><a href="generate_work_schema_org.html">generate_work_schema_org()</a></code>
+
+        </dt>
+        <dd>Generate Schema.org JSON-LD for a work page (codecheckers/register#150)</dd>
 
         <dt>
 
@@ -801,6 +843,13 @@
 
         </dt>
         <dd>Retrieves the abstract from OpenAlex and reports whether the API answered</dd>
+
+        <dt>
+
+          <code><a href="get_agile_codecheckers_data.html">get_agile_codecheckers_data()</a></code>
+
+        </dt>
+        <dd>Fetch and cache agile-codecheckers.csv data from GitHub</dd>
 
         <dt>
 
@@ -853,6 +902,13 @@
 
         <dt>
 
+          <code><a href="get_codecheck_yml_or_null.html">get_codecheck_yml_or_null()</a></code>
+
+        </dt>
+        <dd>Fetch a `codecheck.yml` without aborting the whole render</dd>
+
+        <dt>
+
           <code><a href="get_codecheck_yml_osf.html">get_codecheck_yml_osf()</a></code>
 
         </dt>
@@ -885,6 +941,13 @@
 
         </dt>
         <dd>Get codechecker profile information by GitHub handle</dd>
+
+        <dt>
+
+          <code><a href="get_codechecker_venues.html">get_codechecker_venues()</a></code>
+
+        </dt>
+        <dd>Compute a codechecker's contributed venues, with per-venue check counts</dd>
 
         <dt>
 
@@ -934,6 +997,13 @@
 
         </dt>
         <dd>Retrieve the README of a GitLab.com project, as raw text</dd>
+
+        <dt>
+
+          <code><a href="get_institutional_codecheckers_data.html">get_institutional_codecheckers_data()</a></code>
+
+        </dt>
+        <dd>Fetch and cache institutional-codecheckers.csv data from GitHub</dd>
 
         <dt>
 
@@ -1371,10 +1441,66 @@
 
         <dt>
 
+          <code><a href="validate_wikidata_model.html">validate_wikidata_model()</a></code>
+
+        </dt>
+        <dd>Check the model's invariants</dd>
+
+        <dt>
+
           <code><a href="validate_yaml_syntax.html">validate_yaml_syntax()</a></code>
 
         </dt>
         <dd>Validate YAML syntax of a codecheck.yml file</dd>
+
+        <dt>
+
+          <code><a href="wikidata_creates.html">wikidata_creates()</a></code>
+
+        </dt>
+        <dd>Whether the export may create this kind of entity on a target</dd>
+
+        <dt>
+
+          <code><a href="wikidata_endpoint.html">wikidata_endpoint()</a></code>
+
+        </dt>
+        <dd>The SPARQL endpoint serving a kind of entity</dd>
+
+        <dt>
+
+          <code><a href="wikidata_entity_kinds.html">wikidata_entity_kinds()</a></code>
+
+        </dt>
+        <dd>The entity kinds of the model</dd>
+
+        <dt>
+
+          <code><a href="wikidata_model.html">wikidata_model()</a></code>
+
+        </dt>
+        <dd>The CODECHECK Wikidata model</dd>
+
+        <dt>
+
+          <code><a href="wikidata_pending.html">wikidata_pending()</a></code>
+
+        </dt>
+        <dd>The statements waiting on an item that does not exist yet</dd>
+
+        <dt>
+
+          <code><a href="wikidata_properties.html">wikidata_properties()</a></code>
+
+        </dt>
+        <dd>Every property the model uses, as a flat table</dd>
+
+        <dt>
+
+          <code><a href="wikidata_statements.html">wikidata_statements()</a></code>
+
+        </dt>
+        <dd>The statement definitions of one entity kind</dd>
 
         <dt>
 

@@ -1,7 +1,12 @@
-# Function for adding clickable links to the paper for each entry in the register table and add certificate identifier and link as extra columns
+# Function for adding certificate identifier and link as extra columns
 
-Function for adding clickable links to the paper for each entry in the
-register table and add certificate identifier and link as extra columns
+The \`Certificate\` column itself is left as the plain identifier -
+callers that need it as a markdown link (only the md/HTML table
+rendering does, via \[adjust_cert_links_relative()\]) build that
+themselves at render time. Every other consumer (JSON/CSV output,
+Schema.org generation, Zenodo/ ResearchEquals policy checks, ...) can
+then read \`Certificate\` directly without having to strip markdown
+syntax back out of it first.
 
 ## Usage
 
@@ -17,5 +22,5 @@ add_cert_links(register_table)
 
 ## Value
 
-The adjusted register table with clickable Certificate links and new
-columns for certificate identifier and certificate URL
+The adjusted register table with new columns for certificate identifier
+and certificate URL

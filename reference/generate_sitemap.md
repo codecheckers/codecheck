@@ -8,7 +8,7 @@ for search engine optimization and crawling.
 ``` r
 generate_sitemap(
   register_table,
-  filter_by = c("venues", "codecheckers"),
+  filter_by = c("venues", "works", "persons"),
   output_dir = "docs",
   base_url = CONFIG$HYPERLINKS[["register"]],
   lastmod = format(Sys.Date(), "%Y-%m-%d")
@@ -23,7 +23,7 @@ generate_sitemap(
 
 - filter_by:
 
-  List of filters used (e.g., "venues", "codecheckers")
+  List of filters used (e.g., "venues", "works", "persons")
 
 - output_dir:
 

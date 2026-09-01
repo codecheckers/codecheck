@@ -1,7 +1,9 @@
 # Get GitHub handle for a codechecker by name
 
-Looks up the GitHub handle for a codechecker by their name in the
-codecheckers registry.
+Looks up the GitHub handle for a codechecker by their name in all three
+codechecker lists, see \[all_codechecker_records()\]. Used for
+codecheckers whose \`codecheck.yml\` carries no ORCID, where the name is
+all there is to match on.
 
 ## Usage
 
