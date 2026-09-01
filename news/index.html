@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.27.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.27.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,15 @@
       <small>Source: <a href="https://github.com/codecheckers/codecheck/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.27.1" id="codecheck-0271">codecheck 0.27.1<a class="anchor" aria-label="anchor" href="#codecheck-0271"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-27-1">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-27-1"></a></h3>
+<ul><li>
+<code><a href="../reference/register_render.html">register_render()</a></code>’s codechecker counts (the main <code>statistics.json</code>, every venue’s <code>index.json</code>, and the statistics dashboard) no longer come back empty: <code><a href="../reference/preprocess_register.html">preprocess_register()</a></code> only built the underlying <code>Codechecker</code> column when <code>"codecheckers" %in% filter_by</code>, which stopped happening once 0.27.0 dropped <code>"codecheckers"</code> from the default <code>filter_by</code>. The column is now always built.</li>
+<li>The statistics dashboard’s “Codecheckers” summary card no longer links to the retired <code>/codecheckers/index.html</code>; it links to <code>/persons/index.html</code>.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.27.0" id="codecheck-0270">codecheck 0.27.0<a class="anchor" aria-label="anchor" href="#codecheck-0270"></a></h2>
 <div class="section level3">
