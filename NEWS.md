@@ -1,4 +1,9 @@
-# codecheck (development version)
+# codecheck 0.27.1
+
+## Bug Fixes
+
+* `register_render()`'s codechecker counts (the main `statistics.json`, every venue's `index.json`, and the statistics dashboard) no longer come back empty: `preprocess_register()` only built the underlying `Codechecker` column when `"codecheckers" %in% filter_by`, which stopped happening once 0.27.0 dropped `"codecheckers"` from the default `filter_by`. The column is now always built.
+* The statistics dashboard's "Codecheckers" summary card no longer links to the retired `/codecheckers/index.html`; it links to `/persons/index.html`.
 
 # codecheck 0.27.0
 
