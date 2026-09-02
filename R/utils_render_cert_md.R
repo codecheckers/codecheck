@@ -327,6 +327,68 @@ get_openalex_id_cached_result <- function(paper_reference, paper_title = NULL, f
   )
 }
 
+#' Look up the publication facts OpenAlex holds about a work
+#'
+#' The OpenAlex ID is not worth much on its own: what the linked data export
+#' needs is what the record behind it says about *where* and *when* the work
+#' appeared, and that is the one place it can be had. The register's own `Venue`
+#' column cannot answer the first question - a register venue names the
+#' conference or journal that commissioned the check, and one such venue spans
+#' several publications over the years (codecheckers/register#50).
+#'
+#' Only the ISSN identifies a publication well enough to resolve it to an item,
+#' so a source without one yields nothing rather than a name to guess from.
+#'
+#' @param openalex_id The OpenAlex work URL or ID
+#' @return A list with `status` ("found", "absent" or "failed") and `value`, a
+#'   list with `issn` and `publication_date`, both possibly `NA`
+#' @noRd
+get_openalex_work_fields_result <- function(openalex_id) {
+  empty <- list(issn = NA_character_, publication_date = NA_character_)
+  if (is.null(openalex_id) || is.na(openalex_id) || nchar(openalex_id) == 0) {
+    return(list(status = "absent", value = empty))
+  }
+
+  work <- sub("^https?://openalex\\.org/", "", openalex_id)
+  response <- codecheck_GET_openalex(paste0("https://api.openalex.org/works/", work))
+  if (is.null(response)) {
+    return(list(status = "failed", value = empty))
+  }
+  if (httr::status_code(response) != 200) {
+    # 404 is an answer - OpenAlex does not have this work - anything else is
+    # not, and must not be cached as an absence.
+    return(list(status = if (httr::status_code(response) == 404) "absent" else "failed",
+                value = empty))
+  }
+
+  data <- httr::content(response, "parsed")
+  source <- data$primary_location$source
+  # issn_l is the linking ISSN, the one identifier a publication has exactly one
+  # of; the issn list holds the print and electronic ones separately.
+  issn <- source$issn_l %||% (if (length(source$issn) > 0) source$issn[[1]] else NULL)
+
+  list(status = "found", value = list(
+    issn = if (is.null(issn)) NA_character_ else as.character(issn),
+    publication_date = data$publication_date %||% NA_character_
+  ))
+}
+
+#' Cached version of get_openalex_work_fields_result
+#'
+#' Keyed on the OpenAlex ID, which is stable, so this costs one request per work
+#' per cache lifetime. Cleared by \code{\link{register_clear_cache}}.
+#'
+#' @inheritParams get_openalex_work_fields_result
+#' @return A list with `status` and `value`
+#' @noRd
+get_openalex_work_fields_cached_result <- function(openalex_id) {
+  cached_lookup_result(
+    key = list("openalex_work_fields", openalex_id),
+    dirs = c("codecheck", "openalex_work_fields"),
+    lookup = function() get_openalex_work_fields_result(openalex_id)
+  )
+}
+
 #' Extracts the paper DOI from the config_yml of the paper,
 #' constructs a CrossRef API request, and returns the abstract text if available.
 #'

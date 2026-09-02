@@ -225,6 +225,40 @@ check_near_duplicate_works <- function(certs, work_keys, titles) {
   invisible(NULL)
 }
 
+#' Check for certificates that share a report DOI
+#'
+#' Two certificates for two different papers, both naming the same archived
+#' record (certificates 2025-009/2025-010 and OSF record `gv2z4`). The register
+#' renders both perfectly well, so this is invisible there, but the report DOI
+#' is what identifies a certificate everywhere else: it is the dedup key for the
+#' Wikidata and Wikibase export, so two certificates sharing one collapse into a
+#' single item and whichever is written second silently wins. Almost always the
+#' cause is a second certificate deposited into the first one's record by
+#' mistake.
+#'
+#' @param certs Character vector of certificate IDs.
+#' @param reports Character vector of report DOIs/URLs, same length/order.
+#' @return None; a `warning()` per group of certificates sharing a report.
+#' @keywords internal
+check_duplicate_reports <- function(certs, reports) {
+  normalized <- toupper(sub("^https?://(dx\\.)?doi\\.org/", "", trimws(as.character(reports))))
+  usable <- !is.na(normalized) & nzchar(normalized)
+  if (!any(usable)) {
+    return(invisible(NULL))
+  }
+
+  groups <- split(which(usable), normalized[usable])
+  for (group in groups) {
+    if (length(group) < 2) next
+    warning(
+      "Certificates share a report DOI, which identifies a certificate in the ",
+      "Wikidata/Wikibase export and would make them one item: ",
+      paste(certs[group], collapse = ", "), " all report ", normalized[group][1]
+    )
+  }
+  invisible(NULL)
+}
+
 #' Normalize a person's name for conflict comparison
 #'
 #' Reduced to "first initial + surname" (the last whitespace-separated

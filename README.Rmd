@@ -58,6 +58,8 @@ For first-time codecheckers using this R package:
 
 See the [getting started guide](https://codecheck.org.uk/codecheck/articles/codecheck_overview.html) for step-by-step instructions on using the template and the [workflow descriptions](https://codecheck.org.uk/workflows/) on the overall procedures.
 
+The package also renders the [CODECHECK Register](https://codecheck.org.uk/register/), see the [register vignette](https://codecheck.org.uk/codecheck/articles/codecheck_register.html), and publishes it as linked data in a Wikibase and on Wikidata, see [Export the register to Wikidata](https://codecheck.org.uk/codecheck/articles/codecheck_wikidata.html) for the full procedure.
+
 **Note on certificate templates**: The R Markdown template created by this package can be used in multiple ways:
 
 - Execute code in various languages (R, Python, bash, etc.) using knitr's language engines

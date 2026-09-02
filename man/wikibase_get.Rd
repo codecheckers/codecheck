@@ -4,12 +4,14 @@
 \alias{wikibase_get}
 \title{A read-only Action API request}
 \usage{
-wikibase_get(handle, params)
+wikibase_get(handle, params, api = WIKIBASE_INSTANCE$api)
 }
 \arguments{
 \item{handle}{an `httr` handle, or `NULL` for an anonymous request}
 
 \item{params}{the query parameters, `format = "json"` is added}
+
+\item{api}{the Action API to read from, the CODECHECK Wikibase by default}
 }
 \value{
 the parsed response

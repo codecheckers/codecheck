@@ -93,3 +93,43 @@ expect_silent(
 )
 
 expect_silent(codecheck:::check_orcid_conflicts(character(0), character(0), character(0)))
+
+# Certificates sharing a report DOI ----
+
+# The report DOI identifies a certificate in the Wikidata/Wikibase export, so
+# two certificates naming the same archived record become one item there and the
+# second silently overwrites the first. The register renders both, which is why
+# this is invisible without a check (certificates 2025-009/2025-010, OSF gv2z4).
+expect_warning(
+  codecheck:::check_duplicate_reports(
+    certs = c("2025-009", "2025-010"),
+    reports = c("https://doi.org/10.17605/OSF.IO/gv2z4",
+                "https://doi.org/10.17605/OSF.IO/gv2z4")
+  ),
+  "share a report DOI"
+)
+
+# The comparison is on the DOI, not on how it was written down: resolver prefix
+# and case vary across the register.
+expect_warning(
+  codecheck:::check_duplicate_reports(
+    certs = c("2025-009", "2025-010"),
+    reports = c("http://dx.doi.org/10.17605/osf.io/GV2Z4", "10.17605/OSF.IO/gv2z4")
+  ),
+  "share a report DOI"
+)
+
+# Distinct records, no warning.
+expect_silent(
+  codecheck:::check_duplicate_reports(
+    certs = c("2020-001", "2020-002"),
+    reports = c("https://doi.org/10.5281/zenodo.3674056",
+                "https://doi.org/10.5281/zenodo.3750741")
+  )
+)
+
+# Certificates without a report are not all "the same" report.
+expect_silent(
+  codecheck:::check_duplicate_reports(c("2020-001", "2020-002"), c(NA, NA))
+)
+expect_silent(codecheck:::check_duplicate_reports(character(0), character(0)))

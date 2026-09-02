@@ -48,6 +48,16 @@ WIKIDATA_ENDPOINTS <- list(
   wikibase = "https://codecheck.wikibase.cloud/query/sparql"
 )
 
+#' Wikidata's Action API
+#'
+#' Used to look an item up by a statement it carries. The search index behind it
+#' picks up a new item within minutes, where the query service can take hours -
+#' which matters because the export creates items and then has to find them
+#' again before the next batch can refer to them.
+#'
+#' @keywords internal
+WIKIDATA_API <- "https://www.wikidata.org/w/api.php"
+
 #' The CODECHECK Wikibase instance
 #'
 #' Deliberately a time-limited platform for testing the deposition code and for
@@ -67,6 +77,9 @@ WIKIBASE_INSTANCE <- list(
   # The generated index of the loaded certificates, see
   # write_wikibase_certificates_page()
   certificates_page = "Project:Certificates",
+  # The generated preview of the Wikidata batches, see
+  # write_wikidata_preview_page()
+  wikidata_page = "Project:Wikidata export",
   # Special:BotPasswords credentials, see the register's .env.example
   user_env = "WIKIBASE_USER",
   token_env = "WIKIBASE_TOKEN"
@@ -354,7 +367,12 @@ WIKIDATA_MODEL <- list(
     resolve = list(property = "P356", field = "Paper reference", transform = "doi", endpoint = "scholarly"),
     # Papers are ordinary scholarly articles and are created on Wikidata through
     # WikiProject Source MetaData tooling, not by this pipeline.
-    create = list(wikidata = FALSE, wikibase = TRUE),
+    # The checked works are created on Wikidata as well as mirrored here: two
+    # thirds of them have no item, and a certificate whose "review of" points
+    # nowhere loses the link the model exists for. Scholarly articles are
+    # routinely held on Wikidata, so this adds to an established corpus rather
+    # than inventing one.
+    create = list(wikidata = TRUE, wikibase = TRUE),
     statements = list(
       wikidata_statement(
         "instance_of", "P31", "instance of", datatype = "wikibase-item",
@@ -383,8 +401,32 @@ WIKIDATA_MODEL <- list(
         list(kind = "field", field = "Title")
       ),
       wikidata_statement(
+        "author_name_string", "P2093", "author name string", datatype = "string",
+        list(kind = "field", field = "Paper authors", transform = "author_names"),
+        note = paste(
+          "the paper's authors as strings. A created work should say who wrote",
+          "it, and P50 would need an item per author - which this export does",
+          "not create, since people are resolved on Wikidata, not minted there"
+        )
+      ),
+      wikidata_statement(
+        "openalex", "P10283", "OpenAlex ID", datatype = "external-id",
+        list(kind = "field", field = "OpenAlex", transform = "openalex"),
+        note = paste(
+          "the work's OpenAlex id, which the register already resolves for the",
+          "certificate pages. It is the identifier most likely to be present when",
+          "a DOI is not enough to find the work again, and it carries the",
+          "authors, venue and citations this export deliberately does not mirror"
+        )
+      ),
+      wikidata_statement(
+        "publication_date", "P577", "publication date", datatype = "time",
+        list(kind = "field", field = "Paper publication date", transform = "date_day"),
+        note = "the work's own publication date, from its OpenAlex record"
+      ),
+      wikidata_statement(
         "published_in", "P1433", "published in", datatype = "wikibase-item",
-        list(kind = "entity", entity = "venue", field = "Paper reference"),
+        list(kind = "entity", entity = "venue", field = "Paper ISSN"),
         note = paste(
           "the publication the checked article appeared in, resolved from the",
           "paper's own record rather than from the register's Venue column. A",

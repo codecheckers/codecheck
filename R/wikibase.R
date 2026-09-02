@@ -93,19 +93,19 @@ wikibase_retry_after <- function(result, response = NULL, attempt = 1) {
 #' @param handle an `httr` handle, or `NULL` for an anonymous request
 #' @param what what is being requested, for messages
 #' @param attempts how many times to try in total
+#' @param api the Action API to address, the CODECHECK Wikibase by default
 #' @return the parsed response
 #' @keywords internal
 wikibase_request <- function(method, params, handle = NULL, what = "the API",
-                             attempts = 4) {
+                             attempts = 4, api = WIKIBASE_INSTANCE$api) {
   params$format <- "json"
   agent <- httr::user_agent(wikibase_user_agent())
 
   for (attempt in seq_len(attempts)) {
     response <- if (identical(method, "POST")) {
-      httr::POST(WIKIBASE_INSTANCE$api, handle = handle, body = params,
-                 encode = "form", agent)
+      httr::POST(api, handle = handle, body = params, encode = "form", agent)
     } else {
-      httr::GET(WIKIBASE_INSTANCE$api, handle = handle, query = params, agent)
+      httr::GET(api, handle = handle, query = params, agent)
     }
     result <- httr::content(response, as = "parsed", type = "application/json")
 
@@ -186,10 +186,12 @@ wikibase_post <- function(session, params, what) {
 #'
 #' @param handle an `httr` handle, or `NULL` for an anonymous request
 #' @param params the query parameters, `format = "json"` is added
+#' @param api the Action API to read from, the CODECHECK Wikibase by default
 #' @return the parsed response
 #' @keywords internal
-wikibase_get <- function(handle, params) {
-  wikibase_request("GET", params, handle = handle, what = "reading the instance")
+wikibase_get <- function(handle, params, api = WIKIBASE_INSTANCE$api) {
+  wikibase_request("GET", params, handle = handle, what = "reading the instance",
+                   api = api)
 }
 
 #' Look an entity up by its label

@@ -310,7 +310,48 @@ add_openalex_ids <- function(register_table, register) {
   register_table$OpenAlex <- openalex_ids
   n_found <- sum(!is.na(openalex_ids))
   cli::cli_alert_success("Found {n_found}/{nrow(register)} OpenAlex IDs")
+
+  register_table <- add_openalex_work_fields(register_table)
   return(register_table)
+}
+
+#' Add the publication facts behind each OpenAlex ID (register#50)
+#'
+#' Part of the same enrichment: an OpenAlex ID is a pointer, and the record it
+#' points at is the only place that says which publication a checked work
+#' appeared in and when. Both are needed to describe the work as linked data -
+#' the register's own `Venue` column names the venue that commissioned the
+#' check, which is a different fact and, for a conference running over several
+#' years, a different publication.
+#'
+#' Costs one cached request per work that has an ID, and nothing at all for one
+#' that does not.
+#'
+#' @param register_table The register table, with an `OpenAlex` column
+#' @return The register table with added "Paper ISSN" and "Paper publication
+#'   date" columns
+add_openalex_work_fields <- function(register_table) {
+  if (!"OpenAlex" %in% colnames(register_table)) {
+    return(register_table)
+  }
+  cli::cli_alert_info("Looking up the publication of each work")
+
+  fields <- lapply(register_table$OpenAlex, function(id) {
+    if (is.na(id)) return(list(issn = NA_character_, publication_date = NA_character_))
+    tryCatch(
+      get_openalex_work_fields_cached_result(id)$value,
+      error = function(e) list(issn = NA_character_, publication_date = NA_character_)
+    )
+  })
+
+  register_table$`Paper ISSN` <- vapply(fields, function(f) f$issn %||% NA_character_, character(1))
+  register_table$`Paper publication date` <- vapply(
+    fields, function(f) f$publication_date %||% NA_character_, character(1))
+
+  cli::cli_alert_success(
+    "Found {sum(!is.na(register_table$`Paper ISSN`))} publication ISSN{?s} and {sum(!is.na(register_table$`Paper publication date`))} publication date{?s}"
+  )
+  register_table
 }
 
 #' Function for preprocessing the register to create and return the preprocessed register table.

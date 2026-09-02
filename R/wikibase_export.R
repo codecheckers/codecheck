@@ -22,7 +22,19 @@
 #' @keywords internal
 wikidata_transform <- function(x, transform = NULL) {
   if (is.null(transform)) return(x)
-  if (length(x) == 0 || all(is.na(x))) return(NA_character_)
+  if (length(x) == 0) return(NA_character_)
+
+  # Author records are lists, not strings, so this transform runs before the
+  # coercion the string transforms rely on.
+  if (identical(transform, "author_names")) {
+    names <- vapply(x, function(author) {
+      got <- if (is.list(author)) author[["name"]] else author
+      if (is.null(got) || length(got) == 0) NA_character_ else as.character(got)[1]
+    }, character(1))
+    return(names[!is.na(names) & nzchar(names)])
+  }
+
+  if (all(is.na(x))) return(NA_character_)
   x <- as.character(x)
 
   switch(
@@ -40,6 +52,11 @@ wikidata_transform <- function(x, transform = NULL) {
     date_day = substr(trimws(x), 1, 10),
     # The bare identifier, however the register wrote it.
     orcid = sub("^https?://orcid\\.org/", "", trimws(x)),
+    # OpenAlex work ids are "W" plus digits; the register stores the URL.
+    openalex = {
+      bare <- sub("^https?://openalex\\.org/", "", trimws(x))
+      ifelse(grepl("^W[0-9]+$", bare), bare, NA_character_)
+    },
     # venues.csv packs identifiers as "ISSN|icon|value|url", possibly several
     # separated by ";".
     issn = {
@@ -127,8 +144,12 @@ evaluate_model_value <- function(value, row, resolve = NULL) {
         as.character(raw)
       }
       keys <- keys[!is.na(keys) & nzchar(keys)]
-      resolved <- vapply(keys, function(key) resolve(value$entity, key) %||% NA_character_,
-                         character(1))
+      # A resolver may answer with NULL or a logical NA for "no item"; both mean
+      # the statement has no target and is dropped.
+      resolved <- vapply(keys, function(key) {
+        got <- resolve(value$entity, key)
+        if (is.null(got) || length(got) == 0) NA_character_ else as.character(got)[1]
+      }, character(1))
       unname(stats::na.omit(resolved))
     },
 
@@ -313,14 +334,17 @@ read_register_records <- function(dir) {
     id <- entry[["Certificate ID"]]
     detail <- file.path(dir, "docs", "certs", id, "index.json")
     codecheckers <- list()
+    authors <- list()
     if (file.exists(detail)) {
       parsed <- jsonlite::fromJSON(detail, simplifyDataFrame = FALSE)
       codecheckers <- parsed$codecheck$codecheckers %||% list()
+      authors <- parsed$paper$authors %||% list()
     }
     entry <- lapply(entry, function(field) {
       if (is.null(field) || length(field) == 0) NA_character_ else as.character(field)[1]
     })
     attr(entry, "codecheckers") <- codecheckers
+    attr(entry, "authors") <- authors
     entry
   })
 
@@ -330,12 +354,14 @@ read_register_records <- function(dir) {
   columns <- unique(unlist(lapply(certificates, names)))
   certificates <- lapply(certificates, function(entry) {
     codecheckers <- attr(entry, "codecheckers")
+    authors <- attr(entry, "authors")
     missing <- setdiff(columns, names(entry))
     entry[missing] <- NA_character_
     row <- as.data.frame(entry[columns], check.names = FALSE, stringsAsFactors = FALSE)
     # I(), so a certificate with no codecheckers - or with three - is still one
     # row holding one list, rather than none or three.
     row$Codechecker <- I(list(codecheckers))
+    row$`Paper authors` <- I(list(authors))
     row
   })
 
@@ -449,6 +475,50 @@ wikibase_key_column <- function(rows, kind) {
          character(1))
 }
 
+#' Refuse rows whose identity key is not unique
+#'
+#' Every entity is found again by the identifier the model resolves it on, so
+#' two rows sharing one are not two entities: they are one, written twice, and
+#' the second overwrites the first. The register can contain this - certificates
+#' 2025-009 and 2025-010 name the same OSF record - and it renders there without
+#' trouble, so the export cannot assume it away. It is caught here rather than
+#' silently reduced to one item, on Wikidata most of all, where the loser is
+#' gone without a trace.
+#'
+#' @param rows the tables from [wikibase_export_rows()]
+#' @param kinds which of them to check
+#' @return `TRUE` invisibly, or an error naming the collisions
+#' @keywords internal
+check_export_keys <- function(rows, kinds = names(rows)) {
+  problems <- character(0)
+  for (kind in kinds) {
+    table <- rows[[kind]]
+    if (is.null(table) || nrow(table) == 0) next
+    keys <- wikibase_key_column(table, kind)
+    usable <- !is.na(keys)
+    duplicated_keys <- unique(keys[usable][duplicated(keys[usable])])
+    for (key in duplicated_keys) {
+      # Name the rows, not just the key: what a person needs is which register
+      # entries to look at.
+      which_rows <- which(keys == key)
+      labels <- if ("Certificate ID" %in% names(table)) {
+        table$`Certificate ID`[which_rows]
+      } else {
+        as.character(which_rows)
+      }
+      problems <- c(problems, paste0(kind, " ", key, ": ", paste(labels, collapse = ", ")))
+    }
+  }
+
+  if (length(problems) > 0) {
+    stop("Two or more entities share an identifier, so the export would write ",
+         "one item for both and the second would overwrite the first:\n  ",
+         paste(problems, collapse = "\n  "),
+         "\nFix the register, or drop the affected rows before exporting.")
+  }
+  invisible(TRUE)
+}
+
 #' Load the register into the CODECHECK Wikibase
 #'
 #' The rehearsal the Wikidata batches are worth doing only after: the whole
@@ -498,6 +568,7 @@ load_wikibase_register <- function(dir = "../register", dry_run = TRUE,
 
   if (is.null(records)) records <- read_register_records(dir)
   rows <- wikibase_export_rows(records)
+  check_export_keys(rows)
   if (!is.null(limit)) {
     rows$certificate <- utils::head(rows$certificate, limit)
     keep <- wikidata_transform(rows$certificate$`Paper reference`, "doi")
@@ -526,7 +597,17 @@ load_wikibase_register <- function(dir = "../register", dry_run = TRUE,
     property <- WIKIDATA_MODEL[[kind]]$resolve$property
     cli::cli_alert_info("{kind}: {nrow(table)} row{?s}, {sum(!is.na(keys))} with an identifier")
 
-    for (i in seq_len(nrow(table))) {
+    # Updates first, then creates. A label the register has moved on from sits
+    # on an existing item until that item is updated, and Wikibase refuses two
+    # items with the same label and description - so creating while stale
+    # labels are still out there fails on a conflict with an item that is about
+    # to stop conflicting. Certificates 2025-009/2025-010 swapped identities
+    # exactly this way when one of them was given its own report DOI.
+    # The index is keyed "<property>=<value>", the way lookup() addresses it.
+    known_now <- !is.na(keys) & paste0(property, "=", keys) %in% names(index)
+    order <- c(which(known_now), which(!is.na(keys) & !known_now))
+
+    for (i in order) {
       key <- keys[i]
       # No identifier, no item: it could not be found again on the next run and
       # would be created a second time.

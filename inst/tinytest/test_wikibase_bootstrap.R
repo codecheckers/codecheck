@@ -22,7 +22,11 @@ expect_equal(
   sum(plan$kind == "property"),
   length(unique(properties$property)) + 1L
 )
-expect_equal(sum(plan$kind == "item"), length(codecheck:::WIKIDATA_ITEMS))
+# The class items, plus one per platform a certificate can be published on:
+# those are values the model emits, and a statement whose target does not exist
+# is dropped.
+expect_equal(sum(plan$kind == "item"),
+             length(codecheck:::WIKIDATA_ITEMS) + length(codecheck:::WIKIDATA_PLATFORMS))
 
 # The mapping property is the one entity without a Wikidata counterpart, and it
 # has to be created before anything that refers to it.
@@ -54,9 +58,11 @@ expect_equal(plan$datatype[!is.na(plan$wikidata_id) & plan$wikidata_id == "P813"
 expect_equal(plan$label[!is.na(plan$wikidata_id) & plan$wikidata_id == "P972"], "catalog")
 
 # Why each property exists, carried through to the listing page.
-expect_true(all(plan$role %in% c("mapping", "statement", "qualifier", "reference", "class item")))
+expect_true(all(plan$role %in% c("mapping", "statement", "qualifier", "reference",
+                                 "class item", "platform item")))
 expect_equal(plan$role[is.na(plan$wikidata_id)], "mapping")
-expect_true(all(plan$role[plan$kind == "item"] == "class item"))
+expect_true(all(plan$role[plan$kind == "item"] %in% c("class item", "platform item")))
+expect_equal(sum(plan$role == "platform item"), length(codecheck:::WIKIDATA_PLATFORMS))
 expect_equal(plan$role[!is.na(plan$wikidata_id) & plan$wikidata_id == "P813"], "reference")
 
 # A property the model uses in two positions is still one property: P31 is a

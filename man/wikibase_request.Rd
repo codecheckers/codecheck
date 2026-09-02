@@ -4,7 +4,14 @@
 \alias{wikibase_request}
 \title{One Action API request, repeated while the server asks us to come back}
 \usage{
-wikibase_request(method, params, handle = NULL, what = "the API", attempts = 4)
+wikibase_request(
+  method,
+  params,
+  handle = NULL,
+  what = "the API",
+  attempts = 4,
+  api = WIKIBASE_INSTANCE$api
+)
 }
 \arguments{
 \item{method}{`httr::GET` or `httr::POST`}
@@ -16,6 +23,8 @@ wikibase_request(method, params, handle = NULL, what = "the API", attempts = 4)
 \item{what}{what is being requested, for messages}
 
 \item{attempts}{how many times to try in total}
+
+\item{api}{the Action API to address, the CODECHECK Wikibase by default}
 }
 \value{
 the parsed response

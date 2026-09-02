@@ -8,6 +8,7 @@ local <- c(P31 = "P9", P13046 = "P10", P1476 = "P11", P356 = "P12", P577 = "P13"
            P50 = "P14", P2093 = "P15", P6977 = "P16", P973 = "P17", P528 = "P18",
            P972 = "P26", P953 = "P19", P1324 = "P20", P1433 = "P21", P1343 = "P22",
            P854 = "P27", P813 = "P28", P496 = "P23", P236 = "P24", P856 = "P25",
+           P10283 = "P29",
            Q116740091 = "Q7", Q116740071 = "Q8", Q111935840 = "Q9", Q13442814 = "Q10",
            Q580922 = "Q11", Q265158 = "Q12", Q5 = "Q13", Q141254857 = "Q14",
            Q22661177 = "Q15", Q18691678 = "Q16", Q115504497 = "Q17")
@@ -27,6 +28,14 @@ expect_true(is.na(codecheck:::wikidata_transform("https://arxiv.org/abs/2101.000
 expect_equal(codecheck:::wikidata_transform("2019-02-14 10:00:00", "date_day"), "2019-02-14")
 expect_equal(codecheck:::wikidata_transform("https://orcid.org/0000-0001-8607-8025", "orcid"),
              "0000-0001-8607-8025")
+
+# The register stores an OpenAlex work as a URL; Wikidata's P10283 wants the id.
+expect_equal(codecheck:::wikidata_transform("https://openalex.org/W3014157798", "openalex"),
+             "W3014157798")
+expect_equal(codecheck:::wikidata_transform("W3014157798", "openalex"), "W3014157798")
+# An author or venue id is not a work id, and neither is a stray URL.
+expect_true(is.na(codecheck:::wikidata_transform("https://openalex.org/A5023888391", "openalex")))
+expect_true(is.na(codecheck:::wikidata_transform("not an id", "openalex")))
 
 # venues.csv packs identifiers; once extracted the value is the ISSN itself.
 # The model resolves a venue by this value whichever shape it arrives in.
@@ -164,6 +173,22 @@ long_payload <- codecheck:::wikibase_entity_payload("paper", long, local)
 expect_true(nchar(long_payload$labels$en$value) <= 250)
 expect_true(endsWith(long_payload$labels$en$value, "..."))
 
+# A checked work carries its OpenAlex id: it is the identifier most likely to be
+# there when the DOI alone does not find the work, and it leads to the authors,
+# venue and citations this export deliberately does not mirror.
+paper_row <- list(`Paper reference` = "https://doi.org/10.1093/gigascience/giaa026",
+                  Title = "ShinyLearner", Venue = "GigaScience",
+                  OpenAlex = "https://openalex.org/W3014157798")
+paper_payload <- codecheck:::wikibase_entity_payload("paper", paper_row, local)
+openalex <- Filter(function(claim) claim$mainsnak$property == "P29", paper_payload$claims)
+expect_equal(length(openalex), 1L)
+expect_equal(openalex[[1]]$mainsnak$datavalue$value, "W3014157798")
+
+# A paper the register has no OpenAlex id for simply gets no such statement.
+paper_row$OpenAlex <- NA_character_
+expect_equal(length(Filter(function(claim) claim$mainsnak$property == "P29",
+                           codecheck:::wikibase_entity_payload("paper", paper_row, local)$claims)), 0L)
+
 # Keys and deduplication ----
 
 expect_equal(codecheck:::wikibase_entity_key("certificate", row), "10.5281/ZENODO.3674056")
@@ -226,3 +251,69 @@ no_paper$`Paper reference` <- "https://example.org/no-doi"
 sparse <- paste(codecheck:::wikibase_certificates_wikitext(written, no_paper), collapse = "\n")
 expect_false(grepl("Item:NA", sparse, fixed = TRUE))
 expect_true(grepl("&mdash;", sparse, fixed = TRUE))
+
+# Two entities, one identifier ----
+
+# Every entity is found again by the identifier the model resolves it on, so two
+# rows sharing one are not two entities: they are one, written twice, and the
+# second overwrites the first. On Wikidata the loser is gone without a trace.
+collide <- records
+collide$certificates$Report <- rep("https://doi.org/10.5281/zenodo.1", 2)
+collide$certificates$`Certificate ID` <- c("2025-009", "2025-010")
+expect_error(
+  codecheck:::check_export_keys(codecheck:::wikibase_export_rows(collide)),
+  pattern = "2025-009, 2025-010"
+)
+expect_error(
+  codecheck:::check_export_keys(codecheck:::wikibase_export_rows(collide)),
+  pattern = "overwrite"
+)
+
+# The register as it stands passes, and so does a check limited to the kinds
+# that go to Wikidata.
+expect_true(codecheck:::check_export_keys(rows))
+expect_true(codecheck:::check_export_keys(rows, kinds = c("paper", "certificate")))
+
+# Rows with no identifier are not all the same entity: they are simply not
+# exported, and must not read as a collision.
+no_keys <- records
+no_keys$certificates$`Paper reference` <- c("https://example.org/a", "https://example.org/b")
+expect_true(codecheck:::check_export_keys(codecheck:::wikibase_export_rows(no_keys),
+                                          kinds = "paper"))
+
+# Where and when a checked work appeared ----
+
+# The register's own Venue column names the venue that commissioned the check,
+# which is a different fact: one register venue spans several publications over
+# the years. The publication comes from the work's own OpenAlex record.
+work_row <- list(
+  Title = "ShinyLearner",
+  `Paper reference` = "https://doi.org/10.1093/gigascience/giaa026",
+  Venue = "AGILEGIS",
+  `Paper ISSN` = "2047-217X",
+  `Paper publication date` = "2020-04-01"
+)
+local_with_venue <- c(local, list(P577 = "P13"))
+work_payload <- codecheck:::wikibase_entity_payload(
+  "paper", work_row, local_with_venue,
+  resolve = function(kind, key) if (kind == "venue" && key == "2047-217X") "Q85" else NA)
+
+published_in <- Filter(function(claim) claim$mainsnak$property == "P21", work_payload$claims)
+expect_equal(length(published_in), 1L)
+expect_equal(published_in[[1]]$mainsnak$datavalue$value$id, "Q85")
+
+published_on <- Filter(function(claim) claim$mainsnak$property == "P13", work_payload$claims)
+expect_equal(published_on[[1]]$mainsnak$datavalue$value$time, "+2020-04-01T00:00:00Z")
+
+# A work whose publication has no ISSN - a preprint, a report - gets no venue
+# statement rather than a guess from the register's venue.
+no_issn <- work_row
+no_issn$`Paper ISSN` <- NA_character_
+expect_equal(length(Filter(
+  function(claim) claim$mainsnak$property == "P21",
+  codecheck:::wikibase_entity_payload("paper", no_issn, local_with_venue)$claims)), 0L)
+
+# A register rendered before this enrichment existed has neither column, and
+# the work is exported without those statements rather than failing.
+older <- work_row[c("Title", "Paper reference", "Venue")]
+expect_true(length(codecheck:::wikibase_entity_payload("paper", older, local_with_venue)$claims) > 0)

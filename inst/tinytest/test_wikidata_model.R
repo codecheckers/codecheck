@@ -79,11 +79,18 @@ expect_equal(cert_venue[[1]]$value$field, "Report")
 paper_venue <- Filter(function(s) s$property == "P1433", codecheck::wikidata_statements("paper"))
 expect_equal(length(paper_venue), 1)
 expect_equal(paper_venue[[1]]$value$entity, "venue")
-# Resolved from the paper's own record, not from the register's Venue column:
-# one register venue can span several publications over the years - AGILE papers
-# are in AGILE: GIScience Series today and were in Springer LNCS earlier - so a
+# Resolved by the ISSN of the publication the work itself names - which the
+# OpenAlex enrichment resolves - and not from the register's Venue column: one
+# register venue can span several publications over the years, AGILE papers are
+# in AGILE: GIScience Series today and were in Springer LNCS earlier, so a
 # venue-derived value would be wrong for the older ones.
-expect_equal(paper_venue[[1]]$value$field, "Paper reference")
+expect_equal(paper_venue[[1]]$value$field, "Paper ISSN")
+
+# And the work says when it appeared, from the same record.
+paper_date <- Filter(function(s) s$property == "P577", codecheck::wikidata_statements("paper"))
+expect_equal(length(paper_date), 1)
+expect_equal(paper_date[[1]]$value$field, "Paper publication date")
+expect_equal(paper_date[[1]]$datatype, "time")
 expect_true(is.null(paper_venue[[1]]$venue_types))
 expect_equal(codecheck::wikidata_model()$venue$resolve$property, "P236")
 expect_equal(codecheck::wikidata_model()$venue$resolve$field, "issn")
@@ -156,10 +163,12 @@ expect_error(codecheck::wikidata_statements("nonesuch"), pattern = "Unknown enti
 
 # What may be created where ----
 
-# Only certificates are created on Wikidata; the papers, people and venues they
-# refer to belong to the communities that maintain them.
+# Certificates and the works they check are created on Wikidata - two thirds of
+# the checked works have no item, and a certificate whose "review of" points
+# nowhere loses the link the model exists for. The people and venues they refer
+# to belong to the communities that maintain them.
 expect_true(codecheck::wikidata_creates("certificate", "wikidata"))
-expect_false(codecheck::wikidata_creates("paper", "wikidata"))
+expect_true(codecheck::wikidata_creates("paper", "wikidata"))
 expect_false(codecheck::wikidata_creates("person", "wikidata"))
 expect_false(codecheck::wikidata_creates("venue", "wikidata"))
 
@@ -240,6 +249,7 @@ expect_equal(codecheck::wikidata_model()$certificate$resolve$field, "Report")
 register_columns <- c(
   "Certificate ID", "Certificate Link", "Certificate PDF", "Report", "Check date",
   "Title", "Paper reference", "Repository Link", "Venue", "Codechecker",
+  "OpenAlex", "Paper authors", "Paper ISSN", "Paper publication date",
   # venue and person entities are built from venues.csv / codecheck.yml rather
   # than from a register row
   "orcid", "name", "issn", "identifiers", "website_url", "longname"

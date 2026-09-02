@@ -1,31 +1,27 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
 
 # codecheck
 
 <!-- badges: start -->
-
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-[![R build
-status](https://github.com/codecheckers/codecheck/workflows/R-CMD-check/badge.svg)](https://github.com/codecheckers/codecheck/actions)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![R build status](https://github.com/codecheckers/codecheck/workflows/R-CMD-check/badge.svg)](https://github.com/codecheckers/codecheck/actions)
 [![DOI](https://zenodo.org/badge/256862293.svg)](https://zenodo.org/badge/latestdoi/256862293)
 <!-- badges: end -->
 
-`codecheck` is an R package to assist codecheckers in creating
-CODECHECK-ready workspaces and conducting codechecks. This package
-focuses on the technical workflow for codecheckers using R. It also
-contains helper functions for managing the [CODECHECK
-register](https://codecheck.org.uk/register/).
+`codecheck` is an R package to assist codecheckers in creating CODECHECK-ready workspaces and conducting codechecks. This package focuses on the technical workflow for codecheckers using R. It also contains helper functions for managing the [CODECHECK register](https://codecheck.org.uk/register/).
 
-For general information about the CODECHECK initiative and community
-processes, visit <https://codecheck.org.uk/>.
+For general information about the CODECHECK initiative and community processes, visit [https://codecheck.org.uk/](https://codecheck.org.uk/).
 
 ## Installation
 
-The package is not on [CRAN](https://CRAN.R-project.org) yet. Install
-the current version from
-[GitHub](https://github.com/codecheckers/codecheck) with:
+The package is not on [CRAN](https://CRAN.R-project.org) yet.
+Install the current version from [GitHub](https://github.com/codecheckers/codecheck) with:
 
 ``` r
 # install.packages("remotes")
@@ -36,75 +32,42 @@ remotes::install_github("codecheckers/codecheck")
 
 For first-time codecheckers using this R package:
 
-1.  **Fork the research repository** - Fork to the [codecheckers
-    organization](https://github.com/codecheckers) on GitHub
-2.  **Clone and navigate to the repository root** - Run R from the
-    top-level directory of the research project
-3.  **Create CODECHECK files** - Run
-    `codecheck::create_codecheck_files()` to generate:
-    - A `codecheck.yml` configuration file with metadata (certificate
-      ID, authors, manifest, etc.)
-    - A `codecheck/` directory with report templates
-4.  **Define the manifest** - List all computational outputs (figures,
-    tables, data files) that you’ve successfully reproduced in the
-    `manifest` section of `codecheck.yml`
-5.  **Complete the certificate** - Fill in the report template and
-    render it
-6.  **Create a record on Zenodo** (or OSF, or ResearchEquals) and submit
-    the draft for feedback to your CODECHECK editor/contact person,
-    e.g., via a sharing link or the CODECHECK Zenodo community; push the
-    `codecheck.yml` to the repository
-
-    > **Note:** Zenodo gives every deposit two DOIs: a version-specific
-    > DOI (pointing at that exact record) and a "concept DOI" (which
-    > always resolves to the *latest* version, see
-    > [Zenodo versioning](https://zenodo.org/help/versioning)). The
-    > `report` field in `codecheck.yml` must use the version-specific
-    > DOI, so the certificate stays linked to an immutable record.
-    > `codecheck::validate_codecheck_yml()` and
-    > `validate_certificate_for_rendering()` both flag a concept DOI used
-    > by mistake.
+1. **Fork the research repository** - Fork to the [codecheckers organization](https://github.com/codecheckers) on GitHub
+2. **Clone and navigate to the repository root** - Run R from the top-level directory of the research project
+3. **Create CODECHECK files** - Run `codecheck::create_codecheck_files()` to generate:
+   - A `codecheck.yml` configuration file with metadata (certificate ID, authors, manifest, etc.)
+   - A `codecheck/` directory with report templates
+4. **Define the manifest** - List all computational outputs (figures, tables, data files) that you've successfully reproduced in the `manifest` section of `codecheck.yml`
+5. **Complete the certificate** - Fill in the report template and render it
+6. **Create a record on Zenodo** (or OSF, or ResearchEquals) and submit the draft for feedback to your CODECHECK editor/contact person, e.g., via a sharing link or the CODECHECK Zenodo community; push the `codecheck.yml` to the repository
 
 ## Key Concepts
 
-- **Certificate** - The final report documenting your CODECHECK, which
-  includes metadata, the manifest, and your assessment.
-- **codecheck.yml** - The configuration file containing all CODECHECK
-  metadata (paper details, authors, manifest, etc.)
-- **Manifest** - A list of computational output files (figures, data
-  files, tables) that you have successfully reproduced during the
-  CODECHECK. Each manifest entry includes the file path and a brief
-  description. The manifest is defined in the `codecheck.yml`.
+- **Certificate** - The final report documenting your CODECHECK, which includes metadata, the manifest, and your assessment.
+- **codecheck.yml** - The configuration file containing all CODECHECK metadata (paper details, authors, manifest, etc.)
+- **Manifest** - A list of computational output files (figures, data files, tables) that you have successfully reproduced during the CODECHECK. Each manifest entry includes the file path and a brief description. The manifest is defined in the `codecheck.yml`.
 
 ## Usage
 
-See the [getting started
-guide](https://codecheck.org.uk/codecheck/articles/codecheck_overview.html)
-for step-by-step instructions on using the template and the [workflow
-descriptions](https://codecheck.org.uk/workflows/) on the overall
-procedures.
+See the [getting started guide](https://codecheck.org.uk/codecheck/articles/codecheck_overview.html) for step-by-step instructions on using the template and the [workflow descriptions](https://codecheck.org.uk/workflows/) on the overall procedures.
 
-**Note on certificate templates**: The R Markdown template created by
-this package can be used in multiple ways:
+The package also renders the [CODECHECK Register](https://codecheck.org.uk/register/), see the [register vignette](https://codecheck.org.uk/codecheck/articles/codecheck_register.html), and publishes it as linked data in a Wikibase and on Wikidata, see [Export the register to Wikidata](https://codecheck.org.uk/codecheck/articles/codecheck_wikidata.html) for the full procedure.
 
-- Execute code in various languages (R, Python, bash, etc.) using
-  knitr’s language engines
+**Note on certificate templates**: The R Markdown template created by this package can be used in multiple ways:
+
+- Execute code in various languages (R, Python, bash, etc.) using knitr's language engines
 - Simply write your certificate narrative without executing any code
 - Mix both approaches as needed
 
-If you prefer working with Jupyter Notebooks (especially for
-Python-based projects), see the [Python CODECHECK
-template](https://github.com/codecheckers/codecheck-py) based on a
-Jupyter Notebook.
+If you prefer working with Jupyter Notebooks (especially for Python-based projects), see the [Python CODECHECK template](https://github.com/codecheckers/codecheck-py) based on a Jupyter Notebook.
 
 ## Development
 
-The package uses
-[`tinytest`](https://cran.r-project.org/package=tinytest) for tests. Run
-`test_all("/path/to/package")` to run all tests interactively. Even
-better, run the tests in a fresh install and temporary directory using
+The package uses [`tinytest`](https://cran.r-project.org/package=tinytest) for tests.
+Run `test_all("/path/to/package")` to run all tests interactively.
+Even better, run the tests in a fresh install and temporary directory using 
 
-``` r
+```r
 # assuming . is the package path
 library(tinytest)
 build_install_test(".")
@@ -112,17 +75,15 @@ build_install_test(".")
 
 ## Contribute
 
-*All contributions are welcome!* See [CONTRIBUTING.md](CONTRIBUTING.md)
-for details.
+_All contributions are welcome!_
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Code of Conduct
-
-Please note that the codecheck project is released with a [Contributor
-Code of
-Conduct](http://codecheck.org.uk/codecheck/CODE_OF_CONDUCT.html). By
-contributing to this project, you agree to abide by its terms.
+  
+Please note that the codecheck project is released with a [Contributor Code of Conduct](http://codecheck.org.uk/codecheck/CODE_OF_CONDUCT.html).
+By contributing to this project, you agree to abide by its terms.
 
 ## License
 
-Copyright 2025 S. Eglen & D. Nüst. The `codecheck` package is published
-under the MIT license, see file `LICENSE`.
+Copyright 2026 S. Eglen & D. Nüst.
+The `codecheck` package is published under the MIT license, see file `LICENSE`.
