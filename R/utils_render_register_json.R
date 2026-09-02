@@ -109,7 +109,14 @@ render_register_full <- function(register_table, output_dir) {
   csv_source <- rep(NA_character_, n)
   csv_repo_links <- rep(NA_character_, n)
 
+  cli_pb_id <- cli::cli_progress_bar(
+    format = "{cli::pb_spin} Full export [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | {cli::pb_elapsed}",
+    total = n,
+    clear = FALSE
+  )
+
   for (i in seq_len(n)) {
+    cli::cli_progress_update(id = cli_pb_id)
     repo_spec <- register_table[i, "Repository"]
 
     # Repository link
@@ -191,6 +198,8 @@ render_register_full <- function(register_table, output_dir) {
 
     json_entries[[i]] <- entry
   }
+
+  cli::cli_progress_done(id = cli_pb_id)
 
   # Sort by Certificate ID for consistent diffs (as requested in issue)
   cert_ids <- vapply(json_entries, function(e) e$`Certificate ID`, character(1))

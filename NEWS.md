@@ -2,6 +2,8 @@
 
 ## New Features
 
+* Register rendering now announces the main register, the full export and each filter before rendering them, with a progress bar per page group (per-page timings under `verbose = TRUE`).
+* The filtered register CSVs are now written under their own log heading instead of silently.
 * New `load_wikibase_register()` writes the whole register to the CODECHECK Wikibase as items - people, venues, papers, then the certificates that refer to them (register#50). Each entity is matched by the identifier the model resolves it on, so a rerun updates what it wrote instead of duplicating it, and a load also generates a [Project:Certificates](https://codecheck.wikibase.cloud/wiki/Project:Certificates) index linking every certificate item to its register page. Dry by default, and the dry run returns the payloads it would send. New internal `read_register_records()`, `wikibase_export_rows()`, `evaluate_model_value()`, `wikibase_claims()` and `wikibase_entity_payload()` in `R/wikibase_export.R`.
 * The bootstrap now also creates an item for each platform a certificate can be published on (Zenodo, OSF, ResearchEquals). They are values the model emits, so without them every "published in" statement was dropped for want of a target.
 * A certificate item's label is built from `{{Certificate_ID}}` rather than ``{{`Certificate ID`}}``: mustache cannot address a key containing a space, so the label rendered as "CODECHECK Certificate" with the number missing. Register columns are offered to the model's templates under an underscored alias.

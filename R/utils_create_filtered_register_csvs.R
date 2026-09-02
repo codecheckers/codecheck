@@ -90,6 +90,9 @@ set_paper_title_references_csv <- function(register_table){
 #' @importFrom utils write.csv
 #'
 create_filtered_reg_csvs <- function(register_table, filter_by){
+  cli::cli_h2("Creating filtered register CSVs")
+  start_time_total <- Sys.time()
+
   # A filtered register.csv is only linked to from the venue/codechecker
   # detail-page footer - works/persons detail pages never show a "CSV
   # source" link (see generate_html_postfix_hrefs_reg()'s has_csv), so
@@ -99,6 +102,8 @@ create_filtered_reg_csvs <- function(register_table, filter_by){
   # later, by create_register_files() - running this first for e.g. "works"
   # would fail with "cannot open the connection".
   for (filter in intersect(filter_by, c("venues", "codecheckers"))){
+    start_time_filter <- Sys.time()
+
     if (filter == "codecheckers"){
       # Using the temporary codechecker register (already preprocessed)
       register_table <- read.csv(CONFIG$DIR_TEMP_REGISTER_CODECHECKER, as.is = TRUE)
@@ -158,5 +163,11 @@ create_filtered_reg_csvs <- function(register_table, filter_by){
       output_dir <- paste0(table_details[["output_dir"]], "register.csv")
       write.csv(filtered_register, output_dir, row.names=FALSE)
     }
+
+    elapsed_filter <- as.numeric(difftime(Sys.time(), start_time_filter, units = "secs"))
+    cli::cli_alert_success("Written {length(filtered_register_list)} {filter} {cli::qty(length(filtered_register_list))}CSV{?s} in {sprintf('%.1f', elapsed_filter)}s")
   }
+
+  elapsed_total <- as.numeric(difftime(Sys.time(), start_time_total, units = "secs"))
+  cli::cli_alert_success("Completed all filtered register CSVs in {sprintf('%.1f', elapsed_total)}s")
 }

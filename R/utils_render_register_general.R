@@ -191,7 +191,15 @@ create_original_register_files <- function(register_table, outputs){
   for (output_type in outputs){
     table_details <- list(is_reg_table = TRUE)
     table_details[["output_dir"]] <- generate_output_dir(filter, table_details)
+
+    # Announced before the work, not just after it: rendering the whole
+    # register as HTML is a single pandoc run over all entries and the
+    # longest silent stretch of the render if it is not bracketed.
+    cli::cli_alert_info("Rendering main register ({output_type}, {nrow(register_table)} entries)")
+    start_time_output <- Sys.time()
     render_register(register_table, table_details, filter, output_type, full_register_table = register_table)
+    elapsed_output <- as.numeric(difftime(Sys.time(), start_time_output, units = "secs"))
+    cli::cli_alert_success("Main register ({output_type}) in {sprintf('%.2f', elapsed_output)}s")
   }
 
   # Generate full metadata export (addresses register#57)
@@ -286,8 +294,21 @@ create_register_files <- function(register_table, filter_by, outputs){
     # table can't represent.
     filter_outputs <- setdiff(outputs, if (filter %in% CONFIG$FILTERS_WITHOUT_MD) "md" else character(0))
 
+    # Size of the job before the first page appears - the progress bar below
+    # only shows on a dynamic terminal, so this line is what a redirected
+    # log (e.g. `make render > render.log`) has to go on.
+    n_items <- length(filtered_register_list)
+    cli::cli_alert_info("Rendering {n_items} {filter} {cli::qty(n_items)}page{?s} x {length(filter_outputs)} output{?s}")
+
     # Looping over each of the output types
     for (output_type in filter_outputs){
+      cli_pb_id <- cli::cli_progress_bar(
+        format = paste0("{cli::pb_spin} ", filter, " (", output_type,
+                        ") [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | {cli::pb_elapsed} {cli::pb_status}"),
+        total = n_items,
+        clear = FALSE
+      )
+
       for (i in seq_along(filtered_register_list)) {
         # Retrieving the register and its key
         register_key <- register_keys[[filter_col_name]][i]
@@ -298,13 +319,20 @@ create_register_files <- function(register_table, filter_by, outputs){
         start_time_item <- Sys.time()
         render_register(filtered_table, table_details, filter, output_type, full_register_table = filtered_table)
         elapsed_item <- as.numeric(difftime(Sys.time(), start_time_item, units = "secs"))
-        cli::cli_alert_success("Rendered {filter} {.val {register_key}} ({output_type}) in {sprintf('%.2f', elapsed_item)}s")
+        cli::cli_progress_update(id = cli_pb_id, status = register_key)
+
+        # One line per page is too much output for a full render, but it is
+        # the only way to spot a single slow page, so it stays behind verbose.
+        if (isTRUE(CONFIG$VERBOSE)) {
+          cli::cli_alert_success("Rendered {filter} {.val {register_key}} ({output_type}) in {sprintf('%.2f', elapsed_item)}s")
+        }
       }
+
+      cli::cli_progress_done(id = cli_pb_id)
     }
 
     elapsed_filter <- as.numeric(difftime(Sys.time(), start_time_filter, units = "secs"))
-    n_items <- length(filtered_register_list)
-    n_outputs <- length(outputs)
+    n_outputs <- length(filter_outputs)
     cli::cli_alert_success("Completed filter {.val {filter}} ({n_items} items x {n_outputs} outputs) in {sprintf('%.1f', elapsed_filter)}s")
   }
 
