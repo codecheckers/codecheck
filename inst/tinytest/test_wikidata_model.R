@@ -44,12 +44,10 @@ expect_equal(catalog[[1]]$value$field, "Certificate ID")
 # P528 says nothing without naming its catalog.
 expect_equal(vapply(catalog[[1]]$qualifiers, function(q) q$property, character(1)), "P972")
 
-# The catalog item does not exist yet, so the statement is marked pending and no
-# export may emit it - the marker is what keeps that visible.
-pending <- codecheck::wikidata_pending()
-expect_equal(nrow(pending), 1)
-expect_equal(pending$property, "P528")
-expect_true(nzchar(pending$pending))
+# The catalog item exists, so nothing in the model is waiting on an item that
+# still has to be created and every statement is emittable.
+expect_equal(nrow(codecheck::wikidata_pending()), 0L)
+expect_equal(catalog[[1]]$qualifiers[[1]]$value$item, "Q141254857")
 
 missing_catalog <- codecheck::wikidata_model()
 missing_catalog$certificate$statements <- lapply(

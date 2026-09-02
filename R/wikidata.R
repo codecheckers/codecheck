@@ -92,11 +92,9 @@ WIKIDATA_ITEMS <- list(
   review = "Q265158",
   # "human", for codechecker items
   human = "Q5",
-  # The register itself, as the catalog the certificate identifiers belong to.
-  # No such item exists yet: the interim P528 statement below needs one, and it
-  # is created together with the first Wikidata batch. Until then the statement
-  # is marked pending and no export emits it.
-  codecheck_register = NA_character_
+  # The register itself, as the catalog the certificate identifiers belong to,
+  # which is what makes the interim P528 statement below meaningful
+  codecheck_register = "Q141254857"
 )
 
 #' The platforms a certificate itself is published on
@@ -291,9 +289,7 @@ WIKIDATA_MODEL <- list(
         list(kind = "field", field = "Certificate ID"),
         qualifiers = list(
           list(property = "P972", label = "catalog",
-               value = list(kind = "constant",
-                            item = WIKIDATA_ITEMS$codecheck_register,
-                            pending = "the CODECHECK register catalog item, created with the first batch"))
+               value = list(kind = "constant", item = WIKIDATA_ITEMS$codecheck_register))
         ),
         note = paste(
           "the certificate identifier, carried generically until a dedicated",
