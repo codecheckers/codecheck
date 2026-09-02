@@ -10,7 +10,8 @@ wikibase_edit_entity(
   kind = NULL,
   id = NULL,
   summary = NULL,
-  what = "an entity"
+  what = "an entity",
+  clear = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ wikibase_edit_entity(
 \item{summary}{the edit summary}
 
 \item{what}{what is being written, for the error message}
+
+\item{clear}{when updating, replace the entity's content instead of merging
+into it}
 }
 \value{
 the parsed response

@@ -397,6 +397,18 @@ plan_wikibase_entities <- function(existing) {
       datatype = NA_character_,
       role = "class item",
       stringsAsFactors = FALSE
+    ),
+    # The platform a certificate is published on is a value the model emits, so
+    # it needs a local item as much as the classes do - without one, every
+    # "published in" statement is silently dropped for want of a target.
+    data.frame(
+      kind = "item",
+      wikidata_id = unlist(WIKIDATA_PLATFORMS, use.names = FALSE),
+      label = gsub("_", " ", names(WIKIDATA_PLATFORMS)),
+      description = paste0("counterpart of Wikidata ", unlist(WIKIDATA_PLATFORMS, use.names = FALSE)),
+      datatype = NA_character_,
+      role = "platform item",
+      stringsAsFactors = FALSE
     )
   )
 
@@ -483,10 +495,12 @@ create_wikibase_entity <- function(session, row, mapping_property) {
 #' @param id the entity to update, `NULL` when creating
 #' @param summary the edit summary
 #' @param what what is being written, for the error message
+#' @param clear when updating, replace the entity's content instead of merging
+#'   into it
 #' @return the parsed response
 #' @keywords internal
 wikibase_edit_entity <- function(session, data, kind = NULL, id = NULL,
-                                 summary = NULL, what = "an entity") {
+                                 summary = NULL, what = "an entity", clear = FALSE) {
   if (is.null(kind) == is.null(id)) {
     stop("wikibase_edit_entity() creates with a kind or updates with an id, not both")
   }
@@ -496,7 +510,15 @@ wikibase_edit_entity <- function(session, data, kind = NULL, id = NULL,
     summary = summary,
     bot = 1
   )
-  if (is.null(id)) params$new <- kind else params$id <- id
+  if (is.null(id)) {
+    params$new <- kind
+  } else {
+    params$id <- id
+    # The instance is generated from the model, so an update replaces what is
+    # there rather than adding to it: without clear=1 wbeditentity merges, and
+    # a second run would leave every statement twice over.
+    if (clear) params$clear <- 1
+  }
   wikibase_post(session, params, what = what)
 }
 

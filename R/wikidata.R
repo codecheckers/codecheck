@@ -64,6 +64,9 @@ WIKIBASE_INSTANCE <- list(
   # The generated index of everything the bootstrap created, see
   # write_wikibase_report()
   report_page = "Project:Data model",
+  # The generated index of the loaded certificates, see
+  # write_wikibase_certificates_page()
+  certificates_page = "Project:Certificates",
   # Special:BotPasswords credentials, see the register's .env.example
   user_env = "WIKIBASE_USER",
   token_env = "WIKIBASE_TOKEN"
@@ -228,7 +231,9 @@ wikidata_statement <- function(key, property, label, value, datatype, required =
 WIKIDATA_MODEL <- list(
 
   certificate = list(
-    label = "CODECHECK Certificate {{`Certificate ID`}}",
+    # Mustache cannot address a key with a space in it, so the register column
+    # "Certificate ID" is offered to the template as "Certificate_ID".
+    label = "CODECHECK Certificate {{Certificate_ID}}",
     description = "reproducibility check of a paper published in {{Venue}}",
     # The report DOI is the dedup key: every certificate has one, it is stable,
     # and it does not depend on a CODECHECK-specific property existing yet.
