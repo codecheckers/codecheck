@@ -385,11 +385,12 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
 #' this only needs to opt sortable columns in: "string" for plain text/ISO
 #' dates (which already sort correctly lexicographically), "int" for the
 #' known numeric count columns, and nothing at all for Report/Work, whose
-#' cells hold titles/links rather than sortable values.
+#' cells hold titles/links rather than sortable values, or "Check types"
+#' (register#92), whose cells hold a stacked bar with no comparable value.
 #'
 #' @param html_file_path The path to the rendered index.html file.
 add_sortable_th_attributes <- function(html_file_path) {
-  unsortable_headers <- c("Report", "Work")
+  unsortable_headers <- c("Report", "Work", "Check types")
   numeric_headers <- c("No. of codechecks", "No. of checks", "Works authored", "Checks conducted")
 
   html <- paste(readLines(html_file_path), collapse = "\n")

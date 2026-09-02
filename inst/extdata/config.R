@@ -38,7 +38,7 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
     venues_subcat = "|:---------------------|:----------|",
     codecheckers = "|:-----------|:---------------------|:----------|:------|",
     works = "|:---------------------------------------------|:---------------------------|:----------|",
-    persons = "|:-----------|:---------------------|:----------|:----------|"
+    persons = "|:-----------|:---------------------|:----------|:----------|:------|"
   )
 )
 
@@ -320,7 +320,8 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
     "person_name" = "Name",
     "Person" = "ORCID",
     "no_works" = "Works authored",
-    "no_checks" = "Checks conducted"
+    "no_checks" = "Checks conducted",
+    "check_types" = "Check types"
   )
 )
 

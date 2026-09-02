@@ -69,12 +69,12 @@ create_non_register_files <- function(register_table, filter_by){
         }
       }
 
-      # The codecheckers table carries the check-type breakdown twice: as the
-      # stacked-bar HTML the rendered page needs (register#92), and as a plain
-      # object. index.json is an API, so it gets the object under the same
-      # column name and never the markup.
-      if (filter == "codecheckers"){
-        col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["codecheckers"]]
+      # The codecheckers/persons tables carry the check-type breakdown twice:
+      # as the stacked-bar HTML the rendered page needs (register#92), and as
+      # a plain object. index.json is an API, so it gets the object under the
+      # same column name and never the markup.
+      if (filter %in% c("codecheckers", "persons")){
+        col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[[filter]]
         if ("checks_per_type" %in% colnames(table)){
           # unbox() so each type maps to a number rather than a one-element
           # array - write_json() has no auto_unbox argument to do it globally.

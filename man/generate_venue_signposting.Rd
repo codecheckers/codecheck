@@ -24,3 +24,11 @@ type, which is what `cite-as` needs given its cardinality of 1. The ISSNs in
 the `identifiers` column stay where they are, in the Schema.org `sameAs`.
 A venue without a Wikidata item simply gets no `cite-as`.
 }
+\details{
+Some rows of `venues.csv` are not venues but publication states - "preprint",
+"in press" - and their `wikidata` value is a class item the Wikidata data
+model types checked works with (Q580922, "preprint"), not an identifier of
+the venue. Those get no `cite-as` either: `cite-as` states the PID *of the
+thing the page is about*, and a class shared across the register is not it.
+They are recognised by looking the value up in [WIKIDATA_ITEMS].
+}

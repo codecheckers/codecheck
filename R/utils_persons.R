@@ -132,6 +132,7 @@ create_all_persons_table <- function(register_table) {
     empty <- data.frame(
       person_name = character(0), Person = character(0),
       no_works = integer(0), no_checks = integer(0),
+      check_types = character(0),
       stringsAsFactors = FALSE
     )
     col_names_dict <- CONFIG$NON_REG_TABLE_COL_NAMES[["persons"]]
@@ -166,11 +167,29 @@ create_all_persons_table <- function(register_table) {
       })
     )
 
+  # Per-venue-type breakdown of checks conducted (register#92), mirroring
+  # create_all_codecheckers_table(): computed from the codechecker-role rows
+  # only, since an authored work has no check type of its own.
+  checker_rows <- exploded %>% filter(Role == "codechecker")
+  type_counts <- lapply(new_table$Person, function(id) {
+    types <- checker_rows$Type[checker_rows$Person == id]
+    types <- types[!is.na(types) & nzchar(types)]
+    if (length(types) == 0) integer(0) else table(types)
+  })
+
+  new_table$check_types <- vapply(type_counts, codechecker_type_bar_html, character(1))
+
   col_names_dict <- CONFIG$NON_REG_TABLE_COL_NAMES[["persons"]]
   for (key in names(col_names_dict)) {
     colnames(new_table)[colnames(new_table) == key] <- col_names_dict[[key]]
   }
   new_table <- new_table[, unname(col_names_dict), drop = FALSE]
+
+  # The machine-readable twin of the "Check types" bar (see
+  # create_all_codecheckers_table() and render_non_register_files()).
+  new_table$checks_per_type <- lapply(type_counts, function(counts) {
+    if (length(counts) == 0) NULL else as.list(order_type_counts(counts))
+  })
 
   list(persons = new_table)
 }

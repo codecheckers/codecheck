@@ -87,6 +87,21 @@ expect_true(any(grepl("0000-0001-8607-8025", person_jsonld, fixed = TRUE)))
 expect_true(file.exists("docs/persons/index.html"))
 expect_true(file.exists("docs/persons/index.json"))
 
+# "all persons" overview table: check-type stacked bar (register#92),
+# mirroring the retired codecheckers table - rendered as markup in the HTML,
+# as plain per-type counts in JSON (config.R's MD_TABLE_COLUMN_WIDTHS$persons
+# must carry a 5th column or pandoc silently drops "Check types" from the
+# table, which slipped through untested before)
+persons_index_html <- paste(readLines("docs/persons/index.html", warn = FALSE), collapse = "\n")
+expect_true(grepl("Check types", persons_index_html, fixed = TRUE))
+expect_true(grepl('class="type-bar"', persons_index_html, fixed = TRUE))
+
+persons_index_json <- jsonlite::fromJSON("docs/persons/index.json")
+expect_true("Check types" %in% colnames(persons_index_json))
+eglen_row <- persons_index_json[persons_index_json$ORCID == "0000-0001-8607-8025", ]
+expect_equal(nrow(eglen_row), 1)
+expect_true(length(eglen_row$`Check types`[[1]]) >= 1)
+
 # footer: no "Markdown" link on the person page, no CSV links on either
 person_footer <- xml2::xml_text(xml2::xml_find_all(person_html, "//p[@class='footer-links']"))
 expect_false(grepl("Markdown", person_footer))
