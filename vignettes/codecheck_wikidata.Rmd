@@ -56,8 +56,10 @@ library(codecheck)
 
 Writing to the Wikibase needs a bot password from
 <https://codecheck.wikibase.cloud/wiki/Special:BotPasswords> with the
-"High-volume editing" and "Edit existing pages" grants, in two environment
-variables:
+"High-volume editing", "Edit existing pages" and "Create, edit, and move
+pages" grants, in two environment variables. The last of these matters because
+the bootstrap creates the hosting-policy pages, and creating a page is a
+different grant from editing one:
 
 ```sh
 WIKIBASE_USER=<account>@<bot name>
@@ -101,6 +103,12 @@ rather than by label, so a partially failed run can simply be repeated.
 It also brings a label that has drifted from the model back in line, and writes
 the index at
 [Project:Data model](https://codecheck.wikibase.cloud/wiki/Project:Data_model).
+Every run also writes
+[Project:About](https://codecheck.wikibase.cloud/wiki/Project:About) and
+[Project:Copyrights](https://codecheck.wikibase.cloud/wiki/Project:Copyrights),
+which the [wikibase.cloud hosting
+policy](https://www.wikibase.cloud/hosting-policy) requires of every hosted
+instance, so that an instance rebuilt from empty comes back compliant.
 
 Run this again whenever the model gains a property or an item - the load in the
 next step refuses to run against an instance that is missing any of them.

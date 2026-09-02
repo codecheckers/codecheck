@@ -80,6 +80,12 @@ WIKIBASE_INSTANCE <- list(
   # The generated preview of the Wikidata batches, see
   # write_wikidata_preview_page()
   wikidata_page = "Project:Wikidata export",
+  # The pages the wikibase.cloud hosting policy requires, see
+  # write_wikibase_policy_pages()
+  about_page = "Project:About",
+  copyright_page = "Project:Copyrights",
+  # MediaWiki's own footer target is the singular, kept as a redirect
+  copyright_redirect = "Project:Copyright",
   # Special:BotPasswords credentials, see the register's .env.example
   user_env = "WIKIBASE_USER",
   token_env = "WIKIBASE_TOKEN"

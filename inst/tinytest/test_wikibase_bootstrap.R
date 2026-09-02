@@ -391,3 +391,43 @@ rerun <- codecheck:::plan_wikibase_entities(seeded_and_ours)
 expect_equal(rerun$label[!is.na(rerun$wikidata_id) & rerun$wikidata_id == "P31"],
              "instance of (P31)")
 expect_equal(rerun$action[!is.na(rerun$wikidata_id) & rerun$wikidata_id == "P31"], "present")
+
+# The hosting-policy pages ----
+
+# wikibase.cloud hosts the instance on the condition that it says what it is for
+# and states a license, and that it has rules for the data it holds about living
+# people. Those pages are generated rather than curated so that an instance
+# rebuilt from empty comes back compliant.
+
+about <- paste(codecheck:::wikibase_about_wikitext(), collapse = "\n")
+expect_true(grepl("staging instance", about, fixed = TRUE))
+expect_true(grepl("https://codecheck.org.uk/register/", about, fixed = TRUE))
+expect_true(grepl("== Personal data ==", about, fixed = TRUE))
+expect_true(grepl("ORCID", about, fixed = TRUE))
+# A reader has to be able to reach somebody, and to reach the license.
+expect_true(grepl("codecheckers/register/issues", about, fixed = TRUE))
+expect_true(grepl("[[Project:Copyrights]]", about, fixed = TRUE))
+
+copyright <- paste(codecheck:::wikibase_copyright_wikitext(), collapse = "\n")
+expect_true(grepl("ODC-BY", copyright, fixed = TRUE))
+expect_true(grepl("https://codecheck.org.uk/register/", copyright, fixed = TRUE))
+# The policy asks for text that permits both, so it has to be said in words.
+expect_true(grepl("commercial and non-commercial use", copyright, fixed = TRUE))
+expect_true(grepl("MIT License", copyright, fixed = TRUE))
+
+# Three edits: the two pages, and the redirect from MediaWiki's own footer
+# target at the singular title.
+sent <- list()
+with_mocked_codecheck(list(wikibase_post = function(session, params, what) {
+  sent[[length(sent) + 1L]] <<- params
+  list(edit = list(result = "Success"))
+}), {
+  written <- codecheck:::write_wikibase_policy_pages(NULL)
+})
+expect_equal(length(sent), 3L)
+expect_equal(vapply(sent, function(p) p$title, character(1)),
+             c("Project:About", "Project:Copyrights", "Project:Copyright"))
+expect_equal(written, c("Project:About", "Project:Copyrights", "Project:Copyright"))
+expect_true(all(vapply(sent, function(p) p$action, character(1)) == "edit"))
+expect_true(all(vapply(sent, function(p) p$bot, numeric(1)) == 1))
+expect_equal(sent[[3]]$text, "#REDIRECT [[Project:Copyrights]]")

@@ -697,6 +697,10 @@ bootstrap_wikibase <- function(dry_run = TRUE, log_file = NULL) {
       cli::cli_alert("create {plan$kind[i]} {.strong {plan$label[i]}}{if (!is.na(plan$datatype[i])) paste0(' (', plan$datatype[i], ')') else ''}{if (!is.na(plan$wikidata_id[i])) paste0(' -> ', plan$wikidata_id[i]) else ''}")
     }
     cli::cli_alert_info("Would write the listing page {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$report_page)}}")
+    for (page in c(WIKIBASE_INSTANCE$about_page, WIKIBASE_INSTANCE$copyright_page,
+                   WIKIBASE_INSTANCE$copyright_redirect)) {
+      cli::cli_alert_info("Would write the hosting-policy page {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', page)}}")
+    }
     cli::cli_alert_info("Dry run, nothing written. Pass {.code dry_run = FALSE} to create these.")
     return(invisible(plan))
   }
@@ -746,6 +750,16 @@ bootstrap_wikibase <- function(dry_run = TRUE, log_file = NULL) {
                id = WIKIBASE_INSTANCE$report_page, label = "listing page",
                status = "done", file = log_file)
   cli::cli_alert_success("Listing page written to {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$report_page)}}")
+
+  # The wikibase.cloud hosting policy asks for these, and an instance rebuilt
+  # from empty has to come back compliant without anybody remembering to write
+  # them by hand.
+  for (page in write_wikibase_policy_pages(session)) {
+    wikibase_log(target = "wikibase", action = "edit", kind = "page",
+                 id = page, label = "hosting-policy page",
+                 status = "done", file = log_file)
+    cli::cli_alert_success("Hosting-policy page written to {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', page)}}")
+  }
 
   cli::cli_alert_success("Bootstrap complete")
   invisible(plan)
