@@ -1,0 +1,25 @@
+{
+  "id": "https://ror.org/02e2c7k09",
+  "status": "active",
+  "established": 1842,
+  "types": ["education", "funder"],
+  "names": [
+    {"value": "Delft University of Technology", "lang": "en", "types": ["ror_display", "label"]},
+    {"value": "TU Delft", "lang": "nl", "types": ["alias"]},
+    {"value": "Technische Universiteit Delft", "lang": "nl", "types": ["label"]}
+  ],
+  "links": [
+    {"type": "website", "value": "https://www.tudelft.nl"},
+    {"type": "wikipedia", "value": "http://en.wikipedia.org/wiki/Delft_University_of_Technology"}
+  ],
+  "locations": [
+    {"geonames_details": {"name": "Delft", "country_name": "The Netherlands", "country_code": "NL"}}
+  ],
+  "external_ids": [
+    {"type": "fundref", "preferred": "501100001831", "all": ["501100001831", "501100002984"]},
+    {"type": "grid", "preferred": "grid.5292.c", "all": ["grid.5292.c"]},
+    {"type": "isni", "preferred": null, "all": ["0000 0001 2097 4740"]},
+    {"type": "wikidata", "preferred": "Q752663", "all": ["Q752663", "Q6379334"]}
+  ],
+  "relationships": []
+}

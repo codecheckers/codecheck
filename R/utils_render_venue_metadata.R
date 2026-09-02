@@ -107,7 +107,11 @@ get_venue_metadata_fields <- function(venue_row, venue_type = NULL) {
     contact_name = get_col("contact_name"),
     contact_email = get_col("contact_email"),
     description = get_col("description"),
-    identifiers = parse_venue_identifiers(get_col("identifiers"))
+    identifiers = parse_venue_identifiers(get_col("identifiers")),
+    # The organisation page for this venue's ROR, when the register's people
+    # put one there (register#53). A venue commissioned the check, the
+    # organisation employed the people who did it - two pages, cross-linked.
+    organisation_ror = venue_organisation_ror(parse_venue_identifiers(get_col("identifiers")))
   )
 }
 
@@ -169,7 +173,10 @@ generate_venue_metadata_html <- function(venue_row, venue_type = NULL) {
     has_description = has_description,
     description = fields$description,
     has_identifiers = has_identifiers,
-    identifiers = fields$identifiers
+    identifiers = fields$identifiers,
+    has_organisation = has_value(fields$organisation_ror),
+    # a venue page lives at docs/venues/<type_plural>/<slug>/
+    organisation_url = paste0("../../../organisations/", fields$organisation_ror, "/")
   )
 
   whisker.render(template, data)
@@ -215,4 +222,23 @@ generate_venue_metadata_yaml <- function(venue_row, venue_type = NULL) {
   }
 
   yaml::as.yaml(yaml_list, line.sep = "\n")
+}
+
+#' The ROR of a venue that also has an organisation page
+#'
+#' @param identifiers A venue's parsed identifiers (see
+#'   [parse_venue_identifiers()]).
+#' @return The bare ROR id, or `NA_character_` when the venue has no ROR or
+#'   no organisation page was rendered for it.
+#' @keywords internal
+venue_organisation_ror <- function(identifiers) {
+  rendered <- if (exists("ORGANISATION_RORS", envir = CONFIG)) CONFIG$ORGANISATION_RORS else character(0)
+
+  for (identifier in identifiers) {
+    if (!grepl("^ROR$", identifier$name, ignore.case = TRUE)) next
+    ror <- normalize_ror(identifier$value)
+    if (ror %in% rendered) return(ror)
+  }
+
+  NA_character_
 }

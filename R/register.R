@@ -52,7 +52,7 @@ is_full_register_run <- function(from, to, n) {
 #'
 #' @export
 register_render <- function(register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
-                            filter_by = c("venues", "works", "persons"),
+                            filter_by = c("venues", "works", "persons", "organisations"),
                             outputs = c("html", "md", "json"),
                             config = c(system.file("extdata", "config.R", package = "codecheck")),
                             venues_file = "venues.csv",
@@ -655,6 +655,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
   tryCatch({
     check_near_duplicate_works(work_certs, work_keys, work_titles)
     check_orcid_conflicts(person_certs, person_orcids, person_names)
+    if (!is.null(reports)) check_duplicate_reports(reports$Certificate, reports$Report)
   }, error = function(e) {
     cli::cli_alert_info("Could not run the work/person consistency checks: {conditionMessage(e)}")
   })

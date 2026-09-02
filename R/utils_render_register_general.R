@@ -278,6 +278,14 @@ create_register_files <- function(register_table, filter_by, outputs){
       grouping_table <- explode_person_records(grouping_table)
     }
 
+    # Same shape for organisations: one row per (certificate, organisation,
+    # person, role), see add_organisation_records(). A certificate whose
+    # people have no ROR-identified affiliation drops out here, which is
+    # what keeps the pages honest about what the data supports.
+    else if (filter == "organisations") {
+      grouping_table <- explode_organisation_records(grouping_table)
+    }
+
     # Group the register_table by the filter column and nest the resulting groups
     filter_col_name <- CONFIG$FILTER_COLUMN_NAMES[[filter]]
     grouped_registers <- grouping_table %>%
@@ -446,6 +454,12 @@ generate_table_details <- function(table_key, table, filter, is_reg_table = TRUE
         title_cell
       }
     }
+  } else if (filter == "organisations") {
+    # The ROR id is already a safe directory name (docs/organisations/02e2c7k09/).
+    table_details[["slug_name"]] <- table_key
+    # CONFIG$MD_TITLES$organisations only ever receives table_details, so the
+    # organisation's name is resolved here rather than there.
+    table_details[["title"]] <- get_organisation_metadata(table_key)$name
   } else if (is_orcid) {
     table_details[["slug_name"]] <- table_key  # Use ORCID as-is for directory
     table_details[["is_github_username"]] <- FALSE

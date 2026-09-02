@@ -2,6 +2,8 @@
 
 ## New Features
 
+* New `/organisations/` pages list the works authored and the checks conducted by each research organisation's people, identified by ROR (register#53). An organisation is only credited for a certificate where the person's ORCID profile placed them there at the time, and every page says so.
+* Organisation pages carry name, type, location and identifiers from ror.org and a logo from Wikidata, and cross-link with an institution venue that shares their ROR.
 * New `orcid_rors()` and `register_ror_coverage()` report which authors and codecheckers have a ROR-identified affiliation in their ORCID profile, currently or at the time of publication (register#53).
 
 * Register rendering now announces the main register, the full export and each filter before rendering them, with a progress bar per page group (per-page timings under `verbose = TRUE`).

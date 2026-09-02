@@ -108,6 +108,8 @@ generate_person_metadata_html <- function(orcid, register_table, table_details) 
     n_checked, if (n_checked == 1) "" else "s"
   )
 
+  role_summary <- paste0(role_summary, person_organisations_html(orcid))
+
   checked_table <- if (has_role) register_table[register_table$Role == "codechecker", , drop = FALSE] else register_table[0, , drop = FALSE]
   checker_panel <- generate_codechecker_metadata_html(orcid, checked_table, table_details)
 
@@ -235,4 +237,37 @@ add_all_persons_hyperlink <- function(table, table_details = NULL) {
     )
 
   table[, unname(col_names), drop = FALSE]
+}
+
+#' The organisations a person is on the register through
+#'
+#' Rendered under the role summary on a person page: the organisations their
+#' ORCID profile identified with a ROR when they authored or checked the works
+#' in the register (see [add_organisation_records()]), each linked to its own
+#' page. Empty - not an empty list, no markup at all - for the majority of
+#' people who have no ROR-identified affiliation on record (register#53).
+#'
+#' @param orcid The person's ORCID.
+#' @return An HTML string, or `""`.
+#' @keywords internal
+person_organisations_html <- function(orcid) {
+  by_person <- if (exists("ORGANISATIONS_BY_PERSON", envir = CONFIG)) {
+    CONFIG$ORGANISATIONS_BY_PERSON
+  } else {
+    list()
+  }
+
+  rors <- by_person[[orcid]]
+  if (length(rors) == 0) {
+    return("")
+  }
+
+  links <- vapply(rors, function(ror) {
+    # A person page always lives at docs/persons/<orcid>/.
+    sprintf('<a href="../../organisations/%s/">%s</a>', ror,
+            get_organisation_metadata(ror)$name)
+  }, character(1))
+
+  paste0('<p class="person-organisations">Affiliations: ',
+         paste(links, collapse = ", "), '</p>')
 }

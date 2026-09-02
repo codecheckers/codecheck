@@ -183,6 +183,18 @@ expect_equal(coverage$ror_at_date[[1]], "02e2c7k09")
 expect_equal(coverage$n_affiliations, c(1L, 1L, 3L, 1L))
 expect_equal(coverage$has_ror, c(TRUE, TRUE, FALSE, TRUE))
 
+# The dates register_ror_coverage() matches against are computed by the shared
+# helper the organisation records use too, so they must not drift apart.
+dates <- with_mocked_codecheck(
+  list(get_openalex_publication_date_cached = function(openalex_id) {
+    if (is.na(openalex_id)) NA_character_ else "2018-05-02"
+  }),
+  suppressMessages(codecheck:::person_record_dates(
+    codecheck:::explode_person_records(register_table)))
+)
+expect_equal(dates$date, coverage$date)
+expect_equal(dates$date_source, coverage$date_source)
+
 # --- ror_coverage_summary() --------------------------------------------------
 
 summary <- ror_coverage_summary(coverage, quiet = TRUE)

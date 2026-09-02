@@ -87,6 +87,8 @@ render_register_md <- function(register_table, table_details, filter) {
     !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
   is_works_page <- filter == "works" && isTRUE(table_details[["is_reg_table"]]) &&
     !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
+  is_organisations_page <- filter == "organisations" && isTRUE(table_details[["is_reg_table"]]) &&
+    !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
 
   if (is_venues_page) {
     venue_row <- lookup_venue_row(table_details[["name"]])
@@ -101,6 +103,10 @@ render_register_md <- function(register_table, table_details, filter) {
     } else {
       venue_frontmatter <- generate_work_metadata_yaml(table_details, register_table)
     }
+  } else if (is_organisations_page && "for_html_file" %in% names(table_details)) {
+    # No frontmatter branch: an organisation page never writes register.md
+    # (see CONFIG$FILTERS_WITHOUT_MD), same as a person page.
+    venue_metadata <- generate_organisation_metadata_html(table_details[["name"]], register_table)
   }
 
   # Convert certificate links to relative paths for HTML display
@@ -114,7 +120,9 @@ render_register_md <- function(register_table, table_details, filter) {
   register_table <- add_venue_type_hyperlinks_reg(register_table, table_details)
 
   # Fill in the content
-  if (!is.na(filter) && filter == "persons") {
+  if (!is.na(filter) && filter == "organisations") {
+    md_table <- create_organisations_md_table(register_table, table_details)
+  } else if (!is.na(filter) && filter == "persons") {
     # Two tables (works authored, checks conducted), not one - the generic
     # single-kable create_md_table() can't represent that, so this filter
     # gets its own content builder. Still lands in temp.md only, since
@@ -134,6 +142,15 @@ render_register_md <- function(register_table, table_details, filter) {
   md_table <- gsub("\\$profile_frontmatter\\$", profile_frontmatter, md_table)
   md_table <- gsub("\\$venue_metadata\\$", venue_metadata, md_table)
   md_table <- gsub("\\$venue_frontmatter\\$", venue_frontmatter, md_table)
+
+  # A note below the page content, for the filters that have one - everything
+  # else empties the slot (see CONFIG$PAGE_NOTES).
+  page_note <- ""
+  if (!is.na(filter) && isTRUE(table_details[["is_reg_table"]]) &&
+      filter %in% names(CONFIG$PAGE_NOTES)) {
+    page_note <- CONFIG$PAGE_NOTES[[filter]]
+  }
+  md_table <- gsub("\\$page_note\\$", page_note, md_table)
 
   output_dir <- table_details[["output_dir"]]
 
@@ -194,6 +211,83 @@ create_persons_md_table <- function(register_table, table_details) {
 
   md_table <- gsub("\\$content\\$", paste(content, collapse = "\n"), md_table)
   unlist(strsplit(md_table, "\n", fixed = TRUE))
+}
+
+#' Build the temp.md content for an organisation page
+#'
+#' The organisation analogue of [create_persons_md_table()]: the same two
+#' sections, works authored and checks conducted, but every row also names the
+#' person the organisation is on that certificate through - an organisation is
+#' never on a certificate in its own right (register#53).
+#'
+#' @param register_table The organisation's exploded, per-person-per-role rows
+#'   (see [explode_organisation_records()]), already hyperlinked for display.
+#' @param table_details List containing details such as the table name.
+#' @return The markdown lines (a character vector, one per line).
+#' @keywords internal
+create_organisations_md_table <- function(register_table, table_details) {
+  md_table <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["md_template"]])
+  md_table <- add_markdown_title(table_details, md_table, "organisations")
+
+  register_table <- add_person_hyperlinks_reg(register_table, table_details)
+
+  has_role <- "Role" %in% names(register_table)
+  authored <- if (has_role) register_table[register_table$Role == "author", , drop = FALSE] else register_table[0, , drop = FALSE]
+  checked  <- if (has_role) register_table[register_table$Role == "codechecker", , drop = FALSE] else register_table[0, , drop = FALSE]
+
+  authored_cols <- intersect(c("Report", "Paper Title", "Person", "Venue", "Check date"), names(authored))
+  checked_cols  <- intersect(c("Certificate", "Report", "Paper Title", "Person", "Venue", "Type", "Check date"), names(checked))
+
+  authored_md <- if (nrow(authored) > 0) {
+    capture.output(kable(rename_paper_title_column_for_display(authored[, authored_cols, drop = FALSE]), format = "markdown"))
+  } else {
+    "*No authored works with a DOI-identified check yet.*"
+  }
+  checked_md <- if (nrow(checked) > 0) {
+    capture.output(kable(rename_paper_title_column_for_display(checked[, checked_cols, drop = FALSE]), format = "markdown"))
+  } else {
+    "*No checks conducted yet.*"
+  }
+
+  content <- c(
+    paste0("## Works authored (", nrow(authored), ")"), "",
+    authored_md, "",
+    paste0("## Checks conducted (", nrow(checked), ")"), "",
+    checked_md
+  )
+
+  md_table <- gsub("\\$content\\$", paste(content, collapse = "\n"), md_table)
+  unlist(strsplit(md_table, "\n", fixed = TRUE))
+}
+
+#' Turn the Person column into links to the person pages
+#'
+#' The organisation page's tables show who each row is attributed through, by
+#' name rather than by ORCID. Links are relative, like every other internal
+#' link (see [add_venue_hyperlinks_reg()]), so a locally served `docs/` works.
+#'
+#' @param register_table A register table with a `Person` (ORCID) column.
+#' @param table_details List containing the page's `output_dir`.
+#' @return The table, with `Person` rewritten as a markdown link.
+#' @keywords internal
+add_person_hyperlinks_reg <- function(register_table, table_details = NULL) {
+  if (!("Person" %in% names(register_table)) || nrow(register_table) == 0) {
+    return(register_table)
+  }
+
+  persons_base <- CONFIG$HYPERLINKS[["persons"]]
+  if (!is.null(table_details) && "output_dir" %in% names(table_details)) {
+    depth <- stringr::str_count(gsub("^docs/", "", table_details[["output_dir"]]), "/")
+    persons_base <- if (depth == 0) "./persons/" else paste0(strrep("../", depth), "persons/")
+  }
+
+  register_table$Person <- vapply(register_table$Person, function(orcid) {
+    name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
+    if (is.null(name)) name <- orcid
+    paste0("[", name, "](", persons_base, orcid, "/)")
+  }, character(1))
+
+  register_table
 }
 
 #' Rename the "Paper Title" column to "Work" for display

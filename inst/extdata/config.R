@@ -38,7 +38,8 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
     venues_subcat = "|:---------------------|:----------|",
     codecheckers = "|:-----------|:---------------------|:----------|:------|",
     works = "|:---------------------------------------------|:---------------------------|:----------|",
-    persons = "|:-----------|:---------------------|:----------|:----------|:------|"
+    persons = "|:-----------|:---------------------|:----------|:----------|:------|",
+    organisations = "|:-----------------------------|:-------------|:------------|:----------|:----------|:--------|"
   )
 )
 
@@ -92,6 +93,16 @@ CONFIG$REGISTER_COLUMNS <- list(
     html = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date", "Role"),
     csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Role"),
     json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Role")
+  ),
+
+  # Organisation pages show the same two role-tables as a person page, plus
+  # the person each row is attributed through ("Person"), since an
+  # organisation is only ever on a certificate by way of one of its people
+  # (register#53). No "md" entry: see CONFIG$FILTERS_WITHOUT_MD.
+  organisations = list(
+    html = c("Certificate", "Report", "Paper Title", "Venue", "Type", "Check date", "Role", "Person"),
+    csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Role", "Person"),
+    json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Role", "Person")
   )
 )
 
@@ -100,7 +111,8 @@ CONFIG$FILTER_COLUMN_NAMES <- list(
   "venues" = "Venue",
   "codecheckers" = "Codechecker",
   "works" = "Work",
-  "persons" = "Person"
+  "persons" = "Person",
+  "organisations" = "Organisation"
 )
 
 # register.md is only worth publishing for a page whose main content is one
@@ -110,7 +122,7 @@ CONFIG$FILTER_COLUMN_NAMES <- list(
 # here get every other output (html, json, csv) but no register.md, and the
 # HTML footer's "Markdown" link is omitted for them (see
 # generate_html_postfix_hrefs_reg()).
-CONFIG$FILTERS_WITHOUT_MD <- c("persons")
+CONFIG$FILTERS_WITHOUT_MD <- c("persons", "organisations")
 
 CONFIG$NO_CODECHECKS_VENUE_TYPE <- list()
 
@@ -157,6 +169,15 @@ CONFIG$MD_TITLES <- list(
     person_name
   },
 
+  # The organisation's name from ror.org, falling back to the bare ROR when
+  # the record could not be read.
+  "organisations" = function(table_details) {
+    ror <- table_details[["name"]]
+    name <- table_details[["title"]]
+    if (is.null(name) || is.na(name) || !nzchar(name)) name <- ror
+    name
+  },
+
   "certs" = "CODECHECK Certificate"
 )
 
@@ -175,6 +196,7 @@ CONFIG$HYPERLINKS <- list(
   codecheckers = "https://codecheck.org.uk/register/codecheckers/",
   works = "https://codecheck.org.uk/register/works/",
   persons = "https://codecheck.org.uk/register/persons/",
+  organisations = "https://codecheck.org.uk/register/organisations/",
   orcid = "https://orcid.org/",
   osf = "https://osf.io/",
   gitlab = "https://gitlab.com/",
@@ -246,13 +268,36 @@ CONFIG$NON_REG_TITLE_FNS <- list(
   # now covers paper authors as well as codecheckers.
   persons = function(subcat = NULL) {
     "People"
+  },
+
+  organisations = function(subcat = NULL) {
+    "Organisations"
   }
+)
+
+# The provenance note shown at the bottom of the organisation pages
+# (register#53). Organisation affiliations are not recorded in the register
+# itself: they are read off public ORCID profiles, so the pages are
+# necessarily incomplete and must say so.
+CONFIG$ORGANISATION_NOTE <- paste0(
+  "<p class=\"page-note\"><strong>Best effort data.</strong> ",
+  "Affiliations come from public ORCID profiles, matched against the publication date of ",
+  "the paper or the date of the check. People without a ROR-identified affiliation on ",
+  "record are not listed here.</p>"
+)
+
+# Notes rendered below the content of an individual page (see
+# CONFIG$NON_REG_EXTRA_TEXT for the same thing on a listing page).
+CONFIG$PAGE_NOTES <- list(
+  organisations = CONFIG$ORGANISATION_NOTE
 )
 
 CONFIG$NON_REG_EXTRA_TEXT <- list(
   codecheckers = "<i>\\*Note that the total number of codechecks is less than 
     the collective sum of individual codecheckers' number of codechecks. 
-    This is because some codechecks involved more than one codechecker.</i>"
+    This is because some codechecks involved more than one codechecker.</i>",
+
+  organisations = CONFIG$ORGANISATION_NOTE
 )
 
 CONFIG$NON_REG_SUBTEXT <- list(
@@ -291,6 +336,11 @@ CONFIG$NON_REG_SUBTEXT <- list(
   persons = function(table, subcat = NULL) {
     no_persons <- nrow(table)
     paste0("In total, ", no_persons, " people have authored or checked a work in the register.")
+  },
+
+  organisations = function(table, subcat = NULL) {
+    no_organisations <- nrow(table)
+    paste0("In total, ", no_organisations, " organisations are affiliated with a work or a check in the register.")
   }
 )
 
@@ -322,6 +372,15 @@ CONFIG$NON_REG_TABLE_COL_NAMES <- list(
     "no_works" = "Works authored",
     "no_checks" = "Checks conducted",
     "check_types" = "Check types"
+  ),
+
+  "organisations" = c(
+    "organisation_name" = "Organisation",
+    "Organisation" = "ROR",
+    "country" = "Country",
+    "no_works" = "Works authored",
+    "no_checks" = "Checks conducted",
+    "no_persons" = "People"
   )
 )
 

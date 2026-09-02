@@ -42,7 +42,7 @@ generate_404_page <- function(output_dir = "docs") {
 #' @return Invisibly returns the path to the generated sitemap.xml
 #' @export
 generate_sitemap <- function(register_table,
-                             filter_by = c("venues", "works", "persons"),
+                             filter_by = c("venues", "works", "persons", "organisations"),
                              output_dir = "docs",
                              base_url = CONFIG$HYPERLINKS[["register"]],
                              lastmod = format(Sys.Date(), "%Y-%m-%d")) {
@@ -196,6 +196,29 @@ generate_sitemap <- function(register_table,
     for (orcid in persons) {
       urls[[length(urls) + 1]] <- list(
         loc = paste0(base_url, "/persons/", orcid, "/"),
+        lastmod = lastmod,
+        changefreq = "monthly",
+        priority = "0.7"
+      )
+    }
+  }
+
+  # Organisation pages (register#53)
+  if ("organisations" %in% filter_by && "Organisation" %in% names(register_table)) {
+    urls[[length(urls) + 1]] <- list(
+      loc = paste0(base_url, "/organisations/"),
+      lastmod = lastmod,
+      changefreq = "weekly",
+      priority = "0.9"
+    )
+
+    organisations <- unique(unlist(lapply(register_table$Organisation, function(records) {
+      vapply(records, function(r) r$ror, character(1))
+    })))
+
+    for (ror in organisations) {
+      urls[[length(urls) + 1]] <- list(
+        loc = paste0(base_url, "/organisations/", ror, "/"),
         lastmod = lastmod,
         changefreq = "monthly",
         priority = "0.7"

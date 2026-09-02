@@ -325,6 +325,15 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
     )
   }
 
+  # Generate Schema.org metadata for organisation pages (register#53)
+  else if (!is.na(filter) && filter == "organisations" && table_details[["is_reg_table"]] &&
+           !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
+    schema_org_jsonld <- generate_organisation_schema_org(
+      ror = table_details[["name"]],
+      register_table = repo_lookup_table
+    )
+  }
+
   # FAIR Signposting for this page (register#55), dispatched on the same
   # filter/table_details pair as the Schema.org metadata above so the two
   # descriptions of a page cannot drift apart. The JSON-LD document the
@@ -391,7 +400,7 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
 #' @param html_file_path The path to the rendered index.html file.
 add_sortable_th_attributes <- function(html_file_path) {
   unsortable_headers <- c("Report", "Work", "Check types")
-  numeric_headers <- c("No. of codechecks", "No. of checks", "Works authored", "Checks conducted")
+  numeric_headers <- c("No. of codechecks", "No. of checks", "Works authored", "Checks conducted", "People")
 
   html <- paste(readLines(html_file_path), collapse = "\n")
 

@@ -1,0 +1,37 @@
+<div class="venue-metadata">
+{{#has_logo}}
+<img class="venue-metadata-logo" src="{{logo_url}}" alt="{{name}} logo">
+{{/has_logo}}
+<div class="venue-metadata-text">
+<ul class="venue-metadata-list">
+{{#has_types}}
+<li><i class="fa fa-university"></i> <span class="venue-metadata-label">Type:</span> {{types}}</li>
+{{/has_types}}
+{{#has_location}}
+<li><i class="fa fa-map-marker"></i> <span class="venue-metadata-label">Location:</span> {{location}}</li>
+{{/has_location}}
+{{#has_established}}
+<li><i class="fa fa-calendar"></i> <span class="venue-metadata-label">Established:</span> {{established}}</li>
+{{/has_established}}
+{{#has_website}}
+<li><i class="fa fa-globe"></i> <span class="venue-metadata-label">Website:</span> <a href="{{website_url}}" target="_blank" rel="noopener">{{website_url}}</a></li>
+{{/has_website}}
+{{#has_wikipedia}}
+<li><i class="fa fa-book"></i> <span class="venue-metadata-label">Wikipedia:</span> <a href="{{wikipedia_url}}" target="_blank" rel="noopener">{{wikipedia_url}}</a></li>
+{{/has_wikipedia}}
+{{#identifiers}}
+<li>{{#icon}}<i class="fa {{icon}}"></i> {{/icon}}<span class="venue-metadata-label">{{name}}:</span> {{#link}}<a href="{{link}}" target="_blank" rel="noopener">{{value}}</a>{{/link}}{{^link}}{{value}}{{/link}}</li>
+{{/identifiers}}
+{{#has_venue}}
+<li><i class="fa fa-institution"></i> <span class="venue-metadata-label">CODECHECK venue:</span> {{#venue_url}}<a href="{{venue_url}}">{{venue_longname}}</a>{{/venue_url}}{{^venue_url}}{{venue_longname}}{{/venue_url}}</li>
+{{/has_venue}}
+{{#has_people}}
+<li><i class="fa fa-users"></i> <span class="venue-metadata-label">People:</span> {{#people}}<a href="{{url}}">{{name}}</a>{{^last}}, {{/last}}{{/people}}</li>
+{{/has_people}}
+<li><i class="fa fa-cog"></i> <span class="venue-metadata-label">API &amp; statistics:</span> <a href="{{api_stats_url}}">{{api_stats_url}}</a></li>
+</ul>
+{{#has_aliases}}
+<p class="venue-metadata-description">Also known as: {{aliases}}</p>
+{{/has_aliases}}
+</div>
+</div>

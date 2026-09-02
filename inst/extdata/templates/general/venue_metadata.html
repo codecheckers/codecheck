@@ -14,6 +14,9 @@
 {{#has_venue_type}}
 <li><span class="venue-metadata-label">Venue type:</span> <a href="{{venue_type_url}}">{{venue_type}}</a></li>
 {{/has_venue_type}}
+{{#has_organisation}}
+<li><i class="fa fa-university"></i> <span class="venue-metadata-label">Organisation:</span> <a href="{{organisation_url}}">CODECHECKs by this organisation's people</a></li>
+{{/has_organisation}}
 <li><i class="fa fa-cog"></i> <span class="venue-metadata-label">API &amp; statistics:</span> <a href="{{api_stats_url}}">{{api_stats_url}}</a></li>
 {{#identifiers}}
 <li>{{#icon}}<i class="fa {{icon}}"></i> {{/icon}}<span class="venue-metadata-label">{{name}}:</span> {{#link}}<a href="{{link}}" target="_blank" rel="noopener">{{value}}</a>{{/link}}{{^link}}{{value}}{{/link}}</li>

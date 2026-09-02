@@ -343,6 +343,14 @@ preprocess_register <- function(register, filter_by) {
     if ("persons" %in% filter_by){
       register_table <- add_person_records(register_table, register)
     }
+    # Organisations are derived from the people, so their records need the
+    # Person column whether or not the person pages themselves are rendered.
+    if ("organisations" %in% filter_by){
+      if (!("Person" %in% names(register_table))) {
+        register_table <- add_person_records(register_table, register)
+      }
+      register_table <- add_organisation_records(register_table)
+    }
 
     # Create temp register CSV after all enrichment is complete
     # This ensures the CSV has all enriched columns for codechecker filtering

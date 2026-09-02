@@ -34,6 +34,7 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
       venues_path <- "venues/index.html"
       works_path <- "works/index.html"
       persons_path <- "persons/index.html"
+      organisations_path <- "organisations/index.html"
       statistics_path <- "statistics/index.html"
     } else {
       # Special handling for a venue *type* overview page (e.g.,
@@ -51,11 +52,13 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
         venues_path <- "../index.html"
         works_path <- paste0(base_path, "/works/index.html")
         persons_path <- paste0(base_path, "/persons/index.html")
+        organisations_path <- paste0(base_path, "/organisations/index.html")
         statistics_path <- paste0(base_path, "/statistics/index.html")
       } else {
         venues_path <- paste0(base_path, "/venues/index.html")
         works_path <- paste0(base_path, "/works/index.html")
         persons_path <- paste0(base_path, "/persons/index.html")
+        organisations_path <- paste0(base_path, "/organisations/index.html")
         statistics_path <- paste0(base_path, "/statistics/index.html")
       }
     }
@@ -64,6 +67,7 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
     venues_active <- ""
     works_active <- ""
     persons_active <- ""
+    organisations_active <- ""
     statistics_active <- ""
     if (!is.na(filter)) {
       if (filter == "venues") {
@@ -72,6 +76,8 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
         works_active <- " active"
       } else if (filter == "persons") {
         persons_active <- " active"
+      } else if (filter == "organisations") {
+        organisations_active <- " active"
       } else if (filter == "statistics") {
         statistics_active <- " active"
       }
@@ -83,6 +89,7 @@ generate_navigation_header <- function(filter = NA, base_path = ".", table_detai
       <a href="', venues_path, '" class="nav-link', venues_active, '" title="Browse venues that have hosted a CODECHECK">Venues</a>
       <a href="', works_path, '" class="nav-link', works_active, '" title="Browse checked papers">Works</a>
       <a href="', persons_path, '" class="nav-link', persons_active, '" title="Browse people who authored or checked a paper">People</a>
+      <a href="', organisations_path, '" class="nav-link', organisations_active, '" title="Browse organisations whose people authored or checked a paper">Organisations</a>
       <a href="', statistics_path, '" class="nav-link', statistics_active, '" title="View register statistics">Statistics</a>
       <a href="https://codecheck.org.uk/" class="nav-link" title="About the CODECHECK project">About</a>
     </nav>')

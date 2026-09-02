@@ -257,6 +257,154 @@ get_openalex_publication_date_cached <- function(openalex_id) {
   )
 }
 
+#' The date a person's affiliation has to cover, per exploded person record
+#'
+#' A codechecker's date is the register's check date - the check is the thing
+#' they did for that organisation. An author's is the paper's publication date
+#' from OpenAlex, which falls back to the check date for a certificate without
+#' an OpenAlex ID, so every record has a date to match against.
+#'
+#' @param exploded An exploded person table (see [explode_person_records()]),
+#'   with the `Check date`, `Role` and (optionally) `OpenAlex` columns.
+#' @return A data frame with columns `date` (a `Date`) and `date_source`
+#'   ("openalex" or "check date"), one row per input row.
+#' @keywords internal
+person_record_dates <- function(exploded) {
+  dates <- as.Date(exploded$`Check date`)
+  sources <- rep("check date", nrow(exploded))
+
+  if (nrow(exploded) == 0) {
+    return(data.frame(date = dates, date_source = sources, stringsAsFactors = FALSE))
+  }
+
+  cli::cli_alert_info("Looking up publication dates for {nrow(exploded)} person record{?s}")
+  for (i in seq_len(nrow(exploded))) {
+    if (exploded$Role[i] != "author") next
+
+    openalex_id <- if ("OpenAlex" %in% names(exploded)) exploded$OpenAlex[i] else NA_character_
+    published <- get_openalex_publication_date_cached(openalex_id)
+    if (!is.null(published) && !is.na(published)) {
+      dates[i] <- as.Date(published)
+      sources[i] <- "openalex"
+    }
+  }
+
+  data.frame(date = dates, date_source = sources, stringsAsFactors = FALSE)
+}
+
+#' Add the organisations behind each certificate's people
+#'
+#' The organisation analogue of [add_person_records()]: for every
+#' ORCID-identified person on a certificate, the organisations their ORCID
+#' profile identifies with a ROR *at the time of the work* - the paper's
+#' publication date for an author, the check date for a codechecker (see
+#' [person_record_dates()]). An affiliation held before or after that window
+#' is not recorded, so a page never claims work somebody did elsewhere
+#' (register#53).
+#'
+#' @param register_table The register table, with a `Person` list column
+#'   (see [add_person_records()]).
+#' @return The register table with an added `Organisation` list column, one
+#'   list of `{ror, orcid, role, date}` records per certificate (empty for a
+#'   certificate whose people have no ROR-identified affiliation).
+#' @keywords internal
+add_organisation_records <- function(register_table) {
+  if (!("Person" %in% names(register_table))) {
+    stop("The register table has no Person column, add_person_records() must run first.")
+  }
+
+  exploded <- explode_person_records(register_table)
+  records_by_cert <- stats::setNames(
+    vector("list", nrow(register_table)),
+    register_table$`Certificate ID`
+  )
+
+  if (nrow(exploded) > 0) {
+    dated <- person_record_dates(exploded)
+
+    orcids <- unique(exploded$Person)
+    cli::cli_alert_info("Reading ORCID affiliations for {length(orcids)} person{?s}")
+    affiliations <- stats::setNames(lapply(orcids, get_orcid_affiliations_cached), orcids)
+
+    for (i in seq_len(nrow(exploded))) {
+      cert <- exploded$`Certificate ID`[i]
+      rors <- rors_from(affiliations[[exploded$Person[i]]], at = dated$date[i])
+      for (ror in rors) {
+        records_by_cert[[cert]] <- c(records_by_cert[[cert]], list(list(
+          ror = ror,
+          orcid = exploded$Person[i],
+          role = exploded$Role[i],
+          date = as.character(dated$date[i])
+        )))
+      }
+    }
+  }
+
+  register_table$Organisation <- lapply(register_table$`Certificate ID`, function(cert) {
+    records <- records_by_cert[[cert]]
+    if (is.null(records)) return(list())
+    # the same person can hold two affiliations at one organisation
+    keys <- vapply(records, function(r) paste(r$ror, r$orcid, r$role), character(1))
+    records[!duplicated(keys)]
+  })
+
+  rors <- unique(unlist(lapply(register_table$Organisation, function(records) {
+    vapply(records, function(r) r$ror, character(1))
+  })))
+  # Which organisations got a page this run: the venue pages link to an
+  # organisation page only for a ROR that actually has one (see
+  # get_venue_metadata_fields()).
+  CONFIG$ORGANISATION_RORS <- rors
+
+  # ORCID -> the organisations that person is on the register through, for
+  # the person pages: by the time one is rendered its rows have been reduced
+  # to the display columns, so the Organisation column is no longer there.
+  by_person <- list()
+  for (records in register_table$Organisation) {
+    for (record in records) {
+      by_person[[record$orcid]] <- union(by_person[[record$orcid]], record$ror)
+    }
+  }
+  CONFIG$ORGANISATIONS_BY_PERSON <- by_person
+  cli::cli_alert_success("Found {length(rors)} organisation{?s} for the register's people")
+
+  register_table
+}
+
+#' Explode the Organisation list column into one row per record
+#'
+#' The organisation analogue of [explode_person_records()]: one row per
+#' (certificate, organisation, person, role), so the register table can be
+#' grouped by `Organisation` the same way it is grouped by `Person`.
+#'
+#' @param register_table The register table, with an `Organisation` list
+#'   column (see [add_organisation_records()]).
+#' @return A data frame with the register table's columns plus `Organisation`
+#'   (the ROR), `Person` (the ORCID) and `Role`.
+#' @keywords internal
+explode_organisation_records <- function(register_table) {
+  rows <- list()
+  for (i in seq_len(nrow(register_table))) {
+    for (record in register_table$Organisation[[i]]) {
+      row <- register_table[i, , drop = FALSE]
+      row$Organisation <- record$ror
+      row$Person <- record$orcid
+      row$Role <- record$role
+      rows[[length(rows) + 1]] <- row
+    }
+  }
+
+  if (length(rows) == 0) {
+    empty <- register_table[0, , drop = FALSE]
+    empty$Organisation <- character(0)
+    empty$Person <- character(0)
+    empty$Role <- character(0)
+    return(empty)
+  }
+
+  dplyr::bind_rows(rows)
+}
+
 #' How many register persons have a ROR in their ORCID profile
 #'
 #' Preparation for register#53, which wants organisation pages built from the
@@ -307,21 +455,9 @@ register_ror_coverage <- function(register_table = NULL,
     stop("The register table has no ORCID-identified persons.")
   }
 
-  check_dates <- as.Date(exploded$`Check date`)
-
-  cli::cli_alert_info("Looking up publication dates for {nrow(exploded)} person record{?s}")
-  dates <- check_dates
-  date_sources <- rep("check date", nrow(exploded))
-  for (i in seq_len(nrow(exploded))) {
-    if (exploded$Role[i] != "author") next
-
-    openalex_id <- if ("OpenAlex" %in% names(exploded)) exploded$OpenAlex[i] else NA_character_
-    published <- get_openalex_publication_date_cached(openalex_id)
-    if (!is.null(published) && !is.na(published)) {
-      dates[i] <- as.Date(published)
-      date_sources[i] <- "openalex"
-    }
-  }
+  dated <- person_record_dates(exploded)
+  dates <- dated$date
+  date_sources <- dated$date_source
 
   orcids <- unique(exploded$Person)
   cli::cli_alert_info("Reading ORCID affiliations for {length(orcids)} person{?s}")

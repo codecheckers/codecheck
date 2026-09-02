@@ -1180,6 +1180,9 @@ generate_page_signposting <- function(filter, table_details,
   if (is_detail && filter %in% c("persons", "codecheckers")) {
     return(generate_person_signposting(table_details[["name"]], has_jsonld = has_jsonld))
   }
+  if (is_detail && filter == "organisations") {
+    return(generate_organisation_signposting(table_details[["name"]], has_jsonld = has_jsonld))
+  }
 
   # A filtered listing page (all venues, all works, ...) lists subpages and has
   # no register.json of its own; the main register page has the full exports.
@@ -1241,4 +1244,80 @@ header_template_data <- function(page_metadata, meta_generator, base_path,
       has_citation_meta = is_nonempty_string(page_metadata$citation_meta),
       has_signposting = is_nonempty_string(page_metadata$signposting)
     ))
+}
+
+#' Signposting links for an organisation page
+#'
+#' The ROR is the organisation's persistent identifier, so it is what
+#' `cite-as` names - the analogue of the ORCID on a person page.
+#'
+#' @param ror The organisation's ROR id.
+#' @param has_jsonld Whether an `index.jsonld` was written next to the page.
+#' @return The `<link>` elements as an HTML string.
+#' @keywords internal
+generate_organisation_signposting <- function(ror, has_jsonld = FALSE) {
+  links <- list(
+    list(rel = "cite-as", href = if (is_nonempty_string(ror)) paste0("https://ror.org/", ror) else NULL),
+    list(rel = "type", href = "https://schema.org/AboutPage"),
+    list(rel = "type", href = "https://schema.org/Organization"),
+    list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
+         type = "application/ld+json"),
+    list(rel = "alternate", href = "register.json", type = "application/json"),
+    list(rel = "alternate", href = "stats.json", type = "application/json"),
+    list(rel = "license", href = CONFIG$LICENSE_REGISTER)
+  )
+
+  signposting_link_tags(links)
+}
+
+#' Schema.org metadata for an organisation page
+#'
+#' An `Organization` identified by its ROR, with the checked works its people
+#' authored and the certificates its people produced, mirroring
+#' [generate_person_schema_org()] - the organisation is the `affiliation` of
+#' the people the register knows, so the works and reviews it lists are theirs
+#' (register#53).
+#'
+#' @param ror The organisation's ROR id.
+#' @param register_table The organisation's exploded register rows.
+#' @return The JSON-LD as a string.
+#' @keywords internal
+generate_organisation_schema_org <- function(ror, register_table) {
+  fields <- get_organisation_metadata(ror)
+  organisation_id <- paste0("https://ror.org/", ror)
+
+  organisation <- list(
+    `@context` = "https://schema.org",
+    `@type` = "Organization",
+    `@id` = organisation_id,
+    name = fields$name,
+    identifier = organisation_id,
+    url = paste0(CONFIG$HYPERLINKS[["organisations"]], ror, "/")
+  )
+  if (!is.na(fields$website_url)) organisation$sameAs <- fields$website_url
+  if (!is.na(fields$city) || !is.na(fields$country)) {
+    organisation$location <- list(
+      `@type` = "Place",
+      address = paste(stats::na.omit(c(fields$city, fields$country)), collapse = ", ")
+    )
+  }
+
+  has_role <- "Role" %in% names(register_table)
+  checked <- if (has_role) register_table[register_table$Role == "codechecker", , drop = FALSE] else register_table[0, , drop = FALSE]
+
+  # The certificates this organisation's people produced, as Reviews - the
+  # same shape a person page uses, without repeating a certificate that two
+  # of its people worked on.
+  reviews <- list()
+  for (cert_id in unique(checked$Certificate)) {
+    if (is.na(cert_id)) next
+    cert_url <- paste0(CONFIG$HYPERLINKS[["certs"]], cert_id, "/")
+    reviews[[length(reviews) + 1]] <- list(
+      `@type` = "Review", `@id` = cert_url,
+      name = paste("CODECHECK Certificate", cert_id), url = cert_url
+    )
+  }
+  if (length(reviews) > 0) organisation$subjectOf <- reviews
+
+  jsonlite::toJSON(organisation, auto_unbox = TRUE, pretty = TRUE, null = "null")
 }

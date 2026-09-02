@@ -491,6 +491,22 @@ h1 {
 }
 
 /* ====================
+   Page Notes
+   ==================== */
+
+/* A provenance note below a page's content, e.g. the organisation pages'
+   "best effort data" statement (register#53). Set apart from the content
+   above it - on a page whose second table is the "no checks conducted yet"
+   line, the note would otherwise read as part of that sentence. */
+.page-note {
+    color: #444;
+    font-size: 0.9em;
+    margin: 2.75rem 0 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* ====================
    Sortable Tables
    ==================== */
 
