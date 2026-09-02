@@ -7,14 +7,24 @@
 wikidata_properties()
 }
 \value{
-a `data.frame` with columns `entity`, `key`, `property`, `label`,
-  `value_kind`, `required` and `note`, one row per statement definition
+a `data.frame` with columns `entity`, `key`, `role`, `property`,
+  `label`, `datatype`, `value_kind`, `required` and `note`, one row per
+  statement, qualifier and reference property. A reference belongs to every
+  statement rather than to one entity kind, so its `entity` is `NA`.
 }
 \description{
 The list a reviewer wants to see, and the input the CODECHECK Wikibase
 bootstrap needs: it creates one local property per row and records the
 Wikidata counterpart on it.
 }
+\details{
+Qualifiers and references are listed alongside the statements, because a
+Wikibase needs a property for each of them just as much: a `P528` catalog
+code cannot be written without its `P972` catalog qualifier, and no statement
+can carry its reference without `P854` and `P813`. The model writes reference
+properties in QuickStatements' `S` form; they are property ids like any
+other and are reported as such.
+}
 \examples{
-wikidata_properties()[, c("entity", "property", "label")]
+wikidata_properties()[, c("entity", "role", "property", "label")]
 }

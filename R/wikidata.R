@@ -61,6 +61,9 @@ WIKIBASE_INSTANCE <- list(
   api = "https://codecheck.wikibase.cloud/w/api.php",
   rest = "https://codecheck.wikibase.cloud/w/rest.php/wikibase/v1",
   quickstatements = "https://codecheck.wikibase.cloud/tools/quickstatements/",
+  # The generated index of everything the bootstrap created, see
+  # write_wikibase_report()
+  report_page = "Project:Data model",
   # Special:BotPasswords credentials, see the register's .env.example
   user_env = "WIKIBASE_USER",
   token_env = "WIKIBASE_TOKEN"
@@ -116,6 +119,18 @@ WIKIDATA_PLATFORMS <- list(
   researchequals = "Q115504497"
 )
 
+#' The Wikibase datatypes the model uses
+#'
+#' Wikidata knows a property's datatype already; the CODECHECK Wikibase does
+#' not, and a property created with the wrong one cannot be changed afterwards -
+#' it has to be deleted and recreated. The datatype is therefore part of the
+#' model rather than something the bootstrap guesses.
+#'
+#' @keywords internal
+WIKIBASE_DATATYPES <- c(
+  "wikibase-item", "external-id", "url", "string", "time", "monolingualtext", "quantity"
+)
+
 #' A reference block attached to every statement the export writes
 #'
 #' Not decoration: it is what distinguishes a statement this pipeline wrote from
@@ -125,8 +140,10 @@ WIKIDATA_PLATFORMS <- list(
 #'
 #' @keywords internal
 WIKIDATA_REFERENCE <- list(
-  list(property = "S854", label = "reference URL", value = list(kind = "field", field = "Certificate Link")),
-  list(property = "S813", label = "retrieved", value = list(kind = "render_date"))
+  list(property = "S854", label = "reference URL", datatype = "url",
+       value = list(kind = "field", field = "Certificate Link")),
+  list(property = "S813", label = "retrieved", datatype = "time",
+       value = list(kind = "render_date"))
 )
 
 #' Build one statement definition
@@ -143,15 +160,18 @@ WIKIDATA_REFERENCE <- list(
 #'   certificates of these venue types
 #' @param qualifiers optional list of qualifier definitions, each a list with
 #'   `property`, `label` and `value` of the same shape as a statement's own
+#' @param datatype the Wikibase datatype of the property, one of
+#'   [WIKIBASE_DATATYPES]
 #' @return a statement definition list
 #' @keywords internal
-wikidata_statement <- function(key, property, label, value, required = FALSE,
+wikidata_statement <- function(key, property, label, value, datatype, required = FALSE,
                                note = NULL, venue_types = NULL, qualifiers = NULL) {
   stmt <- list(
     key = key,
     property = property,
     label = label,
     value = value,
+    datatype = datatype,
     required = required
   )
   if (!is.null(note)) stmt$note <- note
@@ -216,7 +236,7 @@ WIKIDATA_MODEL <- list(
     create = list(wikidata = TRUE, wikibase = TRUE),
     statements = list(
       wikidata_statement(
-        "instance_of", "P31", "instance of",
+        "instance_of", "P31", "instance of", datatype = "wikibase-item",
         list(
           kind = "switch",
           field = "Venue",
@@ -233,7 +253,7 @@ WIKIDATA_MODEL <- list(
         )
       ),
       wikidata_statement(
-        "publication_type", "P13046", "publication type of scholarly work",
+        "publication_type", "P13046", "publication type of scholarly work", datatype = "wikibase-item",
         list(kind = "constant", item = WIKIDATA_ITEMS$reproducibility_report),
         required = TRUE,
         note = paste(
@@ -243,22 +263,22 @@ WIKIDATA_MODEL <- list(
         )
       ),
       wikidata_statement(
-        "title", "P1476", "title",
+        "title", "P1476", "title", datatype = "monolingualtext",
         list(kind = "field", field = "Title")
       ),
       wikidata_statement(
-        "doi", "P356", "DOI",
+        "doi", "P356", "DOI", datatype = "external-id",
         list(kind = "field", field = "Report", transform = "doi"),
         required = TRUE,
         note = "uppercased, which is how Wikidata stores DOIs and how a lookup must query them"
       ),
       wikidata_statement(
-        "publication_date", "P577", "publication date",
+        "publication_date", "P577", "publication date", datatype = "time",
         list(kind = "field", field = "Check date", transform = "date_day"),
         note = "the check date, to day precision"
       ),
       wikidata_statement(
-        "author", "P50", "author",
+        "author", "P50", "author", datatype = "wikibase-item",
         list(kind = "entity", entity = "person", field = "Codechecker"),
         note = paste(
           "the codechecker; falls back to P2093 author name string when the",
@@ -266,12 +286,12 @@ WIKIDATA_MODEL <- list(
         )
       ),
       wikidata_statement(
-        "author_name_string", "P2093", "author name string",
+        "author_name_string", "P2093", "author name string", datatype = "string",
         list(kind = "field", field = "Codechecker", transform = "unresolved_names"),
         note = "only for codecheckers without an item, the fallback of the statement above"
       ),
       wikidata_statement(
-        "review_of", "P6977", "review of",
+        "review_of", "P6977", "review of", datatype = "wikibase-item",
         list(kind = "entity", entity = "paper", field = "Paper reference"),
         note = paste(
           "the checked paper, and on certificate items this property is used",
@@ -280,15 +300,15 @@ WIKIDATA_MODEL <- list(
         )
       ),
       wikidata_statement(
-        "described_at_url", "P973", "described at URL",
+        "described_at_url", "P973", "described at URL", datatype = "url",
         list(kind = "field", field = "Certificate Link"),
         note = "the register landing page, which is what links Wikidata back to us"
       ),
       wikidata_statement(
-        "catalog_code", "P528", "catalog code",
+        "catalog_code", "P528", "catalog code", datatype = "string",
         list(kind = "field", field = "Certificate ID"),
         qualifiers = list(
-          list(property = "P972", label = "catalog",
+          list(property = "P972", label = "catalog", datatype = "wikibase-item",
                value = list(kind = "constant", item = WIKIDATA_ITEMS$codecheck_register))
         ),
         note = paste(
@@ -299,15 +319,15 @@ WIKIDATA_MODEL <- list(
         )
       ),
       wikidata_statement(
-        "full_work_available_at", "P953", "full work available at URL",
+        "full_work_available_at", "P953", "full work available at URL", datatype = "url",
         list(kind = "field", field = "Certificate PDF")
       ),
       wikidata_statement(
-        "source_code_repository", "P1324", "source code repository URL",
+        "source_code_repository", "P1324", "source code repository URL", datatype = "url",
         list(kind = "field", field = "Repository Link")
       ),
       wikidata_statement(
-        "published_in", "P1433", "published in",
+        "published_in", "P1433", "published in", datatype = "wikibase-item",
         list(kind = "mapped", field = "Report", transform = "report_platform", map = "platforms"),
         note = paste(
           "where the certificate itself is published - Zenodo, OSF or",
@@ -316,7 +336,7 @@ WIKIDATA_MODEL <- list(
         )
       ),
       wikidata_statement(
-        "described_by_source", "P1343", "described by source",
+        "described_by_source", "P1343", "described by source", datatype = "wikibase-item",
         list(kind = "constant", item = WIKIDATA_ITEMS$methods_paper),
         note = "the CODECHECK methods paper, as the existing certificate item already records"
       )
@@ -332,7 +352,7 @@ WIKIDATA_MODEL <- list(
     create = list(wikidata = FALSE, wikibase = TRUE),
     statements = list(
       wikidata_statement(
-        "instance_of", "P31", "instance of",
+        "instance_of", "P31", "instance of", datatype = "wikibase-item",
         list(
           kind = "switch",
           field = "Venue",
@@ -349,16 +369,16 @@ WIKIDATA_MODEL <- list(
         )
       ),
       wikidata_statement(
-        "doi", "P356", "DOI",
+        "doi", "P356", "DOI", datatype = "external-id",
         list(kind = "field", field = "Paper reference", transform = "doi"),
         required = TRUE
       ),
       wikidata_statement(
-        "title", "P1476", "title",
+        "title", "P1476", "title", datatype = "monolingualtext",
         list(kind = "field", field = "Title")
       ),
       wikidata_statement(
-        "published_in", "P1433", "published in",
+        "published_in", "P1433", "published in", datatype = "wikibase-item",
         list(kind = "entity", entity = "venue", field = "Paper reference"),
         note = paste(
           "the publication the checked article appeared in, resolved from the",
@@ -382,12 +402,12 @@ WIKIDATA_MODEL <- list(
     create = list(wikidata = FALSE, wikibase = TRUE),
     statements = list(
       wikidata_statement(
-        "instance_of", "P31", "instance of",
+        "instance_of", "P31", "instance of", datatype = "wikibase-item",
         list(kind = "constant", item = WIKIDATA_ITEMS$human),
         required = TRUE
       ),
       wikidata_statement(
-        "orcid", "P496", "ORCID iD",
+        "orcid", "P496", "ORCID iD", datatype = "external-id",
         list(kind = "field", field = "orcid", transform = "orcid"),
         required = TRUE
       )
@@ -412,11 +432,11 @@ WIKIDATA_MODEL <- list(
     create = list(wikidata = FALSE, wikibase = TRUE),
     statements = list(
       wikidata_statement(
-        "issn", "P236", "ISSN",
+        "issn", "P236", "ISSN", datatype = "external-id",
         list(kind = "field", field = "identifiers", transform = "issn")
       ),
       wikidata_statement(
-        "official_website", "P856", "official website",
+        "official_website", "P856", "official website", datatype = "url",
         list(kind = "field", field = "website_url")
       )
     )
@@ -466,25 +486,53 @@ wikidata_statements <- function(kind) {
 #' bootstrap needs: it creates one local property per row and records the
 #' Wikidata counterpart on it.
 #'
-#' @return a `data.frame` with columns `entity`, `key`, `property`, `label`,
-#'   `value_kind`, `required` and `note`, one row per statement definition
+#' Qualifiers and references are listed alongside the statements, because a
+#' Wikibase needs a property for each of them just as much: a `P528` catalog
+#' code cannot be written without its `P972` catalog qualifier, and no statement
+#' can carry its reference without `P854` and `P813`. The model writes reference
+#' properties in QuickStatements' `S` form; they are property ids like any
+#' other and are reported as such.
+#'
+#' @return a `data.frame` with columns `entity`, `key`, `role`, `property`,
+#'   `label`, `datatype`, `value_kind`, `required` and `note`, one row per
+#'   statement, qualifier and reference property. A reference belongs to every
+#'   statement rather than to one entity kind, so its `entity` is `NA`.
 #' @examples
-#' wikidata_properties()[, c("entity", "property", "label")]
+#' wikidata_properties()[, c("entity", "role", "property", "label")]
 #' @export
 wikidata_properties <- function() {
-  rows <- lapply(names(WIKIDATA_MODEL), function(kind) {
-    statements <- WIKIDATA_MODEL[[kind]]$statements
+  as_row <- function(entity, key, role, definition) {
     data.frame(
-      entity = rep(kind, length(statements)),
-      key = vapply(statements, function(s) s$key, character(1)),
-      property = vapply(statements, function(s) s$property, character(1)),
-      label = vapply(statements, function(s) s$label, character(1)),
-      value_kind = vapply(statements, function(s) s$value$kind, character(1)),
-      required = vapply(statements, function(s) isTRUE(s$required), logical(1)),
-      note = vapply(statements, function(s) if (is.null(s$note)) NA_character_ else s$note, character(1)),
+      entity = entity,
+      key = key,
+      role = role,
+      # References are written "S854" in the model, the QuickStatements way of
+      # saying "P854, in a reference".
+      property = sub("^S", "P", definition$property),
+      label = definition$label,
+      datatype = definition$datatype,
+      value_kind = definition$value$kind,
+      required = isTRUE(definition$required),
+      note = if (is.null(definition$note)) NA_character_ else definition$note,
       stringsAsFactors = FALSE
     )
-  })
+  }
+
+  rows <- list()
+  for (kind in names(WIKIDATA_MODEL)) {
+    for (statement in WIKIDATA_MODEL[[kind]]$statements) {
+      rows[[length(rows) + 1]] <- as_row(kind, statement$key, "statement", statement)
+      # Directly after the statement they qualify, which is how a reviewer
+      # reads them and how they have to be created.
+      for (qualifier in statement$qualifiers) {
+        rows[[length(rows) + 1]] <- as_row(kind, statement$key, "qualifier", qualifier)
+      }
+    }
+  }
+  for (reference in WIKIDATA_REFERENCE) {
+    rows[[length(rows) + 1]] <- as_row(NA_character_, NA_character_, "reference", reference)
+  }
+
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
   out
@@ -638,6 +686,9 @@ validate_wikidata_model <- function(model = WIKIDATA_MODEL) {
       if (!grepl("^P[0-9]+$", statement$property)) {
         problems <- c(problems, paste0(at, "'", statement$property, "' is not a property id"))
       }
+      if (is.null(statement$datatype) || !statement$datatype %in% WIKIBASE_DATATYPES) {
+        problems <- c(problems, paste0(at, "datatype missing or unknown"))
+      }
       if (!statement$value$kind %in% known_value_kinds) {
         problems <- c(problems, paste0(at, "unknown value kind '", statement$value$kind, "'"))
       }
@@ -647,6 +698,9 @@ validate_wikidata_model <- function(model = WIKIDATA_MODEL) {
         qual_at <- paste0(at, "qualifier ", qualifier$property, ": ")
         if (!grepl("^P[0-9]+$", qualifier$property)) {
           problems <- c(problems, paste0(qual_at, "not a property id"))
+        }
+        if (is.null(qualifier$datatype) || !qualifier$datatype %in% WIKIBASE_DATATYPES) {
+          problems <- c(problems, paste0(qual_at, "datatype missing or unknown"))
         }
         if (!qualifier$value$kind %in% known_value_kinds) {
           problems <- c(problems, paste0(qual_at, "unknown value kind '", qualifier$value$kind, "'"))

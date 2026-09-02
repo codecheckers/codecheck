@@ -174,19 +174,60 @@ properties <- codecheck::wikidata_properties()
 expect_true(is.data.frame(properties))
 expect_equal(
   colnames(properties),
-  c("entity", "key", "property", "label", "value_kind", "required", "note")
+  c("entity", "key", "role", "property", "label", "datatype", "value_kind",
+    "required", "note")
 )
-expect_equal(
-  nrow(properties),
-  sum(vapply(codecheck::wikidata_entity_kinds(),
-             function(k) length(codecheck::wikidata_statements(k)), integer(1)))
-)
+
+# Every statement names the datatype of its property. Wikidata already knows it;
+# the CODECHECK Wikibase does not, and a property created with the wrong
+# datatype cannot be corrected afterwards - it has to be deleted and recreated.
+expect_true(all(properties$datatype %in% codecheck:::WIKIBASE_DATATYPES))
+expect_equal(properties$datatype[properties$property == "P356"][1], "external-id")
+expect_equal(properties$datatype[properties$property == "P577"][1], "time")
+expect_equal(properties$datatype[properties$property == "P1476"][1], "monolingualtext")
+
+no_datatype <- codecheck::wikidata_model()
+no_datatype$certificate$statements[[1]]$datatype <- "wikibase-entity"
+expect_true(any(grepl("datatype missing or unknown",
+                      codecheck::validate_wikidata_model(no_datatype))))
+# Statements, plus the qualifiers hanging off them, plus the reference
+# properties every statement carries: the Wikibase needs a property for each of
+# those, so all three are reported.
+statement_count <- sum(vapply(codecheck::wikidata_entity_kinds(),
+                              function(k) length(codecheck::wikidata_statements(k)), integer(1)))
+qualifier_count <- sum(vapply(codecheck::wikidata_entity_kinds(), function(k) {
+  sum(vapply(codecheck::wikidata_statements(k),
+             function(s) length(s$qualifiers), integer(1)))
+}, integer(1)))
+expect_equal(sum(properties$role == "statement"), statement_count)
+expect_equal(sum(properties$role == "qualifier"), qualifier_count)
+expect_equal(sum(properties$role == "reference"), 2L)
+expect_equal(nrow(properties), statement_count + qualifier_count + 2L)
+
+# The P528 catalog code is unreadable without the catalog it belongs to, so its
+# P972 qualifier is part of the model's property inventory and sits directly
+# after the statement it qualifies.
+catalog <- which(properties$entity == "certificate" & properties$key == "catalog_code")
+expect_equal(properties$role[catalog], c("statement", "qualifier"))
+expect_equal(properties$property[catalog], c("P528", "P972"))
+expect_equal(properties$datatype[properties$property == "P972"], "wikibase-item")
+
+# The model writes reference properties the QuickStatements way, "S854"; they
+# are property ids like any other and are reported as such. A reference belongs
+# to every statement, not to one entity kind.
+references <- properties[properties$role == "reference", ]
+expect_equal(references$property, c("P854", "P813"))
+expect_equal(references$datatype, c("url", "time"))
+expect_true(all(is.na(references$entity)))
 expect_true(all(grepl("^P[0-9]+$", properties$property)))
 expect_true(all(properties$value_kind %in% c("constant", "field", "entity", "render_date", "switch", "mapped")))
 
 # The DOI is the dedup key for a certificate: it is required, and it is what
 # resolution looks an existing item up by.
-doi <- properties[properties$entity == "certificate" & properties$key == "doi", ]
+# which(), not a plain logical subset: a reference property belongs to no one
+# entity kind, so its `entity` is NA and a bare comparison would carry NA rows
+# into the result.
+doi <- properties[which(properties$entity == "certificate" & properties$key == "doi"), ]
 expect_equal(nrow(doi), 1)
 expect_true(doi$required)
 expect_equal(codecheck::wikidata_model()$certificate$resolve$property, "P356")

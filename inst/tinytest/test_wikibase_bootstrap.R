@@ -1,0 +1,249 @@
+tinytest::using(ttdo)
+
+source("mocks.R")
+
+# plan_wikibase_entities() is the half of the bootstrap that decides what to
+# create, kept free of network access so the decision can be tested directly.
+# The instance itself is disposable, so being able to rebuild it from empty -
+# and to repeat a partially failed run - is the property that matters most.
+
+empty <- data.frame(local_id = character(0), wikidata_id = character(0),
+                    label = character(0), stringsAsFactors = FALSE)
+
+# An empty instance: everything is created ----
+
+plan <- codecheck:::plan_wikibase_entities(empty)
+expect_true(all(plan$action == "create"))
+expect_true(all(plan$kind %in% c("property", "item")))
+
+# One property per distinct Wikidata property, plus the mapping property.
+properties <- codecheck::wikidata_properties()
+expect_equal(
+  sum(plan$kind == "property"),
+  length(unique(properties$property)) + 1L
+)
+expect_equal(sum(plan$kind == "item"), length(codecheck:::WIKIDATA_ITEMS))
+
+# The mapping property is the one entity without a Wikidata counterpart, and it
+# has to be created before anything that refers to it.
+mapping <- plan[is.na(plan$wikidata_id), ]
+expect_equal(nrow(mapping), 1)
+expect_equal(mapping$label, "Wikidata entity")
+expect_equal(mapping$datatype, "external-id")
+
+# Every property carries the datatype from the model; a Wikibase property
+# created with the wrong one cannot be corrected afterwards.
+expect_true(all(plan$datatype[plan$kind == "property"] %in% codecheck:::WIKIBASE_DATATYPES))
+doi <- plan[!is.na(plan$wikidata_id) & plan$wikidata_id == "P356", ]
+expect_equal(doi$datatype, "external-id")
+expect_equal(plan$datatype[!is.na(plan$wikidata_id) & plan$wikidata_id == "P577"], "time")
+expect_equal(plan$datatype[!is.na(plan$wikidata_id) & plan$wikidata_id == "P1476"], "monolingualtext")
+expect_equal(plan$datatype[!is.na(plan$wikidata_id) & plan$wikidata_id == "P31"], "wikibase-item")
+
+# Items carry no datatype.
+expect_true(all(is.na(plan$datatype[plan$kind == "item"])))
+
+# A qualifier and a reference need a property on the instance as much as a
+# statement does: without P972 no catalog code can be written, and without P854
+# and P813 no statement can carry the reference that marks it as ours. They have
+# to exist from the first run, not be discovered when the first certificate is
+# loaded.
+expect_true(all(c("P972", "P854", "P813") %in% plan$wikidata_id))
+expect_equal(plan$datatype[!is.na(plan$wikidata_id) & plan$wikidata_id == "P854"], "url")
+expect_equal(plan$datatype[!is.na(plan$wikidata_id) & plan$wikidata_id == "P813"], "time")
+expect_equal(plan$label[!is.na(plan$wikidata_id) & plan$wikidata_id == "P972"], "catalog")
+
+# Why each property exists, carried through to the listing page.
+expect_true(all(plan$role %in% c("mapping", "statement", "qualifier", "reference", "class item")))
+expect_equal(plan$role[is.na(plan$wikidata_id)], "mapping")
+expect_true(all(plan$role[plan$kind == "item"] == "class item"))
+expect_equal(plan$role[!is.na(plan$wikidata_id) & plan$wikidata_id == "P813"], "reference")
+
+# A property the model uses in two positions is still one property: P31 is a
+# statement on three entity kinds and appears once.
+expect_equal(sum(plan$wikidata_id == "P31", na.rm = TRUE), 1L)
+
+# A populated instance: nothing is created twice ----
+
+populated <- data.frame(
+  local_id = c("P1", paste0("P", seq_len(nrow(plan[plan$kind == "property", ]) - 1) + 1),
+               paste0("Q", seq_len(sum(plan$kind == "item")))),
+  wikidata_id = c(NA_character_,
+                  plan$wikidata_id[plan$kind == "property" & !is.na(plan$wikidata_id)],
+                  plan$wikidata_id[plan$kind == "item"]),
+  label = c("Wikidata entity",
+            plan$label[plan$kind == "property" & !is.na(plan$wikidata_id)],
+            plan$label[plan$kind == "item"]),
+  stringsAsFactors = FALSE
+)
+replanned <- codecheck:::plan_wikibase_entities(populated)
+expect_true(all(replanned$action == "present"))
+
+# Identity is the Wikidata id, not the label: a property renamed on the instance
+# is still recognised, which is what keeps a rerun from duplicating it.
+renamed <- populated
+renamed$label[renamed$wikidata_id == "P356" & !is.na(renamed$wikidata_id)] <- "digital object identifier"
+expect_true(all(codecheck:::plan_wikibase_entities(renamed)$action == "present"))
+
+# A partial instance: only the gaps are created ----
+
+partial <- populated[populated$wikidata_id %in% c("P31", "P356") | is.na(populated$wikidata_id), ]
+partial_plan <- codecheck:::plan_wikibase_entities(partial)
+expect_equal(sum(partial_plan$action == "present"), 3L)  # mapping property, P31, P356
+expect_true(sum(partial_plan$action == "create") > 0)
+# The mapping property is present, so it is not created a second time.
+expect_equal(partial_plan$action[is.na(partial_plan$wikidata_id)], "present")
+
+# The stock seed entities do not count as ours: wikibase.cloud ships Q1-Q6 and
+# P1-P6 with labels like "instance of", which must not be mistaken for the
+# model's properties, since they carry no Wikidata mapping.
+seeded <- data.frame(
+  local_id = c("P5", "P6", "Q3"),
+  wikidata_id = c(NA_character_, NA_character_, NA_character_),
+  label = c("instance of", "subclass of", "human"),
+  stringsAsFactors = FALSE
+)
+seeded_plan <- codecheck:::plan_wikibase_entities(seeded)
+expect_true(any(seeded_plan$wikidata_id[seeded_plan$action == "create"] == "P31", na.rm = TRUE))
+
+# Property labels must be unique in a Wikibase, and the seed data occupies
+# "instance of" and "subclass of". A colliding property is disambiguated by its
+# Wikidata id rather than by deleting somebody else's entity.
+seeded_p31 <- seeded_plan[!is.na(seeded_plan$wikidata_id) & seeded_plan$wikidata_id == "P31", ]
+expect_equal(seeded_p31$label, "instance of (P31)")
+# Items are not affected: Wikibase allows duplicate item labels.
+expect_true(all(seeded_plan$label[seeded_plan$kind == "item"] ==
+                  plan$label[plan$kind == "item"]))
+# Without a collision the plain label is kept.
+expect_equal(plan$label[!is.na(plan$wikidata_id) & plan$wikidata_id == "P31"], "instance of")
+
+# Credentials are required for a real run ----
+
+user <- Sys.getenv("WIKIBASE_USER")
+token <- Sys.getenv("WIKIBASE_TOKEN")
+Sys.setenv(WIKIBASE_USER = "", WIKIBASE_TOKEN = "")
+expect_error(codecheck:::wikibase_session(), pattern = "Special:BotPasswords")
+Sys.setenv(WIKIBASE_USER = user, WIKIBASE_TOKEN = token)
+
+# The payload a created entity carries ----
+
+# wbeditentity has to be right the first time: a property's datatype cannot be
+# changed after creation, only deleted and recreated.
+sent <- NULL
+session <- list(handle = NULL, csrf = "token")
+with_mocked_codecheck(
+  list(wikibase_post = function(session, params, what) {
+    sent <<- params
+    list(entity = list(id = "P42"))
+  }),
+  {
+    row <- plan[!is.na(plan$wikidata_id) & plan$wikidata_id == "P356", ]
+    expect_equal(codecheck:::create_wikibase_entity(session, row, "P1"), "P42")
+  }
+)
+expect_equal(sent$action, "wbeditentity")
+expect_equal(sent$new, "property")
+payload <- jsonlite::fromJSON(sent$data, simplifyVector = FALSE)
+expect_equal(payload$datatype, "external-id")
+expect_equal(payload$labels$en$value, "DOI")
+# The Wikidata counterpart is stated through the mapping property, whose local
+# id is not P356 - that is the whole point of the mapping.
+expect_equal(payload$claims[[1]]$mainsnak$property, "P1")
+expect_equal(payload$claims[[1]]$mainsnak$datavalue$value, "P356")
+
+# The mapping property itself has no counterpart to state.
+sent <- NULL
+with_mocked_codecheck(
+  list(wikibase_post = function(session, params, what) {
+    sent <<- params
+    list(entity = list(id = "P1"))
+  }),
+  codecheck:::create_wikibase_entity(session, plan[is.na(plan$wikidata_id), ], NA_character_)
+)
+mapping_payload <- jsonlite::fromJSON(sent$data, simplifyVector = FALSE)
+expect_null(mapping_payload$claims)
+expect_equal(mapping_payload$datatype, "external-id")
+
+# An item is created without a datatype, which wbeditentity rejects on items.
+sent <- NULL
+with_mocked_codecheck(
+  list(wikibase_post = function(session, params, what) {
+    sent <<- params
+    list(entity = list(id = "Q7"))
+  }),
+  codecheck:::create_wikibase_entity(session, plan[plan$kind == "item", ][1, ], "P1")
+)
+expect_equal(sent$new, "item")
+expect_null(jsonlite::fromJSON(sent$data, simplifyVector = FALSE)$datatype)
+
+# Reading the instance back ----
+
+# The mapping is read off the instance rather than kept in a file, so what
+# wikibase_mapping() makes of the API's answer is what keeps a rerun from
+# duplicating entities.
+entities <- list(
+  P1 = list(labels = list(en = list(value = "Wikidata entity")), claims = list()),
+  P2 = list(labels = list(en = list(value = "DOI")),
+            claims = list(P1 = list(list(mainsnak = list(datavalue = list(value = "P356")))))),
+  Q1 = list(labels = list(en = list(value = "human")),
+            claims = list(P1 = list(list(mainsnak = list(datavalue = list(value = "Q5"))))))
+)
+fake_get <- function(handle, params) {
+  if (identical(params$list, "allpages")) {
+    prefix <- if (identical(params$apnamespace, 120)) "Item:" else "Property:"
+    ids <- names(entities)[startsWith(names(entities), if (prefix == "Item:") "Q" else "P")]
+    return(list(query = list(allpages = lapply(ids, function(id) list(title = paste0(prefix, id))))))
+  }
+  ids <- strsplit(params$ids, "|", fixed = TRUE)[[1]]
+  list(entities = entities[ids])
+}
+
+mapping <- with_mocked_codecheck(list(wikibase_get = fake_get),
+                                 codecheck:::wikibase_mapping())
+expect_equal(sort(mapping$local_id), c("P1", "P2", "Q1"))
+expect_true(is.na(mapping$wikidata_id[mapping$local_id == "P1"]))
+expect_equal(mapping$wikidata_id[mapping$local_id == "P2"], "P356")
+expect_equal(mapping$wikidata_id[mapping$local_id == "Q1"], "Q5")
+
+# An empty instance reads back as an empty mapping, which is what makes the
+# first run plan everything.
+empty_mapping <- with_mocked_codecheck(
+  list(wikibase_get = function(handle, params) list(query = list(allpages = list()))),
+  codecheck:::wikibase_mapping()
+)
+expect_equal(nrow(empty_mapping), 0L)
+expect_true(all(codecheck:::plan_wikibase_entities(empty_mapping)$action == "create"))
+
+# The listing page ----
+
+# The instance mints its own P- and Q-numbers, so the only readable index of
+# what it holds is the one the bootstrap writes.
+listed <- plan
+listed$local_id <- paste0(ifelse(listed$kind == "property", "P", "Q"), seq_len(nrow(listed)))
+page <- codecheck:::wikibase_report_wikitext(listed,
+                                             generated_at = as.POSIXct("2026-09-02 12:00:00", tz = "UTC"))
+page <- paste(page, collapse = "\n")
+expect_true(grepl("bootstrap_wikibase()", page, fixed = TRUE))
+expect_true(grepl("register/issues/50", page, fixed = TRUE))
+expect_true(grepl("== Properties ==", page, fixed = TRUE))
+expect_true(grepl("== Class items ==", page, fixed = TRUE))
+expect_true(grepl("2026-09-02 12:00:00", page, fixed = TRUE))
+
+# Every entity is listed, linked by its local id, next to its Wikidata
+# counterpart - the mapping is the reason the page exists.
+expect_true(all(vapply(listed$local_id, function(id) {
+  grepl(paste0("|", id, "]]"), page, fixed = TRUE)
+}, logical(1))))
+expect_true(grepl("[[Property:P1|P1]]", page, fixed = TRUE))
+expect_true(grepl("https://www.wikidata.org/wiki/Property:P356 P356]", page, fixed = TRUE))
+expect_true(grepl("https://www.wikidata.org/wiki/Q5 Q5]", page, fixed = TRUE))
+# The mapping property has no counterpart, and says so rather than showing NA.
+expect_false(grepl("NA", page, fixed = TRUE))
+
+# An entity that was planned but not created (a failed run, resumed later)
+# shows as missing rather than silently vanishing from the index.
+partial_listing <- listed
+partial_listing$local_id[2] <- NA_character_
+expect_true(grepl("''missing''",
+                  paste(codecheck:::wikibase_report_wikitext(partial_listing), collapse = "\n"),
+                  fixed = TRUE))

@@ -9,6 +9,7 @@ wikidata_statement(
   property,
   label,
   value,
+  datatype,
   required = FALSE,
   note = NULL,
   venue_types = NULL,
@@ -23,6 +24,9 @@ wikidata_statement(
 \item{label}{the property's English label, for the human-readable exports}
 
 \item{value}{how the value is obtained, see [WIKIDATA_MODEL]}
+
+\item{datatype}{the Wikibase datatype of the property, one of
+[WIKIBASE_DATATYPES]}
 
 \item{required}{whether a certificate without this value is an error rather
 than an omission}
