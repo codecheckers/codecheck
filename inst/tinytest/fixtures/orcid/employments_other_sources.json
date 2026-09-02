@@ -1,0 +1,41 @@
+{
+  "affiliation-group": [
+    {
+      "summaries": [
+        {
+          "employment-summary": {
+            "start-date": {"year": {"value": "2010"}, "month": null, "day": null},
+            "end-date": null,
+            "organization": {
+              "name": "Ringgold University",
+              "disambiguated-organization": {
+                "disambiguated-organization-identifier": "2152",
+                "disambiguation-source": "RINGGOLD"
+              }
+            }
+          }
+        },
+        {
+          "employment-summary": {
+            "start-date": null,
+            "end-date": null,
+            "organization": {
+              "name": "Grid Institute",
+              "disambiguated-organization": {
+                "disambiguated-organization-identifier": "grid.5333.6",
+                "disambiguation-source": "GRID"
+              }
+            }
+          }
+        },
+        {
+          "employment-summary": {
+            "start-date": null,
+            "end-date": null,
+            "organization": {"name": "Undisambiguated Lab", "disambiguated-organization": null}
+          }
+        }
+      ]
+    }
+  ]
+}

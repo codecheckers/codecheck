@@ -2,6 +2,8 @@
 
 ## New Features
 
+* New `orcid_rors()` and `register_ror_coverage()` report which authors and codecheckers have a ROR-identified affiliation in their ORCID profile, currently or at the time of publication (register#53).
+
 * Register rendering now announces the main register, the full export and each filter before rendering them, with a progress bar per page group (per-page timings under `verbose = TRUE`).
 * The filtered register CSVs are now written under their own log heading instead of silently.
 * New `load_wikibase_register()` writes the whole register to the CODECHECK Wikibase as items - people, venues, papers, then the certificates that refer to them (register#50). Each entity is matched by the identifier the model resolves it on, so a rerun updates what it wrote instead of duplicating it, and a load also generates a [Project:Certificates](https://codecheck.wikibase.cloud/wiki/Project:Certificates) index linking every certificate item to its register page. Dry by default, and the dry run returns the payloads it would send. New internal `read_register_records()`, `wikibase_export_rows()`, `evaluate_model_value()`, `wikibase_claims()` and `wikibase_entity_payload()` in `R/wikibase_export.R`.

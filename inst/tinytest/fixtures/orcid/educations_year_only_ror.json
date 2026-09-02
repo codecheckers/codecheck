@@ -1,0 +1,22 @@
+{
+  "affiliation-group": [
+    {
+      "summaries": [
+        {
+          "education-summary": {
+            "role-title": "PhD",
+            "start-date": {"year": {"value": "2016"}, "month": null, "day": null},
+            "end-date": {"year": {"value": "2020"}, "month": null, "day": null},
+            "organization": {
+              "name": "Doctoral School",
+              "disambiguated-organization": {
+                "disambiguated-organization-identifier": "https://ror.org/04pp8hn57",
+                "disambiguation-source": "ROR"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

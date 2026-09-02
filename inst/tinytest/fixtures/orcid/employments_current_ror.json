@@ -1,0 +1,23 @@
+{
+  "affiliation-group": [
+    {
+      "summaries": [
+        {
+          "employment-summary": {
+            "department-name": "Department of Applied Mathematics",
+            "role-title": "Professor",
+            "start-date": {"year": {"value": "2020"}, "month": null, "day": null},
+            "end-date": null,
+            "organization": {
+              "name": "Test University",
+              "disambiguated-organization": {
+                "disambiguated-organization-identifier": "https://ror.org/013meh722",
+                "disambiguation-source": "ROR"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

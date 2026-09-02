@@ -1,0 +1,22 @@
+{
+  "affiliation-group": [
+    {
+      "summaries": [
+        {
+          "employment-summary": {
+            "role-title": "Postdoc",
+            "start-date": {"year": {"value": "2015"}, "month": {"value": "01"}, "day": {"value": "01"}},
+            "end-date": {"year": {"value": "2019"}, "month": {"value": "12"}, "day": {"value": "31"}},
+            "organization": {
+              "name": "Former University",
+              "disambiguated-organization": {
+                "disambiguated-organization-identifier": "https://ror.org/02e2c7k09",
+                "disambiguation-source": "ROR"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
