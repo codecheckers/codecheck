@@ -27,6 +27,98 @@ WIKIBASE_MAPPING_PROPERTY <- list(
   formatter_url = "https://www.wikidata.org/entity/$1"
 )
 
+#' How this client identifies itself
+#'
+#' Wikimedia's User-Agent policy asks every client for a descriptive agent with
+#' a way to reach whoever runs it, and answers a request without one with 403 on
+#' the busier endpoints. `WikidataQueryServiceR` was removed from CRAN in
+#' February 2026 "for policy violation", which is the cheapest possible reminder
+#' to send a real one.
+#'
+#' @return the User-Agent string
+#' @seealso <https://foundation.wikimedia.org/wiki/Policy:User-Agent_policy>
+#' @keywords internal
+wikibase_user_agent <- function() {
+  contact <- getOption("codecheck.contact", "https://github.com/codecheckers/codecheck")
+  paste0("codecheck-R/", utils::packageVersion("codecheck"),
+         " (", contact, ") httr/", utils::packageVersion("httr"))
+}
+
+#' How long to wait before repeating a request, or `NA` to give up
+#'
+#' A MediaWiki install under load does not fail a request outright, it asks the
+#' client to come back: `maxlag` when the database replicas are behind,
+#' `ratelimited` when the account is writing too fast, 503 with `Retry-After`
+#' when the site is overloaded, and `readonly` during maintenance. All four are
+#' transient, and all four used to end a bootstrap halfway through. Everything
+#' else - a bad token, a duplicate label, a wrong datatype - is a real error and
+#' must not be retried.
+#'
+#' @param result the parsed API response, or `NULL`
+#' @param response the `httr` response, or `NULL`
+#' @param attempt which attempt this was, 1-based
+#' @return seconds to wait, or `NA_real_` if the request should not be repeated
+#' @keywords internal
+wikibase_retry_after <- function(result, response = NULL, attempt = 1) {
+  # Doubling, so a busy instance is not hammered on every attempt, but never
+  # more than a minute: a run that stalls silently is worse than one that fails.
+  backoff <- function(seconds) min(max(seconds, 1) * 2^(attempt - 1), 60)
+
+  code <- result$error$code
+  if (!is.null(code)) {
+    if (identical(code, "maxlag")) {
+      # The API reports the actual replication lag, which is a better wait than
+      # any constant we could pick.
+      return(backoff(result$error$lag %||% 5))
+    }
+    if (code %in% c("ratelimited", "readonly")) return(backoff(5))
+    return(NA_real_)
+  }
+
+  if (!is.null(response) && httr::status_code(response) %in% c(429L, 503L)) {
+    after <- suppressWarnings(as.numeric(httr::headers(response)[["retry-after"]]))
+    return(backoff(if (is.na(after)) 5 else after))
+  }
+
+  NA_real_
+}
+
+#' One Action API request, repeated while the server asks us to come back
+#'
+#' The single place both reads and writes go through, so the User-Agent, the
+#' retry rule and the JSON parsing are decided once.
+#'
+#' @param method `httr::GET` or `httr::POST`
+#' @param params the request parameters
+#' @param handle an `httr` handle, or `NULL` for an anonymous request
+#' @param what what is being requested, for messages
+#' @param attempts how many times to try in total
+#' @return the parsed response
+#' @keywords internal
+wikibase_request <- function(method, params, handle = NULL, what = "the API",
+                             attempts = 4) {
+  params$format <- "json"
+  agent <- httr::user_agent(wikibase_user_agent())
+
+  for (attempt in seq_len(attempts)) {
+    response <- if (identical(method, "POST")) {
+      httr::POST(WIKIBASE_INSTANCE$api, handle = handle, body = params,
+                 encode = "form", agent)
+    } else {
+      httr::GET(WIKIBASE_INSTANCE$api, handle = handle, query = params, agent)
+    }
+    result <- httr::content(response, as = "parsed", type = "application/json")
+
+    wait <- wikibase_retry_after(result, response, attempt)
+    if (is.na(wait) || attempt == attempts) return(result)
+    cli::cli_alert_warning(
+      "{what}: {result$error$code %||% httr::status_code(response)}, retrying in {round(wait)}s"
+    )
+    Sys.sleep(wait)
+  }
+  result
+}
+
 #' Open an authenticated session with the CODECHECK Wikibase
 #'
 #' Uses the bot password in the `WIKIBASE_USER` and `WIKIBASE_TOKEN`
@@ -51,11 +143,9 @@ wikibase_session <- function() {
     action = "query", meta = "tokens", type = "login"
   ))$query$tokens$logintoken
 
-  login <- httr::POST(WIKIBASE_INSTANCE$api, handle = handle, body = list(
-    action = "login", format = "json",
-    lgname = user, lgpassword = token, lgtoken = login_token
-  ), encode = "form")
-  result <- httr::content(login, as = "parsed", type = "application/json")
+  result <- wikibase_request("POST", list(
+    action = "login", lgname = user, lgpassword = token, lgtoken = login_token
+  ), handle = handle, what = "logging in")
   if (!identical(result$login$result, "Success")) {
     stop("Wikibase login failed: ", result$login$result, " ", result$login$reason %||% "")
   }
@@ -80,11 +170,12 @@ wikibase_session <- function() {
 #' @return the parsed response
 #' @keywords internal
 wikibase_post <- function(session, params, what) {
-  params$format <- "json"
   params$token <- session$csrf
-  response <- httr::POST(WIKIBASE_INSTANCE$api, handle = session$handle,
-                         body = params, encode = "form")
-  result <- httr::content(response, as = "parsed", type = "application/json")
+  # Ask the server to refuse the write rather than add to its load when the
+  # replicas are behind; wikibase_retry_after() then waits out the lag it
+  # reports. The value Wikimedia recommends for interactive bots.
+  params$maxlag <- 5
+  result <- wikibase_request("POST", params, handle = session$handle, what = what)
   if (!is.null(result$error)) {
     stop("Could not write ", what, ": ", result$error$code, " - ", result$error$info)
   }
@@ -98,9 +189,95 @@ wikibase_post <- function(session, params, what) {
 #' @return the parsed response
 #' @keywords internal
 wikibase_get <- function(handle, params) {
-  params$format <- "json"
-  response <- httr::GET(WIKIBASE_INSTANCE$api, handle = handle, query = params)
-  httr::content(response, as = "parsed", type = "application/json")
+  wikibase_request("GET", params, handle = handle, what = "reading the instance")
+}
+
+#' Look an entity up by its label
+#'
+#' The fallback for when resolution by identifier finds nothing: a paper without
+#' a DOI, a venue without an ISSN, a person without an ORCID. Deliberately not
+#' the primary route - a label match is a guess, an identifier match is not - so
+#' callers are expected to confirm what comes back.
+#'
+#' @param text the label or alias to search for
+#' @param type `"item"` or `"property"`
+#' @param handle an optional `httr` handle
+#' @param limit how many matches to return
+#' @return a `data.frame` with columns `id`, `label` and `description`, best
+#'   match first, empty when nothing matched
+#' @keywords internal
+wikibase_search <- function(text, type = c("item", "property"), handle = NULL,
+                            limit = 5) {
+  type <- match.arg(type)
+  hits <- wikibase_get(handle, list(
+    action = "wbsearchentities", search = text, type = type,
+    language = "en", uselang = "en", limit = limit
+  ))$search
+
+  if (length(hits) == 0) {
+    return(data.frame(id = character(0), label = character(0),
+                      description = character(0), stringsAsFactors = FALSE))
+  }
+  data.frame(
+    id = vapply(hits, function(h) h$id, character(1)),
+    label = vapply(hits, function(h) h$label %||% NA_character_, character(1)),
+    description = vapply(hits, function(h) h$description %||% NA_character_, character(1)),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Split identifiers into SPARQL `VALUES` blocks
+#'
+#' Resolution asks "which of these DOIs already has an item", and the way to ask
+#' that is one query per batch of identifiers, not one query per identifier:
+#' 132 certificates would otherwise be 132 round trips against a query service
+#' that rate limits, which is the mistake the archived `WikidataR` makes.
+#'
+#' @param values the identifiers
+#' @param size how many to put in one query
+#' @param quote whether to render each value as a SPARQL string literal
+#' @return a character vector of `VALUES` bodies, one per query to run
+#' @keywords internal
+wikibase_values_chunks <- function(values, size = 50, quote = TRUE) {
+  values <- unique(values[!is.na(values) & nzchar(values)])
+  if (length(values) == 0) return(character(0))
+  rendered <- if (quote) paste0("\"", gsub("\"", "\\\\\"", values), "\"") else values
+  chunks <- split(rendered, ceiling(seq_along(rendered) / size))
+  vapply(chunks, paste, character(1), collapse = " ")
+}
+
+#' Run a SPARQL query against Wikidata or the CODECHECK Wikibase
+#'
+#' @param query the query text
+#' @param endpoint one of [WIKIDATA_ENDPOINTS], by name
+#' @return a `data.frame` of the bindings, one column per selected variable
+#' @keywords internal
+wikibase_sparql <- function(query, endpoint = c("wikibase", "main", "scholarly")) {
+  endpoint <- match.arg(endpoint)
+  response <- httr::GET(
+    WIKIDATA_ENDPOINTS[[endpoint]], query = list(query = query),
+    httr::add_headers(Accept = "application/sparql-results+json"),
+    httr::user_agent(wikibase_user_agent())
+  )
+  if (httr::http_error(response)) {
+    stop("SPARQL query against ", endpoint, " failed: ",
+         httr::http_status(response)$message)
+  }
+  parsed <- httr::content(response, as = "parsed", type = "application/json")
+  bindings <- parsed$results$bindings
+  variables <- unlist(parsed$head$vars)
+  if (length(bindings) == 0) {
+    empty <- as.data.frame(matrix(character(0), ncol = length(variables)),
+                           stringsAsFactors = FALSE)
+    colnames(empty) <- variables
+    return(empty)
+  }
+  columns <- lapply(variables, function(v) {
+    vapply(bindings, function(b) if (is.null(b[[v]])) NA_character_ else b[[v]]$value,
+           character(1))
+  })
+  names(columns) <- variables
+  as.data.frame(columns, stringsAsFactors = FALSE)
 }
 
 #' Every entity the instance holds, with its Wikidata counterpart
@@ -228,9 +405,18 @@ plan_wikibase_entities <- function(existing) {
   # the model wants. Rather than deleting somebody else's entities, a colliding
   # property is disambiguated by its Wikidata id, which is the identity that
   # matters here anyway.
-  taken <- stats::na.omit(existing$label)
-  collides <- planned$kind == "property" & planned$label %in% taken &
-    !is.na(planned$wikidata_id)
+  #
+  # A property does not collide with itself: on every run after the first, the
+  # instance already holds our own property under the label we gave it, and
+  # counting that as a collision would rename "title" to "title (P1476)" on the
+  # second run and to "title (P1476) (P1476)" on the third. Only an entity with
+  # a different Wikidata id - or none, like the seed data - occupies a label.
+  collides <- vapply(seq_len(nrow(planned)), function(i) {
+    if (planned$kind[i] != "property" || is.na(planned$wikidata_id[i])) return(FALSE)
+    others <- existing$label[is.na(existing$wikidata_id) |
+                               existing$wikidata_id != planned$wikidata_id[i]]
+    planned$label[i] %in% stats::na.omit(others)
+  }, logical(1))
   planned$label[collides] <- paste0(planned$label[collides],
                                     " (", planned$wikidata_id[collides], ")")
 
@@ -275,11 +461,70 @@ create_wikibase_entity <- function(session, row, mapping_property) {
     ))
   }
 
-  result <- wikibase_post(session, list(
-    action = "wbeditentity", new = row$kind,
-    data = jsonlite::toJSON(entity, auto_unbox = TRUE)
-  ), what = paste0(row$kind, " '", row$label, "'"))
+  result <- wikibase_edit_entity(
+    session, entity, kind = row$kind,
+    summary = paste0("create from the CODECHECK model",
+                     if (!is_mapping_property) paste0(" (", row$wikidata_id, ")") else ""),
+    what = paste0(row$kind, " '", row$label, "'")
+  )
   result$entity$id
+}
+
+#' Create or update one entity through wbeditentity
+#'
+#' `new=` mints an entity, `id=` edits the one named - the same call, and the
+#' difference between a rerun that converges and a rerun that duplicates. Every
+#' edit carries a summary, so the instance's history says why it changed rather
+#' than only that it did.
+#'
+#' @param session a session from [wikibase_session()]
+#' @param data the entity data to write
+#' @param kind `"item"` or `"property"` when creating, `NULL` when updating
+#' @param id the entity to update, `NULL` when creating
+#' @param summary the edit summary
+#' @param what what is being written, for the error message
+#' @return the parsed response
+#' @keywords internal
+wikibase_edit_entity <- function(session, data, kind = NULL, id = NULL,
+                                 summary = NULL, what = "an entity") {
+  if (is.null(kind) == is.null(id)) {
+    stop("wikibase_edit_entity() creates with a kind or updates with an id, not both")
+  }
+  params <- list(
+    action = "wbeditentity",
+    data = jsonlite::toJSON(data, auto_unbox = TRUE),
+    summary = summary,
+    bot = 1
+  )
+  if (is.null(id)) params$new <- kind else params$id <- id
+  wikibase_post(session, params, what = what)
+}
+
+#' Bring an entity that already exists back in line with the model
+#'
+#' The instance is generated, so a label or description that no longer matches
+#' the model is drift, not somebody's edit to preserve. Only what differs is
+#' written: an unchanged entity costs no edit at all, which is what makes
+#' running the bootstrap again cheap enough to do routinely.
+#'
+#' @param session a session from [wikibase_session()]
+#' @param row one row of the plan, with `local_id` filled in
+#' @param existing the mapping from [wikibase_mapping()]
+#' @return `TRUE` if an edit was made
+#' @keywords internal
+reconcile_wikibase_entity <- function(session, row, existing) {
+  current <- existing$label[match(row$local_id, existing$local_id)]
+  if (length(current) == 0 || is.na(current) || identical(current, row$label)) {
+    return(FALSE)
+  }
+  wikibase_edit_entity(
+    session,
+    list(labels = list(en = list(language = "en", value = row$label))),
+    id = row$local_id,
+    summary = "relabel from the CODECHECK model",
+    what = paste0(row$kind, " ", row$local_id)
+  )
+  TRUE
 }
 
 #' The wiki page listing everything the bootstrap created
@@ -388,6 +633,8 @@ write_wikibase_report <- function(session, plan) {
 #'
 #' @param dry_run if `TRUE` (the default) report what would be created without
 #'   writing anything
+#' @param log_file where to append the edit log, or `NULL` for the
+#'   `codecheck.wikibase_log` option (no log by default)
 #' @return the plan, invisibly, with a `local_id` column filled in for the
 #'   entities that exist afterwards
 #' @examples
@@ -396,7 +643,7 @@ write_wikibase_report <- function(session, plan) {
 #' bootstrap_wikibase(dry_run = FALSE)  # create it
 #' }
 #' @export
-bootstrap_wikibase <- function(dry_run = TRUE) {
+bootstrap_wikibase <- function(dry_run = TRUE, log_file = NULL) {
   cli::cli_h2("CODECHECK Wikibase bootstrap {if (dry_run) '(dry run)' else ''}")
 
   session <- if (dry_run) NULL else wikibase_session()
@@ -447,11 +694,33 @@ bootstrap_wikibase <- function(dry_run = TRUE) {
     } else {
       cli::cli_alert_success("{plan$kind[i]} {plan$label[i]} -> {id} ({plan$wikidata_id[i]})")
     }
+    wikibase_log(target = "wikibase", action = "create", kind = plan$kind[i],
+                 id = id, label = plan$label[i], status = "done",
+                 detail = plan$wikidata_id[i], file = log_file)
   }
+
+  # An entity that was already there but no longer matches the model is brought
+  # back in line, so a rerun converges on the model rather than only filling
+  # gaps - the instance has to be reproducible, and a label nothing generates
+  # any more is exactly the drift that makes it not.
+  relabelled <- 0
+  for (i in which(plan$action == "present" & !is.na(plan$local_id))) {
+    if (reconcile_wikibase_entity(session, plan[i, ], existing)) {
+      relabelled <- relabelled + 1
+      cli::cli_alert_success("{plan$local_id[i]} relabelled to {plan$label[i]}")
+      wikibase_log(target = "wikibase", action = "relabel", kind = plan$kind[i],
+                   id = plan$local_id[i], label = plan$label[i], status = "done",
+                   detail = plan$wikidata_id[i], file = log_file)
+    }
+  }
+  if (relabelled > 0) cli::cli_alert_info("{relabelled} entit{?y/ies} brought back in line with the model")
 
   # Written on every run, not only when something was created: it is the index
   # of the instance, and an unchanged instance still deserves a current one.
   write_wikibase_report(session, plan)
+  wikibase_log(target = "wikibase", action = "edit", kind = "page",
+               id = WIKIBASE_INSTANCE$report_page, label = "listing page",
+               status = "done", file = log_file)
   cli::cli_alert_success("Listing page written to {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$report_page)}}")
 
   cli::cli_alert_success("Bootstrap complete")

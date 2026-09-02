@@ -247,3 +247,141 @@ partial_listing$local_id[2] <- NA_character_
 expect_true(grepl("''missing''",
                   paste(codecheck:::wikibase_report_wikitext(partial_listing), collapse = "\n"),
                   fixed = TRUE))
+
+# Coming back when the server asks us to ----
+
+# A MediaWiki under load does not refuse a write, it asks for it again later.
+# All of these used to end a bootstrap halfway through.
+expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "maxlag", lag = 8))), 8)
+expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "ratelimited"))), 5)
+expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "readonly"))), 5)
+# The wait doubles per attempt, and is capped so a run cannot stall unnoticed.
+expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "maxlag", lag = 5)), attempt = 3), 20)
+expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "maxlag", lag = 30)), attempt = 5), 60)
+
+# Everything else is a real error: a bad token or a duplicate label does not
+# get better by being sent again.
+expect_true(is.na(codecheck:::wikibase_retry_after(list(error = list(code = "badtoken")))))
+expect_true(is.na(codecheck:::wikibase_retry_after(list(entity = list(id = "P1")))))
+
+# A 503 or a 429 carries the wait in the response rather than in the body.
+throttled <- structure(list(status_code = 503L,
+                            headers = structure(list(`retry-after` = "12"), class = "insensitive")),
+                       class = "response")
+expect_equal(codecheck:::wikibase_retry_after(list(), throttled), 12)
+expect_true(is.na(codecheck:::wikibase_retry_after(list(), structure(list(status_code = 200L),
+                                                                     class = "response"))))
+
+# Saying who we are ----
+
+# Wikimedia's policy asks for a descriptive agent with a way to reach us, and
+# the busier endpoints answer an anonymous client with 403.
+agent <- codecheck:::wikibase_user_agent()
+expect_true(grepl("^codecheck-R/", agent))
+expect_true(grepl("codecheckers/codecheck", agent, fixed = TRUE))
+withr_option <- getOption("codecheck.contact")
+options(codecheck.contact = "codecheck@example.org")
+expect_true(grepl("codecheck@example.org", codecheck:::wikibase_user_agent(), fixed = TRUE))
+options(codecheck.contact = withr_option)
+
+# Asking about many identifiers in one query ----
+
+# Resolution asks "which of these DOIs already has an item". One query per DOI
+# is 132 round trips against a service that rate limits.
+chunks <- codecheck:::wikibase_values_chunks(c("10.1/a", "10.1/b", "10.1/a"), size = 2)
+expect_equal(length(chunks), 1L)          # the duplicate is dropped
+expect_equal(unname(chunks), "\"10.1/a\" \"10.1/b\"")
+expect_equal(length(codecheck:::wikibase_values_chunks(paste0("10.1/", 1:130), size = 50)), 3L)
+expect_equal(length(codecheck:::wikibase_values_chunks(c(NA, ""))), 0L)
+# Item ids are not string literals, so they can be emitted unquoted.
+expect_equal(unname(codecheck:::wikibase_values_chunks(c("wd:Q1", "wd:Q2"), quote = FALSE)),
+             "wd:Q1 wd:Q2")
+
+# Creating versus updating ----
+
+# The same call, and the difference between a rerun that converges and one that
+# duplicates.
+sent <- NULL
+capture <- function(session, params, what) {
+  sent <<- params
+  list(entity = list(id = "P9"))
+}
+with_mocked_codecheck(list(wikibase_post = capture), {
+  codecheck:::wikibase_edit_entity(session, list(labels = list()), kind = "property",
+                                   summary = "create it")
+})
+expect_equal(sent$new, "property")
+expect_null(sent$id)
+expect_equal(sent$summary, "create it")
+expect_equal(sent$bot, 1)
+
+with_mocked_codecheck(list(wikibase_post = capture), {
+  codecheck:::wikibase_edit_entity(session, list(labels = list()), id = "P9",
+                                   summary = "fix it")
+})
+expect_equal(sent$id, "P9")
+expect_null(sent$new)
+
+expect_error(codecheck:::wikibase_edit_entity(session, list(), kind = "item", id = "Q1"),
+             pattern = "not both")
+expect_error(codecheck:::wikibase_edit_entity(session, list()), pattern = "not both")
+
+# Drift is repaired, agreement costs no edit ----
+
+# The instance is generated, so a label the model no longer produces is drift
+# rather than somebody's edit to keep.
+mapping_now <- data.frame(local_id = c("P9", "P11"),
+                          wikidata_id = c("P31", "P1476"),
+                          label = c("instance of", "title (P1476)"),
+                          stringsAsFactors = FALSE)
+row_ok <- data.frame(kind = "property", local_id = "P9", label = "instance of",
+                     stringsAsFactors = FALSE)
+row_drifted <- data.frame(kind = "property", local_id = "P11", label = "title",
+                          stringsAsFactors = FALSE)
+
+edits <- 0
+with_mocked_codecheck(list(wikibase_post = function(session, params, what) {
+  edits <<- edits + 1
+  sent <<- params
+  list(entity = list(id = "P11"))
+}), {
+  expect_false(codecheck:::reconcile_wikibase_entity(session, row_ok, mapping_now))
+  expect_true(codecheck:::reconcile_wikibase_entity(session, row_drifted, mapping_now))
+})
+expect_equal(edits, 1)
+expect_equal(sent$id, "P11")
+expect_true(grepl("title", sent$data, fixed = TRUE))
+
+# A rerun does not rename what it created ----
+
+# On every run after the first, the instance holds our own properties under the
+# labels we gave them. Counting that as a label collision renamed "title" to
+# "title (P1476)" on the second run, and would have renamed it again on the
+# third - and the reconciliation step would have written each of those.
+first <- codecheck:::plan_wikibase_entities(empty)
+after_first <- data.frame(
+  local_id = paste0("X", seq_len(nrow(first))),
+  wikidata_id = first$wikidata_id,
+  label = first$label,
+  stringsAsFactors = FALSE
+)
+second <- codecheck:::plan_wikibase_entities(after_first)
+expect_equal(second$label, first$label)
+expect_true(all(second$action == "present"))
+# And a third run is identical again, which is what makes the run idempotent
+# rather than merely convergent.
+after_second <- after_first
+after_second$label <- second$label
+expect_equal(codecheck:::plan_wikibase_entities(after_second)$label, first$label)
+
+# The seed data still occupies "instance of", so that one property stays
+# disambiguated on every run - including when our own copy is already there.
+seeded_and_ours <- rbind(
+  seeded,
+  data.frame(local_id = "P9", wikidata_id = "P31", label = "instance of (P31)",
+             stringsAsFactors = FALSE)
+)
+rerun <- codecheck:::plan_wikibase_entities(seeded_and_ours)
+expect_equal(rerun$label[!is.na(rerun$wikidata_id) & rerun$wikidata_id == "P31"],
+             "instance of (P31)")
+expect_equal(rerun$action[!is.na(rerun$wikidata_id) & rerun$wikidata_id == "P31"], "present")

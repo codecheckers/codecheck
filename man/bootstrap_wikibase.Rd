@@ -4,11 +4,14 @@
 \alias{bootstrap_wikibase}
 \title{Build the CODECHECK Wikibase from the model}
 \usage{
-bootstrap_wikibase(dry_run = TRUE)
+bootstrap_wikibase(dry_run = TRUE, log_file = NULL)
 }
 \arguments{
 \item{dry_run}{if `TRUE` (the default) report what would be created without
 writing anything}
+
+\item{log_file}{where to append the edit log, or `NULL` for the
+`codecheck.wikibase_log` option (no log by default)}
 }
 \value{
 the plan, invisibly, with a `local_id` column filled in for the
