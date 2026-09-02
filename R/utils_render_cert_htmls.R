@@ -589,6 +589,18 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
         has_pdf = file.exists(file.path(cert_dir, "cert.pdf"))
       )
 
+      # The Schema.org metadata as a standalone document, so the signposting
+      # `describedby` link below resolves to something a harvester can read
+      # rather than to a page it has to scrape. GitHub Pages serves .jsonld as
+      # application/ld+json, which is what makes this worth writing.
+      has_jsonld <- write_schema_org_jsonld(schema_org_jsonld, cert_dir)
+
+      signposting <- generate_cert_signposting(
+        cert_id, config_yml,
+        has_pdf = file.exists(file.path(cert_dir, "cert.pdf")),
+        has_jsonld = has_jsonld
+      )
+
       # the codecheckers authored the certificate; the register-wide default
       # names the register editors, which is wrong on a certificate page
       checkers <- vapply(config_yml$codechecker,
@@ -599,7 +611,8 @@ create_cert_page_section_files <- function(output_dir, cert_id = NULL, cert_type
         page_metadata$page_author
       }
 
-      c(opengraph, list(page_author = page_author, citation_meta = citation_meta))
+      c(opengraph, list(page_author = page_author, citation_meta = citation_meta,
+                        signposting = signposting))
     }, error = function(e) {
       warning(cert_id, " | Failed to generate certificate page metadata: ", e$message)
       schema_org_jsonld <<- ""

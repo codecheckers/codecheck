@@ -1,5 +1,10 @@
 # codecheck (development version)
 
+## New Features
+
+* Every rendered page carries [FAIR Signposting](https://signposting.org/FAIR/) typed links (register#55). Because GitHub Pages cannot set HTTP `Link` headers, the links are expressed as HTML `<link>` elements in the page head, which is what the profile prescribes for platforms without header control; certificate pages are Level 1 conformant. Level 2 stays out of reach: a link set has to be served as `application/linkset+json`, and GitHub Pages derives media types from file extensions, for which none is registered. A certificate page gets `cite-as` (its archived DOI, not the checked paper's), two `type` links, an `author` per ORCID-bearing codechecker, `describedby`, `item` (the PDF) and `license`; a work page gets the paper's DOI as `cite-as`, a person page their ORCID, and a venue page its Wikidata item where `venues.csv` records one. Listing pages get `type`, `license` and `alternate` links, which is what finally makes the JSON and CSV exports discoverable from the HTML. New `generate_cert_signposting()`, `generate_work_signposting()`, `generate_person_signposting()`, `generate_venue_signposting()`, `generate_list_signposting()`, `generate_page_signposting()`.
+* Pages with Schema.org metadata now also write it to an `index.jsonld` next to the page, so the signposting `describedby` links resolve to a machine-readable document rather than to a page a harvester has to scrape. GitHub Pages serves `.jsonld` as `application/ld+json`.
+
 # codecheck 0.27.1
 
 ## Bug Fixes

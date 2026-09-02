@@ -8,7 +8,8 @@ create_index_section_files(
   output_dir,
   filter,
   table_details,
-  schema_org_jsonld = ""
+  schema_org_jsonld = "",
+  signposting = ""
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ create_index_section_files(
 \item{table_details}{List containing details such as the table name, subcat name.}
 
 \item{schema_org_jsonld}{Optional Schema.org JSON-LD string to include in header (default: "")}
+
+\item{signposting}{Optional FAIR Signposting `<link>` elements for the page,
+see [generate_page_signposting()] (default: "")}
 }
 \description{
 Creates index postfix, prefix and the header

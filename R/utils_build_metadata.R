@@ -885,6 +885,311 @@ truncate_text <- function(x, max_chars) {
   paste0(trimws(shortened), "…")
 }
 
+# ---------------------------------------------------------------------------
+# FAIR Signposting, codecheckers/register#55
+# ---------------------------------------------------------------------------
+
+#' Render a list of typed links as HTML `<link>` elements
+#'
+#' The register is served by GitHub Pages, which cannot set HTTP response
+#' headers, so signposting is expressed entirely through `<link>` elements in
+#' the page head. The FAIR Signposting profile explicitly allows this: Level 1
+#' asks for the links "in the HTTP header and/or in HTML link elements", and
+#' names platforms without header control as the reason for the alternative.
+#' What is given up is HEAD-request access to the links, and any signposting on
+#' the PDF itself. Level 2 (a link set served as `application/linkset+json`) is
+#' out of reach on GitHub Pages, which derives media types from file extensions
+#' and has none registered for that type.
+#'
+#' @param links List of `list(rel, href, type)` entries; `type` may be NULL.
+#'   Entries without a `href` are dropped, so callers can pass conditional
+#'   values straight through.
+#' @return HTML string of `<link>` elements, one per line, or `""` for none
+#' @keywords internal
+signposting_link_tags <- function(links) {
+  tags <- character(0)
+  for (link in links) {
+    if (is.null(link) || !is_nonempty_string(link$href)) next
+    tag <- sprintf('<link rel="%s" href="%s"', link$rel,
+                   escape_html_attribute(trimws(link$href)))
+    if (is_nonempty_string(link$type)) {
+      tag <- paste0(tag, sprintf(' type="%s"', escape_html_attribute(link$type)))
+    }
+    tags <- c(tags, paste0(tag, ">"))
+  }
+  paste(tags, collapse = "\n")
+}
+
+#' Write a page's Schema.org metadata as a standalone JSON-LD document
+#'
+#' The same JSON-LD is inlined in the page's `<script>` element; writing it to
+#' `index.jsonld` next to the page gives the signposting `describedby` link a
+#' real target. The extension matters: GitHub Pages derives media types from
+#' file extensions and serves `.jsonld` as `application/ld+json`, so the
+#' document arrives correctly typed without any header control.
+#'
+#' @param schema_org_jsonld The JSON-LD string, or `""` for a page that has none
+#' @param output_dir Directory of the page
+#' @return `TRUE` if a document was written, `FALSE` otherwise
+#' @keywords internal
+write_schema_org_jsonld <- function(schema_org_jsonld, output_dir) {
+  if (!is_nonempty_string(schema_org_jsonld)) return(FALSE)
+  writeLines(schema_org_jsonld, file.path(output_dir, "index.jsonld"))
+  TRUE
+}
+
+#' Signposting links for a certificate page
+#'
+#' A certificate page is a scholarly object's landing page, so it carries the
+#' full FAIR Signposting Level 1 link set. `cite-as` is the certificate's own
+#' archived DOI, never the checked paper's: the paper has its own landing page
+#' at its own PID, and it is linked as `itemReviewed` in the Schema.org
+#' metadata instead, for the same reason the Highwire tags describe the
+#' certificate only, see \code{\link{generate_cert_citation_meta}}.
+#'
+#' Relations that cannot be stated truthfully are omitted rather than guessed:
+#' `cite-as` has cardinality 1 and is dropped when the certificate has no
+#' report DOI, and `item` is dropped when no PDF sits next to the page.
+#'
+#' @inheritParams generate_cert_citation_meta
+#' @param has_jsonld Whether `index.jsonld`, the Schema.org metadata as a
+#'   standalone document, was written next to the page
+#' @return HTML string of `<link>` elements, one per line
+#' @export
+generate_cert_signposting <- function(cert_id, config_yml, has_pdf = FALSE,
+                                      has_jsonld = FALSE) {
+  doi <- bare_doi(config_yml$report)
+
+  authors <- lapply(config_yml$codechecker, function(checker) {
+    if (is.null(checker$ORCID) || !is_nonempty_string(checker$ORCID)) return(NULL)
+    list(rel = "author", href = paste0(CONFIG$HYPERLINKS[["orcid"]], checker$ORCID))
+  })
+
+  links <- c(
+    list(
+      list(rel = "cite-as", href = if (!is.null(doi)) paste0(CONFIG$HYPERLINKS[["doi"]], doi) else NULL),
+      # the schema.org class of the described object, plus the class of this
+      # page itself, as the profile requires (cardinality 2)
+      list(rel = "type", href = "https://schema.org/Review"),
+      list(rel = "type", href = "https://schema.org/AboutPage")
+    ),
+    authors,
+    list(
+      list(rel = "describedby", href = "index.json", type = "application/json"),
+      list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
+           type = "application/ld+json"),
+      list(rel = "item", href = if (isTRUE(has_pdf)) "cert.pdf" else NULL,
+           type = "application/pdf"),
+      list(rel = "license", href = CONFIG$LICENSE_CERT)
+    )
+  )
+
+  signposting_link_tags(links)
+}
+
+#' Signposting links for a work page
+#'
+#' A work page is about a checked paper, which has a DOI, so it is the one
+#' non-certificate page that can carry a `cite-as`. The register is a third
+#' party to that paper - `cite-as` here states the PID of the thing the page
+#' describes, which is what an aggregator landing page is expected to do, and
+#' does not claim to be the publisher's landing page.
+#'
+#' @param doi The work's DOI (`table_details[["name"]]` on a work page)
+#' @param register_table See \code{\link{get_work_metadata_fields}}
+#' @param has_jsonld Whether `index.jsonld` was written next to the page
+#' @return HTML string of `<link>` elements, one per line
+#' @export
+generate_work_signposting <- function(doi, register_table, has_jsonld = FALSE) {
+  fields <- get_work_metadata_fields(doi, register_table)
+
+  authors <- lapply(fields$authors, function(author) {
+    if (is.null(author$orcid) || !is_nonempty_string(author$orcid)) return(NULL)
+    list(rel = "author", href = paste0(CONFIG$HYPERLINKS[["orcid"]], author$orcid))
+  })
+
+  links <- c(
+    list(
+      list(rel = "cite-as", href = paste0(CONFIG$HYPERLINKS[["doi"]], doi)),
+      list(rel = "type", href = "https://schema.org/ScholarlyArticle"),
+      list(rel = "type", href = "https://schema.org/AboutPage")
+    ),
+    authors,
+    list(
+      list(rel = "describedby", href = "index.json", type = "application/json"),
+      list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
+           type = "application/ld+json"),
+      list(rel = "alternate", href = "register.json", type = "application/json"),
+      list(rel = "alternate", href = "register.md", type = "text/markdown"),
+      list(rel = "license", href = CONFIG$LICENSE_REGISTER)
+    )
+  )
+
+  signposting_link_tags(links)
+}
+
+#' Signposting links for a person page
+#'
+#' `ProfilePage` is Schema.org's type for exactly this page, and an ORCID is a
+#' persistent identifier for the person the page is about, so a person page can
+#' carry a `cite-as` as well. No `author`: the person authors the checks listed
+#' on the page, not the page.
+#'
+#' @param orcid The person's ORCID
+#' @param has_jsonld Whether `index.jsonld` was written next to the page
+#' @return HTML string of `<link>` elements, one per line
+#' @export
+generate_person_signposting <- function(orcid, has_jsonld = FALSE) {
+  links <- list(
+    list(rel = "cite-as", href = if (is_nonempty_string(orcid)) paste0(CONFIG$HYPERLINKS[["orcid"]], orcid) else NULL),
+    list(rel = "type", href = "https://schema.org/ProfilePage"),
+    list(rel = "type", href = "https://schema.org/AboutPage"),
+    list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
+         type = "application/ld+json"),
+    list(rel = "alternate", href = "register.json", type = "application/json"),
+    list(rel = "alternate", href = "stats.json", type = "application/json"),
+    list(rel = "license", href = CONFIG$LICENSE_REGISTER)
+  )
+
+  signposting_link_tags(links)
+}
+
+#' Signposting links for a venue page
+#'
+#' Venues have persistent identifiers too: `venues.csv` carries a `wikidata`
+#' column, and a Wikidata entity URI is the one PID that exists for every venue
+#' type, which is what `cite-as` needs given its cardinality of 1. The ISSNs in
+#' the `identifiers` column stay where they are, in the Schema.org `sameAs`.
+#' A venue without a Wikidata item simply gets no `cite-as`.
+#'
+#' Some rows of `venues.csv` are not venues but publication states - "preprint",
+#' "in press" - and their `wikidata` value is a class item the Wikidata data
+#' model types checked works with (Q580922, "preprint"), not an identifier of
+#' the venue. Those get no `cite-as` either: `cite-as` states the PID *of the
+#' thing the page is about*, and a class shared across the register is not it.
+#' They are recognised by looking the value up in [WIKIDATA_ITEMS].
+#'
+#' @param venue_name The venue's name (`venues.csv` `name` column)
+#' @param venue_type The venue's type, mapped to a Schema.org class by
+#'   \code{\link{venue_schema_org_type}}
+#' @param has_jsonld Whether `index.jsonld` was written next to the page
+#' @return HTML string of `<link>` elements, one per line
+#' @export
+generate_venue_signposting <- function(venue_name, venue_type, has_jsonld = FALSE) {
+  wikidata_id <- NULL
+  if (exists("VENUE_DATA", envir = CONFIG) && !is.null(CONFIG$VENUE_DATA) &&
+      "wikidata" %in% names(CONFIG$VENUE_DATA)) {
+    venue_row <- CONFIG$VENUE_DATA[CONFIG$VENUE_DATA$name == venue_name, , drop = FALSE]
+    if (nrow(venue_row) > 0 && is_nonempty_string(venue_row$wikidata[1])) {
+      candidate <- trimws(venue_row$wikidata[1])
+      if (!candidate %in% unlist(WIKIDATA_ITEMS)) wikidata_id <- candidate
+    }
+  }
+
+  schema_type <- if (is_nonempty_string(venue_type)) venue_schema_org_type(venue_type) else "Organization"
+
+  links <- list(
+    list(rel = "cite-as", href = if (!is.null(wikidata_id)) paste0(CONFIG$HYPERLINKS[["wikidata"]], wikidata_id) else NULL),
+    list(rel = "type", href = paste0("https://schema.org/", schema_type)),
+    list(rel = "type", href = "https://schema.org/AboutPage"),
+    list(rel = "describedby", href = "index.json", type = "application/json"),
+    list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
+         type = "application/ld+json"),
+    list(rel = "alternate", href = "register.json", type = "application/json"),
+    list(rel = "alternate", href = "register.csv", type = "text/csv"),
+    list(rel = "alternate", href = "register.md", type = "text/markdown"),
+    list(rel = "license", href = CONFIG$LICENSE_REGISTER)
+  )
+
+  signposting_link_tags(links)
+}
+
+#' Signposting links for a listing or overview page
+#'
+#' Listing pages are not scholarly objects, so they are outside the FAIR
+#' Signposting profile and carry no `cite-as`. They do get the same vocabulary
+#' of typed links, which is what makes the register's JSON and CSV exports
+#' discoverable from the HTML rather than only from the documentation.
+#'
+#' They deliberately carry no `item` links to their member certificates:
+#' `item` means a content resource of the described object - on a certificate
+#' page, the PDF - and reusing it for list membership would make those links
+#' ambiguous. Enumerating members is what a Level 2 link set is for, which
+#' GitHub Pages cannot serve conformantly, see
+#' \code{\link{signposting_link_tags}}.
+#'
+#' @param is_main_register Whether this is the unfiltered register page, which
+#'   is the only one with the full CSV and JSON exports next to it
+#' @param has_register_files Whether `register.json` and `register.md` sit next
+#'   to the page; false for the overview pages that only list subpages
+#' @param has_index_json Whether `index.json` sits next to the page, which is
+#'   the case for the overview pages but not for the main register page
+#' @return HTML string of `<link>` elements, one per line
+#' @export
+generate_list_signposting <- function(is_main_register = FALSE,
+                                      has_register_files = TRUE,
+                                      has_index_json = FALSE) {
+  links <- list(
+    list(rel = "type", href = "https://schema.org/CollectionPage"),
+    list(rel = "describedby", href = if (isTRUE(has_index_json)) "index.json" else NULL,
+         type = "application/json"),
+    list(rel = "alternate", href = if (isTRUE(has_register_files)) "register.json" else NULL,
+         type = "application/json"),
+    list(rel = "alternate", href = if (isTRUE(has_register_files)) "register.md" else NULL,
+         type = "text/markdown"),
+    list(rel = "alternate", href = if (isTRUE(is_main_register)) "register-full.json" else NULL,
+         type = "application/json"),
+    list(rel = "alternate", href = if (isTRUE(is_main_register)) "register-full.csv" else NULL,
+         type = "text/csv"),
+    list(rel = "license", href = CONFIG$LICENSE_REGISTER)
+  )
+
+  signposting_link_tags(links)
+}
+
+#' Signposting links for any non-certificate register page
+#'
+#' Dispatches on the same `filter`/`table_details` pair the Schema.org
+#' generation in \code{\link{render_html}} already switches on, so the two
+#' descriptions of a page cannot drift apart.
+#'
+#' @param filter The filter name (`NA` for the main register, else "venues",
+#'   "works", "persons", "codecheckers", ...)
+#' @param table_details List containing details such as the table name and
+#'   subcat name
+#' @param register_table The page's register rows, needed for a work page's
+#'   author ORCIDs
+#' @param has_jsonld Whether `index.jsonld` was written next to the page
+#' @return HTML string of `<link>` elements, one per line
+#' @export
+generate_page_signposting <- function(filter, table_details,
+                                      register_table = NULL, has_jsonld = FALSE) {
+  is_detail <- !is.na(filter) && isTRUE(table_details[["is_reg_table"]]) &&
+    !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])
+
+  if (is_detail && filter == "venues") {
+    return(generate_venue_signposting(table_details[["name"]], table_details[["subcat"]],
+                                      has_jsonld = has_jsonld))
+  }
+  if (is_detail && filter == "works") {
+    return(generate_work_signposting(table_details[["name"]], register_table,
+                                     has_jsonld = has_jsonld))
+  }
+  # codecheckers pages redirect to the person page of the same ORCID, and both
+  # describe the same person
+  if (is_detail && filter %in% c("persons", "codecheckers")) {
+    return(generate_person_signposting(table_details[["name"]], has_jsonld = has_jsonld))
+  }
+
+  # A filtered listing page (all venues, all works, ...) lists subpages and has
+  # no register.json of its own; the main register page has the full exports.
+  generate_list_signposting(
+    is_main_register = is.na(filter),
+    has_register_files = is.na(filter) || isTRUE(table_details[["is_reg_table"]]),
+    has_index_json = !is.na(filter) && !isTRUE(table_details[["is_reg_table"]])
+  )
+}
+
 #' The page-level metadata of a register page
 #'
 #' The defaults the shared header template is filled with, describing the
@@ -902,7 +1207,8 @@ register_page_header_data <- function() {
     og_description = "CODECHECK is a process for independent execution of computations underlying scholarly research articles.",
     og_type = "website",
     og_image = "",
-    citation_meta = ""
+    citation_meta = "",
+    signposting = ""
   )
 }
 
@@ -932,6 +1238,7 @@ header_template_data <- function(page_metadata, meta_generator, base_path,
       schema_org_jsonld = schema_org_jsonld,
       has_schema_org_jsonld = is_nonempty_string(schema_org_jsonld),
       has_og_image = is_nonempty_string(page_metadata$og_image),
-      has_citation_meta = is_nonempty_string(page_metadata$citation_meta)
+      has_citation_meta = is_nonempty_string(page_metadata$citation_meta),
+      has_signposting = is_nonempty_string(page_metadata$signposting)
     ))
 }

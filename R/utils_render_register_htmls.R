@@ -96,8 +96,11 @@ create_index_prefix_html <- function(output_dir, filter = NA, table_details = li
 #' @param schema_org_jsonld Optional Schema.org JSON-LD string to include in header (default: "")
 #' @param include_version_in_meta Whether to include version info in meta generator tag (default: TRUE).
 #'        Set to FALSE for individual detail pages (will use "codecheck" only).
+#' @param signposting Optional FAIR Signposting `<link>` elements for the page,
+#'   see [generate_page_signposting()] (default: "")
 #' @importFrom whisker whisker.render
-create_index_header_html <- function(output_dir, schema_org_jsonld = "", include_version_in_meta = TRUE){
+create_index_header_html <- function(output_dir, schema_org_jsonld = "", include_version_in_meta = TRUE,
+                                    signposting = ""){
   # Using the index_header_template
   header_template <- readLines(CONFIG$TEMPLATE_DIR[["reg"]][["header"]], warn = FALSE)
 
@@ -128,7 +131,10 @@ create_index_header_html <- function(output_dir, schema_org_jsonld = "", include
   # If schema_org_jsonld is empty string, template will use generic fallback
   # register and overview pages describe the register itself; certificate pages
   # override these in create_cert_index_header_html()
-  template_data <- header_template_data(register_page_header_data(),
+  page_metadata <- register_page_header_data()
+  page_metadata$signposting <- signposting
+
+  template_data <- header_template_data(page_metadata,
                                         meta_generator, base_path, schema_org_jsonld)
 
   output <- whisker.render(paste(header_template, collapse = "\n"), template_data)
@@ -210,7 +216,10 @@ generate_href <- function(filter, table_details, href_type) {
 #' @param filter The filter name
 #' @param table_details List containing details such as the table name, subcat name.
 #' @param schema_org_jsonld Optional Schema.org JSON-LD string to include in header (default: "")
-create_index_section_files <- function(output_dir, filter, table_details, schema_org_jsonld = "") {
+#' @param signposting Optional FAIR Signposting `<link>` elements for the page,
+#'   see [generate_page_signposting()] (default: "")
+create_index_section_files <- function(output_dir, filter, table_details, schema_org_jsonld = "",
+                                       signposting = "") {
   create_index_postfix_html(output_dir, filter, table_details)
   create_index_prefix_html(output_dir, filter, table_details)
 
@@ -224,7 +233,9 @@ create_index_section_files <- function(output_dir, filter, table_details, schema
     include_version_in_meta <- FALSE
   }
 
-  create_index_header_html(output_dir, schema_org_jsonld = schema_org_jsonld, include_version_in_meta = include_version_in_meta)
+  create_index_header_html(output_dir, schema_org_jsonld = schema_org_jsonld,
+                           include_version_in_meta = include_version_in_meta,
+                           signposting = signposting)
 }
 
 #' Renders html for a single table
@@ -238,6 +249,16 @@ create_index_section_files <- function(output_dir, filter, table_details, schema
 #'        Schema.org generation on codechecker pages, which needs the Repository column that
 #'        the HTML column set does not include.
 render_html <- function(table, table_details, filter, full_register_table = NULL){
+
+  # Repository is not part of the HTML column set (see
+  # filter_and_drop_register_columns()), but the Schema.org and signposting
+  # generators below need it to look up each paper's codecheck.yml. Fall back
+  # to `table` if the full table wasn't supplied, in which case that lookup is
+  # simply skipped.
+  repo_lookup_table <- table
+  if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
+    repo_lookup_table <- full_register_table
+  }
 
   # Creating md file from which HTML file is made
   if (table_details[["is_reg_table"]]){
@@ -259,15 +280,6 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
     codechecker_name <- CONFIG$DICT_ORCID_ID_NAME[[codechecker_orcid]]
     if (is.null(codechecker_name)) codechecker_name <- codechecker_orcid
 
-    # Repository is not part of the HTML column set (see filter_and_drop_register_columns()),
-    # but generate_codechecker_schema_org() needs it to look up each paper's codecheck.yml.
-    # Fall back to `table` if the full table wasn't supplied, in which case that lookup is
-    # simply skipped for each row.
-    repo_lookup_table <- table
-    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
-      repo_lookup_table <- full_register_table
-    }
-
     # Generate Schema.org JSON-LD for this codechecker
     schema_org_jsonld <- generate_codechecker_schema_org(
       codechecker_orcid = codechecker_orcid,
@@ -280,13 +292,6 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
   # Generate Schema.org metadata for venue pages (addresses register#183)
   else if (!is.na(filter) && filter == "venues" && table_details[["is_reg_table"]] &&
            !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
-    # Repository is not part of the HTML column set (see filter_and_drop_register_columns()),
-    # but generate_venue_schema_org() needs it to look up each paper's codecheck.yml.
-    repo_lookup_table <- table
-    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
-      repo_lookup_table <- full_register_table
-    }
-
     schema_org_jsonld <- generate_venue_schema_org(
       venue_name = table_details[["name"]],
       venue_type = table_details[["subcat"]],
@@ -297,11 +302,6 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
   # Generate Schema.org metadata for work pages (codecheckers/register#150)
   else if (!is.na(filter) && filter == "works" && table_details[["is_reg_table"]] &&
            !is.null(table_details[["name"]]) && !is.na(table_details[["name"]])) {
-    repo_lookup_table <- table
-    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
-      repo_lookup_table <- full_register_table
-    }
-
     schema_org_jsonld <- generate_work_schema_org(
       doi = table_details[["name"]],
       register_table = repo_lookup_table
@@ -315,15 +315,6 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
     person_name <- CONFIG$DICT_ORCID_ID_NAME[[orcid]]
     if (is.null(person_name)) person_name <- orcid
 
-    # "Work" (needed for the works-authored articles) is not part of the
-    # persons HTML column set (see filter_and_drop_register_columns()) -
-    # fall back to `table` if the full table wasn't supplied, in which case
-    # that section is simply skipped.
-    repo_lookup_table <- table
-    if (!is.null(full_register_table) && "Repository" %in% names(full_register_table)) {
-      repo_lookup_table <- full_register_table
-    }
-
     profile <- resolve_codechecker_profile(orcid)
 
     schema_org_jsonld <- generate_person_schema_org(
@@ -334,8 +325,20 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
     )
   }
 
+  # FAIR Signposting for this page (register#55), dispatched on the same
+  # filter/table_details pair as the Schema.org metadata above so the two
+  # descriptions of a page cannot drift apart. The JSON-LD document the
+  # `describedby` link points at is written here, before the header is
+  # rendered, because whether it exists decides whether the link is emitted.
+  has_jsonld <- write_schema_org_jsonld(schema_org_jsonld, output_dir)
+  signposting <- generate_page_signposting(filter, table_details,
+                                           register_table = repo_lookup_table,
+                                           has_jsonld = has_jsonld)
+
   # Creating the index section files and yml document
-  create_index_section_files(output_dir, filter, table_details, schema_org_jsonld = schema_org_jsonld)
+  create_index_section_files(output_dir, filter, table_details,
+                             schema_org_jsonld = schema_org_jsonld,
+                             signposting = signposting)
   generate_html_document_yml(output_dir)
 
   # Schedule cleanup of temporary files so they are removed even if render() fails
