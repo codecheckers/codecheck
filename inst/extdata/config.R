@@ -185,7 +185,8 @@ CONFIG$HYPERLINKS <- list(
   zenodo_community = "https://zenodo.org/communities/codecheck/",
   CrossRef = "https://www.crossref.org",
   OpenAlex = "https://openalex.org",
-  zenodo = "https://zenodo.org/records/"
+  zenodo = "https://zenodo.org/records/",
+  wikidata = "https://www.wikidata.org/entity/"
 )
 
 # Plural of venue subcategories 

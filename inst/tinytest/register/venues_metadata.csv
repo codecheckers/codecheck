@@ -1,3 +1,4 @@
-name,longname,label,logo_url,website_url,policy_url,publisher,contact_name,contact_email,description,identifiers
-AGILEGIS,AGILE Conference on Geographic Information Science,conference,https://example.org/agile-logo.svg,https://agile-gi.eu,,AGILE,Jane Doe,jane@example.org,A conference on geographic information science.,ROR|fa-university|05wg1m734|https://ror.org/05wg1m734;ISSN|fa-book|1234-5678
-GigaByte,GigaByte,journal,,,,,,,,
+name,longname,label,logo_url,website_url,policy_url,publisher,contact_name,contact_email,description,identifiers,wikidata
+AGILEGIS,AGILE Conference on Geographic Information Science,conference,https://example.org/agile-logo.svg,https://agile-gi.eu,,AGILE,Jane Doe,jane@example.org,A conference on geographic information science.,ROR|fa-university|05wg1m734|https://ror.org/05wg1m734;ISSN|fa-book|1234-5678,Q12345678
+GigaByte,GigaByte,journal,,,,,,,,,
+Preprints,Preprints,preprint,,,,,,,,,Q580922

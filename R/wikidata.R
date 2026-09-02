@@ -84,6 +84,10 @@ WIKIDATA_ITEMS <- list(
   methods_paper = "Q111935840",
   # "scholarly article", the value the graph split routes on
   scholarly_article = "Q13442814",
+  # "preprint" - also a scholarly-graph type (3,151 items carry it there and
+  # none in the main graph), so typing a checked preprint this way keeps it
+  # beside its certificate rather than moving it out of reach
+  preprint = "Q580922",
   # "review", the class P6977 expects its subject to be under
   review = "Q265158",
   # "human", for codechecker items
@@ -333,8 +337,20 @@ WIKIDATA_MODEL <- list(
     statements = list(
       wikidata_statement(
         "instance_of", "P31", "instance of",
-        list(kind = "constant", item = WIKIDATA_ITEMS$scholarly_article),
-        required = TRUE
+        list(
+          kind = "switch",
+          field = "Venue",
+          cases = list(preprint = WIKIDATA_ITEMS$preprint),
+          default = WIKIDATA_ITEMS$scholarly_article
+        ),
+        required = TRUE,
+        note = paste(
+          "the register's `preprint` venue is the codechecker stating that the",
+          "checked work is a preprint, which is a fact about the paper rather",
+          "than about a venue - unlike the publication itself, which is read",
+          "from the paper's own record. A Crossref type of `posted-content`",
+          "corroborates it"
+        )
       ),
       wikidata_statement(
         "doi", "P356", "DOI",

@@ -125,6 +125,18 @@ unknown_map$certificate$statements <- lapply(unknown_map$certificate$statements,
 })
 expect_true(any(grepl("no known map", codecheck::validate_wikidata_model(unknown_map))))
 
+# A checked preprint is typed as one ----
+
+paper_type <- Filter(function(s) s$property == "P31", codecheck::wikidata_statements("paper"))[[1]]
+expect_equal(paper_type$value$kind, "switch")
+expect_equal(paper_type$value$cases$preprint, "Q580922")
+expect_equal(paper_type$value$default, "Q13442814")
+
+# Both values keep the paper in the scholarly graph, beside its certificate;
+# a type that moved it to the main graph would break the link.
+expect_true(all(c(paper_type$value$cases$preprint, paper_type$value$default) %in%
+                  c("Q580922", "Q13442814")))
+
 # Endpoints follow the query service graph split ----
 
 # Papers live in the scholarly graph, people and venues in the main one;
