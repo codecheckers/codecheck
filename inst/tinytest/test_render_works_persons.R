@@ -102,6 +102,21 @@ eglen_row <- persons_index_json[persons_index_json$ORCID == "0000-0001-8607-8025
 expect_equal(nrow(eglen_row), 1)
 expect_true(length(eglen_row$`Check types`[[1]]) >= 1)
 
+# A 0 count gets no "(see works)"/"(see checks)" link - misleading next to
+# a role the person has none of. Gerhard Navratil authored one paper here
+# and checked none, giving one row with both a zero and a non-zero cell.
+expect_false(grepl("(see works)", persons_index_html, fixed = TRUE))
+expect_false(grepl("(see checks)", persons_index_html, fixed = TRUE))
+navratil_row <- xml2::xml_find_first(
+  xml2::read_html("docs/persons/index.html"),
+  "//tr[td/a[contains(@href,'0000-0002-2978-5724')]]"
+)
+navratil_cells <- xml2::xml_find_all(navratil_row, "./td")
+expect_equal(xml2::xml_text(navratil_cells[[3]]), "1")
+expect_true(!is.na(xml2::xml_find_first(navratil_cells[[3]], ".//a")))
+expect_equal(xml2::xml_text(navratil_cells[[4]]), "0")
+expect_true(is.na(xml2::xml_find_first(navratil_cells[[4]], ".//a")))
+
 # footer: no "Markdown" link on the person page, no CSV links on either
 person_footer <- xml2::xml_text(xml2::xml_find_all(person_html, "//p[@class='footer-links']"))
 expect_false(grepl("Markdown", person_footer))

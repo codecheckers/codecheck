@@ -213,11 +213,21 @@ add_all_persons_hyperlink <- function(table, table_details = NULL) {
       !!col_names[["person_name"]] := paste0(
         "[", !!sym(col_names[["person_name"]]), "](", persons_base, !!sym(col_names[["Person"]]), "/)"
       ),
-      !!col_names[["no_works"]] := paste0(
-        !!sym(col_names[["no_works"]]), " [(see works)](", persons_base, !!sym(col_names[["Person"]]), "/)"
+      # A count of 0 gets no link - the person page has nothing to show for
+      # that role, and a "(see works)"/"(see checks)" addendum next to a 0
+      # reads as if it did (many rows are 0 for one role or the other, since
+      # a person is rarely both an author and a codechecker).
+      !!col_names[["no_works"]] := ifelse(
+        !!sym(col_names[["no_works"]]) == 0, "0",
+        paste0(
+          "[", !!sym(col_names[["no_works"]]), "](", persons_base, !!sym(col_names[["Person"]]), "/)"
+        )
       ),
-      !!col_names[["no_checks"]] := paste0(
-        !!sym(col_names[["no_checks"]]), " [(see checks)](", persons_base, !!sym(col_names[["Person"]]), "/)"
+      !!col_names[["no_checks"]] := ifelse(
+        !!sym(col_names[["no_checks"]]) == 0, "0",
+        paste0(
+          "[", !!sym(col_names[["no_checks"]]), "](", persons_base, !!sym(col_names[["Person"]]), "/)"
+        )
       ),
       !!col_names[["Person"]] := paste0(
         "[", !!sym(col_names[["Person"]]), "](", CONFIG$HYPERLINKS[["orcid"]], !!sym(col_names[["Person"]]), ")"
