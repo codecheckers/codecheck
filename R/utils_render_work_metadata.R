@@ -16,9 +16,10 @@
 #'   certificate that checked this DOI), still carrying `Repository`,
 #'   `Paper Title`, `OpenAlex`, `Venue`, `Check date`.
 #' @return A list with `title`, `doi`, `openalex` (`NA_character_` if none),
-#'   `venues` (unique, comma-joined), `check_count`, `first_check_date`,
-#'   `last_check_date`, and `authors` (a list of `name`/`orcid` lists, `orcid`
-#'   `NULL` when not known - possibly an empty list).
+#'   `publication_date` (`NA_character_` if none), `venues` (unique,
+#'   comma-joined), `check_count`, `first_check_date`, `last_check_date`, and
+#'   `authors` (a list of `name`/`orcid` lists, `orcid` `NULL` when not known -
+#'   possibly an empty list).
 #' @keywords internal
 get_work_metadata_fields <- function(doi, register_table) {
   # "Paper Title" only survives to this point on the HTML/md path (see
@@ -55,6 +56,13 @@ get_work_metadata_fields <- function(doi, register_table) {
     NA_character_
   }
 
+  publication_date <- if ("Work publication date" %in% names(register_table)) {
+    dates <- register_table$`Work publication date`[!is.na(register_table$`Work publication date`)]
+    if (length(dates) > 0) dates[1] else NA_character_
+  } else {
+    NA_character_
+  }
+
   venues <- if ("Venue" %in% names(register_table)) {
     unique(register_table$Venue[!is.na(register_table$Venue)])
   } else {
@@ -79,6 +87,7 @@ get_work_metadata_fields <- function(doi, register_table) {
     title = title,
     doi = doi,
     openalex = openalex,
+    publication_date = publication_date,
     venues = venues,
     check_count = nrow(register_table),
     first_check_date = if (length(check_dates) > 0) check_dates[1] else NA_character_,
@@ -127,6 +136,7 @@ generate_work_metadata_html <- function(table_details, register_table) {
   }
 
   has_openalex <- !is.na(fields$openalex) && nzchar(fields$openalex)
+  has_publication_date <- !is.na(fields$publication_date) && nzchar(fields$publication_date)
   # The work's own Wikidata item, beside its other identifiers (register#50).
   wikidata <- wikidata_id_for("paper", fields$doi)
   has_wikidata <- !is.null(wikidata)
@@ -142,6 +152,8 @@ generate_work_metadata_html <- function(table_details, register_table) {
     doi_url = paste0(CONFIG$HYPERLINKS[["doi"]], fields$doi),
     has_openalex = has_openalex,
     openalex = fields$openalex,
+    has_publication_date = has_publication_date,
+    publication_date = fields$publication_date,
     has_wikidata = has_wikidata,
     wikidata = wikidata,
     has_authors = has_authors,

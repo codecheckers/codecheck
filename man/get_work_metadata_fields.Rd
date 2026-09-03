@@ -15,9 +15,10 @@ certificate that checked this DOI), still carrying `Repository`,
 }
 \value{
 A list with `title`, `doi`, `openalex` (`NA_character_` if none),
-  `venues` (unique, comma-joined), `check_count`, `first_check_date`,
-  `last_check_date`, and `authors` (a list of `name`/`orcid` lists, `orcid`
-  `NULL` when not known - possibly an empty list).
+  `publication_date` (`NA_character_` if none), `venues` (unique,
+  comma-joined), `check_count`, `first_check_date`, `last_check_date`, and
+  `authors` (a list of `name`/`orcid` lists, `orcid` `NULL` when not known -
+  possibly an empty list).
 }
 \description{
 The shared source of truth for the work landing page's metadata panel

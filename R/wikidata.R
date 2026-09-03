@@ -437,7 +437,7 @@ WIKIDATA_MODEL <- list(
       ),
       wikidata_statement(
         "publication_date", "P577", "publication date", datatype = "time",
-        list(kind = "field", field = "Paper publication date", transform = "date_day"),
+        list(kind = "field", field = "Work publication date", transform = "date_day"),
         note = "the work's own publication date, from its OpenAlex record"
       ),
       wikidata_statement(

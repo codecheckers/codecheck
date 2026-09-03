@@ -56,7 +56,7 @@ CONFIG$REGISTER_COLUMNS <- list(
     csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Type", "Venue", "Check date"),
     # The table is subset by this list before render_register_json() sees it,
     # so a column missing here never reaches CONFIG$JSON_COLUMNS (register#50)
-    json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Paper ISSN", "Paper venue", "Paper publication date", "Type", "Venue", "Check date")
+    json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Paper ISSN", "Paper venue", "Work publication date", "Type", "Venue", "Check date")
   ),
 
   # Venue-specific views (venue and type are redundant in page context)
@@ -82,7 +82,7 @@ CONFIG$REGISTER_COLUMNS <- list(
   # codecheck.yml and identifiers without needing the un-dropped
   # full_register_table.
   works = list(
-    html = c("Certificate", "Report", "Venue", "Type", "Check date", "Repository", "OpenAlex"),
+    html = c("Certificate", "Report", "Venue", "Type", "Check date", "Repository", "OpenAlex", "Work publication date"),
     md = c("Certificate", "Report", "Venue", "Type", "Check date"),
     csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date"),
     json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date")
@@ -496,7 +496,7 @@ CONFIG$JSON_COLUMNS <- c(
   # (register#50), which is not what the Venue column says
   "Paper ISSN",
   "Paper venue",
-  "Paper publication date",
+  "Work publication date",
   "Type",
   "Venue",
   "Check date"

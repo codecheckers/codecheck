@@ -139,7 +139,7 @@ render_register_full <- function(register_table, output_dir) {
       OpenAlex = if ("OpenAlex" %in% names(register_table)) register_table[i, "OpenAlex"] else NA_character_,
       `Paper ISSN` = if ("Paper ISSN" %in% names(register_table)) register_table[i, "Paper ISSN"] else NA_character_,
       `Paper venue` = if ("Paper venue" %in% names(register_table)) register_table[i, "Paper venue"] else NA_character_,
-      `Paper publication date` = if ("Paper publication date" %in% names(register_table)) register_table[i, "Paper publication date"] else NA_character_
+      `Work publication date` = if ("Work publication date" %in% names(register_table)) register_table[i, "Work publication date"] else NA_character_
     )
 
     # Fetch full codecheck.yml metadata (cached from preprocessing)
@@ -347,6 +347,60 @@ compute_annual_stats <- function(register_table) {
   cumulative_checks <- cumsum(as.integer(checks_sorted))
   names(cumulative_checks) <- all_years
   stats$checks_cumulative <- as.list(cumulative_checks)
+
+  # --- Interval between paper publication and check: captures the *spread*
+  # of how much time separates a paper's formal
+  # publication date from its CODECHECK certificate's check date - not a
+  # speed metric (a fast turnaround and a check of a decades-old paper are
+  # both notable), so this reports the full distribution rather than a
+  # single mean/median, which would hide the shape entirely. ---
+  if ("Work publication date" %in% names(register_table)) {
+    pub_dates <- as.Date(as.character(register_table$`Work publication date`))
+    check_dates_all <- as.Date(as.character(register_table$`Check date`))
+    cert_key <- if ("Certificate ID" %in% names(register_table)) "Certificate ID" else "Certificate"
+    cert_ids <- if (cert_key %in% names(register_table)) as.character(register_table[[cert_key]]) else rep(NA_character_, nrow(register_table))
+
+    has_both <- !is.na(pub_dates) & !is.na(check_dates_all)
+    interval_days <- as.integer(check_dates_all[has_both] - pub_dates[has_both])
+    interval_certs <- cert_ids[has_both]
+
+    stats$interval_n <- length(interval_days)
+    stats$interval_excluded <- sum(!has_both)
+
+    # Raw per-certificate points, for a strip/beeswarm plot showing every check.
+    interval_points <- Map(function(id, d) list(id = id, days = d), interval_certs, interval_days)
+    names(interval_points) <- NULL
+    stats$interval_points <- interval_points
+
+    # Bucketed counts, for a histogram of the same data. "Before publication"
+    # is a first-class bucket, not an outlier to hide: it is the common
+    # preprint-first workflow (check happens before the paper's formal/
+    # journal publication date), not a data error.
+    bucket_labels <- c("Before publication", "0-1mo", "1-3mo", "3-6mo", "6-12mo", "1-2y", "2-5y", "5y+")
+    bucket_of <- function(d) {
+      if (d < 0) return("Before publication")
+      m <- d / 30.44
+      if (m < 1) "0-1mo"
+      else if (m < 3) "1-3mo"
+      else if (m < 6) "3-6mo"
+      else if (m < 12) "6-12mo"
+      else if (m < 24) "1-2y"
+      else if (m < 60) "2-5y"
+      else "5y+"
+    }
+    if (length(interval_days) > 0) {
+      bucketed <- vapply(interval_days, bucket_of, character(1))
+      bucket_counts <- table(factor(bucketed, levels = bucket_labels))
+      stats$interval_buckets <- as.list(bucket_counts)
+
+      n <- length(interval_days)
+      stats$interval_summary <- list(
+        pct_before_publication = round(100 * sum(interval_days < 0) / n),
+        pct_within_6mo = round(100 * sum(interval_days >= 0 & interval_days < 182.6) / n),
+        max_years = round(max(interval_days) / 365.25)
+      )
+    }
+  }
 
   # --- Unique venues per year (annual + cumulative) ---
   if ("Venue" %in% names(register_table)) {

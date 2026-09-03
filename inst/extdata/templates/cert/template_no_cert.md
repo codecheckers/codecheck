@@ -27,6 +27,7 @@ The certificate can be found at this $codecheck_report_subtext$
   <div class="text-box" id="abstract-content">
   <p>$abstract_content$</p>
   </div>
+  $publication_date_link$
   </div>
   </div>
   </div>

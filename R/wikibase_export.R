@@ -370,7 +370,7 @@ read_register_records <- function(dir) {
   # A register.json rendered before these columns existed still exports with
   # them: the lookup is the same cached one the render uses, so this costs
   # nothing once the register has been rendered with them.
-  for (column in c("Paper ISSN", "Paper venue", "Paper publication date")) {
+  for (column in c("Paper ISSN", "Paper venue", "Work publication date")) {
     if (!column %in% names(certificates)) certificates[[column]] <- NA_character_
   }
   fill <- which(is.na(certificates$`Paper ISSN`) & !is.na(certificates$OpenAlex))
@@ -380,8 +380,8 @@ read_register_records <- function(dir) {
     if (is.null(fields)) next
     certificates$`Paper ISSN`[i] <- fields$issn %||% NA_character_
     certificates$`Paper venue`[i] <- fields$venue %||% NA_character_
-    if (is.na(certificates$`Paper publication date`[i])) {
-      certificates$`Paper publication date`[i] <- fields$publication_date %||% NA_character_
+    if (is.na(certificates$`Work publication date`[i])) {
+      certificates$`Work publication date`[i] <- fields$publication_date %||% NA_character_
     }
   }
 

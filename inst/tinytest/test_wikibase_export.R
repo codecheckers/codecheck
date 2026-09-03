@@ -291,7 +291,7 @@ work_row <- list(
   `Paper reference` = "https://doi.org/10.1093/gigascience/giaa026",
   Venue = "AGILEGIS",
   `Paper ISSN` = "2047-217X",
-  `Paper publication date` = "2020-04-01"
+  `Work publication date` = "2020-04-01"
 )
 local_with_venue <- c(local, list(P577 = "P13"))
 work_payload <- codecheck:::wikibase_entity_payload(

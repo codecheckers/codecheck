@@ -89,7 +89,7 @@ expect_equal(paper_venue[[1]]$value$field, "Paper ISSN")
 # And the work says when it appeared, from the same record.
 paper_date <- Filter(function(s) s$property == "P577", codecheck::wikidata_statements("paper"))
 expect_equal(length(paper_date), 1)
-expect_equal(paper_date[[1]]$value$field, "Paper publication date")
+expect_equal(paper_date[[1]]$value$field, "Work publication date")
 expect_equal(paper_date[[1]]$datatype, "time")
 expect_true(is.null(paper_venue[[1]]$venue_types))
 expect_equal(codecheck::wikidata_model()$venue$resolve$property, "P236")
@@ -249,7 +249,7 @@ expect_equal(codecheck::wikidata_model()$certificate$resolve$field, "Report")
 register_columns <- c(
   "Certificate ID", "Certificate Link", "Certificate PDF", "Report", "Check date",
   "Title", "Paper reference", "Repository Link", "Venue", "Codechecker",
-  "OpenAlex", "Paper authors", "Paper ISSN", "Paper publication date",
+  "OpenAlex", "Paper authors", "Paper ISSN", "Work publication date",
   # venue and person entities are built from venues.csv / codecheck.yml rather
   # than from a register row
   "orcid", "name", "issn", "identifiers", "website_url", "longname"

@@ -275,6 +275,7 @@ create_temp_register_with_codechecker <- function(register_table){
 add_openalex_ids <- function(register_table, register) {
   cli::cli_alert_info("Looking up OpenAlex IDs")
   openalex_ids <- c()
+  paper_references <- c()
 
   for (i in seq_len(nrow(register))) {
     cert_id <- register[i, ]$Certificate
@@ -282,6 +283,9 @@ add_openalex_ids <- function(register_table, register) {
     # must not abort the whole render - same reasoning as the OpenAlex
     # lookup below, just one step earlier.
     config_yml <- get_codecheck_yml_or_null(register[i, ]$Repo, cert_id)
+    paper_reference <- config_yml$paper$reference %||% NA_character_
+    paper_references <- c(paper_references, paper_reference)
+    warn_if_pdf_reference(cert_id, paper_reference)
 
     lookup <- if (!is.null(config_yml) && !is.null(config_yml$paper$reference)) {
       first_author <- NULL
@@ -311,7 +315,7 @@ add_openalex_ids <- function(register_table, register) {
   n_found <- sum(!is.na(openalex_ids))
   cli::cli_alert_success("Found {n_found}/{nrow(register)} OpenAlex IDs")
 
-  register_table <- add_openalex_work_fields(register_table)
+  register_table <- add_openalex_work_fields(register_table, paper_references)
   return(register_table)
 }
 
@@ -328,9 +332,13 @@ add_openalex_ids <- function(register_table, register) {
 #' that does not.
 #'
 #' @param register_table The register table, with an `OpenAlex` column
+#' @param paper_references Optional character vector, same length and order
+#'   as `register_table`'s rows, of each work's `paper.reference` URL from its
+#'   `codecheck.yml`. Used only as a fallback (see below); pass NULL/omit to
+#'   skip it (e.g. for a per-certificate re-render with a one-row table).
 #' @return The register table with added "Paper ISSN", "Paper venue" and
-#'   "Paper publication date" columns
-add_openalex_work_fields <- function(register_table) {
+#'   "Work publication date" columns
+add_openalex_work_fields <- function(register_table, paper_references = NULL) {
   if (!"OpenAlex" %in% colnames(register_table)) {
     return(register_table)
   }
@@ -348,11 +356,37 @@ add_openalex_work_fields <- function(register_table) {
 
   register_table$`Paper ISSN` <- vapply(fields, function(f) f$issn %||% NA_character_, character(1))
   register_table$`Paper venue` <- vapply(fields, function(f) f$venue %||% NA_character_, character(1))
-  register_table$`Paper publication date` <- vapply(
-    fields, function(f) f$publication_date %||% NA_character_, character(1))
+  publication_dates <- vapply(fields, function(f) f$publication_date %||% NA_character_, character(1))
+
+  # OpenAlex has no record at all for some works (an arXiv preprint, a
+  # conference proceedings entry, an institutional repository item, ...) -
+  # for those, fall back to reading the date straight off the paper's own
+  # reference URL: citation_* meta tags, schema.org JSON-LD, or (for a
+  # reference that is itself a PDF) the PDF's own metadata.
+  if (!is.null(paper_references) && length(paper_references) == length(publication_dates)) {
+    n_from_page <- 0L
+    for (i in seq_along(publication_dates)) {
+      if (!is.na(publication_dates[i])) next
+      reference <- paper_references[i]
+      if (is.na(reference) || !nzchar(reference)) next
+      page_result <- tryCatch(
+        get_page_publication_date_cached_result(reference),
+        error = function(e) list(status = "failed", value = NA_character_)
+      )
+      if (identical(page_result$status, "found") && !is.na(page_result$value)) {
+        publication_dates[i] <- page_result$value
+        n_from_page <- n_from_page + 1L
+      }
+    }
+    if (n_from_page > 0) {
+      cli::cli_alert_success("Found {n_from_page} publication date{?s} directly from the paper's own page (OpenAlex had none)")
+    }
+  }
+
+  register_table$`Work publication date` <- publication_dates
 
   cli::cli_alert_success(
-    "Found {sum(!is.na(register_table$`Paper ISSN`))} publication ISSN{?s} and {sum(!is.na(register_table$`Paper publication date`))} publication date{?s}"
+    "Found {sum(!is.na(register_table$`Paper ISSN`))} publication ISSN{?s} and {sum(!is.na(register_table$`Work publication date`))} publication date{?s}"
   )
   register_table
 }

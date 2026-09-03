@@ -4,14 +4,19 @@
 \alias{add_openalex_work_fields}
 \title{Add the publication facts behind each OpenAlex ID (register#50)}
 \usage{
-add_openalex_work_fields(register_table)
+add_openalex_work_fields(register_table, paper_references = NULL)
 }
 \arguments{
 \item{register_table}{The register table, with an `OpenAlex` column}
+
+\item{paper_references}{Optional character vector, same length and order
+as `register_table`'s rows, of each work's `paper.reference` URL from its
+`codecheck.yml`. Used only as a fallback (see below); pass NULL/omit to
+skip it (e.g. for a per-certificate re-render with a one-row table).}
 }
 \value{
 The register table with added "Paper ISSN", "Paper venue" and
-  "Paper publication date" columns
+  "Work publication date" columns
 }
 \description{
 Part of the same enrichment: an OpenAlex ID is a pointer, and the record it

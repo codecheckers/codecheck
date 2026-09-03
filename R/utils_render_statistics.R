@@ -196,11 +196,23 @@ build_statistics_content_html <- function(stats, base_path = "..") {
     '<div class="row stats-charts-row">\n',
     '  <div class="col-md-12"><h3>Venues by type</h3><canvas id="venueTypeChart" height="140"></canvas>',
     '<a href="#" class="chart-reset-link" id="venueTypeChartReset">Show all</a></div>\n',
+    '</div>\n',
+    '<div class="row stats-charts-row">\n',
+    '  <div class="col-md-6"><h3>Time from work publication to check</h3><canvas id="intervalChart" height="220"></canvas></div>\n',
+    '  <div class="col-md-6"><h3>Every certificate, individually (check time)</h3><div id="intervalBeeswarm" class="interval-beeswarm"></div></div>\n',
     '</div>\n'
   )
 
+  interval_html <- build_interval_summary_html(stats$interval_summary, stats$interval_n, stats$interval_excluded)
+
   venues_html <- build_venues_grid_html(stats$venues_detail, base_path)
   publishers_html <- build_publishers_table_html(stats$publishers)
+
+  interval_bucket_labels <- c("Before publication", "0-1mo", "1-3mo", "3-6mo", "6-12mo", "1-2y", "2-5y", "5y+")
+  interval_bucket_values <- vapply(interval_bucket_labels, function(b) {
+    v <- stats$interval_buckets[[b]]
+    if (is.null(v)) 0L else as.integer(v)
+  }, integer(1))
 
   chart_data_json <- jsonlite::toJSON(list(
     checks_labels = checks_labels,
@@ -210,7 +222,11 @@ build_statistics_content_html <- function(stats, base_path = "..") {
     platform_datasets = platform_datasets,
     venue_type_years = venue_type_years,
     venue_type_datasets = venue_type_datasets,
-    venue_type_colors = venue_type_colors
+    venue_type_colors = venue_type_colors,
+    interval_bucket_labels = unname(interval_bucket_labels),
+    interval_bucket_values = unname(interval_bucket_values),
+    interval_points = stats$interval_points,
+    cert_base_path = paste0(base_path, "/certs/")
   ), auto_unbox = TRUE)
 
   script_html <- paste0(
@@ -301,6 +317,92 @@ build_statistics_content_html <- function(stats, base_path = "..") {
     '    options: { scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: "Checks" } } }, plugins: { legend: legendHoverPlugin(function (item) { return "Click to show/hide " + item.text; }) } }\n',
     '  });\n',
     '  addResetLink("venueTypeChartReset", venueTypeChart);\n',
+    '  var intervalChart = new Chart(document.getElementById("intervalChart"), {\n',
+    '    type: "bar",\n',
+    '    data: { labels: data.interval_bucket_labels, datasets: [\n',
+    '      { label: "Certificates", data: data.interval_bucket_values, backgroundColor: "#2c7a4b" }\n',
+    '    ] },\n',
+    '    options: { plugins: { legend: { display: false } }, scales: {\n',
+    '      y: { beginAtZero: true, title: { display: true, text: "Certificates" } }\n',
+    '    } }\n',
+    '  });\n',
+    '  // Chart.js has no symlog scale, so the beeswarm is a small hand-rolled SVG:\n',
+    '  // linear from -1 to 1 year around zero (where most points sit and where sign\n',
+    '  // matters most), logarithmic beyond that in either direction. Points are\n',
+    '  // bucketed onto a coarse grid and stacked vertically within each bucket so\n',
+    '  // nearby certificates fan out instead of overlapping.\n',
+    '  (function renderBeeswarm() {\n',
+    '    var el = document.getElementById("intervalBeeswarm");\n',
+    '    if (!el || !data.interval_points || data.interval_points.length === 0) return;\n',
+    '    var width = el.clientWidth || 480, height = 220;\n',
+    '    var margin = { top: 10, right: 16, bottom: 34, left: 16 };\n',
+    '    var plotW = width - margin.left - margin.right;\n',
+    '    var yearDays = 365.25;\n',
+    '    function scaleX(days) {\n',
+    '      var sign = days < 0 ? -1 : 1;\n',
+    '      var a = Math.abs(days);\n',
+    '      var t; // 0..1 position within the [-domainMax, domainMax] symlog domain\n',
+    '      if (a <= yearDays) {\n',
+    '        t = 0.5 * (a / yearDays);\n',
+    '      } else {\n',
+    '        var maxDays = Math.max.apply(null, data.interval_points.map(function (p) { return Math.abs(p.days); }));\n',
+    '        var logSpan = Math.log(Math.max(maxDays, yearDays * 2)) - Math.log(yearDays);\n',
+    '        t = 0.5 + 0.5 * ((Math.log(a) - Math.log(yearDays)) / logSpan);\n',
+    '      }\n',
+    '      return margin.left + plotW / 2 + sign * t * (plotW / 2);\n',
+    '    }\n',
+    '    var radius = 3.5, rowHeight = radius * 2 + 1;\n',
+    '    var maxRows = Math.floor((height - margin.top - margin.bottom) / rowHeight);\n',
+    '    var binPx = radius * 2;\n',
+    '    var binCounts = {};\n',
+    '    var svgns = "http://www.w3.org/2000/svg";\n',
+    '    var svg = document.createElementNS(svgns, "svg");\n',
+    '    svg.setAttribute("viewBox", "0 0 " + width + " " + height);\n',
+    '    svg.setAttribute("width", "100%");\n',
+    '    svg.setAttribute("height", height);\n',
+    '    var zeroX = scaleX(0);\n',
+    '    var axisY = height - margin.bottom;\n',
+    '    var axis = document.createElementNS(svgns, "line");\n',
+    '    axis.setAttribute("x1", margin.left); axis.setAttribute("x2", width - margin.right);\n',
+    '    axis.setAttribute("y1", axisY); axis.setAttribute("y2", axisY);\n',
+    '    axis.setAttribute("stroke", "#ccc");\n',
+    '    svg.appendChild(axis);\n',
+    '    [0, yearDays, yearDays * 10].forEach(function (d, i) {\n',
+    '      [d, -d].forEach(function (dd) {\n',
+    '        if (dd !== 0 && d === 0) return;\n',
+    '        var x = scaleX(dd);\n',
+    '        var tick = document.createElementNS(svgns, "text");\n',
+    '        tick.setAttribute("x", x); tick.setAttribute("y", axisY + 14);\n',
+    '        tick.setAttribute("text-anchor", "middle"); tick.setAttribute("font-size", "10"); tick.setAttribute("fill", "#888");\n',
+    '        tick.textContent = dd === 0 ? "publication" : (dd < 0 ? "-" : "+") + (i === 1 ? "1yr" : "10yr");\n',
+    '        svg.appendChild(tick);\n',
+    '      });\n',
+    '    });\n',
+    '    data.interval_points.forEach(function (p) {\n',
+    '      var x = scaleX(p.days);\n',
+    '      var bin = Math.round(x / binPx);\n',
+    '      var row = binCounts[bin] || 0;\n',
+    '      binCounts[bin] = row + 1;\n',
+    '      if (row >= maxRows) return; // silently drop overflow beyond the plot height\n',
+    '      var y = axisY - radius - 2 - row * rowHeight;\n',
+      # Each dot links to its certificate landing page - a real <a> around the
+      # <circle> (not a click handler) so it behaves like any other link
+      # (middle-click/open-in-new-tab, status bar preview, no-JS fallback).
+    '      var link = document.createElementNS(svgns, "a");\n',
+    '      link.setAttribute("href", data.cert_base_path + encodeURIComponent(p.id) + "/");\n',
+    '      var c = document.createElementNS(svgns, "circle");\n',
+    '      c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", radius);\n',
+    '      c.setAttribute("fill", p.days < 0 ? "#8a4fbf" : "#2c7a4b");\n',
+    '      c.setAttribute("fill-opacity", "0.75");\n',
+    '      var title = document.createElementNS(svgns, "title");\n',
+    '      var years = Math.abs(p.days / yearDays);\n',
+    '      title.textContent = p.id + ": " + (p.days < 0 ? "checked " + Math.round(-p.days) + " days before publication" : Math.round(p.days) + " days (" + years.toFixed(1) + " yr) after publication");\n',
+    '      c.appendChild(title);\n',
+    '      link.appendChild(c);\n',
+    '      svg.appendChild(link);\n',
+    '    });\n',
+    '    el.appendChild(svg);\n',
+    '  })();\n',
     '});\n',
     '</script>\n'
   )
@@ -321,10 +423,44 @@ build_statistics_content_html <- function(stats, base_path = "..") {
     '.stats-summary-card-link:hover { text-decoration: none; }\n',
     '.stats-summary-card-link:hover .stats-summary-card { border-color: #2c7a4b; }\n',
     '.chart-reset-link { display: inline-block; margin-top: 0.5rem; font-size: 0.85rem; cursor: pointer; }\n',
+    '.interval-summary { margin: 1.5rem 0; }\n',
+    '.interval-note { color: #888; font-size: 0.85rem; }\n',
+    '.interval-beeswarm { width: 100%; }\n',
+    '.interval-beeswarm svg a circle { cursor: pointer; }\n',
     '</style>\n'
   )
 
-  paste0(style_html, summary_cards, charts_html, venues_html, publishers_html, script_html)
+  paste0(style_html, summary_cards, charts_html, interval_html, venues_html, publishers_html, script_html)
+}
+
+#' Build the "time from work publication to check" summary stat line
+#'
+#' Deliberately not framed as a speed metric: a fast turnaround and a check
+#' of a decades-old work are both notable, not "good vs. bad" - so this
+#' describes the spread, never phrasing it as something "completed within" a
+#' target time.
+#'
+#' @param interval_summary The `interval_summary` list from statistics.json
+#'   (`pct_before_publication`, `pct_within_6mo`, `max_years`), or NULL
+#' @param n Number of certificates the summary covers
+#' @param excluded Number of certificates excluded (missing a date)
+#' @return An HTML string, or "" if no summary is available
+#' @keywords internal
+build_interval_summary_html <- function(interval_summary, n, excluded) {
+  if (is.null(interval_summary)) {
+    return("")
+  }
+  note <- if (!is.null(excluded) && excluded > 0) {
+    sprintf(' <span class="interval-note">(%d certificate%s excluded for missing a date)</span>', excluded, if (excluded != 1) "s" else "")
+  } else {
+    ""
+  }
+  paste0(
+    '<p class="interval-summary">Checks span from preprints reviewed before formal publication to works checked ',
+    'decades after: <strong>', interval_summary$pct_before_publication, '%</strong> precede formal publication, ',
+    '<strong>', interval_summary$pct_within_6mo, '%</strong> follow within 6 months, and some reproduce work ',
+    'published over <strong>', interval_summary$max_years, ' years</strong> earlier.', note, '</p>\n'
+  )
 }
 
 #' @keywords internal

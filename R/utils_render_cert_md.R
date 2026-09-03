@@ -630,6 +630,37 @@ add_paper_details_md <- function(md_content, repo_link, openalex_id = NULL, abst
   }
   md_content <- gsub("\\$openalex_link\\$", openalex_html, md_content)
 
+  # Adding the work's publication date: the same fact the statistics
+  # dashboard's publication-to-check interval is computed from, so a reader
+  # can see the concrete date behind that chart. Re-derived here (mirroring
+  # the openalex_id fallback just above) rather than threaded through as a
+  # parameter, since this function is also called standalone
+  # (create_cert_md() -> add_paper_details_md()) without the full register
+  # table in scope.
+  publication_date <- if (!is.na(openalex_id)) {
+    tryCatch(
+      get_openalex_work_fields_cached_result(openalex_id)$value$publication_date,
+      error = function(e) NA_character_
+    )
+  } else {
+    NA_character_
+  }
+  if (is.null(publication_date) || is.na(publication_date)) {
+    page_result <- tryCatch(
+      get_page_publication_date_cached_result(config_yml$paper$reference),
+      error = function(e) list(status = "failed", value = NA_character_)
+    )
+    if (identical(page_result$status, "found")) {
+      publication_date <- page_result$value
+    }
+  }
+  if (!is.null(publication_date) && !is.na(publication_date)) {
+    publication_date_html <- paste0('<p class="mt-3"><strong>Work publication date</strong>: ', publication_date, '</p>')
+  } else {
+    publication_date_html <- ""
+  }
+  md_content <- gsub("\\$publication_date_link\\$", publication_date_html, md_content)
+
   return(md_content)
 }
 

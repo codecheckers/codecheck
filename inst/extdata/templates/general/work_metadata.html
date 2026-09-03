@@ -2,6 +2,9 @@
 <div class="venue-metadata-text">
 <ul class="venue-metadata-list">
 <li><i class="ai ai-doi"></i> <span class="venue-metadata-label">DOI:</span> <a href="{{doi_url}}" target="_blank" rel="noopener">{{doi}}</a></li>
+{{#has_publication_date}}
+<li><span class="venue-metadata-label">Work publication date:</span> {{publication_date}}</li>
+{{/has_publication_date}}
 {{#has_openalex}}
 <li><span class="venue-metadata-label">OpenAlex:</span> <a href="{{openalex}}" target="_blank" rel="noopener">{{openalex}}</a></li>
 {{/has_openalex}}

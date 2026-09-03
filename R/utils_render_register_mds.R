@@ -130,11 +130,12 @@ render_register_md <- function(register_table, table_details, filter) {
     md_table <- create_persons_md_table(register_table, table_details)
   } else {
     if (!is.na(filter) && filter == "works") {
-      # Repository and OpenAlex rode along only so generate_work_metadata_html()
-      # above could look up authors/abstract and the work's identifiers - they
-      # are not columns the visible table should show.
+      # Repository, OpenAlex and Work publication date rode along only so
+      # generate_work_metadata_html() above could look up authors/abstract and
+      # the work's identifiers - they are not columns the visible table should
+      # show.
       register_table <- register_table[, setdiff(names(register_table),
-                                                 c("Repository", "OpenAlex")),
+                                                 c("Repository", "OpenAlex", "Work publication date")),
                                        drop = FALSE]
     }
     md_table <- create_md_table(register_table, table_details, filter)

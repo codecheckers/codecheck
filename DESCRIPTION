@@ -49,14 +49,14 @@ Imports:
     magick,
     git2r,
     parallel,
-    rprojroot
+    rprojroot,
+    xml2
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
 Suggests:
     tinytest,
     ttdo,
-    skimr,
-    xml2
+    skimr
 URL: http://codecheck.org.uk/codecheck/, https://github.com/codecheckers/codecheck
 Config/roxygen2/version: 8.1.0
