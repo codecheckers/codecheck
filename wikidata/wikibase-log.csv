@@ -1,0 +1,14 @@
+"time","target","action","kind","id","label","status","batch","detail"
+"2026-09-03T21:29:54+0200","wikidata","quickstatements","batch","wikidata/wikidata-papers.qs","wikidata-papers","prepared","wikidata-papers","1025 commands"
+"2026-09-03T21:29:54+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","1895 commands"
+"2026-09-03T21:29:56+0200","wikibase","edit","page","Project:Wikidata export","wikidata preview","done",NA,NA
+"2026-09-03T21:40:35+0200","wikidata","quickstatements","batch","wikidata/wikidata-works.qs","wikidata-works","prepared","wikidata-works","433 commands"
+"2026-09-03T21:40:35+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","1946 commands"
+"2026-09-03T21:40:37+0200","wikibase","edit","page","Project:Wikidata export","wikidata preview","done",NA,NA
+"2026-09-03T21:43:53+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1788464327978","wikidata-works","submitted","wikidata-works","foreground run, EditGroups id; no QuickStatements batch page"
+"2026-09-03T21:44:14+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","1985 commands"
+"2026-09-03T21:46:48+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","1985 commands"
+"2026-09-03T21:47:33+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","1985 commands"
+"2026-09-03T21:50:36+0200","wikidata","quickstatements","batch","https://quickstatements.toolforge.org/#/batch/270374","wikidata-certificates","submitted","wikidata-certificates","background run, batch #270374 ""CODECHECK Register certificates"""
+"2026-09-03T21:53:41+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","628 commands"
+"2026-09-03T21:57:39+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2/270378","wikidata-certificates","submitted","wikidata-certificates","batch #270378, the 42 rejected by the rate limit in #270374; 42 DONE, 0 ERROR"

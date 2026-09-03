@@ -29,6 +29,11 @@ that a prepared batch was pasted, by whom it was run and where its result can
 be seen. QuickStatements gives every run a batch URL; that is what belongs
 here.
 }
+\details{
+Recording a batch also retires the `.qs` file it was pasted from, renaming it
+with a `.submitted` suffix so that a later run cannot paste the same creates
+a second time.
+}
 \examples{
 \dontrun{
 quickstatements_submitted("certificates-2026-09", url = "https://...batch/12345")

@@ -146,6 +146,15 @@ expect_equal(length(gregexpr("haswbstatement:",
                              codecheck:::haswbstatement_search("P356", letters[1:5]),
                              fixed = TRUE)[[1]]), 1L)
 
+# What the batches are called ----
+
+# The file name is what a person types to record a hand-pasted batch, so it has
+# to follow the noun the register uses, not the model's internal kind.
+expect_equal(codecheck:::wikidata_kind_noun("paper"), "work")
+expect_equal(codecheck:::wikidata_kind_noun("certificate"), "certificate")
+expect_equal(codecheck:::wikidata_batch_name("paper"), "wikidata-works")
+expect_equal(codecheck:::wikidata_batch_name("certificate"), "wikidata-certificates")
+
 # Not pasting the same batch twice ----
 
 # QuickStatements' CREATE has no idempotency and Wikidata will not stop a second
@@ -154,16 +163,16 @@ log_file <- tempfile(fileext = ".csv")
 expect_true(is.na(codecheck:::wikidata_batch_conflict("paper", 91, log_file)))
 
 codecheck:::wikibase_log(target = "wikidata", action = "quickstatements",
-                         kind = "batch", label = "wikidata-papers",
-                         status = "prepared", batch = "wikidata-papers",
+                         kind = "batch", label = "wikidata-works",
+                         status = "prepared", batch = "wikidata-works",
                          file = log_file)
 # Prepared is not submitted: a batch written but never pasted is no reason to
 # withhold the next one.
 expect_true(is.na(codecheck:::wikidata_batch_conflict("paper", 91, log_file)))
 
 codecheck:::wikibase_log(target = "wikidata", action = "quickstatements",
-                         kind = "batch", label = "wikidata-papers",
-                         status = "submitted", batch = "wikidata-papers",
+                         kind = "batch", label = "wikidata-works",
+                         status = "submitted", batch = "wikidata-works",
                          file = log_file)
 # Submitted, and the works still do not resolve: either the index is behind or
 # the batch failed, and both mean wait rather than paste.

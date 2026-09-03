@@ -2,6 +2,10 @@
 
 ## New Features
 
+* `preview_wikidata_export()` splits a batch that would create more items than Wikidata's rate limit allows per minute into numbered files to paste in turn (register#50). A background QuickStatements run pushes as fast as the API accepts, so a larger batch stopped at the limit and reported the rest as "No success flag set in API result".
+* `quickstatements_submitted()` retires the `.qs` file a batch was pasted from, renaming it with a `.submitted` suffix, and `preview_wikidata_export()` removes a batch file once nothing is left to create (register#50). QuickStatements' `CREATE` is not idempotent, so a batch file left lying around after its run is one paste away from duplicating every item in it.
+* `preview_wikidata_export()` no longer tells you to run the works batch first when there is no works batch to run: certificates left without a `review of` statement once every resolvable work exists name a checked work that has no DOI (register#50).
+* `preview_wikidata_export()` writes the checked works to `wikidata-works.qs` rather than `wikidata-papers.qs`, matching the noun the register uses everywhere else (register#50).
 * `register_render()` keeps a register repo's `.zenodo.json` contributors current with every codechecker named in the register (register#58), crediting people whose work otherwise only appears on their own person page. New `build_zenodo_contributors()` and `update_zenodo_json()`. Zenodo's contributor vocabulary has no "reviewer"/"checker" term, so every entry is typed `"Other"`; a `.zenodo.json` that does not exist is left alone. Only the `contributors` array is touched - the rest of the file (title, creators, licence, ...) stays hand-maintained.
 
 # codecheck 0.28.0

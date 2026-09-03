@@ -82,6 +82,43 @@ wikibase_log_read <- function(file = NULL) {
   utils::read.csv(file, colClasses = "character")
 }
 
+#' How many items a batch may create before Wikidata throttles it
+#'
+#' Wikidata allows a normal account 90 edits per minute, and QuickStatements
+#' writes one edit per item. A background batch pushes as fast as the API takes
+#' it, so item 91 onwards is rejected - reported, unhelpfully, as "No success
+#' flag set in API result". The default leaves headroom for whatever else the
+#' account is doing in the same minute.
+#'
+#' @format a single number
+#' @keywords internal
+QUICKSTATEMENTS_EDIT_LIMIT <- 80
+
+#' Split QuickStatements commands into batches of whole items
+#'
+#' Splits only at `CREATE`, never inside an item: the statements after a
+#' `CREATE` address it as `LAST`, so a chunk boundary in the middle of one would
+#' attach them to whatever the previous chunk created last.
+#'
+#' @param commands the QuickStatements v1 commands, one per element
+#' @param size how many items per chunk
+#' @return a list of command vectors; a single element if no split is needed
+#' @keywords internal
+quickstatements_chunks <- function(commands, size = QUICKSTATEMENTS_EDIT_LIMIT) {
+  starts <- which(commands == "CREATE")
+  # Anything that is not a run of CREATEs - updates to items that already have
+  # QIDs - is one edit per line, and has no LAST to keep together.
+  if (length(starts) == 0) {
+    item <- seq_along(commands)
+  } else {
+    item <- cumsum(commands == "CREATE")
+    # Lines before the first CREATE belong with it rather than to item zero.
+    item[item == 0] <- 1
+  }
+  if (max(item) <= size) return(list(commands))
+  unname(split(commands, (item - 1) %/% size))
+}
+
 #' Write a QuickStatements batch out for somebody to paste
 #'
 #' The Wikidata half of the export is a person copying commands into
@@ -95,27 +132,71 @@ wikibase_log_read <- function(file = NULL) {
 #' @param dir where to write the `.qs` file
 #' @param target `"wikidata"` or `"wikibase"`, which instance it is meant for
 #' @param file the log path, or `NULL` to use the option
-#' @return the path of the written file, invisibly
+#' @param chunk_size how many items one file may create before it is split;
+#'   see [QUICKSTATEMENTS_EDIT_LIMIT]
+#' @return the paths of the written files, invisibly
+#' @details
+#' A batch that would create more items than Wikidata lets an account edit in a
+#' minute is written as several numbered files, each its own batch in the log,
+#' to be pasted one after another. Splitting beforehand is the difference
+#' between a run that stops cleanly at a file boundary and one that fails
+#' part-way through with 42 items missing and no record of which.
 #' @export
 quickstatements_write <- function(commands, batch, dir = ".",
                                   target = c("wikidata", "wikibase"),
-                                  file = NULL) {
+                                  file = NULL,
+                                  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT) {
   target <- match.arg(target)
-  path <- file.path(dir, paste0(batch, ".qs"))
-  dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
-  writeLines(commands, path)
-
-  wikibase_log(target = target, action = "quickstatements", kind = "batch",
-               id = path, label = batch, status = "prepared",
-               batch = batch, detail = paste(length(commands), "commands"),
-               file = file)
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  chunks <- quickstatements_chunks(commands, chunk_size)
+  names <- if (length(chunks) == 1) batch else
+    sprintf("%s-%02d", batch, seq_along(chunks))
 
   where <- if (target == "wikidata") "https://quickstatements.toolforge.org/"
            else WIKIBASE_INSTANCE$quickstatements
-  cli::cli_alert_info("{length(commands)} command{?s} written to {.file {path}}")
-  cli::cli_alert_info("Paste them into {.url {where}}, then record the batch with
-                       {.code quickstatements_submitted('{batch}', url = ...)}")
-  invisible(path)
+  if (length(chunks) > 1) {
+    cli::cli_alert_warning(
+      "{sum(commands == 'CREATE')} items is more than the {chunk_size} an account may create per minute: split into {length(chunks)} batches to paste in turn"
+    )
+  }
+
+  paths <- character(length(chunks))
+  for (i in seq_along(chunks)) {
+    paths[i] <- file.path(dir, paste0(names[i], ".qs"))
+    writeLines(chunks[[i]], paths[i])
+    wikibase_log(target = target, action = "quickstatements", kind = "batch",
+                 id = paths[i], label = names[i], status = "prepared",
+                 batch = names[i],
+                 detail = paste(length(chunks[[i]]), "commands"),
+                 file = file)
+    cli::cli_alert_info("{length(chunks[[i]])} command{?s} written to {.file {paths[i]}}")
+  }
+
+  cli::cli_alert_info("Paste {cli::qty(length(chunks))}{?it/them in turn} into {.url {where}}, recording each with
+                       {.code quickstatements_submitted('{names[1]}', url = ...)}")
+  if (length(chunks) > 1) {
+    cli::cli_alert_info("Leave a minute between them, or the next one runs into the same limit.")
+  }
+  invisible(paths)
+}
+
+#' Retire a batch file that has been pasted
+#'
+#' A `.qs` file whose batch has been run is the duplicate-paste hazard itself:
+#' QuickStatements' `CREATE` has no idempotency, so a second paste makes a
+#' second item for everything in it. Renaming rather than deleting keeps the
+#' commands around - which ones failed is a question worth being able to answer
+#' - while taking away the name that invites a paste.
+#'
+#' @param path the file recorded when the batch was prepared
+#' @return the new path, or `NA` if there was nothing to retire
+#' @keywords internal
+quickstatements_retire <- function(path) {
+  if (length(path) != 1 || is.na(path) || !grepl("\\.qs$", path)) return(NA_character_)
+  if (!file.exists(path)) return(NA_character_)
+  retired <- paste0(path, ".submitted")
+  if (!file.rename(path, retired)) return(NA_character_)
+  retired
 }
 
 #' Record that a QuickStatements batch was actually submitted
@@ -130,6 +211,10 @@ quickstatements_write <- function(commands, batch, dir = ".",
 #' @param note anything worth recording, e.g. which commands failed
 #' @param file the log path, or `NULL` to use the option
 #' @return the log entry, invisibly
+#' @details
+#' Recording a batch also retires the `.qs` file it was pasted from, renaming it
+#' with a `.submitted` suffix so that a later run cannot paste the same creates
+#' a second time.
 #' @examples
 #' \dontrun{
 #' quickstatements_submitted("certificates-2026-09", url = "https://...batch/12345")
@@ -144,7 +229,16 @@ quickstatements_submitted <- function(batch, url = NA_character_,
   }
   target <- if (nrow(prepared) > 0) prepared$target[1] else "wikidata"
 
-  wikibase_log(target = target, action = "quickstatements", kind = "batch",
-               id = url, label = batch, status = "submitted", batch = batch,
-               detail = note, file = file)
+  entry <- wikibase_log(target = target, action = "quickstatements", kind = "batch",
+                        id = url, label = batch, status = "submitted", batch = batch,
+                        detail = note, file = file)
+
+  # The file this batch was pasted from must not stay pasteable.
+  if (nrow(prepared) > 0) {
+    retired <- quickstatements_retire(prepared$id[nrow(prepared)])
+    if (!is.na(retired)) {
+      cli::cli_alert_info("Batch recorded as submitted; its file is now {.file {retired}} so it cannot be pasted again")
+    }
+  }
+  entry
 }

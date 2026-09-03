@@ -195,6 +195,32 @@ quickstatements_for_entity <- function(kind, row, qid = NULL, resolve = NULL) {
   commands
 }
 
+#' What an entity kind is called outside the model
+#'
+#' The model's `paper` kind is a checked *work*, which is what the register, the
+#' certificates and every message here call it. Anything a person reads or types
+#' - a batch file name, a count in a warning - uses this rather than the kind.
+#'
+#' @param kind an entity kind
+#' @return the noun, singular
+#' @keywords internal
+wikidata_kind_noun <- function(kind) {
+  nouns <- c(paper = "work")
+  if (kind %in% names(nouns)) unname(nouns[kind]) else kind
+}
+
+#' Name of the QuickStatements batch for an entity kind
+#'
+#' This is what a person types when recording a batch they pasted by hand, so it
+#' is named after what the batch contains.
+#'
+#' @param kind an entity kind
+#' @return the batch name, without the `.qs` extension
+#' @keywords internal
+wikidata_batch_name <- function(kind) {
+  paste0("wikidata-", wikidata_kind_noun(kind), "s")
+}
+
 #' Whether a batch of creates would repeat one that was already submitted
 #'
 #' QuickStatements' `CREATE` has no idempotency and Wikidata will not stop a
@@ -214,8 +240,11 @@ wikidata_batch_conflict <- function(kind, creates, log_file = NULL) {
   log <- wikibase_log_read(log_file)
   if (nrow(log) == 0) return(NA_character_)
 
-  batch <- paste0("wikidata-", kind, "s")
-  submitted <- log[which(log$batch == batch & log$status == "submitted"), ]
+  # A split batch is several numbered batches in the log; any of them having
+  # been submitted is the situation this guards against.
+  batch <- wikidata_batch_name(kind)
+  part <- log$batch == batch | startsWith(log$batch, paste0(batch, "-"))
+  submitted <- log[which(part & log$status == "submitted"), ]
   if (nrow(submitted) == 0) return(NA_character_)
   submitted$time[nrow(submitted)]
 }
@@ -324,15 +353,30 @@ preview_wikidata_export <- function(dir = "../register", out_dir = ".",
   rownames(out) <- NULL
 
   for (kind in names(batches)) {
-    if (length(batches[[kind]]) == 0) next
+    if (length(batches[[kind]]) == 0) {
+      # A batch with nothing left to create has been run. Leaving the file from
+      # the run behind is the whole duplicate-paste hazard sitting on disk with
+      # a name that says paste me, so it goes.
+      base <- wikidata_batch_name(kind)
+      stale <- list.files(out_dir, pattern = paste0("^", base, "(-[0-9]+)?\\.qs$"),
+                          full.names = TRUE)
+      if (length(stale) > 0) {
+        file.remove(stale)
+        cli::cli_alert_info(
+          "Nothing left to create for {wikidata_kind_noun(kind)}s: removed {length(stale)} batch file{?s} that {?has/have} already been run"
+        )
+      }
+      next
+    }
     creates <- sum(out$action == "create" & out$kind == kind)
     conflict <- if (force) NA_character_ else wikidata_batch_conflict(kind, creates, log_file)
     if (!is.na(conflict)) {
       # Plain R rather than cli's pluralisation: an interpolated noun resets the
-      # quantity {?s} would agree with, so it reads "90 paper".
-      noun <- if (creates == 1) kind else paste0(kind, "s")
+      # quantity {?s} would agree with, so it reads "90 work".
+      singular <- wikidata_kind_noun(kind)
+      noun <- if (creates == 1) singular else paste0(singular, "s")
       cli::cli_alert_danger(
-        "Not writing the {kind} batch: one was submitted at {conflict}, and {creates} {noun} still do not resolve."
+        "Not writing the {singular} batch: one was submitted at {conflict}, and {creates} {noun} still do not resolve."
       )
       cli::cli_alert_info(
         "Either the search index has not caught up - wait and run this again - or that batch failed, which its QuickStatements page will say. Pasting it again would create every one of them a second time."
@@ -340,7 +384,7 @@ preview_wikidata_export <- function(dir = "../register", out_dir = ".",
       cli::cli_alert_info("Pass {.code force = TRUE} once you know which it was.")
       next
     }
-    quickstatements_write(batches[[kind]], paste0("wikidata-", kind, "s"),
+    quickstatements_write(batches[[kind]], wikidata_batch_name(kind),
                           dir = out_dir, target = "wikidata", file = log_file)
   }
 
@@ -353,8 +397,16 @@ preview_wikidata_export <- function(dir = "../register", out_dir = ".",
 
   cli::cli_alert_success("{sum(papers$action == 'create')} work{?s} to create, {sum(papers$action == 'exists')} already on Wikidata")
   cli::cli_alert_success("{sum(certificates$action == 'create')} certificate{?s} to create, {sum(certificates$action == 'exists')} already there")
-  cli::cli_alert_warning("{unlinked} certificate{?s} cannot state {.emph review of} until the works batch has run")
-  cli::cli_alert_info("Run the works batch first, then generate this again: QuickStatements can only refer to an item it just created")
+  if (unlinked > 0 && sum(papers$action == "create") > 0) {
+    cli::cli_alert_warning("{unlinked} certificate{?s} cannot state {.emph review of} until the works batch has run")
+    cli::cli_alert_info("Run the works batch first, then generate this again: QuickStatements can only refer to an item it just created")
+  } else if (unlinked > 0) {
+    # Every work that can be resolved has been. What is left cannot be fixed by
+    # running anything again: these certificates name a work with no DOI, and
+    # the DOI is what the export resolves on.
+    cli::cli_alert_warning("{unlinked} certificate{?s} cannot state {.emph review of}: the checked work has no DOI to resolve on")
+    cli::cli_alert_info("Nothing to re-run - give those works a DOI in the register, or add the statement by hand later")
+  }
 
   if (publish) {
     session <- wikibase_session()
