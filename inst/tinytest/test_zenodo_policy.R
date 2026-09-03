@@ -498,6 +498,17 @@ with_mocked_codecheck(
   expect_equal(codecheck:::zenodo_current_record_id("22205872"), "22205872")
 )
 
+# Following the redirect is right for the run at hand, but the register should
+# not keep pointing at a DOI that resolves to "whatever the latest version is":
+# the certificate has a version-specific DOI, and that is the one to record. So
+# the redirect is a warning naming that DOI, not a silent correction.
+expect_true(grepl("10.5281/zenodo.", codecheck:::zenodo_version_doi_message("8359199", "8359200"),
+                  fixed = TRUE))
+expect_true(grepl("8359200", codecheck:::zenodo_version_doi_message("8359199", "8359200"),
+                  fixed = TRUE))
+expect_true(grepl("not version-specific",
+                  codecheck:::zenodo_version_doi_message("8359199", "8359200"), fixed = TRUE))
+
 # A redirect that does not name a record id is not an id.
 with_mocked_codecheck(
   list(codecheck_GET = redirecting("https://zenodo.org/login")),

@@ -187,6 +187,16 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       # Write build metadata JSON file
       write_meta_json(build_metadata, "docs")
 
+      # Keep the codecheckers current as contributors on the register's own
+      # Zenodo deposit (register#58). Full runs only: a partial render sees
+      # only a subset of the register and would drop everyone outside it.
+      if (full_run) {
+        tryCatch(
+          update_zenodo_json(register),
+          error = function(e) cli::cli_alert_warning("Could not update .zenodo.json: {conditionMessage(e)}")
+        )
+      }
+
       # Generate SEO files (sitemap.xml, robots.txt, 404 page)
       generate_sitemap(register_table, filter_by, output_dir = "docs")
       generate_robots_txt(output_dir = "docs")

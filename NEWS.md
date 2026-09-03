@@ -1,5 +1,9 @@
 # codecheck 0.28.0.9000
 
+## New Features
+
+* `register_render()` keeps a register repo's `.zenodo.json` contributors current with every codechecker named in the register (register#58), crediting people whose work otherwise only appears on their own person page. New `build_zenodo_contributors()` and `update_zenodo_json()`. Zenodo's contributor vocabulary has no "reviewer"/"checker" term, so every entry is typed `"Other"`; a `.zenodo.json` that does not exist is left alone. Only the `contributors` array is touched - the rest of the file (title, creators, licence, ...) stays hand-maintained.
+
 # codecheck 0.28.0
 
 ## New Features

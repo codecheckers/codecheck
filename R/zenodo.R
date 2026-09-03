@@ -1255,6 +1255,23 @@ get_zenodo_record_metadata <- function(id, sandbox = FALSE) {
 }
 
 
+#' What to say when the register's report DOI is not version-specific
+#'
+#' Following the redirect is right for the run at hand, but a DOI that resolves
+#' to whatever the latest version happens to be is not a stable reference to a
+#' published certificate. The message therefore names the version-specific DOI
+#' to record in its place.
+#'
+#' @param id The record id the register points at
+#' @param current The record id it redirects to
+#' @return The warning text
+#' @keywords internal
+zenodo_version_doi_message <- function(id, current) {
+  paste0("record ", id, " redirects to ", current, " - the register's report DOI ",
+         "is not version-specific. Curating ", current, " for now; record ",
+         "10.5281/zenodo.", current, " in the certificate's codecheck.yml instead.")
+}
+
 #' The record id a Zenodo record id now points at
 #'
 #' Zenodo versions a record under a new id and redirects the old one. The
@@ -1523,13 +1540,17 @@ curate_zenodo_record <- function(record,
   cli::cli_alert_info("Opening the published record for editing ...")
   draft <- zenodo$editRecord(id)
 
-  # A versioned record: the register's report DOI names the version that was
-  # published then, and Zenodo redirects that id to the current one. Editing the
-  # old id answers "Not found", which says nothing about why.
+  # A versioned record: the id in the register redirects to the current version,
+  # so editing the old one answers "Not found", which says nothing about why.
+  # Following the redirect is right for this run, but the register should not
+  # keep pointing at a DOI that is not the certificate's own - a concept DOI
+  # resolves to whatever the latest version happens to be, which for a published
+  # certificate is not a stable reference. So this is a warning, not a note, and
+  # it names the DOI to record instead.
   if (is.null(draft) || !inherits(draft, "ZenodoRecord")) {
     current <- zenodo_current_record_id(id)
     if (!identical(as.character(current), as.character(id))) {
-      cli::cli_alert_info("Record {id} has been superseded, editing {current} instead")
+      cli::cli_alert_warning(zenodo_version_doi_message(id, current))
       draft <- zenodo$editRecord(current)
     }
   }
