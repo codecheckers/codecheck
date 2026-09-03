@@ -11,8 +11,8 @@ authors:
     given-names: Angelina
     orcid: https://orcid.org/0000-0002-6875-1551
 title: "codecheck R package: Helper Functions for CODECHECK Project"
-version: 0.26.0
+version: 0.28.0
 #doi: 10.5281/zenodo.TODO
-date-released: 2026-08-27
+date-released: 2026-09-02
 license: MIT
 repository-code: https://github.com/codecheckers/codecheck

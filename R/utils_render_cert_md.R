@@ -341,11 +341,13 @@ get_openalex_id_cached_result <- function(paper_reference, paper_title = NULL, f
 #'
 #' @param openalex_id The OpenAlex work URL or ID
 #' @return A list with `status` ("found", "absent" or "failed") and `value`, a
-#'   list with `issn` and `publication_date`, both possibly `NA`
+#'   list with `issn`, `venue` and `publication_date`, each possibly `NA`
 #' @noRd
 get_openalex_work_fields_result <- function(openalex_id) {
-  empty <- list(issn = NA_character_, publication_date = NA_character_)
-  if (is.null(openalex_id) || is.na(openalex_id) || nchar(openalex_id) == 0) {
+  empty <- list(issn = NA_character_, venue = NA_character_,
+                publication_date = NA_character_)
+  if (is.null(openalex_id) || length(openalex_id) != 1 || is.na(openalex_id) ||
+      !nzchar(openalex_id)) {
     return(list(status = "absent", value = empty))
   }
 
@@ -369,6 +371,10 @@ get_openalex_work_fields_result <- function(openalex_id) {
 
   list(status = "found", value = list(
     issn = if (is.null(issn)) NA_character_ else as.character(issn),
+    # The publication's name, for the venue item the mirror creates for it:
+    # the register's own venues.csv only covers the venues that commission
+    # checks, not the journals the checked works appeared in.
+    venue = source$display_name %||% NA_character_,
     publication_date = data$publication_date %||% NA_character_
   ))
 }
@@ -383,7 +389,9 @@ get_openalex_work_fields_result <- function(openalex_id) {
 #' @noRd
 get_openalex_work_fields_cached_result <- function(openalex_id) {
   cached_lookup_result(
-    key = list("openalex_work_fields", openalex_id),
+    # "v2": the cached values from before the venue name was read have the
+    # wrong shape, and a stale cache is worse than one refetch per work.
+    key = list("openalex_work_fields", openalex_id, "v2"),
     dirs = c("codecheck", "openalex_work_fields"),
     lookup = function() get_openalex_work_fields_result(openalex_id)
   )
@@ -686,6 +694,21 @@ add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venu
   # Adjusting the repo and report links
   md_content <- add_repository_hyperlink(md_content, repo_link)
   md_content <- gsub("\\$codecheck_full_certificate\\$", config_yml$report, md_content)
+
+  # The record on Wikidata, where the export created one (register#50). The
+  # whole line goes when there is none: an empty entry in the details box would
+  # read as a certificate that failed to reach Wikidata rather than one that
+  # has not been sent.
+  # The template is a vector of lines, so the entry is dropped by dropping its
+  # line - leaving the placeholder behind would render as pandoc inline maths.
+  cert_qid <- wikidata_id_for("certificate", config_yml$certificate)
+  md_content <- if (is.null(cert_qid)) {
+    md_content[!grepl("$codecheck_wikidata$", md_content, fixed = TRUE)]
+  } else {
+    gsub("\\$codecheck_wikidata\\$",
+         paste0("[", cert_qid, "](https://www.wikidata.org/wiki/", cert_qid, ")"),
+         md_content)
+  }
 
   # Adding Type and Venue links
   # Create venue slug (lowercase and replace spaces with underscores)

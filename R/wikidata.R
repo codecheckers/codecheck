@@ -91,6 +91,16 @@ WIKIBASE_INSTANCE <- list(
   token_env = "WIKIBASE_TOKEN"
 )
 
+#' The register.csv column holding a certificate's Wikidata item
+#'
+#' Written by [update_register_wikidata()] after a batch has run, and read back
+#' by the render so a certificate page can link the record it exported. One
+#' column rather than two: a checked work's item is resolved from its DOI at
+#' render time, and a person's from the register's person lookup.
+#'
+#' @keywords internal
+WIKIDATA_REGISTER_COLUMN <- "Wikidata"
+
 #' The Wikidata items the model refers to by name
 #'
 #' Constants rather than lookups: these identify the classes the certificates
@@ -486,7 +496,12 @@ WIKIDATA_MODEL <- list(
     statements = list(
       wikidata_statement(
         "issn", "P236", "ISSN", datatype = "external-id",
-        list(kind = "field", field = "identifiers", transform = "issn")
+        # The same field the venue is resolved by, so the statement that makes
+        # an item findable again and the rule that looks for it cannot diverge:
+        # reading venues.csv's packed "identifiers" here left every venue
+        # derived from a work's own record with a label and no ISSN at all.
+        list(kind = "field", field = "issn", transform = "issn"),
+        required = TRUE
       ),
       wikidata_statement(
         "official_website", "P856", "official website", datatype = "url",

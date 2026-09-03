@@ -10,6 +10,7 @@ register_render(
   outputs = c("html", "md", "json"),
   config = c(system.file("extdata", "config.R", package = "codecheck")),
   venues_file = "venues.csv",
+  persons_file = "persons.csv",
   codecheck_repo_path = NULL,
   from = 1,
   to = nrow(register),
@@ -32,6 +33,10 @@ register_render(
 \item{config}{A list of configuration files to be sourced at the beginning of the rending process}
 
 \item{venues_file}{Path to the venues.csv file containing venue names and labels}
+
+\item{persons_file}{Path to a CSV with `orcid` and `wikidata` columns, the
+register's lookup of the people it knows Wikidata items for. Optional: a
+missing file is ignored.}
 
 \item{codecheck_repo_path}{Optional path to the codecheck package repository for build metadata (default: NULL)}
 

@@ -391,15 +391,27 @@ wikidata_preview_wikitext <- function(preview, certificates, batches,
   certs <- preview[which(preview$kind == "certificate"), ]
   by_paper <- stats::setNames(seq_len(nrow(certificates)),
                               wikidata_transform(certificates$`Paper reference`, "doi"))
+  # A certificate is keyed on the DOI of its report, which is what the model
+  # resolves it by - see WIKIDATA_MODEL$certificate$resolve.
+  by_cert <- stats::setNames(seq_len(nrow(certs)), certs$key)
+
+  # What the export did, or would do, for one entity: the item Wikidata holds
+  # for it, or the fact that this run would create one.
+  status <- function(rows, i) {
+    if (length(i) == 0 || is.na(i)) return("&mdash;")
+    if (rows$action[i] == "exists") wikidata_link(rows$wikidata[i]) else "'''to create'''"
+  }
 
   paper_rows <- lapply(seq_len(nrow(papers)), function(i) {
     key <- papers$key[i]
     source <- certificates[unname(by_paper[key]), ]
+    cert <- unname(by_cert[wikidata_transform(text(source$Report), "doi")])
     c(
       paste0("[https://doi.org/", key, " ", key, "]"),
       substr(text(source$Title), 1, 80),
       text(source$Venue),
-      if (papers$action[i] == "exists") wikidata_link(papers$wikidata[i]) else "'''to create'''"
+      status(papers, i),
+      status(certs, cert)
     )
   })
 
@@ -436,10 +448,13 @@ wikidata_preview_wikitext <- function(preview, certificates, batches,
     "runs first; the preview is then generated again, and the certificates get their",
     "''review of'' statements pointing at the new items.",
     "",
-    "== Checked works ==",
+    "== Checked works and their certificates ==",
+    "",
+    "One row per checked work: the item Wikidata holds for the work itself, and the",
+    "item for the CODECHECK certificate that reviews it.",
     "",
     "{| class=\"wikitable sortable\"",
-    "! DOI !! Title !! Venue !! Wikidata",
+    "! DOI !! Title !! Venue !! Wikidata work !! Wikidata certificate",
     unlist(lapply(paper_rows, function(row) c("|-", paste0("| ", paste(row, collapse = " || "))))),
     "|}",
     "",
@@ -490,15 +505,19 @@ write_wikidata_preview_page <- function(session, preview, certificates, batches)
 #'
 #' @param dir the register repository to read from
 #' @param records already-read records, as from [read_register_records()]
-#' @return a `data.frame` with one row per certificate, invisibly: its report
-#'   DOI, its item if it has one, whether the query service can see it, and the
-#'   work it states `review of` on
+#' @param update_register whether to write the items found back into
+#'   `register.csv`, see [update_register_wikidata()]. Off by default: this is
+#'   a check, and editing the register is a separate decision.
+#' @return a `data.frame` with one row per certificate, invisibly: its
+#'   certificate ID, its report DOI, its item if it has one, whether the query
+#'   service can see it, and the work it states `review of` on
 #' @examples
 #' \dontrun{
 #' verify_wikidata_export("../register")
 #' }
 #' @export
-verify_wikidata_export <- function(dir = "../register", records = NULL) {
+verify_wikidata_export <- function(dir = "../register", records = NULL,
+                                  update_register = FALSE) {
   cli::cli_h2("Checking what arrived on Wikidata")
 
   if (is.null(records)) records <- read_register_records(dir)
@@ -548,9 +567,85 @@ verify_wikidata_export <- function(dir = "../register", records = NULL) {
   if (length(unlinked) > 0) {
     cli::cli_alert_warning("{length(unlinked)} certificate{?s} state no {.emph review of}: the work they checked has no item, or the certificates batch ran before the works batch")
   }
+  if (isTRUE(update_register)) update_register_wikidata(dir, out)
+
   if (all(!is.na(out$item)) && all(out$in_scholarly_graph) && all(!is.na(out$review_of))) {
     cli::cli_alert_success("Every certificate is on Wikidata, in the scholarly graph, linked to the work it checked")
   }
 
   invisible(out)
+}
+
+#' Record the certificates' Wikidata items in register.csv
+#'
+#' The QID is the one fact about a certificate that only Wikidata can tell us,
+#' and it is what a landing page needs to link the record it exported. Nothing
+#' in the pipeline can re-derive it offline, so it is written back into the
+#' register - the register is the authority, and a fact that lives only in a
+#' query result is a fact the next render loses.
+#'
+#' Edited line by line rather than read and rewritten as a table: `register.csv`
+#' holds a commented-out row (a check that was withdrawn), and a
+#' `read.csv()`/`write.csv()` round trip would silently drop it along with any
+#' other comment.
+#'
+#' Only cells with a QID are filled: a certificate not yet on Wikidata keeps an
+#' empty cell rather than losing one it already had.
+#'
+#' @param dir the register repository holding `register.csv`
+#' @param verified the table [verify_wikidata_export()] built, needing its
+#'   `certificate` and `item` columns
+#' @return the number of rows changed, invisibly
+#' @keywords internal
+update_register_wikidata <- function(dir, verified) {
+  path <- file.path(dir, "register.csv")
+  if (!file.exists(path)) stop("No register.csv in '", dir, "'")
+
+  lines <- readLines(path)
+  is_data <- !grepl("^\\s*(#|$)", lines)
+  if (!any(is_data)) stop("register.csv holds no rows")
+  header_at <- which(is_data)[1]
+
+  header <- strsplit(lines[header_at], ",", fixed = TRUE)[[1]]
+  rows_at <- setdiff(which(is_data), header_at)
+
+  # The file is plain comma-separated with no quoting; a quoted field holding a
+  # comma would split into more fields than the header has, and editing on that
+  # basis would corrupt the register, so refuse instead. Fewer fields is not a
+  # symptom of the same thing: strsplit() drops trailing empty ones, which is
+  # exactly what a row whose QID is still unknown looks like.
+  widths <- vapply(lines[rows_at], function(line) {
+    length(strsplit(line, ",", fixed = TRUE)[[1]])
+  }, integer(1), USE.NAMES = FALSE)
+  if (any(widths > length(header))) {
+    stop("register.csv has rows that split into more than ", length(header),
+         " fields; refusing to edit it")
+  }
+
+  column <- match(WIKIDATA_REGISTER_COLUMN, header)
+  if (is.na(column)) {
+    header <- c(header, WIKIDATA_REGISTER_COLUMN)
+    column <- length(header)
+    lines[rows_at] <- paste0(lines[rows_at], ",")
+    lines[header_at] <- paste(header, collapse = ",")
+  }
+
+  known <- stats::setNames(verified$item, verified$certificate)
+  known <- known[!is.na(known)]
+
+  changed <- 0
+  for (at in rows_at) {
+    fields <- strsplit(lines[at], ",", fixed = TRUE)[[1]]
+    length(fields) <- length(header)
+    fields[is.na(fields)] <- ""
+    qid <- unname(known[fields[1]])
+    if (is.na(qid) || identical(qid, fields[column])) next
+    fields[column] <- qid
+    lines[at] <- paste(fields, collapse = ",")
+    changed <- changed + 1
+  }
+
+  if (changed > 0) writeLines(lines, path)
+  cli::cli_alert_success("{changed} certificate{?s} recorded in {.file {path}}")
+  invisible(changed)
 }

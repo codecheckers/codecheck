@@ -480,6 +480,12 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
   }
   has_github <- !is.null(profile$github_handle) && nzchar(profile$github_handle)
 
+  # The person's Wikidata item, where the register knows one (register#50).
+  # Shown next to the other identifiers rather than only in the page's
+  # metadata: a reader looking for the record should not have to read the head.
+  wikidata <- wikidata_id_for("person", if (has_orcid) profile$orcid else identifier)
+  has_wikidata <- !is.null(wikidata)
+
   venues_html <- if (!is.null(register_table)) generate_contributed_venues_html(register_table, table_details) else ""
   has_venues <- nzchar(venues_html)
 
@@ -506,6 +512,8 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
     github_handle = if (has_github) profile$github_handle else NULL,
     has_orcid = has_orcid,
     orcid = if (has_orcid) profile$orcid else NULL,
+    has_wikidata = has_wikidata,
+    wikidata = wikidata,
     has_venues = has_venues,
     venues_html = venues_html,
     has_type_chart = has_type_chart,

@@ -14,6 +14,9 @@
 {{#has_github}}
 <li><i class="fa fa-github"></i> <span class="venue-metadata-label">GitHub:</span> <a href="https://github.com/{{github_handle}}" target="_blank" rel="noopener">{{github_handle}}</a></li>
 {{/has_github}}
+{{#has_wikidata}}
+<li><i class="fa fa-database"></i> <span class="venue-metadata-label">Wikidata:</span> <a href="https://www.wikidata.org/wiki/{{wikidata}}" target="_blank" rel="noopener">{{wikidata}}</a></li>
+{{/has_wikidata}}
 {{#has_venues}}
 <li><i class="fa fa-check-square-o"></i> <span class="venue-metadata-label">Contributed checks:</span> {{{venues_html}}}</li>
 {{/has_venues}}

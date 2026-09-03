@@ -136,7 +136,10 @@ render_register_full <- function(register_table, output_dir) {
       Type = register_table[i, "Type"],
       Venue = register_table[i, "Venue"],
       `Check date` = if ("Check date" %in% names(register_table)) register_table[i, "Check date"] else NA_character_,
-      OpenAlex = if ("OpenAlex" %in% names(register_table)) register_table[i, "OpenAlex"] else NA_character_
+      OpenAlex = if ("OpenAlex" %in% names(register_table)) register_table[i, "OpenAlex"] else NA_character_,
+      `Paper ISSN` = if ("Paper ISSN" %in% names(register_table)) register_table[i, "Paper ISSN"] else NA_character_,
+      `Paper venue` = if ("Paper venue" %in% names(register_table)) register_table[i, "Paper venue"] else NA_character_,
+      `Paper publication date` = if ("Paper publication date" %in% names(register_table)) register_table[i, "Paper publication date"] else NA_character_
     )
 
     # Fetch full codecheck.yml metadata (cached from preprocessing)
@@ -594,6 +597,7 @@ build_work_stats_field <- function(doi, register_table) {
     doi = fields$doi,
     title = nullable(fields$title),
     openalex = nullable(fields$openalex),
+    wikidata = nullable(wikidata_id_for("paper", doi)),
     venues = fields$venues,
     check_count = fields$check_count,
     authors = lapply(fields$authors, function(a) list(
@@ -630,6 +634,7 @@ build_person_stats_field <- function(orcid, register_table) {
     name = person_name,
     orcid = orcid,
     github_username = nullable(profile$github_handle),
+    wikidata = nullable(wikidata_id_for("person", orcid)),
     works_authored = length(authored_certs),
     checks_conducted = nrow(checked_table),
     venues = lapply(seq_len(nrow(venues)), function(i) list(

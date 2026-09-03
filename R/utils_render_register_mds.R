@@ -129,11 +129,13 @@ render_register_md <- function(register_table, table_details, filter) {
     # persons never reaches the register.md-writing branch below.
     md_table <- create_persons_md_table(register_table, table_details)
   } else {
-    if (!is.na(filter) && filter == "works" && "Repository" %in% names(register_table)) {
-      # Repository rode along only so generate_work_metadata_html() above
-      # could look up authors/abstract - it's not a column the visible
-      # table should show.
-      register_table <- register_table[, setdiff(names(register_table), "Repository"), drop = FALSE]
+    if (!is.na(filter) && filter == "works") {
+      # Repository and OpenAlex rode along only so generate_work_metadata_html()
+      # above could look up authors/abstract and the work's identifiers - they
+      # are not columns the visible table should show.
+      register_table <- register_table[, setdiff(names(register_table),
+                                                 c("Repository", "OpenAlex")),
+                                       drop = FALSE]
     }
     md_table <- create_md_table(register_table, table_details, filter)
   }

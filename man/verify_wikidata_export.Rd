@@ -4,17 +4,25 @@
 \alias{verify_wikidata_export}
 \title{Check what actually arrived on Wikidata}
 \usage{
-verify_wikidata_export(dir = "../register", records = NULL)
+verify_wikidata_export(
+  dir = "../register",
+  records = NULL,
+  update_register = FALSE
+)
 }
 \arguments{
 \item{dir}{the register repository to read from}
 
 \item{records}{already-read records, as from [read_register_records()]}
+
+\item{update_register}{whether to write the items found back into
+`register.csv`, see [update_register_wikidata()]. Off by default: this is
+a check, and editing the register is a separate decision.}
 }
 \value{
-a `data.frame` with one row per certificate, invisibly: its report
-  DOI, its item if it has one, whether the query service can see it, and the
-  work it states `review of` on
+a `data.frame` with one row per certificate, invisibly: its
+  certificate ID, its report DOI, its item if it has one, whether the query
+  service can see it, and the work it states `review of` on
 }
 \description{
 The step after a batch has run, and the one that proves the model's central

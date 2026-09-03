@@ -365,7 +365,27 @@ read_register_records <- function(dir) {
     row
   })
 
-  list(certificates = do.call(rbind, certificates), venues = venues)
+  certificates <- do.call(rbind, certificates)
+
+  # A register.json rendered before these columns existed still exports with
+  # them: the lookup is the same cached one the render uses, so this costs
+  # nothing once the register has been rendered with them.
+  for (column in c("Paper ISSN", "Paper venue", "Paper publication date")) {
+    if (!column %in% names(certificates)) certificates[[column]] <- NA_character_
+  }
+  fill <- which(is.na(certificates$`Paper ISSN`) & !is.na(certificates$OpenAlex))
+  for (i in fill) {
+    fields <- tryCatch(get_openalex_work_fields_cached_result(certificates$OpenAlex[i])$value,
+                       error = function(e) NULL)
+    if (is.null(fields)) next
+    certificates$`Paper ISSN`[i] <- fields$issn %||% NA_character_
+    certificates$`Paper venue`[i] <- fields$venue %||% NA_character_
+    if (is.na(certificates$`Paper publication date`[i])) {
+      certificates$`Paper publication date`[i] <- fields$publication_date %||% NA_character_
+    }
+  }
+
+  list(certificates = certificates, venues = venues)
 }
 
 #' Which entities the instance already holds, by identifier
@@ -462,6 +482,33 @@ wikibase_export_rows <- function(records) {
   venues <- records$venues
   venues$issn <- vapply(venues$identifiers, wikidata_transform, character(1), "issn")
   venues <- venues[!is.na(venues$issn), , drop = FALSE]
+
+  # venues.csv covers the venues that commission checks, which is not the same
+  # set as the publications the checked works appeared in: 25 publications are
+  # named by the works, and 3 of them are in venues.csv. The mirror holds
+  # everything, so the rest get an item too, from what the work's own OpenAlex
+  # record says - otherwise a work's "published in" statement has no target and
+  # is dropped, and the mirror stops matching what the export means.
+  if ("Paper ISSN" %in% names(certificates)) {
+    publications <- certificates[which(!is.na(certificates$`Paper ISSN`) &
+                                         !certificates$`Paper ISSN` %in% venues$issn), ]
+    publications <- publications[!duplicated(publications$`Paper ISSN`), , drop = FALSE]
+    if (nrow(publications) > 0) {
+      extra <- data.frame(
+        name = publications$`Paper venue`,
+        longname = publications$`Paper venue`,
+        identifiers = NA_character_,
+        website_url = NA_character_,
+        issn = publications$`Paper ISSN`,
+        stringsAsFactors = FALSE
+      )
+      # A publication OpenAlex names without a title cannot be labelled, and an
+      # item with an ISSN and nothing else says less than no item at all.
+      extra <- extra[!is.na(extra$longname) & nzchar(extra$longname), , drop = FALSE]
+      shared <- intersect(names(venues), names(extra))
+      venues <- rbind(venues[, shared, drop = FALSE], extra[, shared, drop = FALSE])
+    }
+  }
 
   list(person = people, venue = venues, paper = papers, certificate = certificates)
 }

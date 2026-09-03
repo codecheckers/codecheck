@@ -5,6 +5,9 @@
 {{#has_openalex}}
 <li><span class="venue-metadata-label">OpenAlex:</span> <a href="{{openalex}}" target="_blank" rel="noopener">{{openalex}}</a></li>
 {{/has_openalex}}
+{{#has_wikidata}}
+<li><span class="venue-metadata-label">Wikidata:</span> <a href="https://www.wikidata.org/wiki/{{wikidata}}" target="_blank" rel="noopener">{{wikidata}}</a></li>
+{{/has_wikidata}}
 {{#has_authors}}
 <li><span class="venue-metadata-label">Authors:</span> {{{authors_html}}}</li>
 {{/has_authors}}

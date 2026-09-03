@@ -478,6 +478,14 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
     cert_json$paper$openalex <- openalex_id
   }
 
+  # The record on Wikidata, where one was exported (register#50). Named here as
+  # well as in the head and the JSON-LD so that a consumer of the JSON alone
+  # can follow it.
+  cert_qid <- wikidata_id_for("certificate", cert_id)
+  if (!is.null(cert_qid)) cert_json$certificate$wikidata <- cert_qid
+  work_qid <- wikidata_id_for("paper", config_yml$paper$reference)
+  if (!is.null(work_qid)) cert_json$paper$wikidata <- work_qid
+
   # Write JSON file
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   json_path <- file.path(output_dir, "index.json")

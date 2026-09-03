@@ -54,7 +54,7 @@ wikibase_user_agent <- function() {
 #' else - a bad token, a duplicate label, a wrong datatype - is a real error and
 #' must not be retried.
 #'
-#' @param result the parsed API response, or `NULL`
+#' @param result the parsed API response, an error condition, or `NULL`
 #' @param response the `httr` response, or `NULL`
 #' @param attempt which attempt this was, 1-based
 #' @return seconds to wait, or `NA_real_` if the request should not be repeated
@@ -63,6 +63,15 @@ wikibase_retry_after <- function(result, response = NULL, attempt = 1) {
   # Doubling, so a busy instance is not hammered on every attempt, but never
   # more than a minute: a run that stalls silently is worse than one that fails.
   backoff <- function(seconds) min(max(seconds, 1) * 2^(attempt - 1), 60)
+
+  # The request never completed - a timeout, a dropped connection, a DNS
+  # failure. That is the same situation as a 503 with less information: the
+  # server did not answer, and the write may or may not have happened. Both
+  # halves of the export are idempotent, so repeating is safe and stopping a
+  # 300-write run on one stalled connection is not.
+  if (inherits(result, "condition")) {
+    return(backoff(5))
+  }
 
   code <- result$error$code
   if (!is.null(code)) {
@@ -102,18 +111,33 @@ wikibase_request <- function(method, params, handle = NULL, what = "the API",
   agent <- httr::user_agent(wikibase_user_agent())
 
   for (attempt in seq_len(attempts)) {
-    response <- if (identical(method, "POST")) {
-      httr::POST(api, handle = handle, body = params, encode = "form", agent)
-    } else {
-      httr::GET(api, handle = handle, query = params, agent)
-    }
-    result <- httr::content(response, as = "parsed", type = "application/json")
+    response <- NULL
+    result <- tryCatch({
+      response <- if (identical(method, "POST")) {
+        httr::POST(api, handle = handle, body = params, encode = "form", agent)
+      } else {
+        httr::GET(api, handle = handle, query = params, agent)
+      }
+      httr::content(response, as = "parsed", type = "application/json")
+    }, error = function(e) e)
 
     wait <- wikibase_retry_after(result, response, attempt)
-    if (is.na(wait) || attempt == attempts) return(result)
-    cli::cli_alert_warning(
-      "{what}: {result$error$code %||% httr::status_code(response)}, retrying in {round(wait)}s"
-    )
+    if (is.na(wait)) return(result)
+    if (attempt == attempts) {
+      # Out of attempts: a transport failure is an error, an API answer is
+      # whatever it is and the caller decides.
+      if (inherits(result, "condition")) {
+        stop("Could not reach ", api, " for ", what, " after ", attempts,
+             " attempts: ", conditionMessage(result))
+      }
+      return(result)
+    }
+    reason <- if (inherits(result, "condition")) {
+      conditionMessage(result)
+    } else {
+      result$error$code %||% httr::status_code(response)
+    }
+    cli::cli_alert_warning("{what}: {reason}, retrying in {round(wait)}s")
     Sys.sleep(wait)
   }
   result

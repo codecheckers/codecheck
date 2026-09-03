@@ -264,13 +264,7 @@ get_gitlab_readme_raw <- function(repo) {
 #' @importFrom yaml yaml.load
 #' @importFrom zen4R ZenodoManager
 get_codecheck_yml_zenodo <- function(x, sandbox = FALSE) {
-  zenodo <- ZenodoManager$new(
-    url = "https://zenodo.org/api",
-    sandbox = sandbox,
-    logger = "INFO"
-  )
-  
-  record <- zenodo$getRecordById(x)
+  record <- zenodo_record(x, sandbox = sandbox)
   
   if(!is.null(record)) {
     files <- record$files
@@ -287,6 +281,26 @@ get_codecheck_yml_zenodo <- function(x, sandbox = FALSE) {
   # record is null, or no file with the required name was in the list of files
   warning("codecheck.yml not found in record ", x, " (sandbox? ", sandbox, ")")
   return(NULL)
+}
+
+#' The Zenodo record behind a record id
+#'
+#' Its own function so that a test can serve a record instead of reaching for
+#' Zenodo, the way [is_zenodo_concept_doi()] takes a `fetch_record`. Zenodo
+#' being slow or rate-limiting is not a reason for a test of this package's own
+#' logic to fail.
+#'
+#' @param x the Zenodo record id
+#' @param sandbox connect with the Zenodo Sandbox instead of the real service
+#' @return the record, or `NULL`
+#' @keywords internal
+zenodo_record <- function(x, sandbox = FALSE) {
+  zenodo <- ZenodoManager$new(
+    url = "https://zenodo.org/api",
+    sandbox = sandbox,
+    logger = "INFO"
+  )
+  zenodo$getRecordById(x)
 }
 
 #' Parse the repository specification in the column "Repo" in the register CSV file

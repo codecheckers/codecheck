@@ -127,6 +127,9 @@ generate_work_metadata_html <- function(table_details, register_table) {
   }
 
   has_openalex <- !is.na(fields$openalex) && nzchar(fields$openalex)
+  # The work's own Wikidata item, beside its other identifiers (register#50).
+  wikidata <- wikidata_id_for("paper", fields$doi)
+  has_wikidata <- !is.null(wikidata)
   has_venues <- length(fields$venues) > 0
   has_authors <- nzchar(authors_html)
   has_dates <- !is.na(fields$first_check_date)
@@ -139,6 +142,8 @@ generate_work_metadata_html <- function(table_details, register_table) {
     doi_url = paste0(CONFIG$HYPERLINKS[["doi"]], fields$doi),
     has_openalex = has_openalex,
     openalex = fields$openalex,
+    has_wikidata = has_wikidata,
+    wikidata = wikidata,
     has_authors = has_authors,
     authors_html = authors_html,
     has_venues = has_venues,

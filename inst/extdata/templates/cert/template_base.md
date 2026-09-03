@@ -60,6 +60,7 @@ title: $title$
   <p><strong>Time of check</strong>: $codecheck_time$</p>
   <p><strong>Repository</strong>: $codecheck_repo$</p>
   <p><strong>Full certificate</strong>: $codecheck_full_certificate$</p>
+  <p><strong>Certificate on Wikidata</strong>: $codecheck_wikidata$</p>
   <p><strong>Type</strong>: $codecheck_type$</p>
   <p><strong>Venue</strong>: $codecheck_venue$</p>
 

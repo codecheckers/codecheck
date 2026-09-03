@@ -9,6 +9,7 @@ register_render_cert(
   register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   config = c(system.file("extdata", "config.R", package = "codecheck")),
   venues_file = "venues.csv",
+  persons_file = "persons.csv",
   force_download = TRUE,
   download_and_convert = TRUE,
   verbose = FALSE,
@@ -25,6 +26,9 @@ Defaults to reading \code{"register.csv"} from the working directory.}
 Defaults to the package's built-in \code{config.R}.}
 
 \item{venues_file}{Path to the venues.csv file containing venue names and labels.}
+
+\item{persons_file}{Path to the register's record of the people with
+Wikidata items, see [register_render()].}
 
 \item{force_download}{Logical; if TRUE, forces re-download of certificate PDF
 even if it already exists locally. Defaults to TRUE.}

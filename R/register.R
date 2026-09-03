@@ -28,6 +28,9 @@ is_full_register_run <- function(from, to, n) {
 #' @param outputs The output formats to create
 #' @param config A list of configuration files to be sourced at the beginning of the rending process
 #' @param venues_file Path to the venues.csv file containing venue names and labels
+#' @param persons_file Path to a CSV with `orcid` and `wikidata` columns, the
+#'   register's lookup of the people it knows Wikidata items for. Optional: a
+#'   missing file is ignored.
 #' @param codecheck_repo_path Optional path to the codecheck package repository for build metadata (default: NULL)
 #' @param from The first register entry to check
 #' @param to The last register entry to check
@@ -56,6 +59,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
                             outputs = c("html", "md", "json"),
                             config = c(system.file("extdata", "config.R", package = "codecheck")),
                             venues_file = "venues.csv",
+                            persons_file = "persons.csv",
                             codecheck_repo_path = NULL,
                             from = 1,
                             to = nrow(register),
@@ -130,6 +134,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       register <- register[(from:to),]
 
       register_table <- preprocess_register(register, filter_by)
+      # After preprocessing: the certificate items come from register.csv, and
+      # the works are only resolved once something has been exported.
+      load_wikidata_ids(register_table, persons_file)
       # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
       # done by multiple authors.
       CONFIG$NO_CODECHECKS <- nrow(register_table)
@@ -260,6 +267,8 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
 #' @param config A character vector of configuration file paths to source.
 #'   Defaults to the package's built-in \code{config.R}.
 #' @param venues_file Path to the venues.csv file containing venue names and labels.
+#' @param persons_file Path to the register's record of the people with
+#'   Wikidata items, see [register_render()].
 #' @param force_download Logical; if TRUE, forces re-download of certificate PDF
 #'   even if it already exists locally. Defaults to TRUE.
 #' @param download_and_convert Logical; if TRUE, downloads and converts the
@@ -282,6 +291,7 @@ register_render_cert <- function(cert_id,
                                  register = read.csv("register.csv", as.is = TRUE, comment.char = '#'),
                                  config = c(system.file("extdata", "config.R", package = "codecheck")),
                                  venues_file = "venues.csv",
+                                 persons_file = "persons.csv",
                                  force_download = TRUE,
                                  download_and_convert = TRUE,
                                  verbose = FALSE,
@@ -323,6 +333,14 @@ register_render_cert <- function(cert_id,
 
   # Load venues configuration
   load_venues_config(venues_file)
+
+  # Only this certificate's row is enriched: preprocessing the whole register
+  # here would make rendering one certificate cost as much as rendering all of
+  # them, and the lookup only needs this work's DOI and these people's ORCIDs.
+  load_wikidata_ids(
+    preprocess_register(register[register$Certificate == cert_id, , drop = FALSE],
+                        filter_by = c("works", "persons")),
+    persons_file)
 
   # Setup shared libraries (needed for HTML rendering)
   setup_external_libraries()

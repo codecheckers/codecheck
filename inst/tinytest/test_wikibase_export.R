@@ -317,3 +317,59 @@ expect_equal(length(Filter(
 # the work is exported without those statements rather than failing.
 older <- work_row[c("Title", "Paper reference", "Venue")]
 expect_true(length(codecheck:::wikibase_entity_payload("paper", older, local_with_venue)$claims) > 0)
+
+# The publications the works appeared in ----
+
+# venues.csv covers the venues that commission checks, which is not the set of
+# publications the checked works appeared in. The mirror holds everything, so a
+# publication the register does not know still gets an item - otherwise the
+# work's "published in" statement has no target and is silently dropped.
+with_publications <- records
+with_publications$certificates$`Paper ISSN` <- c("2047-217X", "0027-8424")
+with_publications$certificates$`Paper venue` <- c("GigaScience",
+                                                  "Proceedings of the National Academy of Sciences")
+venues <- codecheck:::wikibase_export_rows(with_publications)$venue
+expect_equal(nrow(venues), 2L)
+expect_true("Proceedings of the National Academy of Sciences" %in% venues$longname)
+# The register's own row wins for a publication it already describes: it has a
+# website and a curated name, which the OpenAlex record does not.
+expect_equal(venues$longname[venues$issn == "2047-217X"], "GigaScience")
+expect_equal(sum(venues$issn == "2047-217X"), 1L)
+
+# Two works in one publication are one venue item.
+same_venue <- with_publications
+same_venue$certificates$`Paper ISSN` <- c("0027-8424", "0027-8424")
+same_venue$certificates$`Paper venue` <- rep("Proceedings of the National Academy of Sciences", 2)
+expect_equal(nrow(codecheck:::wikibase_export_rows(same_venue)$venue), 2L)
+
+# A publication OpenAlex has no name for cannot be labelled, and an item with an
+# ISSN and nothing else says less than no item at all.
+unnamed <- with_publications
+unnamed$certificates$`Paper venue` <- c("GigaScience", NA_character_)
+expect_equal(nrow(codecheck:::wikibase_export_rows(unnamed)$venue), 1L)
+
+# Every venue row still has the identifier it is found again by.
+expect_true(all(!is.na(codecheck:::wikibase_key_column(venues, "venue"))))
+
+# A venue item states the identifier it is found again by ----
+
+# The statement and the resolve rule have to read the same field: reading
+# venues.csv's packed "identifiers" for the statement while resolving on "issn"
+# left every venue built from a work's own record with a label and no ISSN, so
+# the next run could not find it and created it again.
+venue_payload <- codecheck:::wikibase_entity_payload(
+  "venue",
+  list(longname = "Proceedings of the National Academy of Sciences", issn = "0027-8424"),
+  c(local, list(P236 = "P24")))
+issn_claim <- Filter(function(claim) claim$mainsnak$property == "P24", venue_payload$claims)
+expect_equal(length(issn_claim), 1L)
+expect_equal(issn_claim[[1]]$mainsnak$datavalue$value, "0027-8424")
+expect_equal(venue_payload$labels$en$value, "Proceedings of the National Academy of Sciences")
+
+# venues.csv's packed form still works, since the transform accepts both.
+packed <- codecheck:::wikibase_entity_payload(
+  "venue",
+  list(longname = "GigaScience", issn = "ISSN|fa-book|2047-217X|https://portal.issn.org/x"),
+  c(local, list(P236 = "P24")))
+expect_equal(Filter(function(claim) claim$mainsnak$property == "P24",
+                    packed$claims)[[1]]$mainsnak$datavalue$value, "2047-217X")

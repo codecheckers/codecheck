@@ -7,7 +7,7 @@
 wikibase_retry_after(result, response = NULL, attempt = 1)
 }
 \arguments{
-\item{result}{the parsed API response, or `NULL`}
+\item{result}{the parsed API response, an error condition, or `NULL`}
 
 \item{response}{the `httr` response, or `NULL`}
 

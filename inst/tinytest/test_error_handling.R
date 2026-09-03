@@ -6,6 +6,28 @@ suppressMessages({
   library(R.cache)
 })
 
+source("mocks.R")
+
+# A Zenodo record with files, but none of them a codecheck.yml. Zenodo being
+# slow or rate-limiting used to fail these tests for reasons that have nothing
+# to do with what they check.
+mock_zenodo_record <- function(files = list(list(filename = "article.pdf",
+                                                download = "https://example.org/article.pdf"))) {
+  function(x, sandbox = FALSE) list(files = files)
+}
+
+# Several tests here validate far enough to reach the report DOI, which sends
+# codecheck_yml validation to Zenodo to ask about versioning. This file is
+# about this package's own error handling; Zenodo versioning is under test in
+# test_zenodo_policy.R, so here the answers are given.
+with_mocked_zenodo <- function(expr) {
+  with_mocked_codecheck(list(
+    zenodo_record = mock_zenodo_record(),
+    is_zenodo_concept_doi = function(...) FALSE,
+    is_zenodo_latest_version = function(...) TRUE
+  ), expr)
+}
+
 # Test 1: get_codecheck_yml() - unsupported repository type ----
 expect_error({
   codecheck::get_codecheck_yml("bitbucket::user/repo")
@@ -46,10 +68,14 @@ expect_warning({
 expect_null(result)
 
 # Test 8: get_codecheck_yml() - warning for missing codecheck.yml on Zenodo ----
-expect_warning({
-  result <- codecheck::get_codecheck_yml("zenodo::8385350")
-}, pattern = "codecheck.yml not found")
-expect_null(result)
+# The record is mocked, so what is under test is the walk over its files and
+# the warning at the end of it, not Zenodo's availability.
+with_mocked_zenodo({
+  expect_warning({
+    result <- codecheck::get_codecheck_yml("zenodo::8385350")
+  }, pattern = "codecheck.yml not found")
+  expect_null(result)
+})
 
 # Test 9: validate_codecheck_yml() - missing certificate ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "certificate_id_missing", package = "codecheck")
@@ -107,9 +133,11 @@ expect_error({
 
 # Test 18: validate_codecheck_yml() - invalid repository URL ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "repository_url_invalid", package = "codecheck")
-expect_error({
-  codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "codecheck.yml"))
-}, pattern = "URL returns error")
+with_mocked_zenodo({
+  expect_error({
+    codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "codecheck.yml"))
+  }, pattern = "URL returns error")
+})
 
 # Test 19: validate_codecheck_yml() - file doesn't exist ----
 expect_error({
@@ -189,11 +217,16 @@ bad_register <- data.frame(
   stringsAsFactors = FALSE
 )
 
-expect_error({
-  suppressMessages({
-    codecheck::register_check(bad_register, from = 1, to = 1)
-  })
-}, pattern = "Certificate mismatch")
+# The record is mocked to the fixture the sandbox used to serve: the mismatch
+# under test is between the register row and the certificate in the yml.
+with_mocked_zenodo(
+  with_mocked_codecheck(list(get_codecheck_yml = mock_get_codecheck_yml()), {
+    expect_error({
+      suppressMessages({
+        codecheck::register_check(bad_register, from = 1, to = 1)
+      })
+    }, pattern = "Certificate mismatch")
+  }))
 
 # Test 26: Edge case - very long certificate ID ----
 long_cert_metadata <- list(
@@ -248,11 +281,17 @@ empty_manifest_metadata <- list(
   repository = "https://github.com/codecheckers/register"  # Use real repo
 )
 
-# Empty manifest is technically valid per spec, but may cause issues
-expect_silent({
-  result <- codecheck::validate_codecheck_yml(empty_manifest_metadata)
+# Empty manifest is technically valid per spec, but may cause issues.
+# This is the one metadata block here that validates far enough to reach the
+# report DOI, so it is the one that asked Zenodo whether the DOI is a concept
+# DOI - and failed when Zenodo did not answer. The answers are mocked: what is
+# under test is the empty manifest, not Zenodo versioning.
+with_mocked_zenodo({
+  expect_silent({
+    result <- codecheck::validate_codecheck_yml(empty_manifest_metadata)
+  })
+  expect_true(result)
 })
-expect_true(result)
 
 # Test 29: Manifest item without file field ----
 no_file_manifest_metadata <- list(

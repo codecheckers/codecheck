@@ -431,3 +431,23 @@ expect_equal(written, c("Project:About", "Project:Copyrights", "Project:Copyrigh
 expect_true(all(vapply(sent, function(p) p$action, character(1)) == "edit"))
 expect_true(all(vapply(sent, function(p) p$bot, numeric(1)) == 1))
 expect_equal(sent[[3]]$text, "#REDIRECT [[Project:Copyrights]]")
+
+# A request that never completed ----
+
+# A timeout or a dropped connection is the same situation as a 503 with less
+# information: the server did not answer. Stopping a 300-write run on one
+# stalled connection - which is what happened against the live instance - is
+# worse than repeating a write that both halves of the export make idempotent.
+timeout <- simpleError("Timeout was reached [codecheck.wikibase.cloud]")
+expect_equal(codecheck:::wikibase_retry_after(timeout), 5)
+expect_equal(codecheck:::wikibase_retry_after(timeout, attempt = 3), 20)
+expect_equal(codecheck:::wikibase_retry_after(timeout, attempt = 6), 60)
+
+# No wikitext line starts with a space ----
+
+# A leading space is preformatted text in MediaWiki, so a wrapped list item
+# rendered as a run of fixed-width blocks instead of a list.
+for (page in list(codecheck:::wikibase_about_wikitext(),
+                  codecheck:::wikibase_copyright_wikitext())) {
+  expect_false(any(grepl("^[ \t]", page)))
+}

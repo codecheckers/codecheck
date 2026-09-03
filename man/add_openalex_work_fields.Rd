@@ -10,8 +10,8 @@ add_openalex_work_fields(register_table)
 \item{register_table}{The register table, with an `OpenAlex` column}
 }
 \value{
-The register table with added "Paper ISSN" and "Paper publication
-  date" columns
+The register table with added "Paper ISSN", "Paper venue" and
+  "Paper publication date" columns
 }
 \description{
 Part of the same enrichment: an OpenAlex ID is a pointer, and the record it

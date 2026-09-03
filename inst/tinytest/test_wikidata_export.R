@@ -1,5 +1,7 @@
 tinytest::using(ttdo)
 
+source("mocks.R")
+
 # Wikidata is not written by this code: the batches are pasted into
 # QuickStatements by a person under their own account. What the package owes
 # them is an exact preview, so everything that builds one is pure and tested.
@@ -85,15 +87,18 @@ expect_false(codecheck::wikidata_creates("venue", "wikidata"))
 # The preview page ----
 
 preview <- data.frame(
-  kind = c("paper", "paper", "certificate"),
-  key = c("10.1093/GIGASCIENCE/GIAA026", "10.1234/MISSING", "10.5281/ZENODO.3674056"),
-  wikidata = c("Q91579802", NA, NA),
-  action = c("exists", "create", "create"),
-  commands = c(0L, 6L, 14L), stringsAsFactors = FALSE
+  kind = c("paper", "paper", "certificate", "certificate"),
+  key = c("10.1093/GIGASCIENCE/GIAA026", "10.1234/MISSING",
+          "10.5281/ZENODO.3674056", "10.5281/ZENODO.9999999"),
+  wikidata = c("Q91579802", NA, "Q130000001", NA),
+  action = c("exists", "create", "exists", "create"),
+  commands = c(0L, 6L, 0L, 14L), stringsAsFactors = FALSE
 )
 certificates <- data.frame(
   `Paper reference` = c("https://doi.org/10.1093/gigascience/giaa026",
                         "https://doi.org/10.1234/missing"),
+  Report = c("https://doi.org/10.5281/zenodo.3674056",
+             "https://doi.org/10.5281/zenodo.9999999"),
   Title = c("ShinyLearner", "A missing work"), Venue = c("GigaScience", "codecheck"),
   check.names = FALSE, stringsAsFactors = FALSE
 )
@@ -110,6 +115,21 @@ expect_true(grepl("https://www.wikidata.org/wiki/Q91579802", page, fixed = TRUE)
 expect_true(grepl("'''to create'''", page, fixed = TRUE))
 # Tabs would collapse in the rendered <pre>, so the example is spaced out.
 expect_false(grepl("\t", page, fixed = TRUE))
+
+# Each row carries both items: the work's, and the certificate that reviews it
+# (register#50). A reader of the page needs the certificate's item to find the
+# exported record on Wikidata at all - nothing else on the page names it.
+expect_true(grepl("! DOI !! Title !! Venue !! Wikidata work !! Wikidata certificate",
+                  page, fixed = TRUE))
+expect_true(grepl("https://www.wikidata.org/wiki/Q130000001", page, fixed = TRUE))
+
+# A certificate the preview knows nothing about leaves the cell empty rather
+# than claiming the export would create one.
+no_cert <- certificates
+no_cert$Report <- c("https://doi.org/10.5281/zenodo.3674056", NA)
+page_missing <- paste(codecheck:::wikidata_preview_wikitext(
+  preview, no_cert, list(paper = rep("x", 6), certificate = commands)), collapse = "\n")
+expect_true(grepl("&mdash;", page_missing, fixed = TRUE))
 
 # Finding items again after a batch has run ----
 
@@ -156,3 +176,151 @@ expect_true(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}T", conflict))
 expect_true(is.na(codecheck:::wikidata_batch_conflict("paper", 0, log_file)))
 # A different batch is not this batch.
 expect_true(is.na(codecheck:::wikidata_batch_conflict("certificate", 132, log_file)))
+
+# Recording the items in register.csv ----
+
+# The QID cannot be re-derived offline, so it is written back into the register
+# rather than left in a query result the next render would lose.
+
+register_dir <- tempfile(); dir.create(register_dir)
+register_csv <- file.path(register_dir, "register.csv")
+original <- c(
+  "Certificate,Repository,Type,Venue,Issue",
+  "2020-001,github::codecheckers/a,journal,GigaScience,NA",
+  "#2024-002,github::codecheckers/withdrawn,community,codecheck NL,61",
+  "2024-017,github::codecheckers/b,community,codecheck NL,133"
+)
+writeLines(original, register_csv)
+
+verified <- data.frame(
+  certificate = c("2020-001", "2024-017"),
+  item = c("Q130000001", NA_character_),
+  stringsAsFactors = FALSE
+)
+expect_equal(codecheck:::update_register_wikidata(register_dir, verified), 1)
+
+written <- readLines(register_csv)
+expect_equal(written[1], "Certificate,Repository,Type,Venue,Issue,Wikidata")
+expect_equal(written[2], "2020-001,github::codecheckers/a,journal,GigaScience,NA,Q130000001")
+# The commented-out row is a withdrawn check: a read.csv/write.csv round trip
+# would drop it, which is why the file is edited line by line.
+expect_equal(written[3], original[3])
+# A certificate not on Wikidata gets an empty cell, not "NA".
+expect_equal(written[4], "2024-017,github::codecheckers/b,community,codecheck NL,133,")
+
+# Running it again adds nothing and changes nothing.
+expect_equal(codecheck:::update_register_wikidata(register_dir, verified), 0)
+expect_equal(readLines(register_csv), written)
+
+# A later run fills in what has since been exported, in place.
+verified$item <- c("Q130000001", "Q130000002")
+expect_equal(codecheck:::update_register_wikidata(register_dir, verified), 1)
+expect_equal(readLines(register_csv)[4],
+             "2024-017,github::codecheckers/b,community,codecheck NL,133,Q130000002")
+expect_equal(length(readLines(register_csv)), length(original))
+
+# A quoted field would make splitting on "," wrong, so the register is left alone.
+writeLines(c("Certificate,Repository,Type,Venue,Issue",
+             '2020-001,github::codecheckers/a,journal,"Venue, with comma",NA'), register_csv)
+expect_error(codecheck:::update_register_wikidata(register_dir, verified),
+             pattern = "refusing to edit")
+
+# Linking the pages to the exported records ----
+
+# CONFIG is where the lookup lives, the same way the venue data does.
+source(system.file("extdata", "config.R", package = "codecheck"))
+
+# Three page kinds, three sources for the item: a certificate from the register
+# column, a work by resolving its DOI, a person from the register's lookup.
+
+expect_equal(codecheck:::wikidata_entity_url("Q42"), "https://www.wikidata.org/entity/Q42")
+expect_equal(codecheck:::wikidata_entitydata_url("Q42"),
+             "https://www.wikidata.org/wiki/Special:EntityData/Q42.json")
+
+# describedby, not cite-as: cite-as has a cardinality of 1 and a certificate's
+# PID is the DOI of its report.
+links <- codecheck:::wikidata_signposting_links("Q42")
+expect_equal(length(links), 1L)
+expect_equal(links[[1]]$rel, "describedby")
+expect_equal(links[[1]]$type, "application/json")
+expect_equal(codecheck:::wikidata_signposting_links(NULL), list())
+
+# Resolution is cached per identifier, so the second render asks nothing. That
+# is what makes it safe to resolve on every render rather than only after an
+# export - and it is why a test run does not need the network twice.
+R.cache::setCacheRootPath(tempfile())
+
+plain <- data.frame(`Certificate ID` = c("2020-001", "2020-002"),
+                    `Paper reference` = c("https://doi.org/10.1093/gigascience/giaa026", NA),
+                    Person = I(list(list(list(orcid = "0000-0001-8607-8025", role = "codechecker")),
+                                    list())),
+                    check.names = FALSE, stringsAsFactors = FALSE)
+
+asked <- list()
+resolver <- function(kind, keys, method = "search") {
+  asked[[length(asked) + 1L]] <<- list(kind = kind, keys = keys)
+  if (kind == "paper") stats::setNames("Q91579802", "10.1093/GIGASCIENCE/GIAA026")
+  else stats::setNames("Q38324721", "0000-0001-8607-8025")
+}
+
+persons <- file.path(tempdir(), "persons.csv")
+unlink(persons)
+with_mocked_codecheck(list(wikidata_resolve = resolver), {
+  ids <- codecheck:::load_wikidata_ids(plain, persons_file = persons)
+})
+expect_equal(length(asked), 2L)
+expect_equal(codecheck:::wikidata_id_for("paper", "https://doi.org/10.1093/gigascience/giaa026"),
+             "Q91579802")
+expect_equal(codecheck:::wikidata_id_for("person", "0000-0001-8607-8025"), "Q38324721")
+
+# Resolved by ORCID, but written down: a clone of the register renders the
+# same links without asking Wikidata anything.
+expect_true(file.exists(persons))
+expect_equal(readLines(persons),
+             c("orcid,wikidata", "0000-0001-8607-8025,Q38324721"))
+
+# The second run asks about nothing: every identifier has an answer already.
+asked <- list()
+with_mocked_codecheck(list(wikidata_resolve = resolver), {
+  again <- codecheck:::load_wikidata_ids(plain, persons_file = persons)
+})
+expect_equal(length(asked), 0L)
+expect_equal(again$paper, ids$paper)
+expect_equal(again$person, ids$person)
+
+# A confirmed "no item" is an answer too, and is not asked about again.
+R.cache::setCacheRootPath(tempfile())
+asked <- list()
+with_mocked_codecheck(list(wikidata_resolve = function(kind, keys, method = "search") {
+  asked[[length(asked) + 1L]] <<- keys
+  stats::setNames(character(0), character(0))
+}), {
+  codecheck:::load_wikidata_ids(plain, persons_file = NULL)
+  codecheck:::load_wikidata_ids(plain, persons_file = NULL)
+})
+expect_equal(length(asked), 2L)
+expect_null(codecheck:::wikidata_id_for("paper", "https://doi.org/10.1093/gigascience/giaa026"))
+
+# An outage is not remembered as "no item".
+R.cache::setCacheRootPath(tempfile())
+asked <- list()
+with_mocked_codecheck(list(wikidata_resolve = function(kind, keys, method = "search") {
+  asked[[length(asked) + 1L]] <<- keys
+  stop("no network")
+}), {
+  suppressMessages(codecheck:::load_wikidata_ids(plain, persons_file = NULL))
+  suppressMessages(codecheck:::load_wikidata_ids(plain, persons_file = NULL))
+})
+expect_equal(length(asked), 4L)
+
+# The certificate item is not resolved: only the register says which item an
+# export created.
+exported <- plain
+exported$Wikidata <- c("Q130000001", "")
+with_mocked_codecheck(list(wikidata_resolve = resolver), {
+  ids <- codecheck:::load_wikidata_ids(exported, persons_file = NULL)
+})
+expect_equal(unname(ids$certificate["2020-001"]), "Q130000001")
+expect_equal(length(ids$certificate), 1L)
+expect_equal(codecheck:::wikidata_id_for("certificate", "2020-001"), "Q130000001")
+expect_null(codecheck:::wikidata_id_for("certificate", "2020-002"))

@@ -208,53 +208,19 @@ orcid_rors <- function(orcid, at = NULL) {
   rors_from(get_orcid_affiliations_cached(orcid), at = at)
 }
 
-#' Look up a work's publication date on OpenAlex
+#' A work's publication date, from its OpenAlex record
+#'
+#' Delegates to [get_openalex_work_fields_cached_result()], which reads the same
+#' record for the ISSN of the publication the work appeared in (register#50).
+#' One request and one cache entry per work, rather than two of each for two
+#' fields of the same document.
 #'
 #' @param openalex_id An OpenAlex work URL or ID, e.g.
 #'   "https://openalex.org/W3014157798"
-#' @return A list with `status` ("found", "absent" or "failed") and `value`,
-#'   the publication date as a character string or `NA_character_`
-#' @keywords internal
-get_openalex_publication_date_result <- function(openalex_id) {
-  if (is.null(openalex_id) || length(openalex_id) != 1 || is.na(openalex_id) ||
-      !nzchar(openalex_id)) {
-    return(list(status = "absent", value = NA_character_))
-  }
-
-  work_id <- sub("^.*openalex\\.org/", "", openalex_id)
-  response <- codecheck_GET_openalex(paste0("https://api.openalex.org/works/", work_id))
-
-  if (is.null(response)) {
-    return(list(status = "failed", value = NA_character_))
-  }
-  status <- httr::status_code(response)
-  if (status == 404) {
-    return(list(status = "absent", value = NA_character_))
-  }
-  if (status != 200) {
-    return(list(status = "failed", value = NA_character_))
-  }
-
-  data <- httr::content(response, "parsed")
-  date <- data$publication_date
-  if (is.null(date) || !nzchar(date)) {
-    return(list(status = "absent", value = NA_character_))
-  }
-
-  list(status = "found", value = date)
-}
-
-#' Cached version of [get_openalex_publication_date_result()]
-#'
-#' @inheritParams get_openalex_publication_date_result
 #' @return The publication date as a character string, or `NA_character_`
 #' @keywords internal
 get_openalex_publication_date_cached <- function(openalex_id) {
-  cached_lookup(
-    key = list("openalex_publication_date", openalex_id),
-    dirs = c("codecheck", "openalex_publication_date"),
-    lookup = function() get_openalex_publication_date_result(openalex_id)
-  )
+  get_openalex_work_fields_cached_result(openalex_id)$value$publication_date %||% NA_character_
 }
 
 #' The date a person's affiliation has to cover, per exploded person record

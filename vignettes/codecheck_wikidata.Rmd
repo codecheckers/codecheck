@@ -361,10 +361,14 @@ register is the authority and nothing is lost.
   Wikibase instead.
 - **A work with no DOI gets no item**, on either target: it could not be found
   again on the next run, so it would be created afresh every time.
-- **A checked work gets no `published in`**. The publication a paper appeared
-  in is resolved from the paper's own record, not from the register's `Venue`
-  column - one register venue can span several publications over the years, and
-  a conference is not a publication at all.
+- **A checked work's publication comes from the work, not from the register.**
+  `P1433` published in is resolved by the ISSN in the work's own OpenAlex
+  record, not from the register's `Venue` column - one register venue can span
+  several publications over the years, and a conference is not a publication at
+  all. A work whose record names no ISSN (a preprint, a report) gets no such
+  statement. The Wikibase additionally holds an item for every publication the
+  works name, since `venues.csv` covers only the venues that commission checks;
+  on Wikidata those publications are resolved, never created.
 - **Statements on items that already exist are not overwritten.** A certificate
   or work Wikidata already holds keeps the label, description and statements
   somebody else chose.

@@ -154,3 +154,25 @@ expect_false(grepl("<path", one_type_html, fixed = TRUE))
 # not HTML, and already carries venues[].type/cert_count
 expect_false(grepl("svg", venues_only_yaml, fixed = TRUE))
 expect_false(grepl("codechecker-type-chart", venues_only_yaml, fixed = TRUE))
+
+# The Wikidata row (register#50) ----
+
+# The item is shown next to ORCID and GitHub rather than only in the page's
+# head and JSON: a reader looking for the exported record should not have to
+# read the metadata to find it.
+CONFIG$WIKIDATA_IDS <- list(certificate = character(0), paper = character(0),
+                            person = c("0000-0000-0000-0001" = "Q38324721"))
+
+with_item <- codecheck:::generate_codechecker_metadata_html("0000-0000-0000-0001")
+expect_true(grepl("https://www.wikidata.org/wiki/Q38324721", with_item, fixed = TRUE))
+expect_true(grepl(">Wikidata:<", with_item, fixed = TRUE))
+
+# A person the register knows no item for gets no row at all, rather than an
+# empty one.
+without_item <- codecheck:::generate_codechecker_metadata_html("0000-0000-0000-0002")
+expect_false(grepl("Wikidata", without_item, fixed = TRUE))
+
+# Reset explicitly: tinytest runs every file in one session, so a lookup left
+# in CONFIG would follow the next file. (on.exit() is no use here - at top
+# level it fires at the end of its own statement.)
+CONFIG$WIKIDATA_IDS <- NULL

@@ -205,6 +205,14 @@ generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL,
     }
   }
 
+  # The checked work's own item, where Wikidata holds one. The page's JSON
+  # already names it, and a consumer reading only the JSON-LD should not have
+  # to go and look it up again.
+  paper_qid <- wikidata_id_for("paper", config_yml$paper$reference)
+  if (!is.null(paper_qid)) {
+    paper$sameAs <- c(paper$sameAs, wikidata_entity_url(paper_qid))
+  }
+
   # Build the Review (CODECHECK certificate)
   cert_url <- paste0("https://codecheck.org.uk/register/certs/", cert_id, "/")
 
@@ -231,6 +239,12 @@ generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL,
     }),
     itemReviewed = paper
   )
+
+  # The record exported to Wikidata is the same certificate, said the way
+  # Schema.org says it (register#50). The head's describedby link points at the
+  # same item as a document; this states the identity.
+  cert_qid <- wikidata_id_for("certificate", cert_id)
+  if (!is.null(cert_qid)) review$sameAs <- wikidata_entity_url(cert_qid)
 
   # Add review body (summary) if available
   if ("summary" %in% names(config_yml) && !is.null(config_yml$summary) && config_yml$summary != "") {
@@ -582,6 +596,8 @@ generate_work_schema_org <- function(doi, register_table) {
   if (!is.na(fields$openalex) && nzchar(fields$openalex)) {
     article$sameAs <- c(article_id, fields$openalex)
   }
+  work_qid <- wikidata_id_for("paper", doi)
+  if (!is.null(work_qid)) article$sameAs <- c(article$sameAs, wikidata_entity_url(work_qid))
   if (length(fields$authors) > 0) {
     article$author <- lapply(fields$authors, function(a) {
       person <- list(`@type` = "Person", name = a$name)
@@ -649,6 +665,10 @@ generate_person_schema_org <- function(orcid, name, github_handle = NULL, regist
   person <- list(`@type` = "Person", `@id` = person_id, name = name)
   if (!is.null(github_handle) && nzchar(github_handle) && github_handle != "NA") {
     person$sameAs <- paste0("https://github.com/", github_handle)
+  }
+  person_qid <- wikidata_id_for("person", orcid)
+  if (!is.null(person_qid)) {
+    person$sameAs <- c(person$sameAs, wikidata_entity_url(person_qid))
   }
 
   has_role <- "Role" %in% names(register_table)
@@ -977,7 +997,10 @@ generate_cert_signposting <- function(cert_id, config_yml, has_pdf = FALSE,
     list(
       list(rel = "describedby", href = "index.json", type = "application/json"),
       list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
-           type = "application/ld+json"),
+           type = "application/ld+json")
+    ),
+    wikidata_signposting_links(wikidata_id_for("certificate", cert_id)),
+    list(
       list(rel = "item", href = if (isTRUE(has_pdf)) "cert.pdf" else NULL,
            type = "application/pdf"),
       list(rel = "license", href = CONFIG$LICENSE_CERT)
@@ -1018,7 +1041,10 @@ generate_work_signposting <- function(doi, register_table, has_jsonld = FALSE) {
     list(
       list(rel = "describedby", href = "index.json", type = "application/json"),
       list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
-           type = "application/ld+json"),
+           type = "application/ld+json")
+    ),
+    wikidata_signposting_links(wikidata_id_for("paper", doi)),
+    list(
       list(rel = "alternate", href = "register.json", type = "application/json"),
       list(rel = "alternate", href = "register.md", type = "text/markdown"),
       list(rel = "license", href = CONFIG$LICENSE_REGISTER)
@@ -1040,15 +1066,17 @@ generate_work_signposting <- function(doi, register_table, has_jsonld = FALSE) {
 #' @return HTML string of `<link>` elements, one per line
 #' @export
 generate_person_signposting <- function(orcid, has_jsonld = FALSE) {
-  links <- list(
+  links <- c(list(
     list(rel = "cite-as", href = if (is_nonempty_string(orcid)) paste0(CONFIG$HYPERLINKS[["orcid"]], orcid) else NULL),
     list(rel = "type", href = "https://schema.org/ProfilePage"),
     list(rel = "type", href = "https://schema.org/AboutPage"),
     list(rel = "describedby", href = if (isTRUE(has_jsonld)) "index.jsonld" else NULL,
-         type = "application/ld+json"),
+         type = "application/ld+json")),
+    wikidata_signposting_links(wikidata_id_for("person", orcid)),
+    list(
     list(rel = "alternate", href = "register.json", type = "application/json"),
     list(rel = "alternate", href = "stats.json", type = "application/json"),
-    list(rel = "license", href = CONFIG$LICENSE_REGISTER)
+    list(rel = "license", href = CONFIG$LICENSE_REGISTER))
   )
 
   signposting_link_tags(links)

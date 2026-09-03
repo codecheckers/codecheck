@@ -328,8 +328,8 @@ add_openalex_ids <- function(register_table, register) {
 #' that does not.
 #'
 #' @param register_table The register table, with an `OpenAlex` column
-#' @return The register table with added "Paper ISSN" and "Paper publication
-#'   date" columns
+#' @return The register table with added "Paper ISSN", "Paper venue" and
+#'   "Paper publication date" columns
 add_openalex_work_fields <- function(register_table) {
   if (!"OpenAlex" %in% colnames(register_table)) {
     return(register_table)
@@ -337,14 +337,17 @@ add_openalex_work_fields <- function(register_table) {
   cli::cli_alert_info("Looking up the publication of each work")
 
   fields <- lapply(register_table$OpenAlex, function(id) {
-    if (is.na(id)) return(list(issn = NA_character_, publication_date = NA_character_))
+    if (is.na(id)) return(list(issn = NA_character_, venue = NA_character_,
+                               publication_date = NA_character_))
     tryCatch(
       get_openalex_work_fields_cached_result(id)$value,
-      error = function(e) list(issn = NA_character_, publication_date = NA_character_)
+      error = function(e) list(issn = NA_character_, venue = NA_character_,
+                               publication_date = NA_character_)
     )
   })
 
   register_table$`Paper ISSN` <- vapply(fields, function(f) f$issn %||% NA_character_, character(1))
+  register_table$`Paper venue` <- vapply(fields, function(f) f$venue %||% NA_character_, character(1))
   register_table$`Paper publication date` <- vapply(
     fields, function(f) f$publication_date %||% NA_character_, character(1))
 

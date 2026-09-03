@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_ror.R
 \name{get_openalex_publication_date_cached}
 \alias{get_openalex_publication_date_cached}
-\title{Cached version of [get_openalex_publication_date_result()]}
+\title{A work's publication date, from its OpenAlex record}
 \usage{
 get_openalex_publication_date_cached(openalex_id)
 }
@@ -14,6 +14,9 @@ get_openalex_publication_date_cached(openalex_id)
 The publication date as a character string, or `NA_character_`
 }
 \description{
-Cached version of [get_openalex_publication_date_result()]
+Delegates to [get_openalex_work_fields_cached_result()], which reads the same
+record for the ISSN of the publication the work appeared in (register#50).
+One request and one cache entry per work, rather than two of each for two
+fields of the same document.
 }
 \keyword{internal}
