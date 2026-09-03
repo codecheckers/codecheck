@@ -470,3 +470,43 @@ invisible(curate_zenodo_record(3750741, zenodo = zen_lic, metadata = test_metada
                                fields = "license"))
 ids <- unlist(lapply(zen_lic$deposited$metadata$rights, function(r) r$id))
 expect_equal(ids, c("other-open", "cc-by-4.0"))
+
+# A record that has been superseded by a new version ----
+
+# Zenodo versions a record under a new id and redirects the old one. The
+# register stores the report DOI as published, so curation aimed at that id gets
+# "Not found" - which says nothing about why (certificate 2023-011, whose record
+# 8359199 is now 8359200).
+source("mocks.R")
+
+redirecting <- function(location) {
+  function(url, ...) {
+    response <- mock_response(url, status = 302L)
+    response$headers <- structure(list(location = location), class = "insensitive")
+    response
+  }
+}
+
+with_mocked_codecheck(
+  list(codecheck_GET = redirecting("https://zenodo.org/api/records/8359200")),
+  expect_equal(codecheck:::zenodo_current_record_id("8359199"), "8359200")
+)
+
+# No redirect: the id stands.
+with_mocked_codecheck(
+  list(codecheck_GET = function(url, ...) mock_response(url, status = 200L)),
+  expect_equal(codecheck:::zenodo_current_record_id("22205872"), "22205872")
+)
+
+# A redirect that does not name a record id is not an id.
+with_mocked_codecheck(
+  list(codecheck_GET = redirecting("https://zenodo.org/login")),
+  expect_equal(codecheck:::zenodo_current_record_id("123"), "123")
+)
+
+# Zenodo unreachable: the caller's own error handling takes over, rather than
+# this turning a network blip into a wrong record id.
+with_mocked_codecheck(
+  list(codecheck_GET = function(url, ...) stop("connection refused")),
+  expect_equal(codecheck:::zenodo_current_record_id("123"), "123")
+)

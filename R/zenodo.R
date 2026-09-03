@@ -1255,6 +1255,28 @@ get_zenodo_record_metadata <- function(id, sandbox = FALSE) {
 }
 
 
+#' The record id a Zenodo record id now points at
+#'
+#' Zenodo versions a record under a new id and redirects the old one. The
+#' register stores the report DOI as it was published, so an edit aimed at that
+#' id fails with "Not found" once a new version exists.
+#'
+#' @param id A Zenodo record id
+#' @return The current id, or `id` unchanged when there is no redirect
+#' @keywords internal
+zenodo_current_record_id <- function(id) {
+  response <- tryCatch(
+    codecheck_GET(paste0("https://zenodo.org/api/records/", id),
+                  httr::config(followlocation = FALSE)),
+    error = function(e) NULL
+  )
+  if (is.null(response)) return(id)
+  location <- httr::headers(response)[["location"]]
+  if (is.null(location)) return(id)
+  current <- sub("^.*/records/", "", location)
+  if (grepl("^[0-9]+$", current)) current else id
+}
+
 #' Curate a published Zenodo record to comply with the CODECHECK curation policy
 #'
 #' Computes the metadata corrections needed to bring a published certificate
@@ -1297,6 +1319,7 @@ get_zenodo_record_metadata <- function(id, sandbox = FALSE) {
 #' @author Daniel Nuest
 #' @importFrom cli cli_h1 cli_alert_info cli_alert_success cli_alert_warning
 #' @export
+
 curate_zenodo_record <- function(record,
                                  zenodo = NULL,
                                  metadata = NULL,
@@ -1499,6 +1522,17 @@ curate_zenodo_record <- function(record,
   # truncate a title that was deliberately routed to a human.
   cli::cli_alert_info("Opening the published record for editing ...")
   draft <- zenodo$editRecord(id)
+
+  # A versioned record: the register's report DOI names the version that was
+  # published then, and Zenodo redirects that id to the current one. Editing the
+  # old id answers "Not found", which says nothing about why.
+  if (is.null(draft) || !inherits(draft, "ZenodoRecord")) {
+    current <- zenodo_current_record_id(id)
+    if (!identical(as.character(current), as.character(id))) {
+      cli::cli_alert_info("Record {id} has been superseded, editing {current} instead")
+      draft <- zenodo$editRecord(current)
+    }
+  }
 
   # editRecord() does not stop on failure, it returns a non-record (typically
   # on "Permission denied" when the token does not own the record). Without
@@ -1812,12 +1846,22 @@ curate_register_zenodo_records <- function(register_table,
   } else do.call(rbind, rows)
 
   changed <- sum(nchar(result$applied) > 0)
+  # A record deposited by somebody else is not a failure of this run: the
+  # corrections are known and correct, they simply have to be made by whoever
+  # owns the record. Counting those as errors hides the ones that are.
+  blocked <- !is.na(result$error) & grepl("not allowed to edit", result$error)
   cli::cli_alert_info(paste0(
     if (dry_run) "Dry run: " else "Applied: ",
     changed, " of ", nrow(result), " records ",
     if (dry_run) "would be corrected" else "corrected",
     ", ", sum(nchar(result$manual) > 0), " have findings needing a human, ",
-    sum(!is.na(result$error)), " errored"))
+    sum(blocked), " belong to another Zenodo account, ",
+    sum(!is.na(result$error) & !blocked), " errored"))
+  if (any(blocked)) {
+    cli::cli_alert_info(paste0(
+      "Owned elsewhere: ", paste(result$certificate[blocked], collapse = ", "),
+      " - their owner can run the same curation, or grant the token edit rights"))
+  }
 
   invisible(result)
 }
