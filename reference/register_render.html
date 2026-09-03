@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.27.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/codecheck_overview.html">codecheck: Introduction to the codecheck package</a></li>
     <li><a class="dropdown-item" href="../articles/codecheck_register.html">codecheck: Render the register</a></li>
+    <li><a class="dropdown-item" href="../articles/codecheck_wikidata.html">codecheck: Export the register to Wikidata</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -46,10 +47,11 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">register_render</span><span class="op">(</span></span>
 <span>  register <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"register.csv"</span>, as.is <span class="op">=</span> <span class="cn">TRUE</span>, comment.char <span class="op">=</span> <span class="st">"#"</span><span class="op">)</span>,</span>
-<span>  filter_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"venues"</span>, <span class="st">"works"</span>, <span class="st">"persons"</span><span class="op">)</span>,</span>
+<span>  filter_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"venues"</span>, <span class="st">"works"</span>, <span class="st">"persons"</span>, <span class="st">"organisations"</span><span class="op">)</span>,</span>
 <span>  outputs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"html"</span>, <span class="st">"md"</span>, <span class="st">"json"</span><span class="op">)</span>,</span>
 <span>  config <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"config.R"</span>, package <span class="op">=</span> <span class="st">"codecheck"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  venues_file <span class="op">=</span> <span class="st">"venues.csv"</span>,</span>
+<span>  persons_file <span class="op">=</span> <span class="st">"persons.csv"</span>,</span>
 <span>  codecheck_repo_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  from <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">register</span><span class="op">)</span>,</span>
@@ -85,6 +87,12 @@
 
 <dt id="arg-venues-file">venues_file<a class="anchor" aria-label="anchor" href="#arg-venues-file"></a></dt>
 <dd><p>Path to the venues.csv file containing venue names and labels</p></dd>
+
+
+<dt id="arg-persons-file">persons_file<a class="anchor" aria-label="anchor" href="#arg-persons-file"></a></dt>
+<dd><p>Path to a CSV with `orcid` and `wikidata` columns, the
+register's lookup of the people it knows Wikidata items for. Optional: a
+missing file is ignored.</p></dd>
 
 
 <dt id="arg-codecheck-repo-path">codecheck_repo_path<a class="anchor" aria-label="anchor" href="#arg-codecheck-repo-path"></a></dt>

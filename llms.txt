@@ -27,40 +27,23 @@ For first-time codecheckers using this R package:
 
 1.  **Fork the research repository** - Fork to the [codecheckers
     organization](https://github.com/codecheckers) on GitHub
-
 2.  **Clone and navigate to the repository root** - Run R from the
     top-level directory of the research project
-
 3.  **Create CODECHECK files** - Run
     [`codecheck::create_codecheck_files()`](http://codecheck.org.uk/codecheck/reference/create_codecheck_files.md)
     to generate:
-
     - A `codecheck.yml` configuration file with metadata (certificate
       ID, authors, manifest, etc.)
     - A `codecheck/` directory with report templates
-
 4.  **Define the manifest** - List all computational outputs (figures,
     tables, data files) that you’ve successfully reproduced in the
     `manifest` section of `codecheck.yml`
-
 5.  **Complete the certificate** - Fill in the report template and
     render it
-
 6.  **Create a record on Zenodo** (or OSF, or ResearchEquals) and submit
     the draft for feedback to your CODECHECK editor/contact person,
     e.g., via a sharing link or the CODECHECK Zenodo community; push the
     `codecheck.yml` to the repository
-
-    > **Note:** Zenodo gives every deposit two DOIs: a version-specific
-    > DOI (pointing at that exact record) and a “concept DOI” (which
-    > always resolves to the *latest* version, see [Zenodo
-    > versioning](https://zenodo.org/help/versioning)). The `report`
-    > field in `codecheck.yml` must use the version-specific DOI, so the
-    > certificate stays linked to an immutable record.
-    > [`codecheck::validate_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.md)
-    > and
-    > [`validate_certificate_for_rendering()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_for_rendering.md)
-    > both flag a concept DOI used by mistake.
 
 ## Key Concepts
 
@@ -80,6 +63,14 @@ guide](https://codecheck.org.uk/codecheck/articles/codecheck_overview.html)
 for step-by-step instructions on using the template and the [workflow
 descriptions](https://codecheck.org.uk/workflows/) on the overall
 procedures.
+
+The package also renders the [CODECHECK
+Register](https://codecheck.org.uk/register/), see the [register
+vignette](https://codecheck.org.uk/codecheck/articles/codecheck_register.html),
+and publishes it as linked data in a Wikibase and on Wikidata, see
+[Export the register to
+Wikidata](https://codecheck.org.uk/codecheck/articles/codecheck_wikidata.html)
+for the full procedure.
 
 **Note on certificate templates**: The R Markdown template created by
 this package can be used in multiple ways:
@@ -122,7 +113,7 @@ By contributing to this project, you agree to abide by its terms.
 
 ## License
 
-Copyright 2025 S. Eglen & D. Nüst. The `codecheck` package is published
+Copyright 2026 S. Eglen & D. Nüst. The `codecheck` package is published
 under the MIT license, see file `LICENSE`.
 
 # Package index
@@ -167,6 +158,9 @@ under the MIT license, see file `LICENSE`.
 
 - [`add_openalex_ids()`](http://codecheck.org.uk/codecheck/reference/add_openalex_ids.md)
   : Add OpenAlex work IDs to the register table (addresses register#185)
+
+- [`add_openalex_work_fields()`](http://codecheck.org.uk/codecheck/reference/add_openalex_work_fields.md)
+  : Add the publication facts behind each OpenAlex ID (register#50)
 
 - [`add_paper_details_md()`](http://codecheck.org.uk/codecheck/reference/add_paper_details_md.md)
   : Populates an existing markdown content template with details about
@@ -222,6 +216,9 @@ under the MIT license, see file `LICENSE`.
 
 - [`as_latex_url()`](http://codecheck.org.uk/codecheck/reference/as_latex_url.md)
   : Wrap URL for LaTeX
+
+- [`bootstrap_wikibase()`](http://codecheck.org.uk/codecheck/reference/bootstrap_wikibase.md)
+  : Build the CODECHECK Wikibase from the model
 
 - [`cached_lookup()`](http://codecheck.org.uk/codecheck/reference/cached_lookup.md)
   : Cache the result of a metadata lookup on disk, but only when
@@ -433,6 +430,9 @@ under the MIT license, see file `LICENSE`.
 - [`generate_cert_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_cert_schema_org.md)
   : Generate Schema.org JSON-LD for Certificate Page
 
+- [`generate_cert_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_cert_signposting.md)
+  : Signposting links for a certificate page
+
 - [`generate_certs_redirect()`](http://codecheck.org.uk/codecheck/reference/generate_certs_redirect.md)
   : Generate redirect page for /certs/ directory
 
@@ -484,6 +484,9 @@ under the MIT license, see file `LICENSE`.
 - [`generate_html_title_non_registers()`](http://codecheck.org.uk/codecheck/reference/generate_html_title_non_registers.md)
   : Generate HTML Title for Non-Register Pages
 
+- [`generate_list_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_list_signposting.md)
+  : Signposting links for a listing or overview page
+
 - [`generate_meta_generator_content()`](http://codecheck.org.uk/codecheck/reference/generate_meta_generator_content.md)
   : Generate Meta Generator Content
 
@@ -493,9 +496,15 @@ under the MIT license, see file `LICENSE`.
 - [`generate_output_dir()`](http://codecheck.org.uk/codecheck/reference/generate_output_dir.md)
   : Generate Output Directory Path
 
+- [`generate_page_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_page_signposting.md)
+  : Signposting links for any non-certificate register page
+
 - [`generate_person_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_person_schema_org.md)
   : Generate Schema.org JSON-LD for a person page
   (codecheckers/register#123)
+
+- [`generate_person_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_person_signposting.md)
+  : Signposting links for a person page
 
 - [`generate_robots_txt()`](http://codecheck.org.uk/codecheck/reference/generate_robots_txt.md)
   : Generate robots.txt for the register
@@ -512,9 +521,15 @@ under the MIT license, see file `LICENSE`.
 - [`generate_venue_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_venue_schema_org.md)
   : Generate Schema.org JSON-LD for venue pages
 
+- [`generate_venue_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_venue_signposting.md)
+  : Signposting links for a venue page
+
 - [`generate_work_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_work_schema_org.md)
   : Generate Schema.org JSON-LD for a work page
   (codecheckers/register#150)
+
+- [`generate_work_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_work_signposting.md)
+  : Signposting links for a work page
 
 - [`get_abstract()`](http://codecheck.org.uk/codecheck/reference/get_abstract.md)
   : Retrieves the abstract of a research paper from CrossRef or
@@ -684,6 +699,9 @@ under the MIT license, see file `LICENSE`.
 - [`load_venues_config()`](http://codecheck.org.uk/codecheck/reference/load_venues_config.md)
   : Load venues configuration from CSV file
 
+- [`load_wikibase_register()`](http://codecheck.org.uk/codecheck/reference/load_wikibase_register.md)
+  : Load the register into the CODECHECK Wikibase
+
 - [`normalize_person_lists()`](http://codecheck.org.uk/codecheck/reference/normalize_person_lists.md)
   : Normalize person fields of a codecheck.yml to lists of persons
 
@@ -693,6 +711,9 @@ under the MIT license, see file `LICENSE`.
 - [`openalex_url_with_key()`](http://codecheck.org.uk/codecheck/reference/openalex_url_with_key.md)
   : Add the OpenAlex API key to a request URL
 
+- [`orcid_rors()`](http://codecheck.org.uk/codecheck/reference/orcid_rors.md)
+  : The RORs a person's ORCID profile asserts
+
 - [`parse_repository_spec()`](http://codecheck.org.uk/codecheck/reference/parse_repository_spec.md)
   : Parse the repository specification in the column "Repo" in the
   register CSV file
@@ -701,8 +722,17 @@ under the MIT license, see file `LICENSE`.
   : Function for preprocessing the register to create and return the
   preprocessed register table.
 
+- [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
+  : Preview the export to Wikidata
+
 - [`prune_libs()`](http://codecheck.org.uk/codecheck/reference/prune_libs.md)
   : Prune Unreferenced Library Directories
+
+- [`quickstatements_submitted()`](http://codecheck.org.uk/codecheck/reference/quickstatements_submitted.md)
+  : Record that a QuickStatements batch was actually submitted
+
+- [`quickstatements_write()`](http://codecheck.org.uk/codecheck/reference/quickstatements_write.md)
+  : Write a QuickStatements batch out for somebody to paste
 
 - [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
   : Function for checking all entries in the register
@@ -715,6 +745,9 @@ under the MIT license, see file `LICENSE`.
 
 - [`register_render_cert()`](http://codecheck.org.uk/codecheck/reference/register_render_cert.md)
   : Render a single certificate page by its ID
+
+- [`register_ror_coverage()`](http://codecheck.org.uk/codecheck/reference/register_ror_coverage.md)
+  : How many register persons have a ROR in their ORCID profile
 
 - [`register_update_stats()`](http://codecheck.org.uk/codecheck/reference/register_update_stats.md)
   : Regenerate all statistics files from existing register.json files
@@ -767,6 +800,9 @@ under the MIT license, see file `LICENSE`.
 
 - [`resolve_zenodo_record_id()`](http://codecheck.org.uk/codecheck/reference/resolve_zenodo_record_id.md)
   : Resolve a certificate ID or Zenodo reference to a Zenodo record ID
+
+- [`ror_coverage_summary()`](http://codecheck.org.uk/codecheck/reference/ror_coverage_summary.md)
+  : Summarise ROR coverage over the register
 
 - [`set_paper_title_references()`](http://codecheck.org.uk/codecheck/reference/set_paper_title_references.md)
   : Set "Title" and "Paper reference" columns and values to the
@@ -821,6 +857,9 @@ under the MIT license, see file `LICENSE`.
 - [`validate_yaml_syntax()`](http://codecheck.org.uk/codecheck/reference/validate_yaml_syntax.md)
   : Validate YAML syntax of a codecheck.yml file
 
+- [`verify_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/verify_wikidata_export.md)
+  : Check what actually arrived on Wikidata
+
 - [`wikidata_creates()`](http://codecheck.org.uk/codecheck/reference/wikidata_creates.md)
   : Whether the export may create this kind of entity on a target
 
@@ -856,3 +895,5 @@ under the MIT license, see file `LICENSE`.
   package](http://codecheck.org.uk/codecheck/articles/codecheck_overview.md):
 - [codecheck: Render the
   register](http://codecheck.org.uk/codecheck/articles/codecheck_register.md):
+- [codecheck: Export the register to
+  Wikidata](http://codecheck.org.uk/codecheck/articles/codecheck_wikidata.md):

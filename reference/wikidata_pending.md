@@ -19,8 +19,6 @@ a \`data.frame\` with columns \`entity\`, \`key\`, \`property\` and
 
 ``` r
 wikidata_pending()
-#>        entity          key property
-#> 1 certificate catalog_code     P528
-#>                                                             pending
-#> 1 the CODECHECK register catalog item, created with the first batch
+#> [1] entity   key      property pending 
+#> <0 rows> (or 0-length row.names)
 ```

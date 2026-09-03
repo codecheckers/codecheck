@@ -31,5 +31,5 @@ wikidata_creates(kind, target = c("wikidata", "wikibase"))
 wikidata_creates("certificate", "wikidata")
 #> [1] TRUE
 wikidata_creates("paper", "wikidata")
-#> [1] FALSE
+#> [1] TRUE
 ```

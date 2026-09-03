@@ -10,6 +10,7 @@ wikidata_statement(
   property,
   label,
   value,
+  datatype,
   required = FALSE,
   note = NULL,
   venue_types = NULL,
@@ -34,6 +35,10 @@ wikidata_statement(
 - value:
 
   how the value is obtained, see \[WIKIDATA_MODEL\]
+
+- datatype:
+
+  the Wikibase datatype of the property, one of \[WIKIBASE_DATATYPES\]
 
 - required:
 

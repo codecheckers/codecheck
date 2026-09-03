@@ -13,6 +13,7 @@ register_render_cert(
   register = read.csv("register.csv", as.is = TRUE, comment.char = "#"),
   config = c(system.file("extdata", "config.R", package = "codecheck")),
   venues_file = "venues.csv",
+  persons_file = "persons.csv",
   force_download = TRUE,
   download_and_convert = TRUE,
   verbose = FALSE,
@@ -39,6 +40,11 @@ register_render_cert(
 - venues_file:
 
   Path to the venues.csv file containing venue names and labels.
+
+- persons_file:
+
+  Path to the register's record of the people with Wikidata items, see
+  \[register_render()\].
 
 - force_download:
 

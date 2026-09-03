@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.27.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/codecheck_overview.html">codecheck: Introduction to the codecheck package</a></li>
     <li><a class="dropdown-item" href="articles/codecheck_register.html">codecheck: Render the register</a></li>
+    <li><a class="dropdown-item" href="articles/codecheck_wikidata.html">codecheck: Export the register to Wikidata</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -59,7 +60,7 @@
 <!-- badges: start -->
 
 <p><code>codecheck</code> is an R package to assist codecheckers in creating CODECHECK-ready workspaces and conducting codechecks. This package focuses on the technical workflow for codecheckers using R. It also contains helper functions for managing the <a href="https://codecheck.org.uk/register/" class="external-link">CODECHECK register</a>.</p>
-<p>For general information about the CODECHECK initiative and community processes, visit <a href="https://codecheck.org.uk/" class="external-link uri">https://codecheck.org.uk/</a>.</p>
+<p>For general information about the CODECHECK initiative and community processes, visit <a href="https://codecheck.org.uk/" class="external-link">https://codecheck.org.uk/</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -73,23 +74,24 @@
 </h2>
 <p>For first-time codecheckers using this R package:</p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Fork the research repository</strong> - Fork to the <a href="https://github.com/codecheckers" class="external-link">codecheckers organization</a> on GitHub</p></li>
-<li><p><strong>Clone and navigate to the repository root</strong> - Run R from the top-level directory of the research project</p></li>
 <li>
-<p><strong>Create CODECHECK files</strong> - Run <code><a href="reference/create_codecheck_files.html">codecheck::create_codecheck_files()</a></code> to generate:</p>
+<strong>Fork the research repository</strong> - Fork to the <a href="https://github.com/codecheckers" class="external-link">codecheckers organization</a> on GitHub</li>
+<li>
+<strong>Clone and navigate to the repository root</strong> - Run R from the top-level directory of the research project</li>
+<li>
+<strong>Create CODECHECK files</strong> - Run <code><a href="reference/create_codecheck_files.html">codecheck::create_codecheck_files()</a></code> to generate:
 <ul>
 <li>A <code>codecheck.yml</code> configuration file with metadata (certificate ID, authors, manifest, etc.)</li>
 <li>A <code>codecheck/</code> directory with report templates</li>
 </ul>
 </li>
-<li><p><strong>Define the manifest</strong> - List all computational outputs (figures, tables, data files) that you’ve successfully reproduced in the <code>manifest</code> section of <code>codecheck.yml</code></p></li>
-<li><p><strong>Complete the certificate</strong> - Fill in the report template and render it</p></li>
 <li>
-<p><strong>Create a record on Zenodo</strong> (or OSF, or ResearchEquals) and submit the draft for feedback to your CODECHECK editor/contact person, e.g., via a sharing link or the CODECHECK Zenodo community; push the <code>codecheck.yml</code> to the repository</p>
-<blockquote>
-<p><strong>Note:</strong> Zenodo gives every deposit two DOIs: a version-specific DOI (pointing at that exact record) and a “concept DOI” (which always resolves to the <em>latest</em> version, see <a href="https://zenodo.org/help/versioning" class="external-link">Zenodo versioning</a>). The <code>report</code> field in <code>codecheck.yml</code> must use the version-specific DOI, so the certificate stays linked to an immutable record. <code><a href="reference/validate_codecheck_yml.html">codecheck::validate_codecheck_yml()</a></code> and <code><a href="reference/validate_certificate_for_rendering.html">validate_certificate_for_rendering()</a></code> both flag a concept DOI used by mistake.</p>
-</blockquote>
+<strong>Define the manifest</strong> - List all computational outputs (figures, tables, data files) that you’ve successfully reproduced in the <code>manifest</code> section of <code>codecheck.yml</code>
 </li>
+<li>
+<strong>Complete the certificate</strong> - Fill in the report template and render it</li>
+<li>
+<strong>Create a record on Zenodo</strong> (or OSF, or ResearchEquals) and submit the draft for feedback to your CODECHECK editor/contact person, e.g., via a sharing link or the CODECHECK Zenodo community; push the <code>codecheck.yml</code> to the repository</li>
 </ol>
 </div>
 <div class="section level2">
@@ -108,6 +110,7 @@
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
 <p>See the <a href="https://codecheck.org.uk/codecheck/articles/codecheck_overview.html" class="external-link">getting started guide</a> for step-by-step instructions on using the template and the <a href="https://codecheck.org.uk/workflows/" class="external-link">workflow descriptions</a> on the overall procedures.</p>
+<p>The package also renders the <a href="https://codecheck.org.uk/register/" class="external-link">CODECHECK Register</a>, see the <a href="https://codecheck.org.uk/codecheck/articles/codecheck_register.html" class="external-link">register vignette</a>, and publishes it as linked data in a Wikibase and on Wikidata, see <a href="https://codecheck.org.uk/codecheck/articles/codecheck_wikidata.html" class="external-link">Export the register to Wikidata</a> for the full procedure.</p>
 <p><strong>Note on certificate templates</strong>: The R Markdown template created by this package can be used in multiple ways:</p>
 <ul>
 <li>Execute code in various languages (R, Python, bash, etc.) using knitr’s language engines</li>
@@ -138,7 +141,7 @@
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
-<p>Copyright 2025 S. Eglen &amp; D. Nüst. The <code>codecheck</code> package is published under the MIT license, see file <code>LICENSE</code>.</p>
+<p>Copyright 2026 S. Eglen &amp; D. Nüst. The <code>codecheck</code> package is published under the MIT license, see file <code>LICENSE</code>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

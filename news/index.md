@@ -1,5 +1,199 @@
 # Changelog
 
+## codecheck 0.28.0
+
+### New Features
+
+- New
+  [`bootstrap_wikibase()`](http://codecheck.org.uk/codecheck/reference/bootstrap_wikibase.md)
+  creates the CODECHECK Wikibase’s own properties and class items from
+  the data model in `R/wikidata.R`, each carrying a “Wikidata entity”
+  statement naming its counterpart (register#50). A Wikibase mints its
+  own P-numbers, so that mapping is what lets the two sides line up; it
+  is a dry run by default and idempotent, so the instance can be rebuilt
+  from empty.
+- The bootstrap also creates the properties the model uses as qualifiers
+  and references and one item per platform a certificate can be
+  published on, without which those statements were dropped for want of
+  a target.
+- Each statement in the model now names its Wikibase `datatype`,
+  validated against `WIKIBASE_DATATYPES` and reported by
+  [`wikidata_properties()`](http://codecheck.org.uk/codecheck/reference/wikidata_properties.md) -
+  a property created with the wrong datatype cannot be changed
+  afterwards.
+- The bootstrap writes a generated [Project:Data
+  model](https://codecheck.wikibase.cloud/wiki/Project:Data_model) page
+  listing every local entity next to its Wikidata counterpart.
+- [`bootstrap_wikibase()`](http://codecheck.org.uk/codecheck/reference/bootstrap_wikibase.md)
+  also writes
+  [Project:About](https://codecheck.wikibase.cloud/wiki/Project:About)
+  and
+  [Project:Copyrights](https://codecheck.wikibase.cloud/wiki/Project:Copyrights),
+  which the [wikibase.cloud hosting
+  policy](https://www.wikibase.cloud/hosting-policy) requires of every
+  hosted instance (register#50).
+- [`bootstrap_wikibase()`](http://codecheck.org.uk/codecheck/reference/bootstrap_wikibase.md)
+  brings an entity whose label has drifted from the model back in line,
+  so a rerun converges on the model instead of only filling gaps.
+- The bootstrap retries a write the server asks it to repeat (`maxlag`,
+  `ratelimited`, `readonly`, 429/503) with a capped doubling backoff,
+  and names a contact in its User-Agent (`codecheck.contact` option).
+- New
+  [`load_wikibase_register()`](http://codecheck.org.uk/codecheck/reference/load_wikibase_register.md)
+  writes the whole register to the CODECHECK Wikibase as items - people,
+  venues, papers, then the certificates that refer to them - and
+  generates a
+  [Project:Certificates](https://codecheck.wikibase.cloud/wiki/Project:Certificates)
+  index (register#50). Dry by default, and a rerun updates what it wrote
+  instead of duplicating it.
+- New
+  [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
+  shows what an export to Wikidata would do without sending anything,
+  writing the QuickStatements batches a person pastes in under their own
+  account and publishing [Project:Wikidata
+  export](https://codecheck.wikibase.cloud/wiki/Project:Wikidata_export)
+  on the Wikibase (register#50).
+- The preview page’s table of checked works gained a “Wikidata
+  certificate” column, so each row names both the item Wikidata holds
+  for the work and the item for the certificate that reviews it
+  (register#50).
+- [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
+  resolves against Wikidata through the Action API’s `haswbstatement`
+  search rather than the query service, which indexes a new item within
+  minutes and sees every graph it might have landed in;
+  `method = "sparql"` keeps the old path as a cross-check.
+- [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
+  refuses to write a batch of `CREATE`s the edit log says was already
+  submitted while its entities still do not resolve, since a second
+  paste would duplicate every item; `force = TRUE` overrides it.
+- Checked works are now created on Wikidata as well as mirrored in the
+  Wikibase, carrying their DOI, title, OpenAlex ID (`P10283`) and
+  authors as `P2093` author name strings (register#50).
+- Enriching a work with its OpenAlex ID now also fetches the publication
+  it appeared in and its publication date, as new `Paper ISSN` and
+  `Paper publication date` columns in `register.json`, so an exported
+  work states `P1433` published in and `P577` publication date
+  (register#50). New
+  [`add_openalex_work_fields()`](http://codecheck.org.uk/codecheck/reference/add_openalex_work_fields.md).
+- The CODECHECK Wikibase gets an item for every publication the checked
+  works appeared in, not only for the venues in `venues.csv` - those
+  name the venues that commission checks, and 22 of the 25 publications
+  the works name are not among them, so their works’ “published in”
+  statements had no target (register#50). Wikidata is unaffected:
+  publications are resolved there, never created.
+- `register.json` and `register-full.json` carry each checked work’s
+  `Paper ISSN`, `Paper venue` and `Paper publication date`, and the
+  Wikidata export backfills them from cache when the register was
+  rendered before those columns existed (register#50).
+- New
+  [`verify_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/verify_wikidata_export.md)
+  checks what actually arrived: whether each certificate item exists,
+  whether it is visible in the scholarly graph, and whether it states
+  `review of` on the work it checked.
+- `verify_wikidata_export(update_register = TRUE)` records each
+  certificate’s Wikidata item in a `Wikidata` column of `register.csv`,
+  editing the file line by line so its commented-out rows survive
+  (register#50). Nothing else can re-derive the item offline, and the
+  render needs it to link the exported record.
+- Certificate, work and person pages link their Wikidata record, as a
+  signposting `describedby` link to `Special:EntityData` in the page
+  head, as Schema.org `sameAs` in the JSON-LD, and as a `wikidata` field
+  in the page’s JSON (register#50). A certificate’s item comes from
+  `register.csv`, a work’s is resolved from its DOI and a person’s from
+  their ORCID.
+- A certificate page’s CODECHECK details box gained a “Certificate on
+  Wikidata” entry linking the exported record, below “Full certificate”;
+  the entry is left out entirely for a certificate that has not been
+  exported (register#50).
+- Person and work landing pages show the Wikidata item in their metadata
+  panel, next to ORCID and GitHub on a person page and next to the DOI
+  on a work page, rather than only in the page’s head and JSON
+  (register#50).
+- The people with Wikidata items are recorded in the register’s
+  `persons.csv`, read before anything is resolved and written back
+  after, so a clone renders the same links without network access.
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  and
+  [`register_render_cert()`](http://codecheck.org.uk/codecheck/reference/register_render_cert.md)
+  gained a `persons_file` argument.
+- Wikidata lookups are cached per identifier, a confirmed “no item”
+  included, so only an identifier nobody has looked up yet costs a
+  request. A failed lookup is not cached, so an outage does not become a
+  lasting “no item”.
+- New
+  [`quickstatements_write()`](http://codecheck.org.uk/codecheck/reference/quickstatements_write.md)
+  and
+  [`quickstatements_submitted()`](http://codecheck.org.uk/codecheck/reference/quickstatements_submitted.md)
+  keep an edit log of both halves of the export, the API writes to the
+  Wikibase and the QuickStatements batches pasted into Wikidata by hand
+  (register#50).
+- New vignette “Export the register to Wikidata”, a step-by-step
+  procedure for the whole export, written to be followed literally by a
+  person or an assistant (register#50).
+- New `/organisations/` pages list the works authored and the checks
+  conducted by each research organisation’s people, identified by ROR
+  (register#53). An organisation is only credited for a certificate
+  where the person’s ORCID profile placed them there at the time, and
+  every page says so.
+- Organisation pages carry name, type, location and identifiers from
+  ror.org and a logo from Wikidata, and cross-link with an institution
+  venue that shares their ROR.
+- New
+  [`orcid_rors()`](http://codecheck.org.uk/codecheck/reference/orcid_rors.md)
+  and
+  [`register_ror_coverage()`](http://codecheck.org.uk/codecheck/reference/register_ror_coverage.md)
+  report which authors and codecheckers have a ROR-identified
+  affiliation in their ORCID profile (register#53).
+- Every rendered page carries [FAIR
+  Signposting](https://signposting.org/FAIR/) typed links, expressed as
+  HTML `<link>` elements because GitHub Pages cannot set HTTP `Link`
+  headers; certificate pages are Level 1 conformant (register#55). New
+  [`generate_page_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_page_signposting.md)
+  and one generator per page type.
+- Pages with Schema.org metadata now also write it to an `index.jsonld`
+  next to the page, so the signposting `describedby` links resolve to a
+  machine-readable document.
+- Register rendering announces the main register, the full export and
+  each filter before rendering them, with a progress bar per page group
+  (per-page timings under `verbose = TRUE`).
+- The filtered register CSVs are now written under their own log heading
+  instead of silently.
+- The “all persons” table shows the per-venue-type stacked bar for
+  checks conducted again (register#92); `index.json` carries the plain
+  counts under `"Check types"`.
+
+### Bug Fixes
+
+- A work landing page shows its OpenAlex ID again: the column was
+  missing from the work pages’ HTML column list, so the metadata panel’s
+  OpenAlex row never rendered even though `index.json` carried the ID.
+- [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  warns when two certificates share a report DOI. The register renders
+  both without trouble, so it is invisible there, but the report DOI
+  identifies a certificate in the Wikidata export, where two
+  certificates naming one archived record become a single item and the
+  second silently overwrites the first. New
+  [`check_duplicate_reports()`](http://codecheck.org.uk/codecheck/reference/check_duplicate_reports.md).
+- [`load_wikibase_register()`](http://codecheck.org.uk/codecheck/reference/load_wikibase_register.md)
+  and
+  [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
+  refuse to run when two entities share the identifier the model
+  resolves them on, naming the rows that collide, instead of writing one
+  item for both. New
+  [`check_export_keys()`](http://codecheck.org.uk/codecheck/reference/check_export_keys.md).
+- The Wikibase export no longer ends halfway through when a connection
+  times out or drops: a request that never completed is now retried like
+  a 503, rather than propagating as an error.
+- A certificate item’s label includes its number again: mustache cannot
+  address a key containing a space, so `` {{`Certificate ID`}} ``
+  rendered as “CODECHECK Certificate” alone. Register columns are now
+  offered to the model’s templates under an underscored alias.
+- A rerun of
+  [`bootstrap_wikibase()`](http://codecheck.org.uk/codecheck/reference/bootstrap_wikibase.md)
+  no longer relabels the properties it created, having counted each as
+  colliding with its own label on the instance and planned `title` as
+  `title (P1476)`.
+
 ## codecheck 0.27.1
 
 ### Bug Fixes
@@ -27,10 +221,15 @@
   scholarly work* so it resolves in the query service’s cross-graph
   join, links to the checked paper via `P6977` *review of* rather than
   `P2860`, and gets a venue-derived `P31` (AGILE reproducibility reviews
-  are typed separately from CODECHECKs). Only certificates are created
-  on Wikidata; papers, people and venues are resolved against existing
-  items and otherwise created only in the mirroring CODECHECK Wikibase.
-  New
+  are typed separately from CODECHECKs). A checked work whose venue is
+  `preprint` is typed Q580922 *preprint* rather than *scholarly
+  article*; both values keep it in the scholarly graph beside its
+  certificate. The certificate identifier is carried as `P528` *catalog
+  code* qualified with `P972` *catalog* → Q141254857 (the register),
+  until a dedicated external identifier property exists. Only
+  certificates are created on Wikidata; papers, people and venues are
+  resolved against existing items and otherwise created only in the
+  mirroring CODECHECK Wikibase. New
   [`wikidata_model()`](http://codecheck.org.uk/codecheck/reference/wikidata_model.md),
   [`wikidata_entity_kinds()`](http://codecheck.org.uk/codecheck/reference/wikidata_entity_kinds.md),
   [`wikidata_statements()`](http://codecheck.org.uk/codecheck/reference/wikidata_statements.md),

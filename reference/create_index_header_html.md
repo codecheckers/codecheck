@@ -8,7 +8,8 @@ Dynamically generates the index_header.html from a template file
 create_index_header_html(
   output_dir,
   schema_org_jsonld = "",
-  include_version_in_meta = TRUE
+  include_version_in_meta = TRUE,
+  signposting = ""
 )
 ```
 
@@ -26,3 +27,8 @@ create_index_header_html(
 
   Whether to include version info in meta generator tag (default: TRUE).
   Set to FALSE for individual detail pages (will use "codecheck" only).
+
+- signposting:
+
+  Optional FAIR Signposting \`\<link\>\` elements for the page, see
+  \[generate_page_signposting()\] (default: "")

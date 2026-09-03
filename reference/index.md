@@ -41,6 +41,9 @@
 - [`add_openalex_ids()`](http://codecheck.org.uk/codecheck/reference/add_openalex_ids.md)
   : Add OpenAlex work IDs to the register table (addresses register#185)
 
+- [`add_openalex_work_fields()`](http://codecheck.org.uk/codecheck/reference/add_openalex_work_fields.md)
+  : Add the publication facts behind each OpenAlex ID (register#50)
+
 - [`add_paper_details_md()`](http://codecheck.org.uk/codecheck/reference/add_paper_details_md.md)
   : Populates an existing markdown content template with details about
   the codechecked paper.
@@ -95,6 +98,9 @@
 
 - [`as_latex_url()`](http://codecheck.org.uk/codecheck/reference/as_latex_url.md)
   : Wrap URL for LaTeX
+
+- [`bootstrap_wikibase()`](http://codecheck.org.uk/codecheck/reference/bootstrap_wikibase.md)
+  : Build the CODECHECK Wikibase from the model
 
 - [`cached_lookup()`](http://codecheck.org.uk/codecheck/reference/cached_lookup.md)
   : Cache the result of a metadata lookup on disk, but only when
@@ -306,6 +312,9 @@
 - [`generate_cert_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_cert_schema_org.md)
   : Generate Schema.org JSON-LD for Certificate Page
 
+- [`generate_cert_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_cert_signposting.md)
+  : Signposting links for a certificate page
+
 - [`generate_certs_redirect()`](http://codecheck.org.uk/codecheck/reference/generate_certs_redirect.md)
   : Generate redirect page for /certs/ directory
 
@@ -357,6 +366,9 @@
 - [`generate_html_title_non_registers()`](http://codecheck.org.uk/codecheck/reference/generate_html_title_non_registers.md)
   : Generate HTML Title for Non-Register Pages
 
+- [`generate_list_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_list_signposting.md)
+  : Signposting links for a listing or overview page
+
 - [`generate_meta_generator_content()`](http://codecheck.org.uk/codecheck/reference/generate_meta_generator_content.md)
   : Generate Meta Generator Content
 
@@ -366,9 +378,15 @@
 - [`generate_output_dir()`](http://codecheck.org.uk/codecheck/reference/generate_output_dir.md)
   : Generate Output Directory Path
 
+- [`generate_page_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_page_signposting.md)
+  : Signposting links for any non-certificate register page
+
 - [`generate_person_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_person_schema_org.md)
   : Generate Schema.org JSON-LD for a person page
   (codecheckers/register#123)
+
+- [`generate_person_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_person_signposting.md)
+  : Signposting links for a person page
 
 - [`generate_robots_txt()`](http://codecheck.org.uk/codecheck/reference/generate_robots_txt.md)
   : Generate robots.txt for the register
@@ -385,9 +403,15 @@
 - [`generate_venue_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_venue_schema_org.md)
   : Generate Schema.org JSON-LD for venue pages
 
+- [`generate_venue_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_venue_signposting.md)
+  : Signposting links for a venue page
+
 - [`generate_work_schema_org()`](http://codecheck.org.uk/codecheck/reference/generate_work_schema_org.md)
   : Generate Schema.org JSON-LD for a work page
   (codecheckers/register#150)
+
+- [`generate_work_signposting()`](http://codecheck.org.uk/codecheck/reference/generate_work_signposting.md)
+  : Signposting links for a work page
 
 - [`get_abstract()`](http://codecheck.org.uk/codecheck/reference/get_abstract.md)
   : Retrieves the abstract of a research paper from CrossRef or
@@ -557,6 +581,9 @@
 - [`load_venues_config()`](http://codecheck.org.uk/codecheck/reference/load_venues_config.md)
   : Load venues configuration from CSV file
 
+- [`load_wikibase_register()`](http://codecheck.org.uk/codecheck/reference/load_wikibase_register.md)
+  : Load the register into the CODECHECK Wikibase
+
 - [`normalize_person_lists()`](http://codecheck.org.uk/codecheck/reference/normalize_person_lists.md)
   : Normalize person fields of a codecheck.yml to lists of persons
 
@@ -566,6 +593,9 @@
 - [`openalex_url_with_key()`](http://codecheck.org.uk/codecheck/reference/openalex_url_with_key.md)
   : Add the OpenAlex API key to a request URL
 
+- [`orcid_rors()`](http://codecheck.org.uk/codecheck/reference/orcid_rors.md)
+  : The RORs a person's ORCID profile asserts
+
 - [`parse_repository_spec()`](http://codecheck.org.uk/codecheck/reference/parse_repository_spec.md)
   : Parse the repository specification in the column "Repo" in the
   register CSV file
@@ -574,8 +604,17 @@
   : Function for preprocessing the register to create and return the
   preprocessed register table.
 
+- [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
+  : Preview the export to Wikidata
+
 - [`prune_libs()`](http://codecheck.org.uk/codecheck/reference/prune_libs.md)
   : Prune Unreferenced Library Directories
+
+- [`quickstatements_submitted()`](http://codecheck.org.uk/codecheck/reference/quickstatements_submitted.md)
+  : Record that a QuickStatements batch was actually submitted
+
+- [`quickstatements_write()`](http://codecheck.org.uk/codecheck/reference/quickstatements_write.md)
+  : Write a QuickStatements batch out for somebody to paste
 
 - [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
   : Function for checking all entries in the register
@@ -588,6 +627,9 @@
 
 - [`register_render_cert()`](http://codecheck.org.uk/codecheck/reference/register_render_cert.md)
   : Render a single certificate page by its ID
+
+- [`register_ror_coverage()`](http://codecheck.org.uk/codecheck/reference/register_ror_coverage.md)
+  : How many register persons have a ROR in their ORCID profile
 
 - [`register_update_stats()`](http://codecheck.org.uk/codecheck/reference/register_update_stats.md)
   : Regenerate all statistics files from existing register.json files
@@ -641,6 +683,9 @@
 - [`resolve_zenodo_record_id()`](http://codecheck.org.uk/codecheck/reference/resolve_zenodo_record_id.md)
   : Resolve a certificate ID or Zenodo reference to a Zenodo record ID
 
+- [`ror_coverage_summary()`](http://codecheck.org.uk/codecheck/reference/ror_coverage_summary.md)
+  : Summarise ROR coverage over the register
+
 - [`set_paper_title_references()`](http://codecheck.org.uk/codecheck/reference/set_paper_title_references.md)
   : Set "Title" and "Paper reference" columns and values to the
   register_table
@@ -693,6 +738,9 @@
 
 - [`validate_yaml_syntax()`](http://codecheck.org.uk/codecheck/reference/validate_yaml_syntax.md)
   : Validate YAML syntax of a codecheck.yml file
+
+- [`verify_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/verify_wikidata_export.md)
+  : Check what actually arrived on Wikidata
 
 - [`wikidata_creates()`](http://codecheck.org.uk/codecheck/reference/wikidata_creates.md)
   : Whether the export may create this kind of entity on a target

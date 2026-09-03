@@ -27,40 +27,23 @@ For first-time codecheckers using this R package:
 
 1.  **Fork the research repository** - Fork to the [codecheckers
     organization](https://github.com/codecheckers) on GitHub
-
 2.  **Clone and navigate to the repository root** - Run R from the
     top-level directory of the research project
-
 3.  **Create CODECHECK files** - Run
     [`codecheck::create_codecheck_files()`](http://codecheck.org.uk/codecheck/reference/create_codecheck_files.md)
     to generate:
-
     - A `codecheck.yml` configuration file with metadata (certificate
       ID, authors, manifest, etc.)
     - A `codecheck/` directory with report templates
-
 4.  **Define the manifest** - List all computational outputs (figures,
     tables, data files) that you’ve successfully reproduced in the
     `manifest` section of `codecheck.yml`
-
 5.  **Complete the certificate** - Fill in the report template and
     render it
-
 6.  **Create a record on Zenodo** (or OSF, or ResearchEquals) and submit
     the draft for feedback to your CODECHECK editor/contact person,
     e.g., via a sharing link or the CODECHECK Zenodo community; push the
     `codecheck.yml` to the repository
-
-    > **Note:** Zenodo gives every deposit two DOIs: a version-specific
-    > DOI (pointing at that exact record) and a “concept DOI” (which
-    > always resolves to the *latest* version, see [Zenodo
-    > versioning](https://zenodo.org/help/versioning)). The `report`
-    > field in `codecheck.yml` must use the version-specific DOI, so the
-    > certificate stays linked to an immutable record.
-    > [`codecheck::validate_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml.md)
-    > and
-    > [`validate_certificate_for_rendering()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_for_rendering.md)
-    > both flag a concept DOI used by mistake.
 
 ## Key Concepts
 
@@ -80,6 +63,14 @@ guide](https://codecheck.org.uk/codecheck/articles/codecheck_overview.html)
 for step-by-step instructions on using the template and the [workflow
 descriptions](https://codecheck.org.uk/workflows/) on the overall
 procedures.
+
+The package also renders the [CODECHECK
+Register](https://codecheck.org.uk/register/), see the [register
+vignette](https://codecheck.org.uk/codecheck/articles/codecheck_register.html),
+and publishes it as linked data in a Wikibase and on Wikidata, see
+[Export the register to
+Wikidata](https://codecheck.org.uk/codecheck/articles/codecheck_wikidata.html)
+for the full procedure.
 
 **Note on certificate templates**: The R Markdown template created by
 this package can be used in multiple ways:
@@ -122,5 +113,5 @@ By contributing to this project, you agree to abide by its terms.
 
 ## License
 
-Copyright 2025 S. Eglen & D. Nüst. The `codecheck` package is published
+Copyright 2026 S. Eglen & D. Nüst. The `codecheck` package is published
 under the MIT license, see file `LICENSE`.
