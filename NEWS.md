@@ -1,3 +1,5 @@
+# codecheck 0.28.0.9000
+
 # codecheck 0.28.0
 
 ## New Features
@@ -38,6 +40,8 @@
 
 ## Bug Fixes
 
+* `curate_zenodo_record()` follows a record that Zenodo has superseded with a new version instead of failing with "Not found": the register stores the report DOI as it was published, and the id in it stops being the editable one once a new version exists (certificate 2023-011).
+* `curate_register_zenodo_records()` reports records deposited by another Zenodo account as their own category rather than as errors, and names the certificates concerned - the corrections for those are known and correct, they just have to be made by whoever owns the record.
 * A work landing page shows its OpenAlex ID again: the column was missing from the work pages' HTML column list, so the metadata panel's OpenAlex row never rendered even though `index.json` carried the ID.
 * `register_check()` warns when two certificates share a report DOI. The register renders both without trouble, so it is invisible there, but the report DOI identifies a certificate in the Wikidata export, where two certificates naming one archived record become a single item and the second silently overwrites the first. New `check_duplicate_reports()`.
 * `load_wikibase_register()` and `preview_wikidata_export()` refuse to run when two entities share the identifier the model resolves them on, naming the rows that collide, instead of writing one item for both. New `check_export_keys()`.

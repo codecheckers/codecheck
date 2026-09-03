@@ -63,6 +63,8 @@ Semantic versioning. Use `usethis::use_version("patch"|"minor"|"major"|"dev")` t
 * Run `devtools::document()` so `man/` reflects the current code (roxygen doesn't stamp the package version into `.Rd` files, but a stale `man/` from skipped `--no-docs` installs during iteration should not ship in a release).
 * Update the hardcoded `version:` and `date-released:` fields in `CITATION.cff` - nothing else touches this file, so it silently drifted for several releases (last correct at 0.21.0) before being caught at 0.26.0.
 
+After the release commit lands, complete the release: annotated-tag it as `X.Y.Z` (no `v` prefix, matching the existing tags), push `master` and the tag to both `origin` and `upstream`, then start the next dev cycle with `usethis::use_version("dev")`. Confirm the push target with the user first (both remotes by default) rather than assuming.
+
 ## Architecture
 
 ### Register Rendering Pipeline
