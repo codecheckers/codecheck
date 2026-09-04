@@ -269,13 +269,26 @@ detect_report_platform <- function(url) {
   if (grepl("osf\\.io", url, ignore.case = TRUE)) return("osf")
   if (grepl("researchequals", url, ignore.case = TRUE)) return("researchequals")
 
-  # For doi.org URLs, follow the redirect to find the actual platform
+  # For doi.org URLs, follow the redirect to find the actual platform. Cached
+  # on disk: where a DOI resolves to does not change, and a failed request
+  # here silently reports the platform as "doi.org", which is how the platform
+  # statistics moved between renders.
   if (grepl("doi\\.org/", url, ignore.case = TRUE)) {
-    resolved <- tryCatch({
-      resp <- codecheck_GET(url, httr::config(followlocation = FALSE))
-      loc <- httr::headers(resp)[["location"]]
-      if (!is.null(loc)) loc else url
-    }, error = function(e) url)
+    resolved <- cached_lookup(
+      key = list(report_url = url),
+      dirs = c("codecheck", "report_platform"),
+      lookup = function() {
+        tryCatch({
+          resp <- codecheck_GET(url, httr::config(followlocation = FALSE))
+          loc <- httr::headers(resp)[["location"]]
+          if (is.null(loc)) {
+            list(status = "failed", value = url)
+          } else {
+            list(status = "found", value = loc)
+          }
+        }, error = function(e) list(status = "failed", value = url))
+      }
+    )
     # Re-check known patterns on the resolved URL
     if (grepl("zenodo", resolved, ignore.case = TRUE)) return("zenodo")
     if (grepl("osf\\.io", resolved, ignore.case = TRUE)) return("osf")

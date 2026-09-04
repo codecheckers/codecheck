@@ -6,6 +6,16 @@ suppressMessages({
   library(R.cache)
 })
 
+# register_clear_cache() empties whatever cache root is set, so this file must
+# not run against the user's real one: wiping it turns the next full register
+# render from about a minute into six, re-fetching every API lookup. Restored
+# at the end of the file (on.exit() would run immediately, this is not inside
+# a function), same pattern as test_organisations.R.
+cache_root <- file.path(tempfile("codecheck_cache"))
+dir.create(cache_root, recursive = TRUE)
+old_root <- R.cache::getCacheRootPath()
+R.cache::setCacheRootPath(cache_root)
+
 # Test 1: register_clear_cache() - basic functionality ----
 expect_silent({
   # Clear cache before test
@@ -264,3 +274,6 @@ expect_true(grepl("2024-999", checking_lines[2]))
 
 # Clean up
 file.remove(list.files(tempdir(), pattern = "^file.*\\.csv$", full.names = TRUE))
+
+# restore the user's cache root, see the note at the top of this file
+R.cache::setCacheRootPath(old_root)

@@ -104,7 +104,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   # end, rather than R's default "There were N warnings" prompt.
   captured_warnings <- character(0)
 
-  register_table <- withCallingHandlers(
+  # With verbose = TRUE every log line is prefixed with the seconds elapsed
+  # since here, so a slow phase is visible in a redirected log.
+  register_table <- with_elapsed_log(enabled = verbose, withCallingHandlers(
     {
       # Loading config.R files (creates CONFIG environment)
       for (i in seq(length(config))) {
@@ -141,12 +143,17 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       # done by multiple authors.
       CONFIG$NO_CODECHECKS <- nrow(register_table)
 
+      # Resolve the certificate PDF links before anything is rendered: they are
+      # one HTTP request each and were resolved one by one while the main
+      # register.json was written (see prefetch_cert_links()).
+      prefetch_cert_links(register_table, parallel = parallel, ncores = ncores)
+
       if("html" %in% outputs) {
         render_result <- render_cert_htmls(register_table, force_download = FALSE, parallel = parallel, ncores = ncores)
       }
 
       create_filtered_reg_csvs(register_table, filter_by)
-      create_register_files(register_table, filter_by, outputs)
+      create_register_files(register_table, filter_by, outputs, parallel = parallel, ncores = ncores)
       create_non_register_files(register_table, filter_by)
 
       # Render the statistics dashboard (addresses register#33, register#48).
@@ -208,7 +215,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       captured_warnings <<- c(captured_warnings, conditionMessage(w))
       invokeRestart("muffleWarning")
     }
-  )
+  ))
 
   # Display captured warnings as structured log entries
   if (length(captured_warnings) > 0) {

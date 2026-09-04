@@ -4,7 +4,13 @@
 \alias{create_register_files}
 \title{Create Register Files}
 \usage{
-create_register_files(register_table, filter_by, outputs)
+create_register_files(
+  register_table,
+  filter_by,
+  outputs,
+  parallel = FALSE,
+  ncores = NULL
+)
 }
 \arguments{
 \item{register_table}{The original register table}
@@ -12,6 +18,13 @@ create_register_files(register_table, filter_by, outputs)
 \item{filter_by}{A list specifying the filters to be applied (e.g., "venues", "codecheckers").}
 
 \item{outputs}{A list specifying the output formats to generate (e.g., "md", "html", "json").}
+
+\item{parallel}{Whether to render the pages of a filter in parallel. Each page
+writes into its own output directory, so the items of one filter are
+independent of each other.}
+
+\item{ncores}{Number of workers to use when `parallel` is TRUE, defaults to
+one less than the machine has.}
 }
 \value{
 None. The function generates files in the specified formats.

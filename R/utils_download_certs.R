@@ -66,13 +66,103 @@ get_cert_link <- function(report_link, cert_id){
     return(cert_link_cache[[cache_key]])
   }
 
-  cert_download_url <- get_cert_link_uncached(report_link, cert_id)
+  # Behind the session cache sits the disk cache, because the file URL of a
+  # published report does not change: this was the one lookup in the whole
+  # render that every fresh session paid for again, ~0.5s per certificate in
+  # add_cert_pdf_links(). A resolution that comes back empty is treated as
+  # inconclusive rather than as "this record has no PDF" and is not stored,
+  # same rule as the metadata lookups (see cached_lookup()).
+  cert_download_url <- cached_lookup(
+    key = list(report_link = report_link, cert_id = cert_id),
+    dirs = c("codecheck", "cert_link"),
+    lookup = function() {
+      url <- get_cert_link_uncached(report_link, cert_id)
+      if (is.null(url)) {
+        list(status = "failed", value = NULL)
+      } else {
+        list(status = "found", value = url)
+      }
+    }
+  )
 
   if (!is.null(cert_download_url)) {
     cert_link_cache[[cache_key]] <- cert_download_url
   }
 
   return(cert_download_url)
+}
+
+#' Resolves every certificate's PDF link up front, in parallel
+#'
+#' The links are needed by add_cert_pdf_links() when the main register.json is
+#' written, one HTTP round trip each. Resolving them there, one after another,
+#' was the single slowest step of a render on a cold cache. Doing it here means
+#' the requests run concurrently and the results are in the caches before any
+#' page is rendered; get_cert_link() then answers from memory or disk.
+#'
+#' Failures are ignored: a link that cannot be resolved now is simply resolved
+#' again (and reported) where it is used.
+#'
+#' @param register_table The preprocessed register table
+#' @param parallel Whether to resolve the links in parallel
+#' @param ncores Number of workers, defaults to one less than the machine has
+#' @return Invisibly, the number of links resolved
+prefetch_cert_links <- function(register_table, parallel = FALSE, ncores = NULL) {
+  reports <- register_table[["Report"]]
+  # the column is "Certificate" in the preprocessed table and "Certificate ID"
+  # once the register files are being built - the value is the same either way
+  cert_ids <- register_table[["Certificate ID"]]
+  if (is.null(cert_ids)) {
+    cert_ids <- register_table[["Certificate"]]
+  }
+
+  if (is.null(reports) || is.null(cert_ids) || length(reports) == 0) {
+    return(invisible(0))
+  }
+
+  resolvable <- !is.na(reports) & nzchar(reports)
+  reports <- reports[resolvable]
+  cert_ids <- cert_ids[resolvable]
+
+  if (length(reports) == 0) {
+    return(invisible(0))
+  }
+
+  if (is.null(ncores)) {
+    ncores <- max(1, parallel::detectCores() - 1)
+  }
+  # mclapply forks, which Windows has no equivalent for; there the loop simply
+  # runs sequentially and still fills both caches.
+  if (!parallel || ncores <= 1 || .Platform$OS.type == "windows") {
+    ncores <- 1
+  }
+
+  cli::cli_alert_info("Resolving {length(reports)} certificate PDF link{?s}")
+  start_time <- Sys.time()
+
+  links <- parallel::mclapply(seq_along(reports), function(i) {
+    tryCatch(get_cert_link(reports[[i]], cert_ids[[i]]),
+             error = function(e) NULL)
+  }, mc.cores = ncores, mc.preschedule = TRUE)
+
+  # A forked worker's caches die with it, so the results are put into this
+  # session's cache here (the disk cache the workers wrote is shared, this
+  # only saves the read).
+  resolved <- 0
+  for (i in seq_along(links)) {
+    link <- links[[i]]
+    if (!is.null(link) && !inherits(link, "try-error") && is.character(link)) {
+      cert_link_cache[[paste0(reports[[i]], "|", cert_ids[[i]])]] <- link
+      resolved <- resolved + 1
+    }
+  }
+
+  elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
+  cli::cli_alert_success(
+    "Resolved {resolved}/{length(reports)} certificate PDF links in {sprintf('%.1f', elapsed)}s"
+  )
+
+  invisible(resolved)
 }
 
 #' In-session cache of resolved certificate download links, see get_cert_link()

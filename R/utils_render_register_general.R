@@ -218,12 +218,25 @@ create_original_register_files <- function(register_table, outputs){
 #' @param register_table The original register table
 #' @param filter_by A list specifying the filters to be applied (e.g., "venues", "codecheckers").
 #' @param outputs A list specifying the output formats to generate (e.g., "md", "html", "json").
+#' @param parallel Whether to render the pages of a filter in parallel. Each page
+#'        writes into its own output directory, so the items of one filter are
+#'        independent of each other.
+#' @param ncores Number of workers to use when `parallel` is TRUE, defaults to
+#'        one less than the machine has.
 #'
 #' @return None. The function generates files in the specified formats.
-create_register_files <- function(register_table, filter_by, outputs){
+create_register_files <- function(register_table, filter_by, outputs, parallel = FALSE, ncores = NULL){
 
   cli::cli_h2("Creating register files")
   start_time_total <- Sys.time()
+
+  if (is.null(ncores)) {
+    ncores <- max(1, parallel::detectCores() - 1)
+  }
+  # mclapply forks, which Windows has no equivalent for
+  if (.Platform$OS.type == "windows") {
+    ncores <- 1
+  }
 
   # Creating the original register file
   create_original_register_files(register_table, outputs)
@@ -306,19 +319,15 @@ create_register_files <- function(register_table, filter_by, outputs){
     # only shows on a dynamic terminal, so this line is what a redirected
     # log (e.g. `make render > render.log`) has to go on.
     n_items <- length(filtered_register_list)
-    cli::cli_alert_info("Rendering {n_items} {filter} {cli::qty(n_items)}page{?s} x {length(filter_outputs)} output{?s}")
+    use_parallel <- parallel && ncores > 1 && n_items > 1
+    cli::cli_alert_info(paste0(
+      "Rendering {n_items} {filter} {cli::qty(n_items)}page{?s} x {length(filter_outputs)} output{?s}",
+      if (use_parallel) " on {ncores} cores" else ""
+    ))
 
     # Looping over each of the output types
     for (output_type in filter_outputs){
-      cli_pb_id <- cli::cli_progress_bar(
-        format = paste0("{cli::pb_spin} ", filter, " (", output_type,
-                        ") [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | {cli::pb_elapsed} {cli::pb_status}"),
-        total = n_items,
-        clear = FALSE
-      )
-
-      for (i in seq_along(filtered_register_list)) {
-        # Retrieving the register and its key
+      render_one_page <- function(i) {
         register_key <- register_keys[[filter_col_name]][i]
         filtered_table <- filtered_register_list[[i]]
 
@@ -326,17 +335,49 @@ create_register_files <- function(register_table, filter_by, outputs){
 
         start_time_item <- Sys.time()
         render_register(filtered_table, table_details, filter, output_type, full_register_table = filtered_table)
-        elapsed_item <- as.numeric(difftime(Sys.time(), start_time_item, units = "secs"))
-        cli::cli_progress_update(id = cli_pb_id, status = register_key)
 
-        # One line per page is too much output for a full render, but it is
-        # the only way to spot a single slow page, so it stays behind verbose.
-        if (isTRUE(CONFIG$VERBOSE)) {
-          cli::cli_alert_success("Rendered {filter} {.val {register_key}} ({output_type}) in {sprintf('%.2f', elapsed_item)}s")
-        }
+        list(key = register_key,
+             elapsed = as.numeric(difftime(Sys.time(), start_time_item, units = "secs")))
       }
 
-      cli::cli_progress_done(id = cli_pb_id)
+      if (use_parallel) {
+        # No progress bar here: a forked worker cannot update the parent's.
+        # The per-page lines are printed afterwards, in item order, so a
+        # verbose log reads the same as it does sequentially.
+        results <- parallel::mclapply(seq_along(filtered_register_list), render_one_page,
+                                      mc.cores = ncores, mc.preschedule = TRUE)
+
+        failed <- Filter(function(r) inherits(r, "try-error"), results)
+        for (f in failed) {
+          cli::cli_alert_danger("Failed to render a {filter} page ({output_type}): {conditionMessage(attr(f, 'condition'))}")
+        }
+
+        if (isTRUE(CONFIG$VERBOSE)) {
+          for (result in Filter(function(r) !inherits(r, "try-error"), results)) {
+            cli::cli_alert_success("Rendered {filter} {.val {result$key}} ({output_type}) in {sprintf('%.2f', result$elapsed)}s")
+          }
+        }
+      } else {
+        cli_pb_id <- cli::cli_progress_bar(
+          format = paste0("{cli::pb_spin} ", filter, " (", output_type,
+                          ") [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | {cli::pb_elapsed} {cli::pb_status}"),
+          total = n_items,
+          clear = FALSE
+        )
+
+        for (i in seq_along(filtered_register_list)) {
+          result <- render_one_page(i)
+          cli::cli_progress_update(id = cli_pb_id, status = result$key)
+
+          # One line per page is too much output for a full render, but it is
+          # the only way to spot a single slow page, so it stays behind verbose.
+          if (isTRUE(CONFIG$VERBOSE)) {
+            cli::cli_alert_success("Rendered {filter} {.val {result$key}} ({output_type}) in {sprintf('%.2f', result$elapsed)}s")
+          }
+        }
+
+        cli::cli_progress_done(id = cli_pb_id)
+      }
     }
 
     elapsed_filter <- as.numeric(difftime(Sys.time(), start_time_filter, units = "secs"))
