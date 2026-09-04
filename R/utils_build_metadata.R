@@ -251,13 +251,12 @@ generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL,
     review$reviewBody <- config_yml$summary
   }
 
-  # Add datePublished (check_time)
-  if (!is.null(config_yml$check_time) && config_yml$check_time != "") {
-    # Parse date and format as ISO 8601 date (YYYY-MM-DD)
-    parsed_date <- parsedate::parse_date(config_yml$check_time)
-    if (!is.na(parsed_date)) {
-      review$datePublished <- format(parsed_date, "%Y-%m-%d")
-    }
+  # Add datePublished (check_time), ISO 8601 at the precision the
+  # codecheck.yml recorded - the page itself shows the day only, but this is
+  # machine-readable and keeps the time of day where there is one (register#219)
+  check_time <- format_check_time_iso(config_yml$check_time)
+  if (!is.na(check_time)) {
+    review$datePublished <- check_time
   }
 
   # Add the archived record: its DOI identifies the certificate, and the deposit

@@ -709,8 +709,13 @@ add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venu
   md_content <- gsub("\\$codechecker_names_heading\\$", codechecker_names_heading, md_content)
   md_content <- gsub("\\$codechecker_names\\$", codechecker_names, md_content)
   
-  # Adding check date, summary and cert no.
-  md_content <- gsub("\\$codecheck_time\\$", config_yml$check_time, md_content)
+  # Adding check date, summary and cert no. The page shows the day only, even
+  # where the codecheck.yml records a full timestamp - the hour of a check is
+  # noise to a reader (register#219). The machine-readable variants of the
+  # certificate keep whatever precision was recorded.
+  check_date <- format_check_date(config_yml$check_time)
+  if (is.na(check_date)) check_date <- config_yml$check_time %||% ""
+  md_content <- gsub("\\$codecheck_time\\$", check_date, md_content)
 
   # Adding summary if it exists else adding empty string
   if ("summary" %in% names(config_yml)){

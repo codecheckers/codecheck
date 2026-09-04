@@ -412,6 +412,11 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
                                      prune_unavailable = isTRUE(CONFIG$PRUNE_UNAVAILABLE_METADATA))
   }
 
+  # NULL, so that the field is left out entirely, where the codecheck.yml has
+  # no usable check time - just as it was before the reformatting
+  check_time_iso <- format_check_time_iso(config_yml$check_time)
+  if (is.na(check_time_iso)) check_time_iso <- NULL
+
   cert_json <- list(
     certificate = list(
       id = config_yml$certificate,
@@ -437,7 +442,9 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
         }
         checker_obj
       }),
-      check_time = config_yml$check_time,
+      # kept at the precision the codecheck.yml recorded, unlike the page,
+      # which shows the day only (register#219)
+      check_time = check_time_iso,
       repository = repo_link,
       report = config_yml$report,
       type = cert_type,

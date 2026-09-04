@@ -13,6 +13,12 @@
 * `preview_wikidata_export()` writes the checked works to `wikidata-works.qs` rather than `wikidata-papers.qs`, matching the noun the register uses everywhere else (register#50).
 * `register_render()` keeps a register repo's `.zenodo.json` contributors current with every codechecker named in the register (register#58), crediting people whose work otherwise only appears on their own person page. New `build_zenodo_contributors()` and `update_zenodo_json()`. Zenodo's contributor vocabulary has no "reviewer"/"checker" term, so every entry is typed `"Other"`; a `.zenodo.json` that does not exist is left alone. Only the `contributors` array is touched - the rest of the file (title, creators, licence, ...) stays hand-maintained.
 
+* A certificate's "Time of check" is shown as a day, not a timestamp: `codecheck.yml` files record the check with whatever precision the codechecker had at hand, and the hour of a check is noise to a reader (the register tables already showed the day only). The machine-readable variants keep the recorded precision - the certificate's `index.json` and its schema.org JSON-LD `datePublished` carry the time of day in ISO 8601 where the `codecheck.yml` gave one, and a bare date where it did not, rather than an invented `00:00:00`. `register-full.json` gains a `Check time` field alongside the day-precision `Check date`. New internal helpers `format_check_date()`, `format_check_time_iso()` and `check_time_has_time_of_day()`.
+
+## Bug fixes
+
+* The register pages render properly on a phone: the navigation menu wraps instead of running off the screen, which left "Statistics" and "About" unreachable, and a table wider than the viewport scrolls in its own container instead of widening the whole document, which cut off the right-hand columns with no way to reach them. Also zeroes the body margin, which only the plain 404 and redirect templates ever saw, since Bootstrap sets it on every other page.
+
 # codecheck 0.28.0
 
 ## New Features

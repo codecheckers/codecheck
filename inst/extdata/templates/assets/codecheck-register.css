@@ -79,6 +79,10 @@
 
 .navbar-menu {
     display: flex;
+    /* the menu has seven items: it must wrap rather than run off the screen,
+       otherwise the last ones (Statistics, About) are unreachable on a phone */
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1.5rem;
     align-items: center;
 }
@@ -109,7 +113,12 @@
 
     .navbar-menu {
         width: 100%;
-        justify-content: center;
+        gap: 0.25rem 0.75rem;
+    }
+
+    .navbar-menu .nav-link {
+        font-size: 1.05rem;
+        padding: 0.4rem 0.5rem;
     }
 
     .navbar-logo {
@@ -260,6 +269,10 @@ nav[aria-label="breadcrumb"] {
 /* Base typography for certificate pages */
 body {
     font-family: "PT Sans", Helvetica, Arial, sans-serif;
+    /* Bootstrap zeroes this anyway; it matters on the pages built from the
+       plain templates (404, redirects), which load only this stylesheet and
+       would otherwise keep the browser's default 8px body margin. */
+    margin: 0;
 }
 
 h1 {
@@ -504,6 +517,25 @@ h1 {
     margin: 2.75rem 0 1rem;
     padding-top: 1rem;
     border-top: 1px solid #e5e5e5;
+}
+
+/* ====================
+   Wide Tables
+   ==================== */
+
+/* The register tables have more columns than fit on a phone, and cells like
+   DOIs or ORCIDs cannot wrap below their own width. Without this the table
+   widens the whole page: the document scrolls sideways, the navigation and
+   footer stretch with it, and the right-hand columns are cut off with no
+   visible way to reach them. Making the table its own scroll container keeps
+   the page itself at viewport width and scrolls the columns in place. */
+@media (max-width: 991px) {
+    .main-container table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 /* ====================

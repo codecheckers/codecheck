@@ -146,6 +146,10 @@ render_register_full <- function(register_table, output_dir) {
     config_yml <- get_codecheck_yml(repo_spec)
 
     if (!is.null(config_yml)) {
+      # The full export keeps the check time at the precision the
+      # codecheck.yml recorded it with, next to the day-precision "Check date"
+      # every table and the register.json show (register#219)
+      entry$`Check time` <- format_check_time_iso(config_yml$check_time)
       entry$Report <- config_yml$report %||% NA_character_
       csv_report[i] <- entry$Report
       entry$Title <- if (!is.null(config_yml$paper$title)) stringr::str_trim(config_yml$paper$title) else NA_character_

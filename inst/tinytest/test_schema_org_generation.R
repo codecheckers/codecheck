@@ -200,11 +200,12 @@ expect_equal(
   info = "Review should have reviewBody with summary"
 )
 
-# Test 11: Date published
+# Test 11: Date published - the recorded precision is kept here, unlike on the
+# page itself, which shows the day only (register#219)
 expect_equal(
   json_ld$datePublished,
-  "2025-01-15",
-  info = "Should have datePublished in ISO 8601 date format"
+  "2025-01-15T14:30:00",
+  info = "Should have datePublished in ISO 8601, keeping the recorded time of day"
 )
 
 # Test 12: Associated media (certificate PDF)

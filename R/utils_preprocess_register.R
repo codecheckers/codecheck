@@ -145,6 +145,60 @@ add_issue_number_links <- function(register_table, register) {
   return(register_table)
 }
 
+#' Was a time of day recorded with the check time?
+#'
+#' `check_time` in a `codecheck.yml` is written with whatever precision the
+#' codechecker had at hand: some entries are a bare day, others a full
+#' timestamp. Readers only ever see the day (register#219), so the precision
+#' matters solely for the machine-readable exports, which keep it.
+#'
+#' @param x The raw `check_time` value from a codecheck.yml
+#' @return TRUE if `x` carries a time of day
+#' @keywords internal
+check_time_has_time_of_day <- function(x) {
+  is_nonempty_string(x) && grepl("[0-9]{1,2}:[0-9]{2}", x)
+}
+
+#' The check time as shown to readers: the day, never the time
+#'
+#' @param x The raw `check_time` value from a codecheck.yml
+#' @return `YYYY-MM-DD`, or NA if `x` is missing or unparseable
+#' @keywords internal
+format_check_date <- function(x) {
+  if (!is_nonempty_string(x)) return(NA_character_)
+  parsed <- parsedate::parse_date(x)
+  if (is.na(parsed)) return(NA_character_)
+  format(parsed, "%Y-%m-%d")
+}
+
+#' The check time for machine-readable output, at the recorded precision
+#'
+#' ISO 8601 with the time of day where the codecheck.yml recorded one, the
+#' bare day where it did not - a `00:00:00` invented by the parser would
+#' claim a precision that was never there.
+#'
+#' @param x The raw `check_time` value from a codecheck.yml
+#' @return An ISO 8601 date or date-time, or NA if `x` is missing or
+#'   unparseable
+#' @keywords internal
+format_check_time_iso <- function(x) {
+  if (!is_nonempty_string(x)) return(NA_character_)
+  parsed <- parsedate::parse_date(x)
+  if (is.na(parsed)) return(NA_character_)
+  if (!check_time_has_time_of_day(x)) {
+    return(format(parsed, "%Y-%m-%d"))
+  }
+  # A codecheck.yml usually writes "2020-04-13 10:00:00", a wall clock with no
+  # zone; parsedate reads that as UTC, so formatting it back in UTC returns the
+  # time as written instead of shifting it. Only a value that named a zone
+  # itself gets an offset in the output.
+  if (grepl("(Z|[+-][0-9]{2}:?[0-9]{2})$", trimws(x))) {
+    parsedate::format_iso_8601(parsed)
+  } else {
+    format(parsed, "%Y-%m-%dT%H:%M:%S", tz = "UTC")
+  }
+}
+
 #' Function for adding check time to each report in the register table.
 #' 
 #' @param register_table The register table
