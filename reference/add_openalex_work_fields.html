@@ -17,7 +17,7 @@ years, a different publication."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ years, a different publication.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_openalex_work_fields</span><span class="op">(</span><span class="va">register_table</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_openalex_work_fields</span><span class="op">(</span><span class="va">register_table</span>, paper_references <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,11 +70,18 @@ years, a different publication.</p>
 <dl><dt id="arg-register-table">register_table<a class="anchor" aria-label="anchor" href="#arg-register-table"></a></dt>
 <dd><p>The register table, with an `OpenAlex` column</p></dd>
 
+
+<dt id="arg-paper-references">paper_references<a class="anchor" aria-label="anchor" href="#arg-paper-references"></a></dt>
+<dd><p>Optional character vector, same length and order
+as `register_table`'s rows, of each work's `paper.reference` URL from its
+`codecheck.yml`. Used only as a fallback (see below); pass NULL/omit to
+skip it (e.g. for a per-certificate re-render with a one-row table).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The register table with added "Paper ISSN", "Paper venue" and
-  "Paper publication date" columns</p>
+  "Work publication date" columns</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

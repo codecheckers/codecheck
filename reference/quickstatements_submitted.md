@@ -38,6 +38,12 @@ quickstatements_submitted(
 
 the log entry, invisibly
 
+## Details
+
+Recording a batch also retires the \`.qs\` file it was pasted from,
+renaming it with a \`.submitted\` suffix so that a later run cannot
+paste the same creates a second time.
+
 ## Examples
 
 ``` r

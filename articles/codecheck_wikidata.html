@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
                         <h4 data-toc-skip class="author">Daniel
 Nüst</h4>
             
-            <h4 data-toc-skip class="date">2026-09-03</h4>
+            <h4 data-toc-skip class="date">2026-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_wikidata.Rmd" class="external-link"><code>vignettes/codecheck_wikidata.Rmd</code></a></small>
       <div class="d-none name"><code>codecheck_wikidata.Rmd</code></div>
@@ -269,31 +269,99 @@ for.</p>
 your own Wikidata account.</li>
 <li>
 <em>New batch</em> → V1 syntax.</li>
-<li>Paste the contents of <code>wikidata/wikidata-papers.qs</code>.</li>
+<li>Paste the contents of <code>wikidata/wikidata-works.qs</code>.</li>
 <li>
-<em>Import</em>, check the parsed preview QuickStatements shows,
-then <em>Run</em>.</li>
-<li>Copy the batch URL it gives you.</li>
+<em>Import</em>, and check the parsed preview QuickStatements
+shows.</li>
 </ol>
-<p>Watch the first few commands go through before leaving it. If the
-batch fails early - a malformed value, a blocked account - stop and fix
-it rather than letting it run on.</p>
+<p>Now QuickStatements offers two ways to run, and they differ in what
+you can watch and in what URL you end up with. Either is fine; the point
+is to know which one you used, because the record you keep in step 5
+comes from a different place in each case.</p>
+<p><strong>Run</strong> (recommended) runs the batch in your browser,
+reporting each command as it goes. You see a failure - a malformed
+value, a blocked account - while there is still a run to stop, which is
+why it is the better choice for a batch that has never been run before.
+It needs the tab left open: closing it stops the run part-way. There is
+no QuickStatements batch page. Instead the run shows a <em>You can
+revert or discuss this batch</em> link to <a href="https://editgroups.toolforge.org/" class="external-link">EditGroups</a>, e.g.
+<code>https://editgroups.toolforge.org/b/QSv2T/1788464327978</code>,
+whose trailing number is the run’s start time. <strong>That is the URL
+to keep.</strong></p>
+<p><strong>Run in background</strong> hands the batch to the server. It
+survives the tab closing, which is the reason to prefer it for a long
+batch, but you only learn about failures afterwards. It gives a
+QuickStatements batch page,
+<code>https://quickstatements.toolforge.org/#/batch/12345</code>, listed
+with your other runs at
+<code>https://quickstatements.toolforge.org/#/batches/&lt;your username&gt;</code>.
+<strong>That is the URL to keep.</strong></p>
+<p>Either way, watch the first few commands through before leaving it,
+and stop rather than letting a failing batch continue.</p>
+<div class="section level3">
+<h3 id="wikidatas-edit-rate-limit">Wikidata’s edit rate limit<a class="anchor" aria-label="anchor" href="#wikidatas-edit-rate-limit"></a>
+</h3>
+<p>A normal account may make <strong>90 edits per minute</strong>, and
+QuickStatements writes one edit per item. A background run pushes as
+fast as the API accepts, so a batch creating more than 90 items stops
+dead at the limit: everything from item 91 on is rejected, and
+QuickStatements reports it as</p>
+<pre><code>No success flag set in API result</code></pre>
+<p>which says nothing about the cause. The items already created are
+fine - the run simply stops, and the batch page shows the split
+(<code>90 DONE, 42 ERROR</code>).</p>
+<p><code><a href="../reference/preview_wikidata_export.html">preview_wikidata_export()</a></code> therefore writes any batch
+above the limit as several numbered files:</p>
+<pre><code>! 132 items is more than the 80 an account may create per minute: split into 2
+  batches to paste in turn
+ℹ 1204 commands written to 'wikidata/wikidata-certificates-01.qs'
+ℹ 781 commands written to 'wikidata/wikidata-certificates-02.qs'</code></pre>
+<p>Paste them in order, <strong>leaving a minute between them</strong>,
+and record each one separately - each is its own batch with its own URL.
+The default is a little under 90 so that other edits in the same minute
+do not push the batch over; <code>chunk_size</code> changes it.</p>
+<p>A split never falls inside an item: the statements after a
+<code>CREATE</code> address it as <code>LAST</code>, so a boundary in
+the wrong place would attach them to the previous item.</p>
+<p>If it happens anyway - an older batch file, a hand-made one - the
+recovery is step 6: regenerate, and the preview will offer exactly the
+items that are still missing. That is the one case where
+<code>force = TRUE</code> is right, because the guard cannot tell a
+failed batch from a slow index on its own.</p>
+<p>Both runs are also grouped on EditGroups, which is what makes a whole
+batch revertable in one go if it turns out to have been wrong - worth
+knowing about before running several hundred creates that have no undo
+of their own.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="step-5-record-that-the-batch-ran">Step 5: record that the batch ran<a class="anchor" aria-label="anchor" href="#step-5-record-that-the-batch-ran"></a>
 </h2>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/quickstatements_submitted.html">quickstatements_submitted</a></span><span class="op">(</span><span class="st">"wikidata-papers"</span>,</span>
-<span>                          url <span class="op">=</span> <span class="st">"https://quickstatements.toolforge.org/#/batch/12345"</span>,</span>
-<span>                          note <span class="op">=</span> <span class="st">"3 commands failed, see batch page"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/quickstatements_submitted.html">quickstatements_submitted</a></span><span class="op">(</span><span class="st">"wikidata-works"</span>,</span>
+<span>                          url <span class="op">=</span> <span class="st">"https://editgroups.toolforge.org/b/QSv2T/1788464327978"</span>,</span>
+<span>                          note <span class="op">=</span> <span class="st">"foreground run, 3 commands failed"</span><span class="op">)</span></span></code></pre></div>
+<p>Whichever URL step 4 left you with goes in <code>url</code>. If you
+somehow have neither, record the batch anyway - <code>url</code> may be
+<code>NA</code> - and say so in <code>note</code>; a run with no link is
+still better known than unknown.</p>
 <p>Nothing else records this. The code cannot observe a paste, and a
 batch run last week against a register that has since moved on cannot be
 reconstructed from anywhere else.</p>
+<p>Recording it also arms the guard in step 6: a batch known to have
+been submitted, whose entities do not resolve yet, is the one case where
+generating the batch again would be a mistake.</p>
+<p>And it retires the file: <code>wikidata-works.qs</code> is renamed to
+<code>wikidata-works.qs.submitted</code>, so nothing in the directory
+still looks pasteable when it has already been run. The commands stay
+readable under the new name, which is what you want when you need to see
+which of them failed. Once every work resolves, a later preview also
+removes a leftover batch file for the same reason.</p>
 </div>
 <div class="section level2">
 <h2 id="step-6-regenerate-and-check-the-gate">Step 6: regenerate, and check the gate<a class="anchor" aria-label="anchor" href="#step-6-regenerate-and-check-the-gate"></a>
 </h2>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">preview</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/preview_wikidata_export.html">preview_wikidata_export</a></span><span class="op">(</span><span class="st">"../register"</span>, out_dir <span class="op">=</span> <span class="st">"wikidata"</span><span class="op">)</span></span></code></pre></div>
 <p><strong>The gate:</strong> it must now report that the works are
 already on Wikidata and that there are none to create.</p>
@@ -302,13 +370,13 @@ up yet - usually minutes. Wait and run it again.</p>
 <p>You will not silently get a duplicate batch here: when the log says a
 batch of this name was submitted and the works still do not resolve, the
 file is <em>not</em> written and the reason is printed instead.</p>
-<pre><code>✖ Not writing the paper batch: one was submitted at 2026-09-02T17:04:11+0200,
-  and 91 papers still do not resolve.
+<pre><code>✖ Not writing the work batch: one was submitted at 2026-09-02T17:04:11+0200,
+  and 91 works still do not resolve.
 ℹ Either the search index has not caught up - wait and run this again - or that
   batch failed, which its QuickStatements page will say.</code></pre>
 <p>Find out which of the two it was - the batch page says whether it ran
 - before doing anything else. Only then:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/preview_wikidata_export.html">preview_wikidata_export</a></span><span class="op">(</span><span class="st">"../register"</span>, out_dir <span class="op">=</span> <span class="st">"wikidata"</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <blockquote>
 <p><strong>Do not paste the works batch a second time without
@@ -324,13 +392,13 @@ one DOI directly:
 </h2>
 <p>Same as step 4, with <code>wikidata/wikidata-certificates.qs</code>,
 and then:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/quickstatements_submitted.html">quickstatements_submitted</a></span><span class="op">(</span><span class="st">"wikidata-certificates"</span>, url <span class="op">=</span> <span class="st">"..."</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="step-8-verify">Step 8: verify<a class="anchor" aria-label="anchor" href="#step-8-verify"></a>
 </h2>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/verify_wikidata_export.html">verify_wikidata_export</a></span><span class="op">(</span><span class="st">"../register"</span><span class="op">)</span></span></code></pre></div>
 <p>This is the step that proves the model’s central decision worked
 rather than only sounding right. It asks two different questions of two
@@ -342,7 +410,7 @@ the scholarly graph</em>, where the works it reviews are.</p>
 ℹ 124 state review of on the work they checked</code></pre>
 <p>The returned table has a row per certificate, so a shortfall can be
 looked at directly:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verify_wikidata_export.html">verify_wikidata_export</a></span><span class="op">(</span><span class="st">"../register"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">result</span>, <span class="op">!</span><span class="va">in_scholarly_graph</span> <span class="op">|</span> <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">review_of</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Run it a few hours after the batch, not immediately: the query
@@ -369,7 +437,7 @@ write appends a row: time, target, action, kind, id, label, status,
 batch, detail. It covers both halves of the export - the API writes to
 the Wikibase, and the QuickStatements batches prepared for and submitted
 to Wikidata.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log</span> <span class="op">&lt;-</span> <span class="fu">codecheck</span><span class="fu">:::</span><span class="fu"><a href="../reference/wikibase_log_read.html">wikibase_log_read</a></span><span class="op">(</span><span class="st">"wikibase-log.csv"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">log</span>, <span class="va">target</span> <span class="op">==</span> <span class="st">"wikidata"</span><span class="op">)</span></span></code></pre></div>
 </div>

@@ -15,7 +15,8 @@ quickstatements_write(
   batch,
   dir = ".",
   target = c("wikidata", "wikibase"),
-  file = NULL
+  file = NULL,
+  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT
 )
 ```
 
@@ -41,6 +42,20 @@ quickstatements_write(
 
   the log path, or \`NULL\` to use the option
 
+- chunk_size:
+
+  how many items one file may create before it is split; see
+  \[QUICKSTATEMENTS_EDIT_LIMIT\]
+
 ## Value
 
-the path of the written file, invisibly
+the paths of the written files, invisibly
+
+## Details
+
+A batch that would create more items than Wikidata lets an account edit
+in a minute is written as several numbered files, each its own batch in
+the log, to be pasted one after another. Splitting beforehand is the
+difference between a run that stops cleanly at a file boundary and one
+that fails part-way through with 42 items missing and no record of
+which.

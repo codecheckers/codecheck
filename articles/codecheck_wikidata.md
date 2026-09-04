@@ -199,27 +199,105 @@ work they review, which is the one statement the whole model exists for.
 1.  Open <https://quickstatements.toolforge.org/> and log in with your
     own Wikidata account.
 2.  *New batch* → V1 syntax.
-3.  Paste the contents of `wikidata/wikidata-papers.qs`.
-4.  *Import*, check the parsed preview QuickStatements shows, then
-    *Run*.
-5.  Copy the batch URL it gives you.
+3.  Paste the contents of `wikidata/wikidata-works.qs`.
+4.  *Import*, and check the parsed preview QuickStatements shows.
 
-Watch the first few commands go through before leaving it. If the batch
-fails early - a malformed value, a blocked account - stop and fix it
-rather than letting it run on.
+Now QuickStatements offers two ways to run, and they differ in what you
+can watch and in what URL you end up with. Either is fine; the point is
+to know which one you used, because the record you keep in step 5 comes
+from a different place in each case.
+
+**Run** (recommended) runs the batch in your browser, reporting each
+command as it goes. You see a failure - a malformed value, a blocked
+account - while there is still a run to stop, which is why it is the
+better choice for a batch that has never been run before. It needs the
+tab left open: closing it stops the run part-way. There is no
+QuickStatements batch page. Instead the run shows a *You can revert or
+discuss this batch* link to
+[EditGroups](https://editgroups.toolforge.org/), e.g.
+`https://editgroups.toolforge.org/b/QSv2T/1788464327978`, whose trailing
+number is the run’s start time. **That is the URL to keep.**
+
+**Run in background** hands the batch to the server. It survives the tab
+closing, which is the reason to prefer it for a long batch, but you only
+learn about failures afterwards. It gives a QuickStatements batch page,
+`https://quickstatements.toolforge.org/#/batch/12345`, listed with your
+other runs at
+`https://quickstatements.toolforge.org/#/batches/<your username>`.
+**That is the URL to keep.**
+
+Either way, watch the first few commands through before leaving it, and
+stop rather than letting a failing batch continue.
+
+### Wikidata’s edit rate limit
+
+A normal account may make **90 edits per minute**, and QuickStatements
+writes one edit per item. A background run pushes as fast as the API
+accepts, so a batch creating more than 90 items stops dead at the limit:
+everything from item 91 on is rejected, and QuickStatements reports it
+as
+
+    No success flag set in API result
+
+which says nothing about the cause. The items already created are fine -
+the run simply stops, and the batch page shows the split
+(`90 DONE, 42 ERROR`).
+
+[`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
+therefore writes any batch above the limit as several numbered files:
+
+    ! 132 items is more than the 80 an account may create per minute: split into 2
+      batches to paste in turn
+    ℹ 1204 commands written to 'wikidata/wikidata-certificates-01.qs'
+    ℹ 781 commands written to 'wikidata/wikidata-certificates-02.qs'
+
+Paste them in order, **leaving a minute between them**, and record each
+one separately - each is its own batch with its own URL. The default is
+a little under 90 so that other edits in the same minute do not push the
+batch over; `chunk_size` changes it.
+
+A split never falls inside an item: the statements after a `CREATE`
+address it as `LAST`, so a boundary in the wrong place would attach them
+to the previous item.
+
+If it happens anyway - an older batch file, a hand-made one - the
+recovery is step 6: regenerate, and the preview will offer exactly the
+items that are still missing. That is the one case where `force = TRUE`
+is right, because the guard cannot tell a failed batch from a slow index
+on its own.
+
+Both runs are also grouped on EditGroups, which is what makes a whole
+batch revertable in one go if it turns out to have been wrong - worth
+knowing about before running several hundred creates that have no undo
+of their own.
 
 ## Step 5: record that the batch ran
 
 ``` r
 
-quickstatements_submitted("wikidata-papers",
-                          url = "https://quickstatements.toolforge.org/#/batch/12345",
-                          note = "3 commands failed, see batch page")
+quickstatements_submitted("wikidata-works",
+                          url = "https://editgroups.toolforge.org/b/QSv2T/1788464327978",
+                          note = "foreground run, 3 commands failed")
 ```
+
+Whichever URL step 4 left you with goes in `url`. If you somehow have
+neither, record the batch anyway - `url` may be `NA` - and say so in
+`note`; a run with no link is still better known than unknown.
 
 Nothing else records this. The code cannot observe a paste, and a batch
 run last week against a register that has since moved on cannot be
 reconstructed from anywhere else.
+
+Recording it also arms the guard in step 6: a batch known to have been
+submitted, whose entities do not resolve yet, is the one case where
+generating the batch again would be a mistake.
+
+And it retires the file: `wikidata-works.qs` is renamed to
+`wikidata-works.qs.submitted`, so nothing in the directory still looks
+pasteable when it has already been run. The commands stay readable under
+the new name, which is what you want when you need to see which of them
+failed. Once every work resolves, a later preview also removes a
+leftover batch file for the same reason.
 
 ## Step 6: regenerate, and check the gate
 
@@ -238,8 +316,8 @@ You will not silently get a duplicate batch here: when the log says a
 batch of this name was submitted and the works still do not resolve, the
 file is *not* written and the reason is printed instead.
 
-    ✖ Not writing the paper batch: one was submitted at 2026-09-02T17:04:11+0200,
-      and 91 papers still do not resolve.
+    ✖ Not writing the work batch: one was submitted at 2026-09-02T17:04:11+0200,
+      and 91 works still do not resolve.
     ℹ Either the search index has not caught up - wait and run this again - or that
       batch failed, which its QuickStatements page will say.
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.28.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,8 @@
 <li>Align the merged entries’ style, length, content and links with the historic entries below them: one or two sentences per bullet (per <a href="https://style.tidyverse.org/news.html" class="external-link uri">https://style.tidyverse.org/news.html</a>, referenced in <code>CONTRIBUTING.md</code>), not a multi-paragraph writeup accumulated over a dev cycle - trim implementation narrative down to the user-facing change, and match how existing entries cite an issue (<code>(closes codecheckers/register#N)</code> / <code>(register#N)</code>) rather than a bare <code>#N</code> or no reference at all.</li>
 <li>Run <code>devtools::document()</code> so <code>man/</code> reflects the current code (roxygen doesn’t stamp the package version into <code>.Rd</code> files, but a stale <code>man/</code> from skipped <code>--no-docs</code> installs during iteration should not ship in a release).</li>
 <li>Update the hardcoded <code>version:</code> and <code>date-released:</code> fields in <code>CITATION.cff</code> - nothing else touches this file, so it silently drifted for several releases (last correct at 0.21.0) before being caught at 0.26.0.</li>
-</ul></div>
+</ul><p>After the release commit lands, complete the release: annotated-tag it as <code>X.Y.Z</code> (no <code>v</code> prefix, matching the existing tags), push <code>master</code> and the tag to both <code>origin</code> and <code>upstream</code>, then start the next dev cycle with <code>usethis::use_version("dev")</code>. Confirm the push target with the user first (both remotes by default) rather than assuming.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>

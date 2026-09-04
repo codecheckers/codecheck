@@ -130,6 +130,12 @@ them under the release heading, regenerate `man/`, or touch
   drifted for several releases (last correct at 0.21.0) before being
   caught at 0.26.0.
 
+After the release commit lands, complete the release: annotated-tag it
+as `X.Y.Z` (no `v` prefix, matching the existing tags), push `master`
+and the tag to both `origin` and `upstream`, then start the next dev
+cycle with `usethis::use_version("dev")`. Confirm the push target with
+the user first (both remotes by default) rather than assuming.
+
 ## Architecture
 
 ### Register Rendering Pipeline
