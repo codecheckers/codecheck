@@ -95,6 +95,17 @@ postfix_scripts <- xml2::xml_attr(xml2::xml_find_all(index_head, "//script"), "s
 expect_true(any(grepl("stupidtable.min.js", postfix_scripts, fixed = TRUE)))
 expect_true(any(grepl("table-sort-init.js", postfix_scripts, fixed = TRUE)))
 
+# the shipped initialiser keeps the sort state of each table in the URL
+# ("?sort=-check-date"), so a sorted view can be linked and bookmarked
+table_sort_init <- paste(
+  readLines(system.file("extdata", "js", "table-sort-init.js", package = "codecheck")),
+  collapse = "\n"
+)
+expect_true(grepl("URLSearchParams", table_sort_init, fixed = TRUE),
+            info = "the sort state is read from the query string")
+expect_true(grepl("replaceState", table_sort_init, fixed = TRUE),
+            info = "sorting updates the URL without adding a history entry")
+
 # TODO ----
 
 # clean up
