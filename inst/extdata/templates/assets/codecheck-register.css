@@ -538,6 +538,30 @@ h1 {
     }
 }
 
+/* Below the same breakpoint the least important columns are hidden entirely -
+   scrolling four columns sideways is still work. add_column_priority_classes()
+   marks them; the markup, and every data export, keeps them all. The class
+   deliberately does not start with "col-": Bootstrap 3 sets
+   `table td[class*="col-"] { display: table-cell }`, which would win. */
+@media (max-width: 767px) {
+    .low-priority {
+        display: none;
+    }
+}
+
+.hidden-columns-note {
+    color: #6c757d;
+    font-size: 0.85em;
+    font-style: italic;
+    margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .hidden-columns-note {
+        display: none;
+    }
+}
+
 /* ====================
    Sortable Tables
    ==================== */

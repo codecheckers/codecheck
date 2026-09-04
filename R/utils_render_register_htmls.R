@@ -377,6 +377,10 @@ render_html <- function(table, table_details, filter, full_register_table = NULL
   # register (filter is NA), unlike the libs path rewrite below.
   add_sortable_th_attributes(html_file_path)
 
+  # Hiding the least important columns on a phone (see codecheck-register.css),
+  # after the sortable markers so both rewrites see the same <th> tags.
+  add_column_priority_classes(html_file_path)
+
   # For all registered tables besides the original we change the html
   # file so that the path to the libs folder refers to the libs folder "docs/libs".
   # This is done to remove duplicates of "libs" folders.
@@ -430,6 +434,140 @@ add_sortable_th_attributes <- function(html_file_path) {
   }
 
   writeLines(unlist(strsplit(html, "\n", fixed = TRUE)), html_file_path)
+}
+
+#' Marks the lower-priority columns of the register tables so the stylesheet
+#' can hide them on a phone (see codecheck-register.css).
+#'
+#' The tables have more columns than fit on a narrow screen, and the ones
+#' listed below carry the least: a Report or DOI link whose target is reachable
+#' from the row's own certificate or work page, a Type that repeats what the
+#' Venue label already says, an ORCID next to a name that links to the same
+#' person page, a Check types bar with no textual value. Everything stays in
+#' the markup - and in the JSON, CSV and Markdown exports, which this does not
+#' touch - so widening the window brings the columns back.
+#'
+#' A table whose header row has none of these columns is left untouched.
+#'
+#' @param html_file_path The path to the rendered index.html file.
+add_column_priority_classes <- function(html_file_path) {
+  # The class name must not start with "col-": Bootstrap 3, which the rendered
+  # pages load, has `table td[class*="col-"] { display: table-cell }`, whose
+  # specificity beats a single class and would silently keep the columns
+  # visible.
+  low_priority_headers <- c("Report", "Type", "DOI", "ORCID", "Check types",
+                            "ROR", "Country")
+  note_html <- paste0(
+    '<p class="hidden-columns-note">Some columns are hidden on small ',
+    'screens; rotate the device or use a wider window to see them all.</p>'
+  )
+
+  html <- paste(readLines(html_file_path, warn = FALSE), collapse = "\n")
+
+  # Drop notes from an earlier run before adding them again, so running twice
+  # over the same file leaves it exactly as running once does (the class itself
+  # is skipped when already present, see add_hiding_class()).
+  html <- gsub('(?s)\n?<p class="hidden-columns-note">.*?</p>', "", html, perl = TRUE)
+
+  # (?s) so the pattern spans the newlines pandoc puts between rows
+  table_pattern <- "(?s)<table[^>]*>.*?</table>"
+  matches <- gregexpr(table_pattern, html, perl = TRUE)
+
+  if (matches[[1]][1] == -1) {
+    return(invisible(FALSE))
+  }
+
+  hid_any <- FALSE
+
+  regmatches(html, matches) <- lapply(regmatches(html, matches), function(tables) {
+    vapply(tables, function(table_html) {
+      headers <- header_texts(table_html)
+      low_indices <- which(headers %in% low_priority_headers)
+
+      if (length(headers) == 0 || length(low_indices) == 0) {
+        return(table_html)
+      }
+
+      hid_any <<- TRUE
+      paste0(mark_row_cells(table_html, low_indices), "\n", note_html)
+    }, character(1), USE.NAMES = FALSE)
+  })
+
+  writeLines(unlist(strsplit(html, "\n", fixed = TRUE)), html_file_path)
+  invisible(hid_any)
+}
+
+#' The header cells of one table, in document order, with the non-breaking
+#' space pandoc's "abbreviations" extension puts after "No." normalised away
+#' (same reason as in add_sortable_th_attributes()).
+#'
+#' @param table_html One table element, as HTML.
+#' @return A character vector of header texts, empty if the table has none.
+#' @noRd
+header_texts <- function(table_html) {
+  th_cells <- regmatches(table_html,
+                         gregexpr("(?s)<th[^>]*>.*?</th>", table_html, perl = TRUE))[[1]]
+  if (length(th_cells) == 0) {
+    return(character(0))
+  }
+  texts <- gsub("<[^>]*>", "", th_cells)
+  gsub("\u00a0", " ", trimws(texts), fixed = TRUE)
+}
+
+#' Adds the hiding class to the given column positions in every row of a table.
+#'
+#' Cells are matched by their position within their own row, counting opening
+#' <th>/<td> tags - the register tables never use colspan, so position is the
+#' column. Only the opening tag is rewritten, so cell content (links, spans,
+#' the check-type bars) is untouched.
+#'
+#' @param table_html One table element, as HTML.
+#' @param indices The 1-based column positions to mark.
+#' @return The table HTML with the class added.
+#' @noRd
+mark_row_cells <- function(table_html, indices) {
+  rows <- gregexpr("(?s)<tr[^>]*>.*?</tr>", table_html, perl = TRUE)
+
+  if (rows[[1]][1] == -1) {
+    return(table_html)
+  }
+
+  regmatches(table_html, rows) <- lapply(regmatches(table_html, rows), function(row_htmls) {
+    vapply(row_htmls, function(row_html) {
+      cells <- gregexpr("<t[hd][^>]*>", row_html, perl = TRUE)
+      if (cells[[1]][1] == -1) {
+        return(row_html)
+      }
+
+      regmatches(row_html, cells) <- lapply(regmatches(row_html, cells), function(tags) {
+        marked <- seq_along(tags) %in% indices
+        ifelse(marked, vapply(tags, add_hiding_class, character(1), USE.NAMES = FALSE), tags)
+      })
+
+      row_html
+    }, character(1), USE.NAMES = FALSE)
+  })
+
+  table_html
+}
+
+#' Adds the "low-priority" class to one opening tag, merging with a class
+#' attribute that is already there and doing nothing if the class is present -
+#' the function must be safe to run twice over the same file.
+#'
+#' @param tag One opening <th> or <td> tag.
+#' @return The tag with the class.
+#' @noRd
+add_hiding_class <- function(tag) {
+  if (grepl("low-priority", tag, fixed = TRUE)) {
+    return(tag)
+  }
+
+  if (grepl('class="', tag, fixed = TRUE)) {
+    return(sub('class="', 'class="low-priority ', tag, fixed = TRUE))
+  }
+
+  sub(">$", ' class="low-priority">', tag)
 }
 
 #' Loads a html file and replaces the libs path in the html file to the libs folder in "docs/libs"

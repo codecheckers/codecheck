@@ -106,6 +106,43 @@ expect_true(grepl("URLSearchParams", table_sort_init, fixed = TRUE),
 expect_true(grepl("replaceState", table_sort_init, fixed = TRUE),
             info = "sorting updates the URL without adding a history entry")
 
+# lower-priority columns are marked for hiding on small screens ----
+# The class is what codecheck-register.css hides below 768px; the columns stay
+# in the markup (and in the JSON/CSV/Markdown exports) either way.
+th_class <- function(doc, header_text) {
+  xml2::xml_attr(
+    xml2::xml_find_all(doc, paste0("//table/thead//th[normalize-space(text())='", header_text, "']")),
+    "class"
+  )
+}
+
+expect_true(grepl("low-priority", th_class(index_head, "Report"), fixed = TRUE))
+expect_true(grepl("low-priority", th_class(index_head, "Type"), fixed = TRUE))
+expect_true(is.na(th_class(index_head, "Certificate")),
+            info = "the identifying column is never hidden")
+expect_true(is.na(th_class(index_head, "Check date")))
+
+# the marked column's body cells carry it too, or the column would lose its
+# header but keep its data
+report_cells <- xml2::xml_find_all(
+  index_head, "//table/tbody/tr[1]/td[contains(@class, 'low-priority')]"
+)
+expect_equal(length(report_cells), 2L,
+             info = "Report and Type are hidden in the body rows as well")
+
+expect_equal(
+  length(xml2::xml_find_all(index_head, "//p[@class='hidden-columns-note']")),
+  1L,
+  info = "one note per table with hidden columns"
+)
+
+# a second pass over the same file changes nothing, so a re-render of a single
+# page cannot accumulate classes or notes
+index_before <- readLines("docs/index.html", warn = FALSE)
+codecheck:::add_column_priority_classes("docs/index.html")
+expect_equal(readLines("docs/index.html", warn = FALSE), index_before,
+             info = "add_column_priority_classes() is idempotent")
+
 # TODO ----
 
 # clean up

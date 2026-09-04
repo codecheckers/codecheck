@@ -17,6 +17,7 @@
 
 ## Bug fixes
 
+* On a phone the register tables now hide their least important columns - the Report and DOI links, which each row's certificate or work page carries anyway, plus Type, ORCID, ROR, Country and the check-type bars - and say so in a note below the table. New `add_column_priority_classes()` marks the cells in the rendered HTML after `add_sortable_th_attributes()`; the markup keeps every column and the JSON, CSV and Markdown exports are untouched, so a wider window brings them back.
 * The register pages render properly on a phone: the navigation menu wraps instead of running off the screen, which left "Statistics" and "About" unreachable, and a table wider than the viewport scrolls in its own container instead of widening the whole document, which cut off the right-hand columns with no way to reach them. Also zeroes the body margin, which only the plain 404 and redirect templates ever saw, since Bootstrap sets it on every other page.
 
 # codecheck 0.28.0
