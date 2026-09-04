@@ -30,6 +30,10 @@
   : Function for adding codechecker to each report in the register
   table.
 
+- [`add_column_priority_classes()`](http://codecheck.org.uk/codecheck/reference/add_column_priority_classes.md)
+  : Marks the lower-priority columns of the register tables so the
+  stylesheet can hide them on a phone (see codecheck-register.css).
+
 - [`add_issue_number_links()`](http://codecheck.org.uk/codecheck/reference/add_issue_number_links.md)
   : Function for adding clickable links to the issue number of each
   report in the register table.
@@ -600,6 +604,9 @@
   : Parse the repository specification in the column "Repo" in the
   register CSV file
 
+- [`prefetch_cert_links()`](http://codecheck.org.uk/codecheck/reference/prefetch_cert_links.md)
+  : Resolves every certificate's PDF link up front, in parallel
+
 - [`preprocess_register()`](http://codecheck.org.uk/codecheck/reference/preprocess_register.md)
   : Function for preprocessing the register to create and return the
   preprocessed register table.
@@ -762,6 +769,9 @@
 
 - [`wikidata_statements()`](http://codecheck.org.uk/codecheck/reference/wikidata_statements.md)
   : The statement definitions of one entity kind
+
+- [`with_elapsed_log()`](http://codecheck.org.uk/codecheck/reference/with_elapsed_log.md)
+  : Prefix every log line with the time elapsed since the render started
 
 - [`write_meta_json()`](http://codecheck.org.uk/codecheck/reference/write_meta_json.md)
   : Write Build Metadata to JSON File

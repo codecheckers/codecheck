@@ -40,6 +40,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_check_time.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_codecheck_details_md.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_codechecker.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/add_column_priority_classes.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_issue_number_links.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_markdown_title.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_openalex_ids.html</loc></url>
@@ -92,6 +93,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_repository_org.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_repository_topic.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_researchequals_record.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/check_time_has_time_of_day.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_zenodo_record.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/cite_certificate.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/classify_poppler_log.html</loc></url>
@@ -161,6 +163,8 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_schema_org_date_published.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/fetch_codechecker_list.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/format_check_date.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/format_check_time_iso.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_404_page.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_breadcrumb.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/generate_cert_citation_meta.html</loc></url>
@@ -314,6 +318,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/person_organisations_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/person_record_dates.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/plan_wikibase_entities.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/prefetch_cert_links.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/preprocess_register.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/prune_libs.html</loc></url>
@@ -451,6 +456,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_statement.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_statements.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_transform.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/with_elapsed_log.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_meta_json.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_schema_org_jsonld.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_wikibase_certificates_page.html</loc></url>

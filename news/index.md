@@ -16,6 +16,7 @@
   ignored and leaves the default order. Entirely in
   `inst/extdata/js/table-sort-init.js`, which is all a static GitHub
   Pages site needs.
+
 - The statistics dashboard now shows the spread of time between a work’s
   publication and its CODECHECK certificate: a bucketed histogram and a
   per-certificate beeswarm plot (each dot linking to its certificate
@@ -24,6 +25,7 @@
   from the existing `Work publication date`/`Check date` columns.
   Deliberately framed as a distribution rather than a speed metric -
   checking a decades-old work is as notable as a fast turnaround.
+
 - [`add_openalex_work_fields()`](http://codecheck.org.uk/codecheck/reference/add_openalex_work_fields.md)
   now falls back to reading a work’s publication date straight off its
   own reference URL when OpenAlex has no record for it at all:
@@ -37,6 +39,7 @@
   bare year, or year+month) is resolved to its calendar midpoint rather
   than the 1st, so it does not skew interval calculations toward “early
   in the period”. `xml2` moves from Suggests to Imports.
+
 - A render now warns when a certificate’s `paper.reference` is a plain
   (non-archived) PDF link: such links carry no machine-readable
   publication metadata and are prone to rotting (two of the CMMID
@@ -46,6 +49,7 @@
   [`add_openalex_ids()`](http://codecheck.org.uk/codecheck/reference/add_openalex_ids.md);
   suggests a web.archive.org snapshot instead, matching the guidance
   added to the community workflow config spec.
+
 - A certificate’s “Paper details” box now shows its
   `Work publication date` (when known) below the abstract, and a work’s
   own landing page shows it in the metadata panel directly below the
@@ -54,12 +58,14 @@
   [`generate_work_metadata_html()`](http://codecheck.org.uk/codecheck/reference/generate_work_metadata_html.md)
   (`CONFIG$REGISTER_COLUMNS$works$html`), same as `OpenAlex` already
   was.
+
 - [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
   splits a batch that would create more items than Wikidata’s rate limit
   allows per minute into numbered files to paste in turn (register#50).
   A background QuickStatements run pushes as fast as the API accepts, so
   a larger batch stopped at the limit and reported the rest as “No
   success flag set in API result”.
+
 - [`quickstatements_submitted()`](http://codecheck.org.uk/codecheck/reference/quickstatements_submitted.md)
   retires the `.qs` file a batch was pasted from, renaming it with a
   `.submitted` suffix, and
@@ -68,15 +74,18 @@
   QuickStatements’ `CREATE` is not idempotent, so a batch file left
   lying around after its run is one paste away from duplicating every
   item in it.
+
 - [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
   no longer tells you to run the works batch first when there is no
   works batch to run: certificates left without a `review of` statement
   once every resolvable work exists name a checked work that has no DOI
   (register#50).
+
 - [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
   writes the checked works to `wikidata-works.qs` rather than
   `wikidata-papers.qs`, matching the noun the register uses everywhere
   else (register#50).
+
 - [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
   keeps a register repo’s `.zenodo.json` contributors current with every
   codechecker named in the register (register#58), crediting people
@@ -88,6 +97,69 @@
   every entry is typed `"Other"`; a `.zenodo.json` that does not exist
   is left alone. Only the `contributors` array is touched - the rest of
   the file (title, creators, licence, …) stays hand-maintained.
+
+- A certificate’s “Time of check” is shown as a day, not a timestamp:
+  `codecheck.yml` files record the check with whatever precision the
+  codechecker had at hand, and the hour of a check is noise to a reader
+  (the register tables already showed the day only). The
+  machine-readable variants keep the recorded precision - the
+  certificate’s `index.json` and its schema.org JSON-LD `datePublished`
+  carry the time of day in ISO 8601 where the `codecheck.yml` gave one,
+  and a bare date where it did not, rather than an invented `00:00:00`.
+  `register-full.json` gains a `Check time` field alongside the
+  day-precision `Check date`. New internal helpers
+  [`format_check_date()`](http://codecheck.org.uk/codecheck/reference/format_check_date.md),
+  [`format_check_time_iso()`](http://codecheck.org.uk/codecheck/reference/format_check_time_iso.md)
+  and
+  [`check_time_has_time_of_day()`](http://codecheck.org.uk/codecheck/reference/check_time_has_time_of_day.md).
+
+### Bug fixes
+
+- A full render is about three times faster (roughly 200 s to 65 s on a
+  warm cache), from three changes: the certificate PDF links, one HTTP
+  request per certificate, are now resolved up front and in parallel by
+  the new
+  [`prefetch_cert_links()`](http://codecheck.org.uk/codecheck/reference/prefetch_cert_links.md)
+  and cached on disk rather than only for the session - resolving them
+  one by one while writing `register.json` took 75 s of every render,
+  and now takes 2.5 s; the pages of each filter (venues, works, persons,
+  organisations) render in parallel when
+  `register_render(parallel = TRUE)`, taking that phase from 96 s to 38
+  s; and
+  [`detect_report_platform()`](http://codecheck.org.uk/codecheck/reference/detect_report_platform.md)
+  caches where a report DOI resolves to, which also stops a failed
+  request from silently reporting the platform as “doi.org” and moving
+  the statistics between renders.
+- The test suite no longer empties the user’s `R.cache` root:
+  `test_register_check.R` called
+  [`register_clear_cache()`](http://codecheck.org.uk/codecheck/reference/register_clear_cache.md)
+  against the real cache, so every
+  [`build_install_test()`](https://rdrr.io/pkg/tinytest/man/build_install_test.html)
+  run left the next full render re-fetching every API lookup (about six
+  minutes instead of one). It now uses a temporary cache root, as
+  `test_organisations.R` already did.
+- `register_render(verbose = TRUE)` prefixes every log line with the
+  seconds elapsed since the render started, so a phase that takes
+  minutes between two summary lines is visible in a redirected log. New
+  [`with_elapsed_log()`](http://codecheck.org.uk/codecheck/reference/with_elapsed_log.md);
+  forked workers inherit the handler, so pages rendered in parallel are
+  stamped too.
+- On a phone the register tables now hide their least important
+  columns - the Report and DOI links, which each row’s certificate or
+  work page carries anyway, plus Type, ORCID, ROR, Country and the
+  check-type bars - and say so in a note below the table. New
+  [`add_column_priority_classes()`](http://codecheck.org.uk/codecheck/reference/add_column_priority_classes.md)
+  marks the cells in the rendered HTML after
+  [`add_sortable_th_attributes()`](http://codecheck.org.uk/codecheck/reference/add_sortable_th_attributes.md);
+  the markup keeps every column and the JSON, CSV and Markdown exports
+  are untouched, so a wider window brings them back.
+- The register pages render properly on a phone: the navigation menu
+  wraps instead of running off the screen, which left “Statistics” and
+  “About” unreachable, and a table wider than the viewport scrolls in
+  its own container instead of widening the whole document, which cut
+  off the right-hand columns with no way to reach them. Also zeroes the
+  body margin, which only the plain 404 and redirect templates ever saw,
+  since Bootstrap sets it on every other page.
 
 ## codecheck 0.28.0
 

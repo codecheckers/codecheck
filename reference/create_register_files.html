@@ -51,7 +51,13 @@ creates markdown, HTML, and JSON files for each individual table.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create_register_files</span><span class="op">(</span><span class="va">register_table</span>, <span class="va">filter_by</span>, <span class="va">outputs</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create_register_files</span><span class="op">(</span></span>
+<span>  <span class="va">register_table</span>,</span>
+<span>  <span class="va">filter_by</span>,</span>
+<span>  <span class="va">outputs</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ncores <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -68,6 +74,17 @@ creates markdown, HTML, and JSON files for each individual table.</p>
 
 <dt id="arg-outputs">outputs<a class="anchor" aria-label="anchor" href="#arg-outputs"></a></dt>
 <dd><p>A list specifying the output formats to generate (e.g., "md", "html", "json").</p></dd>
+
+
+<dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
+<dd><p>Whether to render the pages of a filter in parallel. Each page
+writes into its own output directory, so the items of one filter are
+independent of each other.</p></dd>
+
+
+<dt id="arg-ncores">ncores<a class="anchor" aria-label="anchor" href="#arg-ncores"></a></dt>
+<dd><p>Number of workers to use when `parallel` is TRUE, defaults to
+one less than the machine has.</p></dd>
 
 </dl></div>
     <div class="section level2">
