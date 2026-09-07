@@ -77,6 +77,8 @@ WIKIBASE_INSTANCE <- list(
   # The generated index of the loaded certificates, see
   # write_wikibase_certificates_page()
   certificates_page = "Project:Certificates",
+  # The generated SPARQL examples, see write_wikibase_examples_page()
+  queries_page = "Project:Example queries",
   # The generated preview of the Wikidata batches, see
   # write_wikidata_preview_page()
   wikidata_page = "Project:Wikidata export",

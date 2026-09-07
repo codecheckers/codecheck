@@ -45,6 +45,17 @@ expect_equal(codecheck:::wikidata_transform(
 expect_equal(codecheck:::wikidata_transform("2047-217X", "issn"), "2047-217X")
 expect_true(is.na(codecheck:::wikidata_transform("ROR|fa-university|abc|url", "issn")))
 
+# A journal with both a print and an online ISSN labels them "ISSN (print)" and
+# "ISSN (online)"; either identifies the same item, so the first one is enough.
+expect_equal(codecheck:::wikidata_transform(
+  paste0("ISSN (print)|fa-book|1435-5930|https://portal.issn.org/resource/ISSN/1435-5930;",
+         "ISSN (online)|fa-book|1435-5949|https://portal.issn.org/resource/ISSN/1435-5949"),
+  "issn"),
+  "1435-5930")
+expect_equal(codecheck:::wikidata_transform(
+  "ROR|fa-university|abc|url;ISSN (online)|fa-book|1435-5949|url", "issn"),
+  "1435-5949")
+
 # Platform detection stays offline for the DOI prefixes we publish under.
 expect_equal(codecheck:::wikidata_transform("http://doi.org/10.5281/zenodo.3674056", "report_platform"),
              "zenodo")

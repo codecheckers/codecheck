@@ -622,6 +622,9 @@ wikibase_report_wikitext <- function(plan, generated_at = Sys.time()) {
     "lives only on this instance &mdash; everything below is reproducible from the",
     "register and the model.",
     "",
+    "[[Project:Example queries]] shows what to do with them: worked SPARQL, mostly",
+    "against Wikidata itself, and a short section written against these numbers.",
+    "",
     "== Properties ==",
     "",
     table(
@@ -721,6 +724,7 @@ bootstrap_wikibase <- function(dry_run = TRUE, log_file = NULL) {
       cli::cli_alert("create {plan$kind[i]} {.strong {plan$label[i]}}{if (!is.na(plan$datatype[i])) paste0(' (', plan$datatype[i], ')') else ''}{if (!is.na(plan$wikidata_id[i])) paste0(' -> ', plan$wikidata_id[i]) else ''}")
     }
     cli::cli_alert_info("Would write the listing page {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$report_page)}}")
+    cli::cli_alert_info("Would write the example-queries page {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$queries_page)}}")
     for (page in c(WIKIBASE_INSTANCE$about_page, WIKIBASE_INSTANCE$copyright_page,
                    WIKIBASE_INSTANCE$copyright_redirect)) {
       cli::cli_alert_info("Would write the hosting-policy page {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', page)}}")
@@ -774,6 +778,15 @@ bootstrap_wikibase <- function(dry_run = TRUE, log_file = NULL) {
                id = WIKIBASE_INSTANCE$report_page, label = "listing page",
                status = "done", file = log_file)
   cli::cli_alert_success("Listing page written to {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$report_page)}}")
+
+  # The queries are written from the same plan, so the local ids in them are the
+  # ids the entities were just created under - the page cannot go stale against
+  # a renumbered instance.
+  write_wikibase_examples_page(session, plan)
+  wikibase_log(target = "wikibase", action = "edit", kind = "page",
+               id = WIKIBASE_INSTANCE$queries_page, label = "example queries",
+               status = "done", file = log_file)
+  cli::cli_alert_success("Example queries written to {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$queries_page)}}")
 
   # The wikibase.cloud hosting policy asks for these, and an instance rebuilt
   # from empty has to come back compliant without anybody remembering to write

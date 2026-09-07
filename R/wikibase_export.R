@@ -58,7 +58,10 @@ wikidata_transform <- function(x, transform = NULL) {
       ifelse(grepl("^W[0-9]+$", bare), bare, NA_character_)
     },
     # venues.csv packs identifiers as "ISSN|icon|value|url", possibly several
-    # separated by ";".
+    # separated by ";". The label is not always the bare "ISSN": a journal with
+    # both a print and an online ISSN labels them "ISSN (print)" and "ISSN
+    # (online)", and matching only the bare form left those venues with no ISSN
+    # at all, so neither resolved on Wikidata.
     issn = {
       # The field holds either venues.csv's packed form or, once extracted, the
       # ISSN itself - the model resolves a venue by this value wherever it comes
@@ -67,7 +70,7 @@ wikidata_transform <- function(x, transform = NULL) {
         toupper(trimws(x[1]))
       } else {
         parts <- unlist(strsplit(x, ";", fixed = TRUE))
-        issn <- parts[grepl("^ISSN\\|", parts)]
+        issn <- parts[grepl("^ISSN[^|]*\\|", parts)]
         if (length(issn) == 0) NA_character_ else trimws(strsplit(issn[1], "|", fixed = TRUE)[[1]][3])
       }
     },
