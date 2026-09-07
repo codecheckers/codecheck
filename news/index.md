@@ -1,8 +1,46 @@
 # Changelog
 
-## codecheck 0.28.0.9000
+## codecheck 0.29.0
 
 ### New Features
+
+- The register is now published as linked data, on Wikidata and on the
+  CODECHECK Wikibase (register#50). All 132 certificates are items on
+  Wikidata, e.g. [CODECHECK Certificate
+  2025-007](https://www.wikidata.org/wiki/Q141269712), each stating
+  “review of” (`P6977`) on the work it checked, e.g. [the kite wind
+  tunnel measurements](https://www.wikidata.org/wiki/Q141269452) - [one
+  query](https://query-scholarly.wikidata.org/#SELECT%20%3Fcertificate%20%3FcertificateLabel%20%3Fwork%20%3FworkLabel%20WHERE%20%7B%0A%20%20%3Fcertificate%20wdt%3AP13046%20wd%3AQ116740071%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20wdt%3AP6977%20%3Fwork%20.%0A%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%7D)
+  lists all 124 pairs. The staging instance
+  <https://codecheck.wikibase.cloud> holds the same certificates plus
+  the codecheckers and venues that are only ever linked on Wikidata,
+  never created there: [certificate
+  2020-001](https://codecheck.wikibase.cloud/wiki/Item:Q89), the [work
+  it reviews](https://codecheck.wikibase.cloud/wiki/Item:Q87),
+  [Stephen J. Eglen](https://codecheck.wikibase.cloud/wiki/Item:Q18),
+  [GigaScience](https://codecheck.wikibase.cloud/wiki/Item:Q83). It also
+  carries the overview tables and the procedure, readable without R or a
+  login: [Project:Data
+  model](https://codecheck.wikibase.cloud/wiki/Project:Data_model)
+  (every property and item next to its Wikidata counterpart),
+  [Project:Certificates](https://codecheck.wikibase.cloud/wiki/Project:Certificates)
+  (every certificate item beside its register page), and
+  [Project:Wikidata
+  export](https://codecheck.wikibase.cloud/wiki/Project:Wikidata_export)
+  (what an export would do, before it is done). The step-by-step
+  procedure is the vignette [“Export the register to
+  Wikidata”](https://codecheck.org.uk/codecheck/articles/codecheck_wikidata.html).
+
+- The CODECHECK Wikibase now has a page of ready-to-run SPARQL examples,
+  [Project:Example
+  queries](https://codecheck.wikibase.cloud/wiki/Project:Example_queries),
+  written by
+  [`bootstrap_wikibase()`](http://codecheck.org.uk/codecheck/reference/bootstrap_wikibase.md)
+  (register#50). Ten of them query Wikidata itself, where the
+  certificates are, and say which half of its split graph to send them
+  to; three query the instance for the one thing Wikidata cannot answer,
+  who did the checking, and are generated with the instance’s own
+  property numbers and prefixes.
 
 - The sort state of the register tables is now reflected in the page
   URL, so a particular view can be linked, bookmarked or cited:
@@ -115,6 +153,10 @@
 
 ### Bug fixes
 
+- A venue whose `venues.csv` entry labels its identifiers “ISSN (print)”
+  and “ISSN (online)” is now resolved on Wikidata; only the bare “ISSN”
+  label was recognised, so those venues exported with no ISSN at all
+  (register#50).
 - A full render is about three times faster (roughly 200 s to 65 s on a
   warm cache), from three changes: the certificate PDF links, one HTTP
   request per certificate, are now resolved up front and in parallel by

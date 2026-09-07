@@ -96,7 +96,12 @@ It is idempotent: what already exists is left alone, matched by its
 Wikidata id rather than by label, so a partially failed run can simply
 be repeated. It also brings a label that has drifted from the model back
 in line, and writes the index at [Project:Data
-model](https://codecheck.wikibase.cloud/wiki/Project:Data_model). Every
+model](https://codecheck.wikibase.cloud/wiki/Project:Data_model) and the
+SPARQL examples at [Project:Example
+queries](https://codecheck.wikibase.cloud/wiki/Project:Example_queries),
+which are mostly queries against Wikidata itself - the instance’s own
+section is short, and its queries carry the local property numbers
+because they are rendered from the same plan that created them. Every
 run also writes
 [Project:About](https://codecheck.wikibase.cloud/wiki/Project:About) and
 [Project:Copyrights](https://codecheck.wikibase.cloud/wiki/Project:Copyrights),

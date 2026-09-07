@@ -21,11 +21,14 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIBASE_INSTANCE.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIBASE_LOG_COLUMNS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIBASE_MAPPING_PROPERTY.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/WIKIBASE_QUERY_EXAMPLES.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/WIKIBASE_QUERY_PREFIXES.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_API.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_ENDPOINTS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_ITEMS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_MODEL.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_PLATFORMS.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_QUERY_EXAMPLES.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_REFERENCE.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_REGISTER_COLUMN.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/ZENODO_NON_PERSON_CODECHECKERS.html</loc></url>
@@ -62,6 +65,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_venues_hyperlinks_non_reg.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/add_work_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/adjust_cert_links_relative.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/align_wikibase_query_comments.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/all_codechecker_records.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/as_latex_url.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/bare_doi.html</loc></url>
@@ -363,6 +367,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_register_json.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_register_md.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_statistics_page.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/render_wikibase_query.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/report_researchequals_policy_findings.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/report_zenodo_policy_findings.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/researchequals_collection_url.html</loc></url>
@@ -418,15 +423,18 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_edit_entity.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_entity_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_entity_payload.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_examples_wikitext.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_export_rows.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_get.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_identifier_index.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_key_column.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_local_ids.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_log.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_log_file.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_log_read.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_mapping.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_post.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_query_url.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_report_wikitext.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_request.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikibase_retry_after.html</loc></url>
@@ -460,6 +468,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_meta_json.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_schema_org_jsonld.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_wikibase_certificates_page.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/write_wikibase_examples_page.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_wikibase_policy_pages.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_wikibase_report.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_wikidata_preview_page.html</loc></url>
