@@ -65,7 +65,7 @@ get_abstract <- function(register_repo) {
 #' Cached version of get_abstract, with the lookup status
 #'
 #' Same lookup as \code{\link{get_abstract}}, but returns the full
-#' `{status, value}` result so a caller can distinguish a confirmed absence
+#' `\{status, value\}` result so a caller can distinguish a confirmed absence
 #' from an inconclusive failure, see \code{\link{resolve_external_field}}.
 #'
 #' @param register_repo URL or path to the repository containing the paper's configuration.
@@ -311,7 +311,7 @@ get_openalex_id_cached <- function(paper_reference, paper_title = NULL, first_au
 #' Cached version of get_openalex_id, with the lookup status
 #'
 #' Same lookup as \code{\link{get_openalex_id_cached}}, but returns the full
-#' `{status, value}` result so a caller can distinguish a confirmed absence
+#' `\{status, value\}` result so a caller can distinguish a confirmed absence
 #' from an inconclusive failure, see \code{\link{resolve_external_field}}.
 #'
 #' @inheritParams get_openalex_id_result

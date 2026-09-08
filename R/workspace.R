@@ -61,10 +61,15 @@ copy_codecheck_report_template <- function(target = ".", template = c("all", "rm
   report_dir <- file.path(target, "codecheck")
   dir.create(report_dir, recursive = TRUE, showWarnings = FALSE)
 
-  shared_files <- c("codecheck-preamble.sty", "Makefile", "codecheck-zenodo.R",
+  shared_files <- c("codecheck-preamble.sty", "codecheck-zenodo.R",
                      "CODECHECK_report_template.docx", "CODECHECK_report_template.odt",
                      "placeholder_output.txt")
   file.copy(file.path(src_dir, shared_files), report_dir)
+  # The Makefile uses GNU make conditionals, which R CMD check rejects in a
+  # file named "Makefile" even inside inst/, so it ships under a different
+  # name and is renamed on copy.
+  file.copy(file.path(src_dir, "Makefile.template"),
+            file.path(report_dir, "Makefile"), overwrite = TRUE)
   # "outputs/" is an empty directory in the template source, so git does not
   # track it and R CMD build strips it from the package tarball - it may not
   # exist in an installed package, in which case there is nothing to copy.

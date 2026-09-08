@@ -24,7 +24,7 @@ certificate 2026-014:
 }
 \details{
 ```
-[{"type":"pdf","props":{"url":".../api/files/<key>","name":"...pdf"},"children":[]}]
+[\{"type":"pdf","props":\{"url":".../api/files/<key>","name":"...pdf"\},"children":[]\}]
 ```
 
 Returning the BlockNote document as the certificate download means saving

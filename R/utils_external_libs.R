@@ -187,16 +187,16 @@ download_library_file <- function(url, dest_file, progress = FALSE) {
 
     status <- httr::status_code(response)
     if (status != 200) {
-      warning("    ✗ Failed with status ", status, ": ", url)
+      warning("    \u2717 Failed with status ", status, ": ", url)
       FALSE
     } else if (!file.exists(temp_file) || file.size(temp_file) < CODECHECK_MIN_LIB_FILE_SIZE) {
-      warning("    ✗ Suspiciously small download, discarded: ", url)
+      warning("    \u2717 Suspiciously small download, discarded: ", url)
       FALSE
     } else {
       TRUE
     }
   }, error = function(e) {
-    warning("    ✗ Error downloading: ", e$message)
+    warning("    \u2717 Error downloading: ", e$message)
     FALSE
   })
 
@@ -337,7 +337,7 @@ copy_register_css <- function(assets_dir) {
     file.copy(css_source, css_dest, overwrite = TRUE)
     cli::cli_alert_success("Copied codecheck-register.css to {.path {css_dest}}")
   } else {
-    warning("  ✗ Could not find codecheck-register.css in package templates")
+    warning("  \u2717 Could not find codecheck-register.css in package templates")
   }
 }
 

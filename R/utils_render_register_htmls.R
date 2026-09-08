@@ -420,7 +420,7 @@ add_sortable_th_attributes <- function(html_file_path) {
         # after "No." with a non-breaking space (U+00A0) to avoid an
         # awkward line break - normalise it away before comparing, so
         # "No. of codechecks" still matches numeric_headers.
-        header_text <- gsub(" ", " ", trimws(parts[3]), fixed = TRUE)
+        header_text <- gsub("\u00a0", " ", trimws(parts[3]), fixed = TRUE)
 
         if (header_text %in% unsortable_headers) {
           return(th_tag)

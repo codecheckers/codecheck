@@ -15,3 +15,5 @@
 ^\.claude$
 ^LICENSE\.md$
 ^wikibase-cloud-licensing-question\.md$
+^wikidata$
+^\.pytest_cache$

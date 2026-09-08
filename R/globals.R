@@ -96,5 +96,16 @@ utils::globalVariables(c(
   "Certificate ID",
   "Check date",
   "codechecker_name",
-  "venue_label"
+  "venue_label",
+  # Columns of the organisation/person/work tables
+  "checks_per_type",
+  "no_checks",
+  "no_persons",
+  "no_works",
+  "Organisation",
+  "Person",
+  "Role",
+  "title_cell",
+  "Title",
+  "Work"
 ))

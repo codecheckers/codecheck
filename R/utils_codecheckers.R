@@ -37,7 +37,7 @@ CODECHECKER_LIST_COLUMNS <- c("name", "handle", "ORCID", "contact", "fields", "l
 #' @return A data frame with the columns of [CODECHECKER_LIST_COLUMNS].
 #' @importFrom utils read.csv
 #' @keywords internal
-fetch_codechecker_list <- function(url) {
+fetch_codechecker_list_uncached <- function(url) {
   tryCatch({
     normalize_codechecker_list(read.csv(url, stringsAsFactors = FALSE, strip.white = TRUE))
   }, error = function(e) {
@@ -46,8 +46,10 @@ fetch_codechecker_list <- function(url) {
   })
 }
 
-# Memoize the fetch for caching, so a render reads each list once
-fetch_codechecker_list <- R.cache::addMemoization(fetch_codechecker_list)
+# Memoize the fetch for caching, so a render reads each list once. The
+# memoized wrapper takes `...`, so it is a separate binding - documenting it
+# under the same name would put the wrapper's formals in the Rd usage.
+fetch_codechecker_list <- R.cache::addMemoization(fetch_codechecker_list_uncached)
 
 #' Bring a codechecker list to a common set of columns
 #'

@@ -13,7 +13,7 @@ ordered by [order_type_counts()].}
 \item{highlight}{The type to mark, or `NULL` to mark none.}
 }
 \value{
-A single string with `\n` between lines.
+A single string with `\\n` between lines.
 }
 \description{
 Lists *every* type with its count and share, not just the one under the

@@ -24,7 +24,7 @@ Authors@R:
            comment = c(ORCID = "0000-0002-1322-1553"))
        )
 Description: This contains helper functions for codecheckers for conducting CODECHECKs, e.g., authoring CODECHECK certificates (<https://codecheck.org.uk>), and the rendering of the CODECHECK Register (<https://codecheck.org.uk/register/>).
-License: MIT
+License: MIT + file LICENSE
 License_is_FOSS: yes
 Depends: R (>= 4.0.0), gh, R.cache, parsedate
 Imports:
@@ -49,7 +49,6 @@ Imports:
     magick,
     git2r,
     parallel,
-    rprojroot,
     xml2
 Encoding: UTF-8
 LazyData: true
@@ -57,6 +56,7 @@ VignetteBuilder: knitr
 Suggests:
     tinytest,
     ttdo,
-    skimr
+    skimr,
+    rprojroot
 URL: http://codecheck.org.uk/codecheck/, https://github.com/codecheckers/codecheck
 Config/roxygen2/version: 8.1.0

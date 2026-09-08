@@ -271,7 +271,7 @@ person_record_dates <- function(exploded) {
 #' @param register_table The register table, with a `Person` list column
 #'   (see [add_person_records()]).
 #' @return The register table with an added `Organisation` list column, one
-#'   list of `{ror, orcid, role, date}` records per certificate (empty for a
+#'   list of `\{ror, orcid, role, date\}` records per certificate (empty for a
 #'   certificate whose people have no ROR-identified affiliation).
 #' @keywords internal
 add_organisation_records <- function(register_table) {

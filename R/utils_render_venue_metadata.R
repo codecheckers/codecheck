@@ -30,7 +30,7 @@ lookup_venue_row <- function(venue_name) {
 #' just `name|icon`), e.g.
 #' `ISSN|fa-book|2047-217X|https://portal.issn.org/resource/ISSN/2047-217X;ROR|fa-university|05wg1m734|https://ror.org/05wg1m734`.
 #' `icon` is a Font Awesome class name (without the leading `fa-` prefix
-#' already implied by the `fa` base class), rendered as `<i class="fa {{icon}}">`.
+#' already implied by the `fa` base class), rendered as `<i class="fa \{\{icon\}\}">`.
 #'
 #' @param identifiers_str The raw identifiers string from venues.csv.
 #'

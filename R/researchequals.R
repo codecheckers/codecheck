@@ -147,7 +147,7 @@ get_researchequals_version_id <- function(report_link) {
 #' certificate 2026-014:
 #'
 #' ```
-#' [{"type":"pdf","props":{"url":".../api/files/<key>","name":"...pdf"},"children":[]}]
+#' [\{"type":"pdf","props":\{"url":".../api/files/<key>","name":"...pdf"\},"children":[]\}]
 #' ```
 #'
 #' Returning the BlockNote document as the certificate download means saving

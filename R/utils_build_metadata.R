@@ -648,7 +648,7 @@ generate_work_schema_org <- function(doi, register_table) {
 #' possible roles: the `Person` entity still gets a `Review` per certificate
 #' they checked (identical to the codechecker version, `author` referencing
 #' the person by `@id`), and additionally a `ScholarlyArticle` per paper they
-#' authored, each with `author: {"@id": person_id}` pointing back the other
+#' authored, each with `author: \{"@id": person_id\}` pointing back the other
 #' way. A person with only one role simply has an empty list for the other.
 #'
 #' @param orcid The person's ORCID.
@@ -872,7 +872,7 @@ generate_cert_opengraph <- function(cert_id, config_yml, cert_title = NULL,
   description <- if (is_nonempty_string(config_yml$summary)) {
     truncate_text(config_yml$summary, 300)
   } else if (is_nonempty_string(config_yml$paper$title)) {
-    paste0("CODECHECK of “", config_yml$paper$title, "”")
+    paste0("CODECHECK of \u201c", config_yml$paper$title, "\u201d")
   } else {
     "CODECHECK is a process for independent execution of computations underlying scholarly research articles."
   }
@@ -901,7 +901,7 @@ truncate_text <- function(x, max_chars) {
   if (last_space > 1) {
     shortened <- substr(shortened, 1, last_space - 1)
   }
-  paste0(trimws(shortened), "…")
+  paste0(trimws(shortened), "\u2026")
 }
 
 # ---------------------------------------------------------------------------
@@ -1231,7 +1231,7 @@ generate_page_signposting <- function(filter, table_details,
 #' @keywords internal
 register_page_header_data <- function() {
   list(
-    page_author = "Stephen Eglen &amp; Daniel Nüst",
+    page_author = "Stephen Eglen &amp; Daniel N\u00fcst",
     og_title = "CODECHECK Register",
     og_url = CONFIG$HYPERLINKS[["register"]],
     og_description = "CODECHECK is a process for independent execution of computations underlying scholarly research articles.",

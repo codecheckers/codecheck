@@ -258,6 +258,8 @@ wikidata_statement <- function(key, property, label, value, datatype, required =
 #'
 #' @seealso [wikidata_properties()] for the flat property list, and
 #'   [validate_wikidata_model()] for the invariants this structure must satisfy
+#' @rdname wikidata_model_object
+#' @name WIKIDATA_MODEL
 #' @keywords internal
 WIKIDATA_MODEL <- list(
 

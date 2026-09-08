@@ -17,7 +17,7 @@ A list with `status` ("found", "absent" or "failed") and `value`
 }
 \description{
 Same lookup as \code{\link{get_cert_record_title}}, but returns the full
-`{status, value}` result so a caller can tell a platform that conclusively
+`\{status, value\}` result so a caller can tell a platform that conclusively
 has no title apart from one that could not be reached, see
 \code{\link{resolve_external_field}}.
 }

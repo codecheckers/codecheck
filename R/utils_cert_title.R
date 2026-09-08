@@ -33,7 +33,7 @@ get_cert_record_title <- function(report_link, cert_id) {
 #' Cached version of get_cert_record_title, with the lookup status
 #'
 #' Same lookup as \code{\link{get_cert_record_title}}, but returns the full
-#' `{status, value}` result so a caller can tell a platform that conclusively
+#' `\{status, value\}` result so a caller can tell a platform that conclusively
 #' has no title apart from one that could not be reached, see
 #' \code{\link{resolve_external_field}}.
 #'

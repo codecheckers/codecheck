@@ -158,12 +158,12 @@ order_type_counts <- function(counts) {
 #' @param counts A named integer vector of checks per venue type, already
 #'   ordered by [order_type_counts()].
 #' @param highlight The type to mark, or `NULL` to mark none.
-#' @return A single string with `\n` between lines.
+#' @return A single string with `\\n` between lines.
 #' @keywords internal
 type_breakdown_text <- function(counts, highlight = NULL) {
   total <- sum(counts)
   types <- names(counts)
-  marker <- ifelse(types %in% highlight, "▸ ", "  ")
+  marker <- ifelse(types %in% highlight, "\u25b8 ", "  ")
   lines <- sprintf(
     "%s%s: %d (%d%%)",
     marker, types, counts, round(100 * counts / total)

@@ -15,7 +15,7 @@ The exploded register table - one row per person-record, `Person`
   columns) if no certificate has an ORCID-identified person.
 }
 \description{
-Turns each certificate's list of `{orcid, name, role}` records (see
+Turns each certificate's list of `\{orcid, name, role\}` records (see
 [add_person_records()]) into its own row, replacing the `Person` list
 column with a plain `Person` character column (the ORCID, matching
 `CONFIG$FILTER_COLUMN_NAMES[["persons"]]`, so the caller can `group_by()`
