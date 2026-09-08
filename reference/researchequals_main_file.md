@@ -31,7 +31,7 @@ came from a BlockNote block), or NULL when the version has no main file
 ## Details
 
 “\`
-\["type":"pdf","props":"url":".../api/files/\<key\>","name":"...pdf","children":\[\]\]
+\[{"type":"pdf","props":{"url":".../api/files/\<key\>","name":"...pdf"},"children":\[\]}\]
 “\`
 
 Returning the BlockNote document as the certificate download means

@@ -25,4 +25,4 @@ type_breakdown_text(counts, highlight = NULL)
 
 ## Value
 
-A single string with \`\` between lines.
+A single string with \`\n\` between lines.

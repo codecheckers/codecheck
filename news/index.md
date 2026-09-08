@@ -1,6 +1,22 @@
 # Changelog
 
-## codecheck (development version)
+## codecheck 0.29.0.9000
+
+### Bug Fixes
+
+- Fix `R CMD check --as-cran` failing with an error about
+  `man/wikidata_model.Rd` and `man/WIKIDATA_MODEL.Rd` differing only by
+  case, which is not portable across platforms.
+- Fix a batch of `R CMD check` warnings and notes: non-ASCII characters
+  in R sources, lost braces and an unknown `\n` macro in the generated
+  documentation, undocumented and mismatched arguments, undeclared
+  global variables, and `rprojroot` moving from Imports to Suggests (it
+  is used by the shipped certificate templates, not by package code).
+- The certificate template’s `Makefile` now ships as `Makefile.template`
+  and is renamed when copied into a workspace, so its GNU make
+  conditionals no longer trip the portability check.
+- `License: MIT` now names the accompanying `LICENSE` file, as CRAN
+  requires.
 
 ## codecheck 0.29.0
 
@@ -899,7 +915,7 @@
 - Fixed a crash from a missing paper title during CSV generation.
 - Fixed icon font, JavaScript, CSS, and logo paths on nested pages.
 
-## codecheck (development version)
+## codecheck 0.22.0.9000
 
 ### Certificate Page Improvements
 

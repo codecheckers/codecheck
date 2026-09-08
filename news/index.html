@@ -39,7 +39,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.29.0.9000" id="codecheck-02909000">codecheck 0.29.0.9000<a class="anchor" aria-label="anchor" href="#codecheck-02909000"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-29-0-9000">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-29-0-9000"></a></h3>
+<ul><li>Fix <code>R CMD check --as-cran</code> failing with an error about <code>man/wikidata_model.Rd</code> and <code>man/WIKIDATA_MODEL.Rd</code> differing only by case, which is not portable across platforms.</li>
+<li>Fix a batch of <code>R CMD check</code> warnings and notes: non-ASCII characters in R sources, lost braces and an unknown <code>\n</code> macro in the generated documentation, undocumented and mismatched arguments, undeclared global variables, and <code>rprojroot</code> moving from Imports to Suggests (it is used by the shipped certificate templates, not by package code).</li>
+<li>The certificate template’s <code>Makefile</code> now ships as <code>Makefile.template</code> and is renamed when copied into a workspace, so its GNU make conditionals no longer trip the portability check.</li>
+<li>
+<code>License: MIT</code> now names the accompanying <code>LICENSE</code> file, as CRAN requires.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.29.0" id="codecheck-0290">codecheck 0.29.0<a class="anchor" aria-label="anchor" href="#codecheck-0290"></a></h2>
@@ -334,46 +342,46 @@
 </ul></div>
 </div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version-1">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version-1"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.22.0.9000" id="codecheck-02209000">codecheck 0.22.0.9000<a class="anchor" aria-label="anchor" href="#codecheck-02209000"></a></h2>
 <div class="section level3">
-<h3 id="certificate-page-improvements-development-version">Certificate Page Improvements<a class="anchor" aria-label="anchor" href="#certificate-page-improvements-development-version"></a></h3>
+<h3 id="certificate-page-improvements-0-22-0-9000">Certificate Page Improvements<a class="anchor" aria-label="anchor" href="#certificate-page-improvements-0-22-0-9000"></a></h3>
 <ul><li>Codechecker names on certificate pages now link to their register page rather than their ORCID profile (closes <a href="https://github.com/codecheckers/codecheck/issues/141" class="external-link">#141</a>).</li>
 <li>Certificate pages now link the venue type and venue name (closes <a href="https://github.com/codecheckers/codecheck/issues/142" class="external-link">#142</a>).</li>
 <li>Certificate pages now include venue-based breadcrumb navigation.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="visual-improvements-development-version">Visual Improvements<a class="anchor" aria-label="anchor" href="#visual-improvements-development-version"></a></h3>
+<h3 id="visual-improvements-0-22-0-9000">Visual Improvements<a class="anchor" aria-label="anchor" href="#visual-improvements-0-22-0-9000"></a></h3>
 <ul><li>ORCID icons now use the official ORCID brand color.</li>
 <li>Updated the Zenodo icon to the official logo.</li>
 <li>Improved icon alignment across register pages.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="infrastructure-improvements-development-version">Infrastructure Improvements<a class="anchor" aria-label="anchor" href="#infrastructure-improvements-development-version"></a></h3>
+<h3 id="infrastructure-improvements-0-22-0-9000">Infrastructure Improvements<a class="anchor" aria-label="anchor" href="#infrastructure-improvements-0-22-0-9000"></a></h3>
 <ul><li>Temporary HTML section files are now cleaned up after rendering.</li>
 <li>Register CSS moved out of inline styles into a dedicated stylesheet.</li>
 <li>External libraries (Bootstrap, Font Awesome, Academicons) are now managed locally instead of via CDN, with provenance tracking.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-0-22-0-9000">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-22-0-9000"></a></h3>
 <ul><li>Fixed a rendering error from a missing table details name.</li>
 <li>Fixed broken venue type hyperlinks.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="venue-configuration-and-label-integration-development-version">Venue Configuration and Label Integration<a class="anchor" aria-label="anchor" href="#venue-configuration-and-label-integration-development-version"></a></h3>
+<h3 id="venue-configuration-and-label-integration-0-22-0-9000">Venue Configuration and Label Integration<a class="anchor" aria-label="anchor" href="#venue-configuration-and-label-integration-0-22-0-9000"></a></h3>
 <ul><li>Venue information now loads from <code>venues.csv</code> instead of being hardcoded.</li>
 <li>Venue pages now link to their open GitHub issues.</li>
 <li>Breaking change: <code><a href="../reference/register_render.html">register_render()</a></code> now requires a <code>venues_file</code> parameter.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="github-issue-validation-development-version">GitHub Issue Validation<a class="anchor" aria-label="anchor" href="#github-issue-validation-development-version"></a></h3>
+<h3 id="github-issue-validation-0-22-0-9000">GitHub Issue Validation<a class="anchor" aria-label="anchor" href="#github-issue-validation-0-22-0-9000"></a></h3>
 <ul><li>Certificates are now validated against their GitHub issue: a missing issue fails validation, a closed or unassigned issue raises a warning.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="orcid-validation-improvements-development-version">ORCID Validation Improvements<a class="anchor" aria-label="anchor" href="#orcid-validation-improvements-development-version"></a></h3>
+<h3 id="orcid-validation-improvements-0-22-0-9000">ORCID Validation Improvements<a class="anchor" aria-label="anchor" href="#orcid-validation-improvements-0-22-0-9000"></a></h3>
 <ul><li>ORCID validation now handles authentication failures gracefully, with a new <code>skip_on_auth_error</code> option for CI and offline use.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="manifest-rendering-enhancements-development-version">Manifest Rendering Enhancements<a class="anchor" aria-label="anchor" href="#manifest-rendering-enhancements-development-version"></a></h3>
+<h3 id="manifest-rendering-enhancements-0-22-0-9000">Manifest Rendering Enhancements<a class="anchor" aria-label="anchor" href="#manifest-rendering-enhancements-0-22-0-9000"></a></h3>
 <ul><li>Certificates can now render more file formats in the manifest section, including TIF, GIF, EPS, SVG, JSON, TSV, and multi-page PDFs.</li>
 <li>A missing or unsupported manifest file no longer fails the whole certificate; it now shows an error message in the PDF instead.</li>
 </ul></div>

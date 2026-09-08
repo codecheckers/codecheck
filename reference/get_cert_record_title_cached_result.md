@@ -2,7 +2,7 @@
 
 Same lookup as
 [`get_cert_record_title`](http://codecheck.org.uk/codecheck/reference/get_cert_record_title.md),
-but returns the full \`status, value\` result so a caller can tell a
+but returns the full \`{status, value}\` result so a caller can tell a
 platform that conclusively has no title apart from one that could not be
 reached, see
 [`resolve_external_field`](http://codecheck.org.uk/codecheck/reference/resolve_external_field.md).

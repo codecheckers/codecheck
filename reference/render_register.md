@@ -37,6 +37,11 @@ render_register(
   A string specifying the desired output format "json" for JSON, "csv"
   for CSVs, "md" for MD and "html" for HTMLs.
 
+- full_register_table:
+
+  Optional table with all register columns, used for outputs that need
+  columns the filtered table does not carry.
+
 ## Value
 
 None. The function generates a file in the specified format.

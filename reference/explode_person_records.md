@@ -1,6 +1,6 @@
 # Explode a register table's \`Person\` list column into one row per record
 
-Turns each certificate's list of \`orcid, name, role\` records (see
+Turns each certificate's list of \`{orcid, name, role}\` records (see
 \[add_person_records()\]) into its own row, replacing the \`Person\`
 list column with a plain \`Person\` character column (the ORCID,
 matching \`CONFIG\$FILTER_COLUMN_NAMES\[\["persons"\]\]\`, so the caller

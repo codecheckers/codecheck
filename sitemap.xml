@@ -3,6 +3,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/CLAUDE.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/CONTRIBUTING.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/LICENSE-text.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/LICENSE.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/articles/codecheck_overview.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/articles/codecheck_register.html</loc></url>
@@ -26,7 +27,6 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_API.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_ENDPOINTS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_ITEMS.html</loc></url>
-<url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_MODEL.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_PLATFORMS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_QUERY_EXAMPLES.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/WIKIDATA_REFERENCE.html</loc></url>
@@ -165,7 +165,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_cert_pdf_from_zip.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_citation_meta_date.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_schema_org_date_published.html</loc></url>
-<url><loc>http://codecheck.org.uk/codecheck/reference/fetch_codechecker_list.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/fetch_codechecker_list_uncached.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/format_check_date.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/format_check_time_iso.html</loc></url>
@@ -454,6 +454,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_kind_noun.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_lookup_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_model.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_model_object.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_pending.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_preview_wikitext.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_properties.html</loc></url>
