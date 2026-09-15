@@ -1,5 +1,14 @@
 # codecheck 0.29.0.9000
 
+## New Features
+
+* The CODECHECK validation rules maintained in the register are bundled with the package and readable with `codecheck_rules()`, `codecheck_rule()` and `rule_severity()`, one set per version of the configuration file specification (register#209).
+* New `update_codecheck_rules()` refreshes the bundled rules from the register, and `codecheck_rules_provenance()` reports the register commit each bundled file came from and when it was fetched (register#209).
+* New `validate_codecheck_yml_rules()` validates a `codecheck.yml` against the rules of the specification version it declares, with one check function per rule and the severity taken from the rule file, so hardened requirements in 2.0 need no separate code path (register#209).
+* New `codecheck_spec_version()` reports which specification version a `codecheck.yml` declares, defaulting to the newest when the `version` node is absent (register#209).
+* New test asserting that every rule in the register's rule files is either implemented by a check function or explicitly recorded as not implemented, so a new rule cannot be ignored silently (register#209).
+* The tagline of the persons page now splits the number of people into those who conducted checks and those who authored checked works, noting that some people are in both groups.
+
 ## Bug Fixes
 
 * Fix `R CMD check --as-cran` failing with an error about `man/wikidata_model.Rd` and `man/WIKIDATA_MODEL.Rd` differing only by case, which is not portable across platforms.

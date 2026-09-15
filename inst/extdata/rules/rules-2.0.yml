@@ -1,0 +1,426 @@
+# CODECHECK validation rules for configuration file specification 2.0.
+# Authoritative list; see RULES.md for the identifier scheme and severities.
+# Identifiers are permanent: never reused, never renumbered.
+# Hardened MUSTs and the new reference-other field; see RULES.md.
+---
+version: 1
+spec_version: "2.0"
+updated: 2026-09-09
+
+rules:
+
+  # --- config ---
+  - id: CC-CFG-001
+    name: yaml-parses
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#format"
+    description: "The codecheck.yml is well-formed YAML 1.1 or later and UTF-8 encoded"
+  - id: CC-CFG-002
+    name: explicit-document
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#explicit-document-and-directive"
+    description: "The file starts with the explicit document marker ---"
+  - id: CC-CFG-003
+    name: file-name-and-location
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#storage-location"
+    description: "The file is named codecheck.yml and sits at the root of the bundle"
+  - id: CC-CFG-004
+    name: manifest-present
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#manifest-list"
+    description: "A root-level manifest list is present"
+  - id: CC-CFG-005
+    name: manifest-item-file
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#manifest-list"
+    description: "Every manifest item has a file node"
+  - id: CC-CFG-006
+    name: manifest-path-relative
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#manifest-list"
+    description: "Manifest file paths are relative to the codecheck.yml"
+  - id: CC-CFG-007
+    name: manifest-item-comment
+    area: config
+    severity: info
+    status: active
+    reference: "spec/config/2.0#manifest-list"
+    description: "Every manifest item has a human-readable comment (MAY, advisory only)"
+  - id: CC-CFG-008
+    name: codechecker-present
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#codecheck-metadata"
+    description: "A root-level codechecker list with at least one entry is present"
+  - id: CC-CFG-009
+    name: codechecker-name
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#codecheck-metadata"
+    description: "Every codechecker entry has a name"
+  - id: CC-CFG-010
+    name: codechecker-orcid
+    area: config
+    severity: warning
+    status: active
+    reference: "spec/config/2.0#codecheck-metadata"
+    description: "Every codechecker entry has an ORCID"
+  - id: CC-CFG-011
+    name: report-present
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#codecheck-metadata"
+    description: "A root-level report node identifies the published certificate"
+  - id: CC-CFG-012
+    name: report-resolvable
+    area: config
+    severity: info
+    status: active
+    reference: "spec/config/2.0#codecheck-metadata"
+    description: "The report identifier is in a resolvable form such as a DOI URL (ideally, advisory only)"
+  - id: CC-CFG-013
+    name: report-doi-not-placeholder
+    area: config
+    severity: error
+    status: active
+    reference: "R:is_doi_placeholder"
+    description: "The report DOI is not a placeholder such as zenodo.FIXME"
+  - id: CC-CFG-014
+    name: version-present
+    area: config
+    severity: warning
+    status: active
+    reference: "spec/config/2.0#version"
+    description: "A version node names the specification version used"
+  - id: CC-CFG-015
+    name: version-known
+    area: config
+    severity: warning
+    status: active
+    reference: "spec/config/2.0#version"
+    description: "The version URL matches a published specification version"
+  - id: CC-CFG-016
+    name: paper-present
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "A root-level paper node is present"
+  - id: CC-CFG-017
+    name: paper-title
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "paper.title is present"
+  - id: CC-CFG-018
+    name: paper-authors
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "paper.authors is a sequence with at least one entry"
+  - id: CC-CFG-019
+    name: paper-author-name
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "Every paper author entry has a name"
+  - id: CC-CFG-020
+    name: paper-author-orcid
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "Every paper author entry has an ORCID, given as the plain identifier without URL prefix"
+  - id: CC-CFG-021
+    name: paper-reference
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "A reference to the article is provided in paper.reference"
+  - id: CC-CFG-022
+    name: reference-not-bare-pdf
+    area: config
+    severity: warning
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "paper.reference points at a DOI or landing page rather than a direct, unarchived PDF"
+  - id: CC-CFG-023
+    name: no-placeholder-values
+    area: config
+    severity: error
+    status: active
+    reference: "R:complete_codecheck_yml"
+    description: "No field still holds a FIXME/TODO/XXXXX placeholder value"
+  - id: CC-CFG-024
+    name: summary-present
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#codecheck-metadata"
+    description: "A root-level summary gives a short textual summary of the certificate"
+  - id: CC-CFG-025
+    name: certificate-present
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#codecheck-metadata"
+    description: "A root-level certificate node carries the register identifier"
+  - id: CC-CFG-026
+    name: certificate-id-format
+    area: config
+    severity: error
+    status: active
+    reference: "R:validate_certificate_github_issue"
+    description: "The certificate identifier matches the YYYY-NNN pattern"
+  - id: CC-CFG-027
+    name: reference-is-url
+    area: config
+    severity: warning
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "paper.reference is a resolvable URL rather than free text; tools do not extract URLs from surrounding text"
+  - id: CC-CFG-028
+    name: reference-prefers-doi
+    area: config
+    severity: info
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "paper.reference is a DOI, preferred over other URLs for long-term availability"
+  - id: CC-CFG-029
+    name: reference-other-is-list
+    area: config
+    severity: error
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "reference-other, when present, is a sequence"
+  - id: CC-CFG-030
+    name: reference-other-item-form
+    area: config
+    severity: warning
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "Every reference-other entry is a resolvable URL, preferably a DOI"
+  - id: CC-CFG-031
+    name: reference-pdf-is-archived
+    area: config
+    severity: info
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "paper.reference is a direct PDF link, but a web archive snapshot, which is acceptable where no DOI or landing page exists"
+
+  # --- metadata ---
+  - id: CC-MET-001
+    name: orcid-format
+    area: metadata
+    severity: error
+    status: active
+    reference: "R:validate_codecheck_yml_orcid"
+    description: "Every ORCID is syntactically valid including its checksum digit"
+  - id: CC-MET-002
+    name: orcid-resolves
+    area: metadata
+    severity: warning
+    status: active
+    reference: "R:validate_codecheck_yml_orcid"
+    description: "Every ORCID resolves against the ORCID public API"
+  - id: CC-MET-003
+    name: orcid-name-match
+    area: metadata
+    severity: warning
+    status: active
+    reference: "R:validate_codecheck_yml_orcid"
+    description: "The name given matches the name on the ORCID record"
+  - id: CC-MET-004
+    name: paper-reference-resolves
+    area: metadata
+    severity: warning
+    status: active
+    reference: "R:validate_codecheck_yml_crossref"
+    description: "The single paper.reference identifier resolves; with a DOI this is a Crossref lookup"
+  - id: CC-MET-005
+    name: crossref-title-match
+    area: metadata
+    severity: warning
+    status: active
+    reference: "R:validate_codecheck_yml_crossref"
+    description: "The paper title matches the Crossref record"
+  - id: CC-MET-006
+    name: crossref-author-count-match
+    area: metadata
+    severity: warning
+    status: active
+    reference: "R:validate_codecheck_yml_crossref"
+    description: "The number of authors matches the Crossref record"
+  - id: CC-MET-007
+    name: crossref-author-name-match
+    area: metadata
+    severity: warning
+    status: active
+    reference: "R:validate_codecheck_yml_crossref"
+    description: "Each author name matches the Crossref record"
+  - id: CC-MET-008
+    name: crossref-author-orcid-match
+    area: metadata
+    severity: warning
+    status: active
+    reference: "R:validate_codecheck_yml_crossref"
+    description: "Author ORCIDs match those recorded in Crossref"
+  - id: CC-MET-009
+    name: reference-other-resolves
+    area: metadata
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "Every reference-other entry resolves"
+
+  # --- bundle ---
+  - id: CC-BUN-001
+    name: manifest-files-exist
+    area: bundle
+    severity: error
+    status: active
+    reference: "guide/bundle"
+    description: "Every manifest file exists at the stated path"
+  - id: CC-BUN-002
+    name: codecheck-directory-present
+    area: bundle
+    severity: warning
+    status: active
+    reference: "guide/bundle"
+    description: "The bundle contains a codecheck/ or .codecheck/ directory"
+  - id: CC-BUN-003
+    name: report-file-present
+    area: bundle
+    severity: warning
+    status: active
+    reference: "guide/bundle"
+    description: "The certificate report file is present in the bundle"
+  - id: CC-BUN-004
+    name: repository-reachable
+    area: bundle
+    severity: error
+    status: active
+    reference: "R:get_codecheck_yml_github|gitlab|osf|zenodo"
+    description: "The material under check is reachable at its stated location, for every supported source: GitHub, GitLab, OSF and Zenodo"
+  - id: CC-BUN-005
+    name: licence-present
+    area: bundle
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The repository under check states a licence"
+
+  # --- report ---
+  - id: CC-REP-001
+    name: report-doi-version-specific
+    area: report
+    severity: warning
+    status: active
+    reference: "R:validate_certificate_for_rendering"
+    description: "The report DOI is version-specific rather than a Zenodo concept DOI"
+  - id: CC-REP-002
+    name: report-doi-newest-version
+    area: report
+    severity: warning
+    status: active
+    reference: "R:validate_certificate_for_rendering"
+    description: "The report DOI points at the newest published version of the record"
+  - id: CC-REP-003
+    name: zenodo-files-present
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Zenodo record carries the expected files"
+  - id: CC-REP-004
+    name: zenodo-certificate-id-match
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The certificate identifier in the Zenodo record matches the one in the codecheck.yml"
+  - id: CC-REP-005
+    name: zenodo-codechecker-names-match
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The codechecker names in the Zenodo record match those in the codecheck.yml"
+  - id: CC-REP-006
+    name: zenodo-codechecker-orcids-match
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The codechecker ORCIDs in the Zenodo record match those in the codecheck.yml"
+
+  # --- register ---
+  - id: CC-REG-001
+    name: certificate-unique
+    area: register
+    severity: error
+    status: active
+    reference: "practice"
+    description: "The certificate identifier does not already exist in register.csv"
+  - id: CC-REG-002
+    name: certificate-id-sequence
+    area: register
+    severity: error
+    status: active
+    reference: "practice"
+    description: "The certificate identifier follows YYYY-NNN and continues the year's sequence"
+  - id: CC-REG-003
+    name: repository-spec-format
+    area: register
+    severity: error
+    status: active
+    reference: "practice"
+    description: "The Repository column uses a known prefix: github:: gitlab:: osf:: zenodo::"
+  - id: CC-REG-004
+    name: type-known
+    area: register
+    severity: error
+    status: active
+    reference: "practice"
+    description: "The Type column is one of journal conference community institution"
+  - id: CC-REG-005
+    name: venue-known
+    area: register
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Venue is listed in venues.csv"
+  - id: CC-REG-006
+    name: issue-exists
+    area: register
+    severity: warning
+    status: active
+    reference: "R:validate_certificate_github_issue"
+    description: "The Issue number resolves to an issue in codecheckers/register"
+  - id: CC-REG-007
+    name: issue-references-certificate
+    area: register
+    severity: warning
+    status: active
+    reference: "R:validate_certificate_github_issue"
+    description: "The referenced issue's title carries the certificate identifier"
