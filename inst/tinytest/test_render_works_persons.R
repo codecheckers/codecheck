@@ -152,5 +152,17 @@ person_stats2 <- jsonlite::fromJSON(file.path(person_dir, "stats.json"))
 expect_equal(person_stats2$person$orcid, "0000-0001-8607-8025")
 expect_equal(person_stats2$person$checks_conducted, person_stats$person$checks_conducted)
 
+# The persons tagline splits the total into checkers and authors; the groups
+# overlap, so each is at most the total and together they cover it.
+persons_html <- paste(readLines("docs/persons/index.html", warn = FALSE), collapse = "\n")
+tagline <- regmatches(persons_html, regexec(
+  "In total, ([0-9]+) people have authored or checked a work in the register - ([0-9]+) conducted checks and ([0-9]+) authored checked works \\(some people are in both groups\\)\\.",
+  persons_html))[[1]]
+expect_equal(length(tagline), 4, info = "persons page must carry the split tagline")
+counts <- as.integer(tagline[2:4])
+expect_true(counts[2] > 0 && counts[3] > 0)
+expect_true(counts[2] <= counts[1] && counts[3] <= counts[1])
+expect_true(counts[2] + counts[3] >= counts[1])
+
 # clean up
 expect_equal(unlink("docs", recursive = TRUE), 0)

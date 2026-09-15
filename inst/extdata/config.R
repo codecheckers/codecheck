@@ -338,7 +338,15 @@ CONFIG$NON_REG_SUBTEXT <- list(
 
   persons = function(table, subcat = NULL) {
     no_persons <- nrow(table)
-    paste0("In total, ", no_persons, " people have authored or checked a work in the register.")
+    # Columns are already renamed to their display names here, but still
+    # numeric (hyperlinks are added later); a person can be in both groups.
+    # No ": " in the text - it ends up in the YAML front matter unquoted.
+    col_names <- CONFIG$NON_REG_TABLE_COL_NAMES[["persons"]]
+    no_authors <- sum(table[[col_names[["no_works"]]]] > 0)
+    no_checkers <- sum(table[[col_names[["no_checks"]]]] > 0)
+    paste0("In total, ", no_persons, " people have authored or checked a work in the register - ",
+           no_checkers, " conducted checks and ", no_authors, " authored checked works",
+           " (some people are in both groups).")
   },
 
   organisations = function(table, subcat = NULL) {
