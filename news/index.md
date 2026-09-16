@@ -14,6 +14,11 @@
   version. A configuration from 2020 is no longer reported against
   requirements published in 2026. See “Choosing the specification
   version” in the register’s `RULES.md`.
+- Person pages show a codechecker’s fields and languages from
+  `codecheckers.csv`, their `stats.json` lists them as `fields` and
+  `languages` arrays, and their Schema.org metadata as `knowsAbout`. An
+  entry is split at commas outside parentheses, so
+  `R (expert, package dev)` stays one item (register#168).
 - [`register_clear_cache()`](http://codecheck.org.uk/codecheck/reference/register_clear_cache.md)
   takes certificate identifiers to refresh only what is cached about
   those certificates, keeping the rest of the cache

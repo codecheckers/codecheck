@@ -31,15 +31,15 @@ register checkout.
 ``` r
 codecheck_rules_provenance()
 #>            file spec_version rules                                   commit
-#> 1 rules-2.0.yml          2.0    58 cbe34cbd4a0d294a6e6e8cb2f3b4cd1d10ad121c
-#> 2 rules-1.0.yml          1.0    55 cbe34cbd4a0d294a6e6e8cb2f3b4cd1d10ad121c
-#>                commit_date                retrieved
-#> 1 2026-09-09T12:42:35+0000 2026-09-16T22:24:35+0200
-#> 2 2026-09-09T12:42:35+0000 2026-09-16T22:24:35+0200
-#>                                                            source
-#> 1 https://raw.githubusercontent.com/codecheckers/register/master/
-#> 2 https://raw.githubusercontent.com/codecheckers/register/master/
-#>                       via                              md5
-#> 1 local register checkout a8d3fb6c107b88ab4b7eccdc4982da81
-#> 2 local register checkout eab4729e8ec4d0eb69c56346c9441b42
+#> 1 rules-2.0.yml          2.0    58 825ab78966b9581ad9fd314de45788ae38efccb3
+#> 2 rules-1.0.yml          1.0    55 825ab78966b9581ad9fd314de45788ae38efccb3
+#>            commit_date                retrieved
+#> 1 2026-09-16T20:32:50Z 2026-09-16T22:38:59+0200
+#> 2 2026-09-16T20:32:50Z 2026-09-16T22:38:59+0200
+#>                                                            source      via
+#> 1 https://raw.githubusercontent.com/codecheckers/register/master/ download
+#> 2 https://raw.githubusercontent.com/codecheckers/register/master/ download
+#>                                md5
+#> 1 a8d3fb6c107b88ab4b7eccdc4982da81
+#> 2 eab4729e8ec4d0eb69c56346c9441b42
 ```

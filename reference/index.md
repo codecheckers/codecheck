@@ -337,7 +337,7 @@
 
 - [`generate_codechecker_metadata_html()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_metadata_html.md)
   : Generate the codechecker metadata HTML panel (avatar + ORCID +
-  GitHub + venues)
+  GitHub + expertise + venues)
 
 - [`generate_codechecker_metadata_yaml()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_metadata_yaml.md)
   : Generate the codechecker metadata YAML frontmatter block for
