@@ -154,7 +154,8 @@ expect_equal(person_stats2$person$checks_conducted, person_stats$person$checks_c
 
 # The persons tagline splits the total into checkers and authors; the groups
 # overlap, so each is at most the total and together they cover it.
-persons_html <- paste(readLines("docs/persons/index.html", warn = FALSE), collapse = "\n")
+# pandoc wraps the subtitle across lines, so match on collapsed whitespace
+persons_html <- gsub("\\s+", " ", paste(readLines("docs/persons/index.html", warn = FALSE), collapse = " "))
 tagline <- regmatches(persons_html, regexec(
   "In total, ([0-9]+) people have authored or checked a work in the register - ([0-9]+) conducted checks and ([0-9]+) authored checked works \\(some people are in both groups\\)\\.",
   persons_html))[[1]]
