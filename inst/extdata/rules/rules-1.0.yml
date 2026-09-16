@@ -5,6 +5,10 @@
 ---
 version: 1
 spec_version: "1.0"
+# Publication date of this specification version, from the specification
+# page itself. Tools use it to date a configuration that names no version; see
+# "Choosing the specification version" in RULES.md.
+spec_date: 2020-02-06
 updated: 2026-09-09
 
 rules:

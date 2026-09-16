@@ -12,38 +12,113 @@
 #' @return The version as a string, or `NA` if it names none.
 #' @keywords internal
 #' @noRd
-spec_version_from_url <- function(version) {
+spec_version_from_url <- function(version, published_only = TRUE) {
   if (!has_value(version)) {
     return(NA_character_)
   }
   known <- codecheck_spec_versions()
   # Tolerate a trailing slash, http, and the /spec/config/<version> form used
-  # in the specification's own examples.
-  matched <- vapply(known, function(candidate) {
-    grepl(paste0("spec/config/", candidate, "/?$"), trimws(version))
-  }, logical(1))
-  if (any(matched)) known[matched][1] else NA_character_
+  # in the specification's own examples. With published_only = FALSE the
+  # historical /spec/<version> form counts too: certificates from 2020 carry
+  # it, and it decides which rules apply even though the URL itself 404s, which
+  # is what CC-CFG-015 reports. See "Choosing the specification version" in the
+  # register's RULES.md.
+  prefixes <- if (published_only) "spec/config/" else c("spec/config/", "spec/")
+  for (prefix in prefixes) {
+    matched <- vapply(known, function(candidate) {
+      grepl(paste0(prefix, candidate, "/?$"), trimws(version))
+    }, logical(1))
+    if (any(matched)) return(known[matched][1])
+  }
+  NA_character_
+}
+
+#' The publication date of a specification version, from its rule file
+#' @keywords internal
+#' @noRd
+spec_version_date <- function(spec_version) {
+  parsed <- yaml::read_yaml(rules_file(spec_version))
+  if (!has_value(parsed$spec_date)) {
+    return(as.Date(NA))
+  }
+  as.Date(parsed$spec_date)
+}
+
+#' The specification version that was current on a date
+#'
+#' The newest version published on or before `when`; the oldest version when
+#' `when` predates every specification, because a CODECHECK done before the
+#' configuration file was specified can only be judged by the earliest
+#' requirements.
+#' @keywords internal
+#' @noRd
+spec_version_as_of <- function(when) {
+  known <- codecheck_spec_versions() # newest first
+  for (candidate in known) {
+    published <- spec_version_date(candidate)
+    if (!is.na(published) && published <= when) {
+      return(candidate)
+    }
+  }
+  known[length(known)]
+}
+
+#' When a configuration was written, as far as it can be told
+#' @keywords internal
+#' @noRd
+configuration_date <- function(configuration, modified = NULL) {
+  if (has_value(configuration$check_time)) {
+    for (format in c("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M")) {
+      when <- suppressWarnings(as.Date(as.character(configuration$check_time), format = format))
+      if (!is.na(when)) return(when)
+    }
+  }
+  if (!is.null(modified) && !is.na(modified)) {
+    return(as.Date(modified))
+  }
+  as.Date(NA)
 }
 
 ##' The specification version a `codecheck.yml` is validated against
 ##'
-##' Read from the `version` node. A file without one is validated against the
-##' newest specification this package knows, which is what the specification
-##' asks tools to assume.
+##' Read from the `version` node, including the historical
+##' `https://codecheck.org.uk/spec/1.0` form that certificates from 2020 carry.
+##'
+##' A file without a version node is dated instead: the version that was current
+##' when the CODECHECK was performed (`check_time`, or `modified`) is used, so a
+##' configuration written in 2020 is not judged against requirements published
+##' in 2026. Only a file that cannot be dated falls back to the newest version,
+##' which is what the specification asks tools to assume. See "Choosing the
+##' specification version" in the register's `RULES.md`.
 ##'
 ##' @param configuration A parsed `codecheck.yml` as a list, or a path to one.
+##' @param modified When the configuration was last changed at its source, as a
+##'   `Date` or `POSIXct`, used when the file carries no `check_time`.
 ##' @return The version as a string, e.g. `"2.0"`.
 ##' @examples
 ##' codecheck_spec_version(list(version = "https://codecheck.org.uk/spec/config/1.0/"))
 ##' codecheck_spec_version(list())
 ##' @seealso [validate_codecheck_yml_rules()], [codecheck_rules()]
 ##' @export
-codecheck_spec_version <- function(configuration) {
+codecheck_spec_version <- function(configuration, modified = NULL) {
+  path <- NULL
   if (is.character(configuration) && file.exists(configuration)) {
+    path <- configuration
     configuration <- yaml::read_yaml(configuration)
   }
-  detected <- spec_version_from_url(configuration$version)
-  if (is.na(detected)) codecheck_spec_versions()[1] else detected
+
+  declared <- spec_version_from_url(configuration$version, published_only = FALSE)
+  if (!is.na(declared)) {
+    return(declared)
+  }
+
+  # No version node: judge the file by the requirements that were current when
+  # it was written, rather than by requirements published years later.
+  when <- configuration_date(configuration, modified)
+  if (!is.na(when)) {
+    return(spec_version_as_of(when))
+  }
+  codecheck_spec_versions()[1]
 }
 
 ##' Validate a `codecheck.yml` against the CODECHECK rules
