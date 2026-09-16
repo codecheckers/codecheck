@@ -9,10 +9,17 @@
 * New test asserting that every rule in the register's rule files is either implemented by a check function or explicitly recorded as not implemented, so a new rule cannot be ignored silently (register#209).
 * `validate_codecheck_yml()` now runs the rule checks instead of implementing the same requirements a second time, so its error messages name the rule that rejected a file, e.g. `CC-CFG-026 certificate-id-format` (register#209).
 * A rule reported on its own now carries the rule's description alongside its identifier, in both the per-rule report and the error messages; where several rules are listed at once, only identifiers and findings are shown (register#209).
+* The ORCID and Crossref comparisons, `CC-MET-002` to `CC-MET-008`, are now rules of `validate_codecheck_yml_rules()`, requesting each record once per file (register#209).
+* `validate_codecheck_yml_rules()` checks that the manifest files exist in the bundle (`CC-BUN-001`), and runs a selection of rules with its new `rules` argument (register#209).
+* New `validate_register_rules()` checks the certificate identifier sequence, the venue types and the venues of `register.csv` (`CC-REG-002`, `CC-REG-004`, `CC-REG-005`), and `register_check()` runs it (register#209).
 * The tagline of the persons page now splits the number of people into those who conducted checks and those who authored checked works, noting that some people are in both groups.
 
 ## Bug Fixes
 
+* An unreachable or rate-limited ORCID or Crossref API no longer fails `validate_codecheck_yml_orcid()` or `validate_codecheck_yml_crossref()`; the comparisons are skipped instead (register#209).
+* `validate_codecheck_yml_orcid()` and `validate_codecheck_yml_crossref()` report at the rule's severity, so a missing codechecker, a codechecker without a name or a malformed ORCID now stops without `strict` (register#209).
+* `validate_codecheck_yml_orcid()` reads ORCID records from the public API only, and its `skip_on_auth_error` argument no longer has an effect (register#209).
+* `validate_codecheck_yml()` runs only the rules it enforces, so validating a certificate in `register_check()` no longer makes requests for the others (register#209).
 * A `codecheck.yml` that is not valid YAML or not UTF-8 is now reported as a failure of rule `CC-CFG-001` rather than as a parser error, and the remaining rules still report what they can (register#209).
 
 * Fix `R CMD check --as-cran` failing with an error about `man/wikidata_model.Rd` and `man/WIKIDATA_MODEL.Rd` differing only by case, which is not portable across platforms.

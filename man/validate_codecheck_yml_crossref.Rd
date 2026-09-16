@@ -7,37 +7,44 @@
 validate_codecheck_yml_crossref(
   yml_file = "codecheck.yml",
   strict = FALSE,
-  check_orcids = TRUE
+  check_orcids = TRUE,
+  stop_on_error = TRUE
 )
 }
 \arguments{
 \item{yml_file}{Path to the codecheck.yml file (defaults to "./codecheck.yml")}
 
-\item{strict}{Logical. If \code{TRUE}, throw an error on any mismatch.
-If \code{FALSE} (default), only issue warnings.}
+\item{strict}{Logical. If \code{TRUE}, report warnings as errors.}
 
-\item{check_orcids}{Logical. If \code{TRUE} (default), validate ORCID
-identifiers. If \code{FALSE}, skip ORCID validation.}
+\item{check_orcids}{Logical. If \code{TRUE} (default), compare author ORCIDs
+with Crossref (`CC-MET-008`).}
+
+\item{stop_on_error}{Logical. If \code{TRUE} (default), stop when a rule
+failed at severity error. Rules at severity warning only ever warn.}
 }
 \value{
 Invisibly returns a list with validation results:
   \describe{
-    \item{valid}{Logical indicating if all checks passed}
-    \item{issues}{Character vector of any issues found}
+    \item{valid}{Logical, \code{FALSE} if any rule failed at severity error or warning}
+    \item{issues}{Character vector of the failed rules, in words}
     \item{crossref_metadata}{The metadata retrieved from CrossRef (if available)}
+    \item{results}{The per-rule results, see [validate_codecheck_yml_rules()]}
   }
 }
 \description{
 Validate codecheck.yml metadata against CrossRef
 }
 \details{
-Retrieves metadata from CrossRef for the paper's DOI and compares it with
-the local codecheck.yml metadata. Validates title and author information
-(names and ORCIDs against CrossRef data).
+Retrieves the Crossref record of the paper's DOI and compares it with the
+local codecheck.yml metadata: whether the reference resolves, the title, the
+number of authors, their names and their ORCIDs. These are the rules
+`CC-MET-004` to `CC-MET-008`, run through [validate_codecheck_yml_rules()]
+together with the two rules they depend on, `CC-CFG-016` paper-present and
+`CC-CFG-021` paper-reference, and reported at the severity the rule file of
+the declared specification version gives them.
 
-This function is useful for ensuring consistency between the published paper
-metadata and the CODECHECK certificate, helping to catch typos, outdated
-information, or missing data.
+A Crossref record that cannot be retrieved, because the API is unreachable
+or rate limited, makes the comparisons skip. It never fails the validation.
 
 Note: For comprehensive validation including ORCID name verification and
 codechecker validation, use \code{validate_contents_references()} instead.
@@ -53,6 +60,9 @@ codechecker validation, use \code{validate_contents_references()} instead.
   # Skip ORCID validation
   validate_codecheck_yml_crossref(check_orcids = FALSE)
 }
+}
+\seealso{
+[validate_codecheck_yml_rules()]
 }
 \author{
 Daniel Nuest

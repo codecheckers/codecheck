@@ -565,6 +565,9 @@ register_update_stats <- function(docs_dir = "docs",
 #' This functions starts of a `data.frame` read from the local register file.
 #'
 #' **Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+#' The rules about the register as a whole - identifier sequence, venue types
+#' and venues - are run first with [validate_register_rules()]; a rule failed at
+#' severity error stops the check once every entry has been checked.
 #' Certificate IDs must also be unique across the whole register; this is checked
 #' once up front, over all rows, before any per-entry checks run.
 #'
@@ -584,6 +587,7 @@ register_update_stats <- function(docs_dir = "docs",
 #' @param from The first register entry to check (defaults to the last row, i.e. the newest entry)
 #' @param to The last register entry to check (defaults to the first row, i.e. the oldest entry)
 #' @param check_zenodo_policy Logical; if TRUE (the default), also audits the Zenodo records against the CODECHECK community curation policy
+#' @param venues_file Path to the `venues.csv` the `Venue` column is checked against
 #' @param check_researchequals_policy Logical; if TRUE (the default), also audits the certificates published on ResearchEquals against the CODECHECK curation policy, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection
 #'
 #' @author Daniel Nuest
@@ -595,7 +599,8 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
                            from = nrow(register),
                            to = 1,
                            check_zenodo_policy = TRUE,
-                           check_researchequals_policy = TRUE) {
+                           check_researchequals_policy = TRUE,
+                           venues_file = "venues.csv") {
   cli::cli_h1("CODECHECK Register Check")
   cli::cli_alert_info("codecheck v{utils::packageVersion('codecheck')} | entries {from} to {to}")
 
@@ -612,6 +617,12 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
     stop("Duplicate certificate ID(s) in register: ",
          toString(unique(register$Certificate[dup])))
   }
+
+  # The other register-wide rules are reported up front but only stop the check
+  # at the end, so that one bad row does not hide what the entries themselves
+  # have to say.
+  register_rules <- validate_register_rules(register, venues_file = venues_file,
+                                            stop_on_error = FALSE)
 
   # The raw register has no Report column, the report DOI comes from each
   # codecheck.yml, so collect it while the configurations are being read anyway.
@@ -710,5 +721,10 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
     }, error = function(e) {
       cli::cli_alert_info("Could not run the ResearchEquals curation policy check: {conditionMessage(e)}")
     })
+  }
+
+  failed_rules <- register_rules[register_rules$outcome == "error", ]
+  if (nrow(failed_rules) > 0) {
+    stop(rules_failure_message(failed_rules, "the register"), call. = FALSE)
   }
 }

@@ -24,9 +24,11 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   src_files = file.path(root, outputs)
   missing = !file.exists(src_files)
 
-  # Warn about missing files but continue processing
+  # Warn about missing files but continue processing: a certificate is drafted
+  # while outputs are still being reproduced, and a missing file is marked as
+  # such in it. validate_codecheck_yml_rules() reports the same thing as a
+  # failure of CC-BUN-001 manifest-files-exist, at the rule's severity.
   if (any(missing)) {
-    # rule: CC-BUN-001 manifest-files-exist
     warning("Manifest files missing:\n",
             paste(src_files[missing], collapse='\n'),
             "\nThese files will be marked as missing in the certificate.")

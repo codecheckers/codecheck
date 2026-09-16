@@ -264,31 +264,36 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 
 ##' Validate codecheck.yml metadata against CrossRef
 ##'
-##' Retrieves metadata from CrossRef for the paper's DOI and compares it with
-##' the local codecheck.yml metadata. Validates title and author information
-##' (names and ORCIDs against CrossRef data).
+##' Retrieves the Crossref record of the paper's DOI and compares it with the
+##' local codecheck.yml metadata: whether the reference resolves, the title, the
+##' number of authors, their names and their ORCIDs. These are the rules
+##' `CC-MET-004` to `CC-MET-008`, run through [validate_codecheck_yml_rules()]
+##' together with the two rules they depend on, `CC-CFG-016` paper-present and
+##' `CC-CFG-021` paper-reference, and reported at the severity the rule file of
+##' the declared specification version gives them.
 ##'
-##' This function is useful for ensuring consistency between the published paper
-##' metadata and the CODECHECK certificate, helping to catch typos, outdated
-##' information, or missing data.
+##' A Crossref record that cannot be retrieved, because the API is unreachable
+##' or rate limited, makes the comparisons skip. It never fails the validation.
 ##'
 ##' Note: For comprehensive validation including ORCID name verification and
 ##' codechecker validation, use \code{validate_contents_references()} instead.
 ##'
 ##' @title Validate codecheck.yml metadata against CrossRef
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
-##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
-##'   If \code{FALSE} (default), only issue warnings.
-##' @param check_orcids Logical. If \code{TRUE} (default), validate ORCID
-##'   identifiers. If \code{FALSE}, skip ORCID validation.
+##' @param strict Logical. If \code{TRUE}, report warnings as errors.
+##' @param check_orcids Logical. If \code{TRUE} (default), compare author ORCIDs
+##'   with Crossref (`CC-MET-008`).
+##' @param stop_on_error Logical. If \code{TRUE} (default), stop when a rule
+##'   failed at severity error. Rules at severity warning only ever warn.
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
-##'     \item{valid}{Logical indicating if all checks passed}
-##'     \item{issues}{Character vector of any issues found}
+##'     \item{valid}{Logical, \code{FALSE} if any rule failed at severity error or warning}
+##'     \item{issues}{Character vector of the failed rules, in words}
 ##'     \item{crossref_metadata}{The metadata retrieved from CrossRef (if available)}
+##'     \item{results}{The per-rule results, see [validate_codecheck_yml_rules()]}
 ##'   }
 ##' @author Daniel Nuest
-##' @importFrom httr GET content status_code
+##' @seealso [validate_codecheck_yml_rules()]
 ##' @export
 ##' @examples
 ##' \dontrun{
@@ -303,202 +308,66 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 ##' }
 validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
                                             strict = FALSE,
-                                            check_orcids = TRUE) {
+                                            check_orcids = TRUE,
+                                            stop_on_error = TRUE) {
+  rules <- c("CC-CFG-016", "CC-CFG-021", "CC-MET-004", "CC-MET-005",
+             "CC-MET-006", "CC-MET-007",
+             if (check_orcids) "CC-MET-008")
+  validation <- validate_rules_on_file(yml_file, rules, strict = strict,
+                                       stop_on_error = stop_on_error)
 
+  crossref <- validation$context$lookups$crossref
+  invisible(list(
+    valid = validation$valid,
+    issues = validation$issues,
+    crossref_metadata = if (is.null(crossref)) NULL else crossref$record,
+    results = validation$results
+  ))
+}
+
+#' Run a selection of rules on a file, the way the older validators report
+#'
+#' The older validation functions warn about every finding and return a list
+#' rather than a data frame. They now run the rules like
+#' [validate_codecheck_yml_rules()], and this is where their results are turned
+#' back into that form: a failed rule at severity warning is a `warning()`, one
+#' at severity error stops (unless `stop_on_error` is `FALSE`), and "could not
+#' check" is neither.
+#'
+#' @param people Which people the ORCID rules look at, see `context_people()`.
+#' @return A list with `valid`, `issues`, `results` and the `context`, whose
+#'   `lookups` hold what external services answered.
+#' @keywords internal
+#' @noRd
+validate_rules_on_file <- function(yml_file, rules, strict = FALSE,
+                                   stop_on_error = TRUE, people = NULL) {
   if (!file.exists(yml_file)) {
     stop("codecheck.yml file not found at: ", yml_file)
   }
 
-  # Read local metadata
-  local_meta <- yaml::read_yaml(yml_file)
+  context <- rules_context(yml_file)
+  context$people <- people
+  spec_version <- codecheck_spec_version(context$yml)
+  context$spec_version <- spec_version
 
-  issues <- character(0)
-  crossref_meta <- NULL
+  results <- run_rules(context, spec_version, rules, strict)
+  report_rule_results(results, context, spec_version, strict)
 
-  # Check if paper metadata exists
-  if (is.null(local_meta$paper)) {
-    issues <- c(issues, "No paper metadata found in codecheck.yml")
-    if (strict) {
-      stop("Validation failed: No paper metadata found in codecheck.yml")
-    }
-    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
+  failed <- results[results$outcome %in% c("error", "warning"), ]
+  for (i in which(failed$outcome == "warning")) {
+    warning(rule_result_text(failed[i, ]), call. = FALSE)
+  }
+  if (stop_on_error && any(failed$outcome == "error")) {
+    stop("Validation failed: ",
+         rules_failure_message(failed[failed$outcome == "error", ], context$label),
+         call. = FALSE)
   }
 
-  # Check if paper reference (DOI) exists
-  if (is.null(local_meta$paper$reference)) {
-    issues <- c(issues, "No paper reference (DOI) found in codecheck.yml")
-    if (strict) {
-      stop("Validation failed: No paper reference found")
-    }
-    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
-  }
-
-  # Extract DOI from reference
-  paper_ref <- local_meta$paper$reference
-
-  # Skip validation if reference contains placeholder
-  if (grepl("FIXME|TODO|template|example", paper_ref, ignore.case = TRUE)) {
-    message("Skipping CrossRef validation: paper reference contains placeholder")
-    return(invisible(list(valid = TRUE, issues = character(0), crossref_metadata = NULL)))
-  }
-
-  # Try to extract DOI
-  doi <- sub("^https?://(dx\\.)?doi\\.org/", "", paper_ref)
-  doi <- sub("^doi:", "", doi)
-
-  # Fetch metadata from CrossRef
-  api_url <- paste0("https://api.crossref.org/works/", doi)
-  message("Fetching metadata from CrossRef: ", api_url)
-
-  response <- tryCatch(
-    codecheck_GET(api_url),
-    error = function(e) {
-      issues <<- c(issues, paste("Failed to connect to CrossRef API:", e$message))
-      return(NULL)
-    }
-  )
-
-  if (is.null(response)) {
-    if (strict) {
-      stop("Validation failed: Could not connect to CrossRef API")
-    }
-    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
-  }
-
-  if (httr::status_code(response) != 200) {
-    msg <- paste0("CrossRef API returned status code ", httr::status_code(response),
-                  " for DOI: ", doi)
-    issues <- c(issues, msg)
-    if (strict) {
-      stop("Validation failed: ", msg)
-    }
-    return(invisible(list(valid = FALSE, issues = issues, crossref_metadata = NULL)))
-  }
-
-  crossref_meta <- httr::content(response, "parsed")$message
-
-  # Validate title
-  if (!is.null(local_meta$paper$title) && !is.null(crossref_meta$title)) {
-    local_title <- tolower(trimws(local_meta$paper$title))
-    # CrossRef returns title as a list, take first element
-    crossref_title <- tolower(trimws(crossref_meta$title[[1]]))
-
-    # Remove common differences (punctuation, extra spaces)
-    local_title_clean <- gsub("[[:punct:]]", "", gsub("\\s+", " ", local_title))
-    crossref_title_clean <- gsub("[[:punct:]]", "", gsub("\\s+", " ", crossref_title))
-
-    if (local_title_clean != crossref_title_clean) {
-      issue <- paste0("Title mismatch:\n",
-                     "  Local:    ", local_meta$paper$title, "\n",
-                     "  CrossRef: ", crossref_meta$title[[1]])
-      issues <- c(issues, issue)
-      # rule: CC-MET-005 crossref-title-match
-      warning(issue)
-    } else {
-      message("\u2713 Title matches CrossRef metadata")
-    }
-  }
-
-  # Validate authors
-  if (!is.null(local_meta$paper$authors) && !is.null(crossref_meta$author)) {
-    local_authors <- local_meta$paper$authors
-    crossref_authors <- crossref_meta$author
-
-    # Check author count
-    if (length(local_authors) != length(crossref_authors)) {
-      issue <- paste0("Author count mismatch: local has ", length(local_authors),
-                     " authors, CrossRef has ", length(crossref_authors), " authors")
-      issues <- c(issues, issue)
-      # rule: CC-MET-006 crossref-author-count-match
-      warning(issue)
-    }
-
-    # Compare each author
-    for (i in seq_along(local_authors)) {
-      if (i > length(crossref_authors)) break
-
-      local_author <- local_authors[[i]]
-      crossref_author <- crossref_authors[[i]]
-
-      # Build full name from CrossRef
-      crossref_name <- paste(
-        if (!is.null(crossref_author$given)) crossref_author$given else "",
-        if (!is.null(crossref_author$family)) crossref_author$family else ""
-      )
-      crossref_name <- trimws(crossref_name)
-
-      # Compare names (case-insensitive)
-      if (!is.null(local_author$name)) {
-        # Strip periods so initials like "S." don't count as a significant,
-        # unmatchable token against a spelled-out middle name like "Samuel"
-        local_name_clean <- tolower(trimws(gsub("\\.", "", local_author$name)))
-        crossref_name_clean <- tolower(trimws(gsub("\\.", "", crossref_name)))
-
-        # Allow for different name formats (e.g., "John Smith" vs "Smith, John")
-        # Just check if key parts are present
-        local_parts <- strsplit(local_name_clean, "\\s+")[[1]]
-        crossref_parts <- strsplit(crossref_name_clean, "\\s+")[[1]]
-
-        # Check if all significant parts match (at least 2 characters)
-        local_parts_sig <- local_parts[nchar(local_parts) >= 2]
-        crossref_parts_sig <- crossref_parts[nchar(crossref_parts) >= 2]
-
-        if (!all(local_parts_sig %in% crossref_parts_sig) &&
-            !all(crossref_parts_sig %in% local_parts_sig)) {
-          issue <- paste0("Author ", i, " name mismatch:\n",
-                         "  Local:    ", local_author$name, "\n",
-                         "  CrossRef: ", crossref_name)
-          issues <- c(issues, issue)
-          # rule: CC-MET-007 crossref-author-name-match
-          warning(issue)
-        } else {
-          message("\u2713 Author ", i, " name matches: ", local_author$name)
-        }
-      }
-
-      # Compare ORCIDs if checking is enabled
-      if (check_orcids && !is.null(local_author$ORCID)) {
-        if (!is.null(crossref_author$ORCID)) {
-          # Normalize ORCIDs (remove URL prefix if present)
-          local_orcid <- sub("^https?://orcid\\.org/", "", local_author$ORCID)
-          crossref_orcid <- sub("^https?://orcid\\.org/", "", crossref_author$ORCID)
-
-          if (local_orcid != crossref_orcid) {
-            issue <- paste0("Author ", i, " ORCID mismatch:\n",
-                           "  Local:    ", local_orcid, "\n",
-                           "  CrossRef: ", crossref_orcid)
-            issues <- c(issues, issue)
-            # rule: CC-MET-008 crossref-author-orcid-match
-            warning(issue)
-          } else {
-            message("\u2713 Author ", i, " ORCID matches: ", local_orcid)
-          }
-        } else {
-          msg <- paste0("Author ", i, " has ORCID in local file but not in CrossRef")
-          message("\u2139 ", msg)
-        }
-      }
-    }
-  }
-
-  # Final validation result
-  valid <- length(issues) == 0
-
-  if (!valid) {
-    message("\n\u26a0 Validation completed with ", length(issues), " issue(s)")
-    if (strict) {
-      stop("Validation failed with ", length(issues), " issue(s):\n",
-           paste(issues, collapse = "\n"))
-    }
-  } else {
-    message("\n\u2713 All validations passed!")
-  }
-
-  invisible(list(
-    valid = valid,
-    issues = issues,
-    crossref_metadata = crossref_meta
-  ))
+  list(valid = nrow(failed) == 0,
+       issues = vapply(seq_len(nrow(failed)),
+                       function(i) rule_result_text(failed[i, ]), character(1)),
+       results = results,
+       context = context)
 }
 
 
@@ -557,50 +426,40 @@ get_orcid_name_public <- function(orcid_id) {
 
 ##' Validate codecheck.yml metadata against ORCID
 ##'
-##' Validates author and codechecker information against the ORCID API.
-##' For each person with an ORCID, retrieves their ORCID record and compares
-##' the name in the ORCID record with the name in the local codecheck.yml file.
+##' Validates author and codechecker information against the public ORCID API:
+##' that codecheckers are present and named (`CC-CFG-008`, `CC-CFG-009`), that
+##' every ORCID is well-formed (`CC-MET-001`), resolves (`CC-MET-002`), and
+##' carries the name given in the codecheck.yml (`CC-MET-003`). The rules are
+##' run through [validate_codecheck_yml_rules()] and reported at the severity
+##' the rule file of the declared specification version gives them.
 ##'
-##' Note: Name lookups first try the authenticated ORCID API
-##' (\code{\link[rorcid]{orcid_person}}), then automatically fall back to the
-##' public, unauthenticated ORCID API for records whose name is publicly
-##' visible. Personal ORCID authentication (\code{ORCID_TOKEN} or
-##' \code{rorcid::orcid_auth()}) only ever authorizes reading the
-##' authenticated user's own record, so it cannot help validate a co-author's
-##' or a different codechecker's ORCID - the public fallback is what makes
-##' those lookups work. If both the authenticated lookup and the public
-##' fallback fail (e.g. no network access, or the record's name is not
-##' public), you can either:
-##' \itemize{
-##'   \item Set \code{skip_on_auth_error = TRUE} to skip validation for that record
-##'   \item Verify the ORCID is correct and its name is public
-##' }
+##' Records are read from the public ORCID API, which needs no token and reads
+##' any record whose name is public. An ORCID record that cannot be retrieved,
+##' because the API is unreachable or rate limited, is skipped. It never fails
+##' the validation.
 ##'
 ##' @title Validate codecheck.yml metadata against ORCID
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
-##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
-##'   If \code{FALSE} (default), only issue warnings.
+##' @param strict Logical. If \code{TRUE}, report warnings as errors.
 ##' @param validate_authors Logical. If \code{TRUE} (default), validate author ORCIDs.
-##' @param validate_codecheckers Logical. If \code{TRUE} (default), validate codechecker ORCIDs.
-##' @param skip_on_auth_error Logical. If \code{TRUE}, skip validation for a
-##'   record when both the authenticated ORCID lookup and the public API
-##'   fallback fail, instead of throwing an error. Default is \code{FALSE}.
-##'   Most records are still validated via the public API fallback regardless
-##'   of this setting; this only controls behavior once both lookups fail.
+##' @param validate_codecheckers Logical. If \code{TRUE} (default), validate
+##'   codecheckers and their ORCIDs.
+##' @param skip_on_auth_error Deprecated and without effect: a record that
+##'   cannot be retrieved is always skipped.
+##' @param stop_on_error Logical. If \code{TRUE} (default), stop when a rule
+##'   failed at severity error. Rules at severity warning only ever warn.
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
-##'     \item{valid}{Logical indicating if all checks passed}
-##'     \item{issues}{Character vector of any issues found}
-##'     \item{skipped}{Logical indicating if validation was skipped due to auth issues}
+##'     \item{valid}{Logical, \code{FALSE} if any rule failed at severity error or warning}
+##'     \item{issues}{Character vector of the failed rules, in words}
+##'     \item{skipped}{Logical, \code{TRUE} if at least one ORCID record could not be retrieved}
+##'     \item{results}{The per-rule results, see [validate_codecheck_yml_rules()]}
 ##'   }
 ##' @author Daniel Nuest
-##' @importFrom rorcid orcid_person
-##' @importFrom httr GET add_headers status_code content
-##' @importFrom jsonlite fromJSON
+##' @seealso [validate_codecheck_yml_rules()]
 ##' @export
 ##' @examples
 ##' \dontrun{
-##'   # Validate with warnings only (requires ORCID authentication)
 ##'   result <- validate_codecheck_yml_orcid()
 ##'
 ##'   # Validate with strict error checking
@@ -608,254 +467,28 @@ get_orcid_name_public <- function(orcid_id) {
 ##'
 ##'   # Validate only codecheckers
 ##'   validate_codecheck_yml_orcid(validate_authors = FALSE)
-##'
-##'   # Skip ORCID validation if authentication is not available
-##'   validate_codecheck_yml_orcid(skip_on_auth_error = TRUE)
 ##' }
 validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
                                          strict = FALSE,
                                          validate_authors = TRUE,
                                          validate_codecheckers = TRUE,
-                                         skip_on_auth_error = FALSE) {
+                                         skip_on_auth_error = FALSE,
+                                         stop_on_error = TRUE) {
+  people <- c(if (validate_authors) "authors",
+              if (validate_codecheckers) "codecheckers")
+  rules <- c(if (validate_codecheckers) c("CC-CFG-008", "CC-CFG-009"),
+             if (length(people) > 0) c("CC-MET-001", "CC-MET-002", "CC-MET-003"))
+  validation <- validate_rules_on_file(yml_file, rules, strict = strict,
+                                       stop_on_error = stop_on_error,
+                                       people = people)
 
-  if (!file.exists(yml_file)) {
-    stop("codecheck.yml file not found at: ", yml_file)
-  }
-
-  # Read local metadata
-  local_meta <- yaml::read_yaml(yml_file)
-
-  issues <- character(0)
-  validation_skipped <- FALSE
-
-  # Helper function to normalize names for comparison
-  normalize_name <- function(name) {
-    # Strip periods so initials like "S." don't count as a significant,
-    # unmatchable token against a spelled-out middle name like "Samuel"
-    tolower(trimws(gsub("\\s+", " ", gsub("\\.", "", name))))
-  }
-
-  # Helper function to extract name from ORCID record
-  get_orcid_name <- function(orcid_id) {
-    tryCatch({
-      # Query ORCID API
-      person_data <- rorcid::orcid_person(orcid_id)
-
-      if (is.null(person_data) || length(person_data) == 0) {
-        return(NULL)
-      }
-
-      # Extract name from nested structure
-      name_data <- person_data[[1]]$name
-
-      if (is.null(name_data)) {
-        return(NULL)
-      }
-
-      # Try to get given and family names
-      given_names <- name_data$`given-names`$value
-      family_name <- name_data$`family-name`$value
-
-      if (!is.null(given_names) && !is.null(family_name)) {
-        return(paste(given_names, family_name))
-      } else if (!is.null(family_name)) {
-        return(family_name)
-      } else if (!is.null(given_names)) {
-        return(given_names)
-      }
-
-      return(NULL)
-    }, error = function(e) {
-      error_msg <- conditionMessage(e)
-
-      # Check if this is an authentication error
-      if (grepl("Unauthorized|401|authentication|token", error_msg, ignore.case = TRUE)) {
-        # Personal ORCID authentication only ever authorizes reading the
-        # authenticated user's own record, so it cannot fix lookups of
-        # someone else's ORCID. Fall back to the public, unauthenticated
-        # ORCID API, which works for any record with a public name.
-        public_name <- get_orcid_name_public(orcid_id)
-        if (!is.null(public_name)) {
-          message("\u2139 ORCID authentication unavailable for ", orcid_id,
-                  "; used the public ORCID API instead (only public profile data was checked)")
-          return(public_name)
-        }
-
-        if (skip_on_auth_error) {
-          validation_skipped <<- TRUE
-          message("\u2139 ORCID authentication required but not available, and the public ORCID API lookup also failed for ", orcid_id)
-          message("  Skipping validation for this record.")
-          return("AUTH_ERROR")
-        } else {
-          stop("ORCID authentication failed for ", orcid_id, ": ", error_msg,
-               "\n  The public ORCID API lookup also failed for this record ",
-               "(it may not be public, or there is no network access).",
-               "\n  Note: personal ORCID authentication (ORCID_TOKEN or rorcid::orcid_auth()) ",
-               "only authorizes reading your own ORCID record, not other authors'/checkers'.",
-               "\n  Set skip_on_auth_error = TRUE to skip validation for this record, ",
-               "or verify the ORCID is correct and its name is public.")
-        }
-      }
-
-      # rule: CC-MET-002 orcid-resolves
-      warning("Failed to retrieve ORCID record for ", orcid_id, ": ", error_msg)
-      return(NULL)
-    })
-  }
-
-  # Validate authors
-  if (validate_authors && !is.null(local_meta$paper$authors)) {
-    message("Validating author ORCIDs...")
-
-    for (i in seq_along(local_meta$paper$authors)) {
-      author <- local_meta$paper$authors[[i]]
-
-      if (!is.null(author$ORCID)) {
-        # Validate ORCID format
-        orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"
-        if (!grepl(orcid_regex, author$ORCID, perl = TRUE)) {
-          issue <- paste0("Author ", i, " has invalid ORCID format: ", author$ORCID,
-                         " (should be NNNN-NNNN-NNNN-NNNX)")
-          issues <- c(issues, issue)
-          # rule: CC-MET-001 orcid-format
-          warning(issue)
-          next
-        }
-
-        # Query ORCID for name
-        orcid_name <- get_orcid_name(author$ORCID)
-
-        # Skip this author if authentication failed and we're in skip mode
-        if (!is.null(orcid_name) && orcid_name == "AUTH_ERROR") {
-          next
-        }
-
-        if (!is.null(orcid_name)) {
-          local_name_norm <- normalize_name(author$name)
-          orcid_name_norm <- normalize_name(orcid_name)
-
-          # Compare names - check if key parts match
-          local_parts <- strsplit(local_name_norm, "\\s+")[[1]]
-          orcid_parts <- strsplit(orcid_name_norm, "\\s+")[[1]]
-
-          # Filter to significant parts (at least 2 characters)
-          local_parts_sig <- local_parts[nchar(local_parts) >= 2]
-          orcid_parts_sig <- orcid_parts[nchar(orcid_parts) >= 2]
-
-          if (!all(local_parts_sig %in% orcid_parts_sig) &&
-              !all(orcid_parts_sig %in% local_parts_sig)) {
-            issue <- paste0("Author ", i, " name mismatch with ORCID record:\n",
-                           "  Local:  ", author$name, "\n",
-                           "  ORCID:  ", orcid_name, "\n",
-                           "  (ORCID: ", author$ORCID, ")")
-            issues <- c(issues, issue)
-            # rule: CC-MET-003 orcid-name-match
-            warning(issue)
-          } else {
-            message("\u2713 Author ", i, " name matches ORCID: ", author$name, " (", author$ORCID, ")")
-          }
-        } else {
-          message("\u2139 Could not retrieve ORCID record for author ", i, ": ", author$ORCID)
-        }
-      }
-    }
-  }
-
-  # Validate codecheckers
-  if (validate_codecheckers) {
-    # rule: CC-CFG-008 codechecker-present
-    if (is.null(local_meta$codechecker) || length(local_meta$codechecker) == 0) {
-      issue <- "No codechecker information found in codecheck.yml"
-      issues <- c(issues, issue)
-      warning(issue)
-    } else {
-      message("Validating codechecker information...")
-
-      for (i in seq_along(local_meta$codechecker)) {
-        checker <- local_meta$codechecker[[i]]
-
-        # Check if name exists
-        if (is.null(checker$name) || trimws(checker$name) == "") {
-          issue <- paste0("Codechecker ", i, " is missing a name")
-          issues <- c(issues, issue)
-          # rule: CC-CFG-009 codechecker-name
-          warning(issue)
-          next
-        }
-
-        message("\u2713 Codechecker ", i, ": ", checker$name)
-
-        # Validate ORCID if present
-        if (!is.null(checker$ORCID)) {
-          # Validate ORCID format
-          orcid_regex <- "^(\\d{4}\\-\\d{4}\\-\\d{4}\\-\\d{3}(\\d|X))$"
-          if (!grepl(orcid_regex, checker$ORCID, perl = TRUE)) {
-            issue <- paste0("Codechecker ", i, " has invalid ORCID format: ", checker$ORCID,
-                           " (should be NNNN-NNNN-NNNN-NNNX)")
-            issues <- c(issues, issue)
-            # rule: CC-MET-001 orcid-format
-            warning(issue)
-            next
-          }
-
-          # Query ORCID for name
-          orcid_name <- get_orcid_name(checker$ORCID)
-
-          # Skip this codechecker if authentication failed and we're in skip mode
-          if (!is.null(orcid_name) && orcid_name == "AUTH_ERROR") {
-            next
-          }
-
-          if (!is.null(orcid_name)) {
-            local_name_norm <- normalize_name(checker$name)
-            orcid_name_norm <- normalize_name(orcid_name)
-
-            # Compare names
-            local_parts <- strsplit(local_name_norm, "\\s+")[[1]]
-            orcid_parts <- strsplit(orcid_name_norm, "\\s+")[[1]]
-
-            local_parts_sig <- local_parts[nchar(local_parts) >= 2]
-            orcid_parts_sig <- orcid_parts[nchar(orcid_parts) >= 2]
-
-            if (!all(local_parts_sig %in% orcid_parts_sig) &&
-                !all(orcid_parts_sig %in% local_parts_sig)) {
-              issue <- paste0("Codechecker ", i, " name mismatch with ORCID record:\n",
-                             "  Local:  ", checker$name, "\n",
-                             "  ORCID:  ", orcid_name, "\n",
-                             "  (ORCID: ", checker$ORCID, ")")
-              issues <- c(issues, issue)
-              warning(issue)
-            } else {
-              message("\u2713 Codechecker ", i, " ORCID matches: ", checker$name, " (", checker$ORCID, ")")
-            }
-          } else {
-            message("\u2139 Could not retrieve ORCID record for codechecker ", i, ": ", checker$ORCID)
-          }
-        }
-      }
-    }
-  }
-
-  # Final validation result
-  valid <- length(issues) == 0
-
-  if (validation_skipped) {
-    message("\n\u2139 ORCID validation skipped for one or more records")
-    message("  Authenticated lookup and the public ORCID API fallback both failed - the record(s) may not be public, or there is no network access")
-  } else if (!valid) {
-    message("\n\u26a0 ORCID validation completed with ", length(issues), " issue(s)")
-    if (strict) {
-      stop("ORCID validation failed with ", length(issues), " issue(s):\n",
-           paste(issues, collapse = "\n"))
-    }
-  } else {
-    message("\n\u2713 All ORCID validations passed!")
-  }
-
+  lookups <- mget(ls(validation$context$lookups, pattern = "^orcid:"),
+                  envir = validation$context$lookups)
   invisible(list(
-    valid = valid,
-    issues = issues,
-    skipped = validation_skipped
+    valid = validation$valid,
+    issues = validation$issues,
+    skipped = any(vapply(lookups, function(r) r$status == "unreachable", logical(1))),
+    results = validation$results
   ))
 }
 
@@ -869,14 +502,13 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##' @title Validate codecheck.yml metadata against external references
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
 ##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
-##'   If \code{FALSE} (default), only issue warnings.
+##'   If \code{FALSE} (default), a rule failed at severity error still stops,
+##'   after both validations have run.
 ##' @param validate_crossref Logical. If \code{TRUE} (default), validate against CrossRef.
 ##' @param validate_orcid Logical. If \code{TRUE} (default), validate against ORCID.
 ##' @param check_orcids Logical. If \code{TRUE} (default), validate ORCID identifiers in CrossRef check.
-##' @param skip_on_auth_error Logical. If \code{TRUE}, skip ORCID validation
-##'   when authentication fails instead of throwing an error. Default is \code{FALSE},
-##'   which requires ORCID authentication. Set to \code{TRUE} to allow the function
-##'   to work without ORCID authentication (e.g., CI/CD pipelines, test environments).
+##' @param skip_on_auth_error Deprecated and without effect: an ORCID record
+##'   that cannot be retrieved is always skipped.
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
 ##'     \item{valid}{Logical indicating if all checks passed}
@@ -898,9 +530,6 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##'
 ##'   # Validate only ORCID
 ##'   validate_contents_references(validate_crossref = FALSE)
-##'
-##'   # Skip ORCID validation if authentication is not available
-##'   validate_contents_references(skip_on_auth_error = TRUE)
 ##' }
 validate_contents_references <- function(yml_file = "codecheck.yml",
                                          strict = FALSE,
@@ -921,8 +550,9 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
 
     crossref_result <- validate_codecheck_yml_crossref(
       yml_file = yml_file,
-      strict = FALSE,  # Don't stop on CrossRef errors if we still need to run ORCID
-      check_orcids = check_orcids
+      strict = strict,
+      check_orcids = check_orcids,
+      stop_on_error = FALSE  # the ORCID validation still has to run
     )
 
     if (!crossref_result$valid) {
@@ -938,8 +568,8 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
 
     orcid_result <- validate_codecheck_yml_orcid(
       yml_file = yml_file,
-      strict = FALSE,  # Don't stop yet
-      skip_on_auth_error = skip_on_auth_error
+      strict = strict,
+      stop_on_error = FALSE  # stop after the summary
     )
 
     if (!orcid_result$valid) {
@@ -957,7 +587,12 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
     message("\u26a0 VALIDATION SUMMARY: ", total_issues, " issue(s) found")
     message(rep("=", 80))
 
-    if (strict) {
+    # A rule that failed at severity error stops, and with strict every
+    # warning already is one.
+    failed_errors <- sum(
+      if (!is.null(crossref_result)) crossref_result$results$outcome == "error" else 0,
+      if (!is.null(orcid_result)) orcid_result$results$outcome == "error" else 0)
+    if (strict || failed_errors > 0) {
       all_issues <- c()
       if (!is.null(crossref_result)) all_issues <- c(all_issues, crossref_result$issues)
       if (!is.null(orcid_result)) all_issues <- c(all_issues, orcid_result$issues)

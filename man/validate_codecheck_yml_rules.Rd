@@ -7,6 +7,7 @@
 validate_codecheck_yml_rules(
   configuration,
   spec_version = NULL,
+  rules = NULL,
   strict = FALSE,
   stop_on_error = TRUE,
   quiet = FALSE
@@ -17,6 +18,10 @@ validate_codecheck_yml_rules(
 
 \item{spec_version}{Specification version to validate against. Defaults to
 the version the file declares, see [codecheck_spec_version()].}
+
+\item{rules}{Identifiers of the rules to run, e.g.
+`c("CC-MET-002", "CC-MET-003")`. The default, `NULL`, runs every active
+rule of the specification version. Rules left out are not reported.}
 
 \item{strict}{Escalate warnings to errors. It never works the other way:
 an error stays an error.}

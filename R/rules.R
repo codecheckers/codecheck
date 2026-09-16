@@ -126,23 +126,15 @@ rules_file <- function(spec_version) {
 #' Rules checked outside the per-rule framework
 #'
 #' Most rules have one check function each, see `rule_checks()`. These are the
-#' rest: rules enforced by the older validation functions, which check a whole
-#' `codecheck.yml` against an external service in one pass and cannot be split
-#' per rule without re-issuing the same request several times.
+#' rest: rules enforced where the thing they are about is at hand - a certificate
+#' being rendered, a Zenodo record, a register entry and its GitHub issue -
+#' rather than in a `codecheck.yml` on its own.
 #'
 #' @return Named character vector, rule identifier to function name.
 #' @keywords internal
 #' @noRd
 rule_implementations <- function() {
   c(
-    "CC-MET-002" = "validate_codecheck_yml_orcid",
-    "CC-MET-003" = "validate_codecheck_yml_orcid",
-    "CC-MET-004" = "validate_codecheck_yml_crossref",
-    "CC-MET-005" = "validate_codecheck_yml_crossref",
-    "CC-MET-006" = "validate_codecheck_yml_crossref",
-    "CC-MET-007" = "validate_codecheck_yml_crossref",
-    "CC-MET-008" = "validate_codecheck_yml_crossref",
-    "CC-BUN-001" = "copy_manifest_files",
     "CC-BUN-004" = "get_codecheck_yml",
     "CC-REP-001" = "validate_certificate_for_rendering",
     "CC-REP-002" = "validate_certificate_for_rendering",
@@ -159,8 +151,8 @@ rule_implementations <- function() {
 
 #' Rules nothing checks yet
 #'
-#' Every rule is checked by `rule_checks()`, by [rule_implementations()], or
-#' listed here, and the tests fail when that stops being true - so a rule added
+#' Every rule is checked by `rule_checks()`, by `register_rule_checks()`, by
+#' [rule_implementations()], or listed here, and the tests fail when that stops being true - so a rule added
 #' to the register shows up as a test failure rather than being quietly
 #' ignored, and implementing a rule requires removing it from this list.
 #'
@@ -168,13 +160,7 @@ rule_implementations <- function() {
 #' @keywords internal
 #' @noRd
 rules_not_implemented <- function() {
-  c(
-    # Register-wide rules about columns of register.csv rather than about a
-    # codecheck.yml: nothing validates the Type column against the four known
-    # venue types, the Venue against venues.csv, or a certificate identifier
-    # against the year's sequence.
-    "CC-REG-002", "CC-REG-004", "CC-REG-005"
-  )
+  character(0)
 }
 
 ##' Where the bundled rules came from

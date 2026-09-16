@@ -109,6 +109,7 @@ export(validate_codecheck_yml_crossref)
 export(validate_codecheck_yml_orcid)
 export(validate_codecheck_yml_rules)
 export(validate_contents_references)
+export(validate_register_rules)
 export(validate_wikidata_model)
 export(validate_yaml_syntax)
 export(verify_wikidata_export)
@@ -185,10 +186,7 @@ importFrom(pdftools,
 )
 importFrom(readxl,read_excel)
 importFrom(rmarkdown,render)
-importFrom(rorcid,
-  check_dois,
-  orcid_person
-)
+importFrom(rorcid,check_dois)
 importFrom(rsvg,rsvg_pdf)
 importFrom(stats,
   median,

@@ -45,6 +45,22 @@ expect_silent({
 })
 # Multiple calls should not cause errors
 
+source("mocks.R")
+
+# The registers below are made up around the Zenodo sandbox record, whose
+# certificate 2024-111 would be the first of its year, which CC-REG-002
+# rejects. These tests are about the per-entry checks, so the register-wide
+# rules are stubbed out; they are tested on their own at the end of the file.
+no_register_rules <- function(...) {
+  invisible(data.frame(id = character(0), name = character(0),
+                       severity = character(0), outcome = character(0),
+                       detail = character(0), description = character(0)))
+}
+check_entries <- function(...) {
+  with_mocked_codecheck(list(validate_register_rules = no_register_rules),
+                        codecheck::register_check(...))
+}
+
 # Test 4: register_check() - basic structure with small register ----
 # This test uses a small register without actually checking (to avoid API calls)
 # We'll test the function loads and processes data correctly
@@ -83,7 +99,7 @@ write.csv(test_register, test_csv, row.names = FALSE)
 # This will fetch remote config and validate
 output <- capture.output({
   suppressMessages({
-    codecheck::register_check(test_register, from = 1, to = 1)
+    check_entries(test_register, from = 1, to = 1)
   })
 })
 # Just check it completed without error
@@ -103,7 +119,7 @@ test_register <- data.frame(
 # Should complete without error since IDs match
 output <- capture.output({
   suppressMessages({
-    codecheck::register_check(test_register, from = 1, to = 1)
+    check_entries(test_register, from = 1, to = 1)
   })
 })
 expect_true(length(output) > 0)
@@ -121,7 +137,7 @@ test_register_bad <- data.frame(
 
 expect_error({
   suppressMessages({
-    codecheck::register_check(test_register_bad, from = 1, to = 1)
+    check_entries(test_register_bad, from = 1, to = 1)
   })
 }, pattern = "Certificate mismatch")
 
@@ -138,7 +154,7 @@ test_register_no_yml <- data.frame(
 
 expect_warning({
   suppressMessages({
-    codecheck::register_check(test_register_no_yml, from = 1, to = 1)
+    check_entries(test_register_no_yml, from = 1, to = 1)
   })
 }, pattern = "does not have a codecheck.yml file")
 
@@ -156,7 +172,7 @@ test_register_multi <- data.frame(
 output <- capture.output({
   expect_warning({
     suppressMessages({
-      codecheck::register_check(test_register_multi, from = 1, to = 2)
+      check_entries(test_register_multi, from = 1, to = 2)
     })
   }, pattern = "does not have a codecheck.yml file")
 })
@@ -176,10 +192,30 @@ test_register_multi <- data.frame(
 output <- capture.output({
   suppressMessages({
     # Only check first entry (which is valid)
-    codecheck::register_check(test_register_multi, from = 1, to = 1)
+    check_entries(test_register_multi, from = 1, to = 1)
   })
 })
 expect_true(length(output) > 0)
+
+# Test 10a: a register-wide rule failed at severity error stops the check,
+# but only after the entries have been checked ----
+test_register_bad_type <- data.frame(
+  Certificate = c("2024-001"),
+  Repository = c("github::codecheckers/register"),
+  Type = c("magazine"),
+  Venue = c("test"),
+  Issue = c(NA),
+  stringsAsFactors = FALSE
+)
+entries_checked <- FALSE
+expect_error(
+  suppressWarnings(suppressMessages(capture.output(
+    with_mocked_codecheck(list(check_certificate_id = function(...) entries_checked <<- TRUE),
+                          codecheck::register_check(test_register_bad_type, from = 1, to = 1,
+                                                    check_zenodo_policy = FALSE,
+                                                    check_researchequals_policy = FALSE))))),
+  pattern = "CC-REG-004")
+expect_true(entries_checked, info = "the entries are checked before the rule stops")
 
 # Test 11: Caching behavior - same request should be cached ----
 expect_silent({
@@ -213,7 +249,7 @@ test_register_single <- data.frame(
 # Should default to checking all rows (just 1 in this case)
 output <- capture.output({
   suppressMessages({
-    codecheck::register_check(test_register_single)
+    check_entries(test_register_single)
   })
 })
 expect_true(length(output) > 0)
@@ -250,7 +286,7 @@ test_register_order <- data.frame(
 output <- capture.output({
   expect_warning({
     suppressMessages({
-      codecheck::register_check(test_register_order)
+      check_entries(test_register_order)
     })
   }, pattern = "does not have a codecheck.yml file")
 })
@@ -263,7 +299,7 @@ expect_true(grepl("2024-111", checking_lines[2]))
 output <- capture.output({
   expect_warning({
     suppressMessages({
-      codecheck::register_check(test_register_order, from = 1, to = nrow(test_register_order))
+      check_entries(test_register_order, from = 1, to = nrow(test_register_order))
     })
   }, pattern = "does not have a codecheck.yml file")
 })

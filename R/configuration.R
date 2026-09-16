@@ -565,11 +565,13 @@ VALIDATE_YML_RULES <- c(
 #'
 #' @export
 validate_codecheck_yml <- function(configuration, spec_version = NULL) {
+  # Only the gate's own rules run, so that validating every certificate in
+  # register_check() makes no requests to ORCID, Crossref or the report DOI.
   results <- validate_codecheck_yml_rules(configuration,
                                           spec_version = spec_version,
+                                          rules = VALIDATE_YML_RULES,
                                           stop_on_error = FALSE,
                                           quiet = TRUE)
-  results <- results[results$id %in% VALIDATE_YML_RULES, ]
   # Every rule in the set is a MUST as far as this gate is concerned, whatever
   # severity the declared specification version gives it: the register has
   # always required a certificate identifier, which 1.0 only advises.

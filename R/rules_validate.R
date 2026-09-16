@@ -65,6 +65,9 @@ codecheck_spec_version <- function(configuration) {
 ##' @param configuration A parsed `codecheck.yml` as a list, or a path to one.
 ##' @param spec_version Specification version to validate against. Defaults to
 ##'   the version the file declares, see [codecheck_spec_version()].
+##' @param rules Identifiers of the rules to run, e.g.
+##'   `c("CC-MET-002", "CC-MET-003")`. The default, `NULL`, runs every active
+##'   rule of the specification version. Rules left out are not reported.
 ##' @param strict Escalate warnings to errors. It never works the other way:
 ##'   an error stays an error.
 ##' @param stop_on_error Stop with an error when any rule failed at severity
@@ -85,6 +88,7 @@ codecheck_spec_version <- function(configuration) {
 ##' @export
 validate_codecheck_yml_rules <- function(configuration,
                                          spec_version = NULL,
+                                         rules = NULL,
                                          strict = FALSE,
                                          stop_on_error = TRUE,
                                          quiet = FALSE) {
@@ -95,16 +99,7 @@ validate_codecheck_yml_rules <- function(configuration,
   spec_version <- match.arg(spec_version, codecheck_spec_versions())
   context$spec_version <- spec_version
 
-  rules <- codecheck_rules(spec_version)
-  rules <- rules[rules$status == "active", ]
-  checks <- rule_checks()
-
-  results <- do.call(rbind, lapply(seq_len(nrow(rules)), function(i) {
-    rule <- rules[i, ]
-    # A rule with no check function is reported as unchecked, not skipped over.
-    check_name <- if (rule$id %in% names(checks)) checks[[rule$id]] else NULL
-    run_rule_check(rule, check_name, context, strict)
-  }))
+  results <- run_rules(context, spec_version, rules, strict)
 
   if (!quiet) {
     report_rule_results(results, context, spec_version, strict)
@@ -116,6 +111,100 @@ validate_codecheck_yml_rules <- function(configuration,
   }
 
   invisible(results)
+}
+
+#' Run the active rules of one specification version against a context
+#'
+#' @param context See `rules_context()`.
+#' @param rules Identifiers to run, or `NULL` for all active rules.
+#' @param checks The table of check functions to look rules up in.
+#' @return The results data frame, see [validate_codecheck_yml_rules()].
+#' @keywords internal
+#' @noRd
+run_rules <- function(context, spec_version, rules = NULL, strict = FALSE,
+                      checks = rule_checks()) {
+  catalogue <- codecheck_rules(spec_version)
+  catalogue <- catalogue[catalogue$status == "active", ]
+  if (!is.null(rules)) {
+    catalogue <- catalogue[catalogue$id %in% rules, ]
+  }
+  results <- lapply(seq_len(nrow(catalogue)), function(i) {
+    rule <- catalogue[i, ]
+    # A rule with no check function is reported as unchecked, not skipped over.
+    check_name <- if (rule$id %in% names(checks)) checks[[rule$id]] else NULL
+    run_rule_check(rule, check_name, context, strict)
+  })
+  if (length(results) == 0) {
+    return(rule_result_row(catalogue, character(0), character(0)))
+  }
+  do.call(rbind, results)
+}
+
+##' Validate the register against the CODECHECK rules
+##'
+##' Runs the rules about the register as a whole, rather than about one
+##' `codecheck.yml`: that certificate identifiers continue their year's sequence
+##' (`CC-REG-002`), that every `Type` is one of the four venue types
+##' (`CC-REG-004`), and that every `Venue` is listed in `venues.csv`
+##' (`CC-REG-005`). Severities come from the rule file, as for
+##' [validate_codecheck_yml_rules()]. [register_check()] runs this first.
+##'
+##' @param register The register as a data frame, or a path to `register.csv`.
+##' @param venues_file Path to `venues.csv`. When it does not exist, `CC-REG-005`
+##'   is skipped.
+##' @param spec_version Specification version whose rule file gives the
+##'   severities, defaulting to the newest.
+##' @inheritParams validate_codecheck_yml_rules
+##' @return Invisibly, a data frame with one row per rule, see
+##'   [validate_codecheck_yml_rules()].
+##' @examples
+##' \dontrun{
+##' validate_register_rules("register.csv", venues_file = "venues.csv")
+##' }
+##' @seealso [register_check()], [codecheck_rules()]
+##' @export
+validate_register_rules <- function(register = "register.csv",
+                                    venues_file = "venues.csv",
+                                    spec_version = codecheck_spec_versions()[1],
+                                    strict = FALSE,
+                                    stop_on_error = TRUE,
+                                    quiet = FALSE) {
+  spec_version <- match.arg(spec_version, codecheck_spec_versions())
+  context <- register_rules_context(register, venues_file)
+  checks <- register_rule_checks()
+
+  results <- run_rules(context, spec_version, names(checks), strict,
+                       checks = checks)
+
+  if (!quiet) {
+    report_rule_results(results, context, spec_version, strict)
+  }
+
+  failed <- results$outcome == "error"
+  if (stop_on_error && any(failed)) {
+    stop(rules_failure_message(results[failed, ], context$label), call. = FALSE)
+  }
+
+  invisible(results)
+}
+
+#' Everything the register-wide checks need
+#'
+#' @keywords internal
+#' @noRd
+register_rules_context <- function(register, venues_file = "venues.csv") {
+  label <- "the register"
+  if (is.character(register) && length(register) == 1) {
+    if (!file.exists(register)) {
+      stop("No such register: ", register)
+    }
+    label <- register
+    register <- utils::read.csv(register, as.is = TRUE, comment.char = "#")
+  }
+  venues <- if (!is.null(venues_file) && file.exists(venues_file)) {
+    utils::read.csv(venues_file, as.is = TRUE)$name
+  }
+  list(register = register, venues = venues, today = Sys.Date(), label = label)
 }
 
 #' What to say when rules failed
@@ -139,6 +228,11 @@ rules_failure_message <- function(failed, label) {
 }
 
 #' Everything the check functions need about the file under validation
+#'
+#' `lookups` is an environment, so that the answers of external services are
+#' shared by every check of one validation run: the Crossref record and each
+#' ORCID record are requested once per file, however many rules read them. See
+#' `context_crossref()` and `context_orcid()`.
 #'
 #' @keywords internal
 #' @noRd
@@ -165,14 +259,16 @@ rules_context <- function(configuration) {
     })
     return(list(yml = yml, path = configuration, lines = lines,
                 raw_lines = raw_lines, parse_error = parse_error,
-                bundle_dir = dirname(configuration), label = configuration))
+                bundle_dir = dirname(configuration), label = configuration,
+                lookups = new.env(parent = emptyenv())))
   }
   if (is.list(configuration)) {
     # A configuration in memory has no file to inspect, so the checks that are
     # about the file on disk skip rather than fail.
     return(list(yml = configuration, path = NULL, lines = NULL,
                 raw_lines = NULL, bundle_dir = NULL,
-                label = "the given configuration"))
+                label = "the given configuration",
+                lookups = new.env(parent = emptyenv())))
   }
   stop("Could not load codecheck configuration from input '", configuration, "'")
 }

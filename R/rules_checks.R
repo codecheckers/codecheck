@@ -78,8 +78,7 @@ check_yaml_parses <- function(context) {
 check_orcid_format <- function(context) {
   # Both the paper's authors and the codecheckers, because the rule is about
   # the form of an ORCID wherever it appears in the file.
-  people <- c(as_items(context$yml$paper$authors),
-              as_items(context$yml$codechecker))
+  people <- context_people(context)
   orcids <- unlist(lapply(people, function(person) person$ORCID))
   if (length(orcids) == 0) {
     return(rule_skip("no ORCID to inspect"))
@@ -150,6 +149,25 @@ check_manifest_item_file <- function(context) {
   } else {
     rule_fail(paste("manifest item(s) without a file:",
                     paste(without_file, collapse = ", ")))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_manifest_files_exist <- function(context) {
+  if (is.null(context$bundle_dir)) {
+    return(rule_skip("no bundle on disk to look in"))
+  }
+  files <- unlist(lapply(as_items(context$yml$manifest), function(item) item$file))
+  if (length(files) == 0) {
+    return(rule_skip("no manifest files to look for"))
+  }
+  missing <- files[!file.exists(file.path(context$bundle_dir, files))]
+  if (length(missing) == 0) {
+    rule_pass(paste(length(files), "manifest file(s)"))
+  } else {
+    rule_fail(paste("manifest file(s) not in the bundle:",
+                    paste(missing, collapse = ", ")))
   }
 }
 
@@ -616,6 +634,493 @@ check_reference_other_resolves <- function(context) {
   rule_pass()
 }
 
+# --- external records: ORCID and Crossref ---------------------------------
+
+#' @keywords internal
+#' @noRd
+check_orcid_resolves <- function(context) {
+  people <- context_people(context)
+  people <- people[vapply(people, function(p) is_orcid(p$ORCID), logical(1))]
+  if (length(people) == 0) {
+    return(rule_skip("no well-formed ORCID to look up"))
+  }
+  orcids <- unique(vapply(people, function(p) p$ORCID, character(1)))
+  records <- lapply(orcids, context_orcid, context = context)
+  status <- vapply(records, function(r) r$status, character(1))
+
+  if (any(status == "not_found")) {
+    return(rule_fail(paste("ORCID(s) with no record:",
+                           paste(orcids[status == "not_found"], collapse = ", "))))
+  }
+  if (all(status == "unreachable")) {
+    return(rule_skip(paste("could not reach the ORCID API:",
+                           records[[1]]$detail)))
+  }
+  unreachable <- sum(status == "unreachable")
+  rule_pass(paste0(sum(status == "ok"), " ORCID record(s)",
+                   if (unreachable > 0) paste0(", ", unreachable, " not reachable") else ""))
+}
+
+#' @keywords internal
+#' @noRd
+check_orcid_name_match <- function(context) {
+  people <- context_people(context)
+  people <- people[vapply(people, function(p) {
+    is_orcid(p$ORCID) && has_value(p$name)
+  }, logical(1))]
+  if (length(people) == 0) {
+    return(rule_skip("no named person with a well-formed ORCID"))
+  }
+
+  compared <- 0
+  mismatches <- character(0)
+  for (person in people) {
+    record <- context_orcid(context, person$ORCID)
+    # A record that cannot be read, or one whose name is not public, gives
+    # nothing to compare against.
+    if (record$status != "ok" || is.null(record$name)) next
+    compared <- compared + 1
+    if (!names_match(person$name, record$name)) {
+      mismatches <- c(mismatches, paste0(person$name, " (", person$ORCID,
+                                         ") is '", record$name, "' on ORCID"))
+    }
+  }
+
+  if (length(mismatches) > 0) {
+    return(rule_fail(paste(mismatches, collapse = "; ")))
+  }
+  if (compared == 0) {
+    return(rule_skip("no public ORCID name to compare against"))
+  }
+  rule_pass(paste(compared, "name(s) match"))
+}
+
+#' @keywords internal
+#' @noRd
+check_paper_reference_resolves <- function(context) {
+  crossref <- context_crossref(context)
+  switch(crossref$status,
+    ok = rule_pass(paste("Crossref record for", crossref$doi)),
+    datacite = rule_pass(paste(crossref$doi, "resolves, but is not a Crossref DOI")),
+    not_found = rule_fail(paste(crossref$doi, "is not a registered DOI")),
+    not_doi = url_resolves(crossref$reference),
+    rule_skip(crossref$detail)
+  )
+}
+
+#' @keywords internal
+#' @noRd
+check_crossref_title_match <- function(context) {
+  crossref <- context_crossref(context)
+  if (crossref$status != "ok") {
+    return(rule_skip(crossref_skip_detail(crossref)))
+  }
+  local <- context$yml$paper$title
+  remote <- unlist(crossref$record$title)
+  if (!has_value(local) || !has_value(remote)) {
+    return(rule_skip("no title to compare"))
+  }
+  normalise <- function(title) {
+    gsub("[[:punct:]]", "", gsub("\\s+", " ", tolower(trimws(title))))
+  }
+  if (identical(normalise(local), normalise(remote[1]))) {
+    rule_pass()
+  } else {
+    rule_fail(paste0("'", local, "' is '", remote[1], "' on Crossref"))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_crossref_author_count_match <- function(context) {
+  crossref <- context_crossref(context)
+  if (crossref$status != "ok") {
+    return(rule_skip(crossref_skip_detail(crossref)))
+  }
+  local <- as_items(context$yml$paper$authors)
+  remote <- crossref$record$author
+  if (length(local) == 0 || length(remote) == 0) {
+    return(rule_skip("no authors to compare"))
+  }
+  if (length(local) == length(remote)) {
+    rule_pass(paste(length(local), "author(s)"))
+  } else {
+    rule_fail(paste(length(local), "author(s) here,", length(remote), "on Crossref"))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_crossref_author_name_match <- function(context) {
+  crossref <- context_crossref(context)
+  if (crossref$status != "ok") {
+    return(rule_skip(crossref_skip_detail(crossref)))
+  }
+  local <- as_items(context$yml$paper$authors)
+  remote <- crossref$record$author
+  # Compared by position, as far as both lists go: the count is CC-MET-006.
+  pairs <- seq_len(min(length(local), length(remote)))
+  pairs <- pairs[vapply(pairs, function(i) has_value(local[[i]]$name), logical(1))]
+  if (length(pairs) == 0) {
+    return(rule_skip("no author names to compare"))
+  }
+  mismatches <- character(0)
+  for (i in pairs) {
+    remote_name <- crossref_author_name(remote[[i]])
+    if (!names_match(local[[i]]$name, remote_name)) {
+      mismatches <- c(mismatches, paste0("author ", i, " '", local[[i]]$name,
+                                         "' is '", remote_name, "' on Crossref"))
+    }
+  }
+  if (length(mismatches) == 0) {
+    rule_pass(paste(length(pairs), "name(s) match"))
+  } else {
+    rule_fail(paste(mismatches, collapse = "; "))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_crossref_author_orcid_match <- function(context) {
+  crossref <- context_crossref(context)
+  if (crossref$status != "ok") {
+    return(rule_skip(crossref_skip_detail(crossref)))
+  }
+  local <- as_items(context$yml$paper$authors)
+  remote <- crossref$record$author
+  # Only where both sides give an ORCID: an ORCID the publisher did not
+  # deposit is not a mismatch.
+  pairs <- seq_len(min(length(local), length(remote)))
+  pairs <- pairs[vapply(pairs, function(i) {
+    has_value(local[[i]]$ORCID) && has_value(remote[[i]]$ORCID)
+  }, logical(1))]
+  if (length(pairs) == 0) {
+    return(rule_skip("no author with an ORCID both here and on Crossref"))
+  }
+  mismatches <- character(0)
+  for (i in pairs) {
+    here <- strip_orcid_prefix(local[[i]]$ORCID)
+    there <- strip_orcid_prefix(remote[[i]]$ORCID)
+    if (!identical(here, there)) {
+      mismatches <- c(mismatches, paste0("author ", i, " ", here, " is ",
+                                         there, " on Crossref"))
+    }
+  }
+  if (length(mismatches) == 0) {
+    rule_pass(paste(length(pairs), "ORCID(s) match"))
+  } else {
+    rule_fail(paste(mismatches, collapse = "; "))
+  }
+}
+
+#' The people whose ORCIDs the ORCID rules look at
+#'
+#' The paper's authors and the codecheckers, unless `context$people` narrows it
+#' to one group, as `validate_codecheck_yml_orcid()` does on request.
+#'
+#' @keywords internal
+#' @noRd
+context_people <- function(context) {
+  groups <- if (is.null(context$people)) c("authors", "codecheckers") else context$people
+  c(if ("authors" %in% groups) as_items(context$yml$paper$authors),
+    if ("codecheckers" %in% groups) as_items(context$yml$codechecker))
+}
+
+#' One ORCID record, requested once per validation run
+#'
+#' Uses the public ORCID API, which reads any record without a token.
+#' Authenticated access would only add the authenticated user's own record.
+#'
+#' @return A list with `status` (`"ok"`, `"not_found"` or `"unreachable"`),
+#'   `name` (`NULL` when the record has no public name) and `detail`.
+#' @keywords internal
+#' @noRd
+context_orcid <- function(context, orcid) {
+  key <- paste0("orcid:", orcid)
+  if (!is.null(context$lookups[[key]])) {
+    return(context$lookups[[key]])
+  }
+
+  url <- paste0("https://pub.orcid.org/v3.0/", orcid, "/person")
+  response <- tryCatch(
+    codecheck_GET(url, httr::add_headers(Accept = "application/json")),
+    error = function(e) e)
+
+  record <- if (inherits(response, "error")) {
+    list(status = "unreachable", name = NULL, detail = conditionMessage(response))
+  } else if (httr::status_code(response) == 404) {
+    list(status = "not_found", name = NULL, detail = paste(orcid, "has no record"))
+  } else if (httr::status_code(response) != 200) {
+    # Rate limits and server errors say nothing about the ORCID.
+    list(status = "unreachable", name = NULL,
+         detail = paste("the ORCID API answered", httr::status_code(response)))
+  } else {
+    person <- tryCatch(
+      jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
+                         simplifyVector = FALSE),
+      error = function(e) NULL)
+    given <- person$name$`given-names`$value
+    family <- person$name$`family-name`$value
+    name <- if (is.null(given) && is.null(family)) NULL else trimws(paste(given, family))
+    list(status = "ok", name = name, detail = NULL)
+  }
+
+  assign(key, record, envir = context$lookups)
+  record
+}
+
+#' The Crossref record of the paper, requested once per validation run
+#'
+#' A DOI Crossref does not know is looked up in the DOI handle system before it
+#' is called unregistered, because a DataCite DOI (a Zenodo or OSF preprint, for
+#' example) is a perfectly good paper reference with no Crossref record.
+#'
+#' @return A list with `status`, one of `"ok"` (with `record`), `"datacite"`
+#'   (registered, but not with Crossref), `"not_found"`, `"not_doi"` (with
+#'   `reference`), `"none"`, `"placeholder"` or `"unreachable"`, plus `doi`
+#'   and `detail`.
+#' @keywords internal
+#' @noRd
+context_crossref <- function(context) {
+  if (!is.null(context$lookups$crossref)) {
+    return(context$lookups$crossref)
+  }
+  result <- lookup_crossref(context$yml$paper$reference)
+  assign("crossref", result, envir = context$lookups)
+  result
+}
+
+#' @keywords internal
+#' @noRd
+lookup_crossref <- function(reference) {
+  if (!has_value(reference)) {
+    return(list(status = "none", detail = "no paper reference"))
+  }
+  reference <- trimws(as.character(reference)[1])
+  if (grepl("FIXME|TODO|template|example", reference, ignore.case = TRUE)) {
+    return(list(status = "placeholder",
+                detail = "the paper reference is a placeholder"))
+  }
+  doi <- doi_from_reference(reference)
+  if (is.na(doi)) {
+    return(list(status = "not_doi", reference = reference,
+                detail = "the paper reference is not a DOI"))
+  }
+
+  response <- tryCatch(
+    codecheck_GET(paste0("https://api.crossref.org/works/", doi)),
+    error = function(e) e)
+  if (inherits(response, "error")) {
+    return(list(status = "unreachable", doi = doi,
+                detail = paste("could not reach Crossref:", conditionMessage(response))))
+  }
+  status <- httr::status_code(response)
+  if (status == 200) {
+    record <- tryCatch(
+      jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
+                         simplifyVector = FALSE)$message,
+      error = function(e) NULL)
+    if (!is.null(record)) {
+      return(list(status = "ok", doi = doi, record = record, detail = NULL))
+    }
+  }
+  if (status != 404) {
+    return(list(status = "unreachable", doi = doi,
+                detail = paste("Crossref answered", status, "for", doi)))
+  }
+
+  handle <- tryCatch(
+    codecheck_GET(paste0("https://doi.org/api/handles/", doi)),
+    error = function(e) e)
+  if (inherits(handle, "error") ||
+      !httr::status_code(handle) %in% c(200, 404)) {
+    return(list(status = "unreachable", doi = doi,
+                detail = paste(doi, "is not on Crossref and doi.org could not be reached")))
+  }
+  if (httr::status_code(handle) == 200) {
+    list(status = "datacite", doi = doi, detail = paste(doi, "has no Crossref record"))
+  } else {
+    list(status = "not_found", doi = doi, detail = paste(doi, "is not a registered DOI"))
+  }
+}
+
+#' Why a Crossref comparison could not run
+#' @keywords internal
+#' @noRd
+crossref_skip_detail <- function(crossref) {
+  if (crossref$status %in% c("datacite", "not_found", "not_doi")) {
+    "no Crossref record to compare against"
+  } else {
+    crossref$detail
+  }
+}
+
+#' The DOI in a paper reference, or `NA`
+#' @keywords internal
+#' @noRd
+doi_from_reference <- function(reference) {
+  doi <- sub("^https?://(dx\\.)?doi\\.org/", "", reference, ignore.case = TRUE)
+  doi <- sub("^doi:\\s*", "", doi, ignore.case = TRUE)
+  if (grepl("^10\\.[0-9]{4,}/\\S+$", doi)) doi else NA_character_
+}
+
+#' @keywords internal
+#' @noRd
+crossref_author_name <- function(author) {
+  if (!is.null(author$name)) {
+    return(author$name)
+  }
+  trimws(paste(if (is.null(author$given)) "" else author$given,
+               if (is.null(author$family)) "" else author$family))
+}
+
+#' Is a value a well-formed ORCID?
+#' @keywords internal
+#' @noRd
+is_orcid <- function(value) {
+  has_value(value) &&
+    grepl("^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$", value, perl = TRUE)
+}
+
+#' @keywords internal
+#' @noRd
+strip_orcid_prefix <- function(orcid) {
+  sub("^https?://orcid\\.org/", "", trimws(orcid))
+}
+
+#' Do two spellings of a name refer to the same person?
+#'
+#' Tolerant on purpose: case, full stops, word order and missing middle names
+#' do not matter, so "S. J. Eglen", "Stephen Eglen" and "Eglen, Stephen J." all
+#' match. The significant parts (two characters or more) of one name must all
+#' appear in the other.
+#'
+#' @keywords internal
+#' @noRd
+names_match <- function(a, b) {
+  parts <- function(name) {
+    words <- strsplit(tolower(gsub("[.,]", " ", name)), "\\s+")[[1]]
+    words[nchar(words) >= 2]
+  }
+  pa <- parts(a)
+  pb <- parts(b)
+  all(pa %in% pb) || all(pb %in% pa)
+}
+
+# --- the register as a whole -----------------------------------------------
+#
+# These take a register context, see register_rules_context(), and are run by
+# validate_register_rules() rather than by the per-file driver.
+
+#' The venue types the register knows, as in the `Type` column
+#' @keywords internal
+#' @noRd
+REGISTER_TYPES <- c("journal", "conference", "community", "institution")
+
+#' How far a certificate number may jump past the year's previous one
+#'
+#' Identifiers are reserved when a check starts, and a check that is abandoned
+#' leaves its number unused, so a year's sequence has gaps. A jump beyond this
+#' is far more likely a typo than a run of abandoned checks.
+#'
+#' @keywords internal
+#' @noRd
+CERTIFICATE_ID_MAX_JUMP <- 9
+
+#' @keywords internal
+#' @noRd
+check_certificate_id_sequence <- function(context) {
+  ids <- trimws(as.character(context$register$Certificate))
+  ids <- ids[!is.na(ids) & nzchar(ids)]
+  if (length(ids) == 0) {
+    return(rule_skip("no certificate identifiers in the register"))
+  }
+
+  malformed <- ids[!grepl("^[0-9]{4}-[0-9]{3}$", ids)]
+  well_formed <- setdiff(ids, malformed)
+  years <- as.integer(substr(well_formed, 1, 4))
+  numbers <- as.integer(substr(well_formed, 6, 8))
+
+  current_year <- as.integer(format(context$today, "%Y"))
+  future <- well_formed[years > current_year]
+
+  jumps <- character(0)
+  for (i in seq_along(well_formed)) {
+    earlier <- numbers[years == years[i] & numbers < numbers[i]]
+    previous <- if (length(earlier) == 0) 0L else max(earlier)
+    if (numbers[i] - previous > CERTIFICATE_ID_MAX_JUMP) {
+      jumps <- c(jumps, paste0(well_formed[i], " (after ",
+                               if (previous == 0) "the start of the year" else
+                                 sprintf("%d-%03d", years[i], previous), ")"))
+    }
+  }
+
+  problems <- c(
+    if (length(malformed) > 0) paste("not YYYY-NNN:", paste(malformed, collapse = ", ")),
+    if (length(future) > 0) paste("in a future year:", paste(future, collapse = ", ")),
+    if (length(jumps) > 0) paste("more than", CERTIFICATE_ID_MAX_JUMP,
+                                 "past the year's previous identifier:",
+                                 paste(jumps, collapse = ", ")))
+  if (length(problems) == 0) {
+    rule_pass(paste(length(ids), "identifier(s)"))
+  } else {
+    rule_fail(paste(problems, collapse = "; "))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_type_known <- function(context) {
+  register <- context$register
+  if (!"Type" %in% names(register) || nrow(register) == 0) {
+    return(rule_skip("no Type column"))
+  }
+  unknown <- !register$Type %in% REGISTER_TYPES
+  if (!any(unknown)) {
+    rule_pass()
+  } else {
+    rule_fail(paste("unknown type(s):",
+                    paste0(register$Certificate[unknown], " '",
+                           register$Type[unknown], "'", collapse = ", ")))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_venue_known <- function(context) {
+  register <- context$register
+  if (is.null(context$venues)) {
+    return(rule_skip("no venues.csv to compare with"))
+  }
+  if (!"Venue" %in% names(register) || nrow(register) == 0) {
+    return(rule_skip("no Venue column"))
+  }
+  unknown <- !register$Venue %in% context$venues
+  if (!any(unknown)) {
+    rule_pass()
+  } else {
+    rule_fail(paste("venue(s) not in venues.csv:",
+                    paste0(register$Certificate[unknown], " '",
+                           register$Venue[unknown], "'", collapse = ", ")))
+  }
+}
+
+#' The check function for each register-wide rule
+#'
+#' Kept apart from `rule_checks()`, so that validating a single `codecheck.yml`
+#' never runs a check that needs the whole register.
+#'
+#' @return Named character vector, rule identifier to check function name.
+#' @keywords internal
+#' @noRd
+register_rule_checks <- function() {
+  c(
+    "CC-REG-002" = "check_certificate_id_sequence",
+    "CC-REG-004" = "check_type_known",
+    "CC-REG-005" = "check_venue_known"
+  )
+}
+
 # --- helpers shared by several checks --------------------------------------
 
 #' Does a reference point directly at a PDF?
@@ -697,7 +1202,15 @@ rule_checks <- function() {
     "CC-CFG-030" = "check_reference_other_item_form",
     "CC-CFG-031" = "check_reference_pdf_is_archived",
     "CC-MET-001" = "check_orcid_format",
+    "CC-MET-002" = "check_orcid_resolves",
+    "CC-MET-003" = "check_orcid_name_match",
+    "CC-MET-004" = "check_paper_reference_resolves",
+    "CC-MET-005" = "check_crossref_title_match",
+    "CC-MET-006" = "check_crossref_author_count_match",
+    "CC-MET-007" = "check_crossref_author_name_match",
+    "CC-MET-008" = "check_crossref_author_orcid_match",
     "CC-MET-009" = "check_reference_other_resolves",
+    "CC-BUN-001" = "check_manifest_files_exist",
     "CC-BUN-002" = "check_codecheck_directory_present",
     "CC-BUN-003" = "check_report_file_present",
     "CC-BUN-005" = "check_licence_present"

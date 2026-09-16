@@ -9,59 +9,53 @@ validate_codecheck_yml_orcid(
   strict = FALSE,
   validate_authors = TRUE,
   validate_codecheckers = TRUE,
-  skip_on_auth_error = FALSE
+  skip_on_auth_error = FALSE,
+  stop_on_error = TRUE
 )
 }
 \arguments{
 \item{yml_file}{Path to the codecheck.yml file (defaults to "./codecheck.yml")}
 
-\item{strict}{Logical. If \code{TRUE}, throw an error on any mismatch.
-If \code{FALSE} (default), only issue warnings.}
+\item{strict}{Logical. If \code{TRUE}, report warnings as errors.}
 
 \item{validate_authors}{Logical. If \code{TRUE} (default), validate author ORCIDs.}
 
-\item{validate_codecheckers}{Logical. If \code{TRUE} (default), validate codechecker ORCIDs.}
+\item{validate_codecheckers}{Logical. If \code{TRUE} (default), validate
+codecheckers and their ORCIDs.}
 
-\item{skip_on_auth_error}{Logical. If \code{TRUE}, skip validation for a
-record when both the authenticated ORCID lookup and the public API
-fallback fail, instead of throwing an error. Default is \code{FALSE}.
-Most records are still validated via the public API fallback regardless
-of this setting; this only controls behavior once both lookups fail.}
+\item{skip_on_auth_error}{Deprecated and without effect: a record that
+cannot be retrieved is always skipped.}
+
+\item{stop_on_error}{Logical. If \code{TRUE} (default), stop when a rule
+failed at severity error. Rules at severity warning only ever warn.}
 }
 \value{
 Invisibly returns a list with validation results:
   \describe{
-    \item{valid}{Logical indicating if all checks passed}
-    \item{issues}{Character vector of any issues found}
-    \item{skipped}{Logical indicating if validation was skipped due to auth issues}
+    \item{valid}{Logical, \code{FALSE} if any rule failed at severity error or warning}
+    \item{issues}{Character vector of the failed rules, in words}
+    \item{skipped}{Logical, \code{TRUE} if at least one ORCID record could not be retrieved}
+    \item{results}{The per-rule results, see [validate_codecheck_yml_rules()]}
   }
 }
 \description{
 Validate codecheck.yml metadata against ORCID
 }
 \details{
-Validates author and codechecker information against the ORCID API.
-For each person with an ORCID, retrieves their ORCID record and compares
-the name in the ORCID record with the name in the local codecheck.yml file.
+Validates author and codechecker information against the public ORCID API:
+that codecheckers are present and named (`CC-CFG-008`, `CC-CFG-009`), that
+every ORCID is well-formed (`CC-MET-001`), resolves (`CC-MET-002`), and
+carries the name given in the codecheck.yml (`CC-MET-003`). The rules are
+run through [validate_codecheck_yml_rules()] and reported at the severity
+the rule file of the declared specification version gives them.
 
-Note: Name lookups first try the authenticated ORCID API
-(\code{\link[rorcid]{orcid_person}}), then automatically fall back to the
-public, unauthenticated ORCID API for records whose name is publicly
-visible. Personal ORCID authentication (\code{ORCID_TOKEN} or
-\code{rorcid::orcid_auth()}) only ever authorizes reading the
-authenticated user's own record, so it cannot help validate a co-author's
-or a different codechecker's ORCID - the public fallback is what makes
-those lookups work. If both the authenticated lookup and the public
-fallback fail (e.g. no network access, or the record's name is not
-public), you can either:
-\itemize{
-  \item Set \code{skip_on_auth_error = TRUE} to skip validation for that record
-  \item Verify the ORCID is correct and its name is public
-}
+Records are read from the public ORCID API, which needs no token and reads
+any record whose name is public. An ORCID record that cannot be retrieved,
+because the API is unreachable or rate limited, is skipped. It never fails
+the validation.
 }
 \examples{
 \dontrun{
-  # Validate with warnings only (requires ORCID authentication)
   result <- validate_codecheck_yml_orcid()
 
   # Validate with strict error checking
@@ -69,10 +63,10 @@ public), you can either:
 
   # Validate only codecheckers
   validate_codecheck_yml_orcid(validate_authors = FALSE)
-
-  # Skip ORCID validation if authentication is not available
-  validate_codecheck_yml_orcid(skip_on_auth_error = TRUE)
 }
+}
+\seealso{
+[validate_codecheck_yml_rules()]
 }
 \author{
 Daniel Nuest

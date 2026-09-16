@@ -3,6 +3,18 @@
 
 library(codecheck)
 
+# The rules that ask ORCID, Crossref or a URL are tested with mocked services
+# in test_crossref_validation.R and test_orcid_validation.R. Here every request
+# fails, so those rules skip, as they do offline, and the outcomes below do not
+# depend on the machine or on what a remote record says today. Restored at the
+# end of the file.
+requests <- character(0)
+online_GET <- getFromNamespace("codecheck_GET", "codecheck")
+assignInNamespace("codecheck_GET", function(url, ...) {
+  requests <<- c(requests, url)
+  stop("no network in test_rules_validate.R")
+}, ns = "codecheck")
+
 fixture <- "yaml/codecheck.yml"
 
 # --- which specification version applies ---
@@ -22,8 +34,8 @@ expect_true(is.na(codecheck:::spec_version_from_url("https://example.com/spec"))
 
 # --- the same file, two specification versions ---
 
-# Network-dependent rules are not exercised here; they skip when offline, which
-# would make the counts depend on the machine. CC-CFG-012 is the only one.
+# CC-CFG-012 resolves the report, so with no network it skips under both
+# versions; left out of the comparisons below as it says nothing about them.
 without_report_check <- function(results) {
   results[results$id != "CC-CFG-012", ]
 }
@@ -169,6 +181,13 @@ in_bundle <- validate_codecheck_yml_rules(file.path(bundle, "codecheck.yml"),
 expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-002"], "ok")
 expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-003"], "ok")
 expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-005"], "ok")
+# The manifest names figure1.png, which is not in the bundle yet.
+expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-001"], "error")
+expect_true(grepl("figure1.png", in_bundle$detail[in_bundle$id == "CC-BUN-001"]))
+file.create(file.path(bundle, "figure1.png"))
+in_bundle <- validate_codecheck_yml_rules(file.path(bundle, "codecheck.yml"),
+                                          stop_on_error = FALSE, quiet = TRUE)
+expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-001"], "ok")
 
 # The same file in a bare directory: the bundle rules report, the rest does not
 # change.
@@ -187,6 +206,7 @@ no_bundle <- validate_codecheck_yml_rules(complete, stop_on_error = FALSE,
                                           quiet = TRUE)
 expect_equal(no_bundle$outcome[no_bundle$id == "CC-BUN-002"], "skipped")
 expect_equal(no_bundle$outcome[no_bundle$id == "CC-BUN-005"], "skipped")
+expect_equal(no_bundle$outcome[no_bundle$id == "CC-BUN-001"], "skipped")
 
 unlink(c(bundle, bare), recursive = TRUE)
 
@@ -229,3 +249,23 @@ passing_line <- grep("CC-CFG-004", report_2_0, value = TRUE)
 expect_false(grepl(codecheck_rule("CC-CFG-004")$description, passing_line,
                    fixed = TRUE),
              info = "a passing line does not repeat the rule")
+
+# --- the rendering gate asks no remote service ---
+
+# validate_codecheck_yml() runs for every certificate in register_check(), so
+# it runs only its own rules and none of those makes a request.
+requests <- character(0)
+expect_true(validate_codecheck_yml_rules(complete, rules = c("CC-CFG-004", "CC-MET-002"),
+                                         stop_on_error = FALSE, quiet = TRUE)$id[2] == "CC-MET-002")
+expect_true(length(requests) > 0, info = "the ORCID rule does ask")
+requests <- character(0)
+expect_equal(sort(validate_codecheck_yml_rules(complete, rules = c("CC-CFG-004", "CC-MET-002"),
+                                               stop_on_error = FALSE, quiet = TRUE)$id),
+             c("CC-CFG-004", "CC-MET-002"),
+             info = "only the selected rules are reported")
+requests <- character(0)
+tryCatch(validate_codecheck_yml(complete), error = function(e) NULL)
+expect_true(!any(grepl("orcid|crossref|handles", requests)),
+            info = "validate_codecheck_yml() does not look up ORCID or Crossref")
+
+assignInNamespace("codecheck_GET", online_GET, ns = "codecheck")

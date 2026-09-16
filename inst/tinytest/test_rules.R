@@ -53,7 +53,9 @@ expect_error(codecheck_rule("CC-CFG-999"), pattern = "No rule CC-CFG-999")
 
 # --- every rule is accounted for ---
 
-checks <- codecheck:::rule_checks()
+# Register-wide checks are a separate table, run by validate_register_rules(),
+# but they count the same.
+checks <- c(codecheck:::rule_checks(), codecheck:::register_rule_checks())
 implementations <- codecheck:::rule_implementations()
 not_implemented <- codecheck:::rules_not_implemented()
 covered <- c(names(checks), names(implementations))
