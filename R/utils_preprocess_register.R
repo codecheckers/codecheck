@@ -5,16 +5,105 @@
 #' to pick up metadata that has changed at the source, the lookups themselves
 #' never cache a failed request.
 #'
-#' @return 0 for success, 1 for failure, invisibly (see `unlink`)
+#' With `certificates`, only what is cached about those certificates is
+#' refreshed, and the rest of the cache - which takes minutes of API requests to
+#' rebuild - is kept: the certificate's `codecheck.yml` is fetched again, and its
+#' abstract, OpenAlex ID, certificate PDF link, report platform and Zenodo or
+#' ResearchEquals policy record are removed, so the next render or check looks
+#' them up anew. Entries shared with other certificates, such as a person's
+#' ORCID affiliations, are kept.
+#'
+#' @param certificates Certificate identifiers, e.g. `"2025-009"`. `NULL`, the
+#'   default, clears the whole cache.
+#' @param register The register as a data frame, or a path to `register.csv`,
+#'   used to find each certificate's repository.
+#' @return 0 for success, 1 for failure, invisibly (see `unlink`); with
+#'   `certificates`, invisibly the number of cache entries removed
 #'
 #' @author Daniel Nuest
-#' @importFrom R.cache getCacheRootPath
+#' @importFrom R.cache getCacheRootPath findCache
 #' @export
-register_clear_cache <- function() {
+register_clear_cache <- function(certificates = NULL, register = "register.csv") {
+  if (!is.null(certificates)) {
+    return(invisible(clear_certificate_cache(certificates, register)))
+  }
   path <- R.cache::getCacheRootPath()
   cli::cli_alert_info("Deleting cache path {.path {path}}")
   unlink(path, recursive = TRUE)
   clear_cert_link_cache()
+}
+
+#' Refresh what is cached about some certificates, see [register_clear_cache()]
+#'
+#' @inheritParams register_clear_cache
+#' @return The number of cache entries removed.
+#' @keywords internal
+clear_certificate_cache <- function(certificates, register = "register.csv") {
+  if (is.character(register) && length(register) == 1) {
+    register <- utils::read.csv(register, as.is = TRUE, comment.char = "#")
+  }
+  unknown <- setdiff(certificates, register$Certificate)
+  if (length(unknown) > 0) {
+    stop("Not in the register: ", toString(unknown))
+  }
+
+  removed <- 0
+  remove_entry <- function(key, dirs) {
+    path <- R.cache::findCache(key = key, dirs = dirs)
+    if (!is.null(path) && file.exists(path)) {
+      unlink(path)
+      removed <<- removed + 1
+    }
+  }
+
+  for (cert in certificates) {
+    repository <- register$Repository[register$Certificate == cert][1]
+
+    # The keys below are made of what the cached codecheck.yml says, so read it
+    # before it is refreshed - and again after, since a corrected file changes
+    # the keys the next render will use.
+    before <- tryCatch(get_codecheck_yml(repository), error = function(e) NULL)
+    after <- tryCatch(get_codecheck_yml_cached(repository, force = TRUE),
+                      error = function(e) {
+                        cli::cli_alert_warning(
+                          "{cert} | could not fetch codecheck.yml again: {conditionMessage(e)}")
+                        NULL
+                      })
+
+    remove_entry(list("abstract", repository), c("codecheck", "abstract"))
+
+    for (config in unique(Filter(Negate(is.null), list(before, after)))) {
+      paper <- config$paper
+      if (!is.null(paper$reference) && !identical(paper$reference, "")) {
+        remove_entry(list("openalex_id", paper$reference, paper$title,
+                          if (length(paper$authors) > 0) paper$authors[[1]]$name else NULL),
+                     c("codecheck", "openalex_id"))
+      }
+      report <- config$report
+      if (!is.null(report) && !identical(report, "")) {
+        remove_entry(list(report_link = report, cert_id = cert), c("codecheck", "cert_link"))
+        remove_entry(list(report_url = report), c("codecheck", "report_platform"))
+        record_id <- get_zenodo_id(report)
+        if (!is.na(record_id)) {
+          remove_entry(list(record_id = record_id), "zenodo-policy")
+        }
+        if (grepl("researchequals", report, ignore.case = TRUE)) {
+          version_id <- tryCatch(get_researchequals_version_id(report),
+                                 error = function(e) NULL)
+          if (!is.null(version_id)) {
+            remove_entry(list(version_id = version_id), "researchequals-policy")
+          }
+        }
+      }
+    }
+
+    cli::cli_alert_success(
+      "{cert} | refreshed codecheck.yml{if (is.null(after)) ' (failed)' else ''} from {repository}")
+  }
+
+  clear_cert_link_cache()
+  cli::cli_alert_info("Removed {removed} cached lookup{?s} for {length(certificates)} certificate{?s}")
+  removed
 }
 
 #' Fetch a `codecheck.yml` without aborting the whole render

@@ -1,5 +1,9 @@
 # codecheck (development version)
 
+## New Features
+
+* `register_clear_cache()` takes certificate identifiers to refresh only what is cached about those certificates, keeping the rest of the cache (`make clean_cert CERT_ID=...` in the register).
+
 ## Bug Fixes
 
 * Rule `CC-MET-001` orcid-format now also checks an ORCID's check digit, so a mistyped ORCID is caught before it is looked up (register#209).
