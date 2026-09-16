@@ -61,9 +61,13 @@ The certificate can be found at this $codecheck_report_subtext$
   </div>
   </div>
 
+  <div class="row">
+  <div class="col-12">
   <p class="text-muted cert-footer-link">
     <a href="index.json">View certificate data as JSON</a>
   </p>
+  </div>
+  </div>
 </div>
 
 <script src="../../libs/codecheck/cert-utils.js"></script>

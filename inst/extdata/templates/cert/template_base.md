@@ -102,6 +102,7 @@ title: $title$
   </div>
   </div>
   </div>
+  </div><!-- /.row -->
 
   <script src="../../libs/bootstrap/bootstrap.bundle.min.js"></script>
   <script src="../../libs/codecheck/citation.min.js"></script>
@@ -109,9 +110,13 @@ title: $title$
   <script src="../../libs/codecheck/cert-utils.js"></script>
   <script src="../../libs/codecheck/cert-citation.js"></script>
 
+  <div class="row">
+  <div class="col-12">
   <p class="text-muted cert-footer-link">
     <a href="index.json">View certificate data as JSON</a>
   </p>
+  </div>
+  </div>
 </div>
 
 <script>
