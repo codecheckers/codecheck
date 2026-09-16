@@ -1,4 +1,4 @@
-# codecheck 0.29.0.9000
+# codecheck 0.30.0
 
 ## New Features
 
@@ -21,7 +21,6 @@
 * `validate_codecheck_yml_orcid()` reads ORCID records from the public API only, and its `skip_on_auth_error` argument no longer has an effect (register#209).
 * `validate_codecheck_yml()` runs only the rules it enforces, so validating a certificate in `register_check()` no longer makes requests for the others (register#209).
 * A `codecheck.yml` that is not valid YAML or not UTF-8 is now reported as a failure of rule `CC-CFG-001` rather than as a parser error, and the remaining rules still report what they can (register#209).
-
 * Fix `R CMD check --as-cran` failing with an error about `man/wikidata_model.Rd` and `man/WIKIDATA_MODEL.Rd` differing only by case, which is not portable across platforms.
 * Fix a batch of `R CMD check` warnings and notes: non-ASCII characters in R sources, lost braces and an unknown `\n` macro in the generated documentation, undocumented and mismatched arguments, undeclared global variables, and `rprojroot` moving from Imports to Suggests (it is used by the shipped certificate templates, not by package code).
 * The certificate template's `Makefile` now ships as `Makefile.template` and is renamed when copied into a workspace, so its GNU make conditionals no longer trip the portability check.
