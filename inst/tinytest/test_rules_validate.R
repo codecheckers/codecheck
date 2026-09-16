@@ -250,6 +250,38 @@ expect_false(grepl(codecheck_rule("CC-CFG-004")$description, passing_line,
                    fixed = TRUE),
              info = "a passing line does not repeat the rule")
 
+# --- names are compared without regard to diacritics or form ---
+
+expect_true(codecheck:::names_match("Ayda Grišiūtė", "Ayda Grisiute"))
+expect_true(codecheck:::names_match("José Pérez", "Jose Perez"))
+expect_true(codecheck:::names_match("Eglen, Stephen J.", "S. J. Eglen"))
+expect_false(codecheck:::names_match("John Doe", "Stephen J. Eglen"))
+
+# --- CC-MET-001 checks the ORCID check digit ---
+
+expect_true(codecheck:::orcid_checksum_valid("0000-0002-1825-0097"))
+# ORCID's own example of a check digit of 10, written X
+expect_true(codecheck:::orcid_checksum_valid("0000-0002-1694-233X"))
+expect_false(codecheck:::orcid_checksum_valid("0000-0002-1825-0098"))
+
+with_orcid <- function(orcid) {
+  config <- complete
+  config$codechecker[[1]]$ORCID <- orcid
+  results <- validate_codecheck_yml_rules(config, rules = "CC-MET-001",
+                                          stop_on_error = FALSE, quiet = TRUE)
+  results[1, ]
+}
+expect_equal(with_orcid("0000-0002-1694-233X")$outcome, "ok")
+typo <- with_orcid("0000-0002-1825-0098")
+expect_equal(typo$outcome, "error")
+expect_true(grepl("wrong check digit.*0000-0002-1825-0098", typo$detail))
+# The template's placeholder is CC-CFG-023's business, not a checksum failure.
+expect_equal(with_orcid("0000-0000-0000-0000")$outcome, "ok")
+# The rendering gate enforces it too, so register_check() stops on a typo.
+typo_config <- complete
+typo_config$codechecker[[1]]$ORCID <- "0000-0002-1825-0098"
+expect_error(validate_codecheck_yml(typo_config), pattern = "CC-MET-001")
+
 # --- the rendering gate asks no remote service ---
 
 # validate_codecheck_yml() runs for every certificate in register_check(), so

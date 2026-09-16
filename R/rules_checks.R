@@ -85,12 +85,38 @@ check_orcid_format <- function(context) {
   }
   malformed <- orcids[!grepl("^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$",
                              orcids, perl = TRUE)]
-  if (length(malformed) == 0) {
-    rule_pass(paste(length(orcids), "ORCID(s)"))
-  } else {
-    rule_fail(paste("ORCIDs must be plain and without URL prefix, but found:",
-                    paste(malformed, collapse = ", ")))
+  if (length(malformed) > 0) {
+    return(rule_fail(paste("ORCIDs must be plain and without URL prefix, but found:",
+                           paste(malformed, collapse = ", "))))
   }
+  # The template's placeholder has no valid check digit, and is reported by
+  # CC-CFG-023 no-placeholder-values instead.
+  checked <- orcids[!vapply(orcids, is_orcid_placeholder, logical(1))]
+  wrong_checksum <- checked[!vapply(checked, orcid_checksum_valid, logical(1))]
+  if (length(wrong_checksum) > 0) {
+    return(rule_fail(paste("ORCID(s) with a wrong check digit, likely a typo:",
+                           paste(wrong_checksum, collapse = ", "))))
+  }
+  rule_pass(paste(length(orcids), "ORCID(s)"))
+}
+
+#' Does an ORCID's last character match its check digit?
+#'
+#' ISO 7064 11,2 over the first fifteen digits, as described in
+#' <https://support.orcid.org/hc/en-us/articles/360006897674>. Expects a
+#' well-formed ORCID, see `is_orcid()`.
+#'
+#' @keywords internal
+#' @noRd
+orcid_checksum_valid <- function(orcid) {
+  digits <- strsplit(gsub("-", "", orcid), "")[[1]]
+  total <- 0
+  for (digit in digits[1:15]) {
+    total <- (total + as.integer(digit)) * 2
+  }
+  result <- (12 - total %% 11) %% 11
+  expected <- if (result == 10) "X" else as.character(result)
+  identical(digits[16], expected)
 }
 
 #' @keywords internal
@@ -1000,15 +1026,20 @@ strip_orcid_prefix <- function(orcid) {
 
 #' Do two spellings of a name refer to the same person?
 #'
-#' Tolerant on purpose: case, full stops, word order and missing middle names
-#' do not matter, so "S. J. Eglen", "Stephen Eglen" and "Eglen, Stephen J." all
-#' match. The significant parts (two characters or more) of one name must all
+#' Tolerant on purpose: case, diacritics, full stops, word order and missing
+#' middle names do not matter, so "S. J. Eglen", "Stephen Eglen" and "Eglen,
+#' Stephen J." all match, and so do "Grišiūtė" and "Grisiute", which is how
+#' many ORCID records spell names. The significant parts (two characters or more) of one name must all
 #' appear in the other.
 #'
 #' @keywords internal
 #' @noRd
 names_match <- function(a, b) {
   parts <- function(name) {
+    # Transliterate, then drop what some platforms' iconv leaves behind, such
+    # as the apostrophe in 'e for an e with an acute accent.
+    ascii <- iconv(name, from = "UTF-8", to = "ASCII//TRANSLIT")
+    if (!is.na(ascii)) name <- gsub("[^A-Za-z.,[:space:]-]", "", ascii)
     words <- strsplit(tolower(gsub("[.,]", " ", name)), "\\s+")[[1]]
     words[nchar(words) >= 2]
   }
