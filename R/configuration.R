@@ -575,8 +575,8 @@ validate_codecheck_yml <- function(configuration, spec_version = NULL) {
   # always required a certificate identifier, which 1.0 only advises.
   failed <- results[results$outcome %in% c("error", "warning", "info"), ]
   if (nrow(failed) > 0) {
-    stop(failed$id[1], " ", failed$name[1], ": ", failed$detail[1],
-         call. = FALSE)
+    # One rule, so it is reported with what the rule says, not just its number.
+    stop(rule_result_text(failed[1, ]), call. = FALSE)
   }
 
   codecheck_yml <- if (is.character(configuration) &&

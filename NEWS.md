@@ -8,6 +8,7 @@
 * New `codecheck_spec_version()` reports which specification version a `codecheck.yml` declares, defaulting to the newest when the `version` node is absent (register#209).
 * New test asserting that every rule in the register's rule files is either implemented by a check function or explicitly recorded as not implemented, so a new rule cannot be ignored silently (register#209).
 * `validate_codecheck_yml()` now runs the rule checks instead of implementing the same requirements a second time, so its error messages name the rule that rejected a file, e.g. `CC-CFG-026 certificate-id-format` (register#209).
+* A rule reported on its own now carries the rule's description alongside its identifier, in both the per-rule report and the error messages; where several rules are listed at once, only identifiers and findings are shown (register#209).
 * The tagline of the persons page now splits the number of people into those who conducted checks and those who authored checked works, noting that some people are in both groups.
 
 ## Bug Fixes

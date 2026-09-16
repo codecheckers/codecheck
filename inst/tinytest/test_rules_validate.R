@@ -129,7 +129,7 @@ expect_equal(
 
 expect_error(validate_codecheck_yml_rules(fixture, spec_version = "2.0",
                                           quiet = TRUE),
-             pattern = "rule\\(s\\) failed")
+             pattern = "rules failed")
 # Nothing to fail, nothing to stop for.
 expect_silent(validate_codecheck_yml_rules(complete, quiet = TRUE))
 
@@ -189,3 +189,43 @@ expect_equal(no_bundle$outcome[no_bundle$id == "CC-BUN-002"], "skipped")
 expect_equal(no_bundle$outcome[no_bundle$id == "CC-BUN-005"], "skipped")
 
 unlink(c(bundle, bare), recursive = TRUE)
+
+# --- what a reported rule says ---
+
+# One identifier on its own tells a reader nothing, so a single reported rule
+# carries the rule's own description.
+one_failure <- tryCatch(
+  validate_codecheck_yml("yaml/certificate_id_invalid/codecheck1.yml"),
+  error = conditionMessage)
+expect_true(grepl("CC-CFG-026", one_failure, fixed = TRUE))
+expect_true(grepl(codecheck_rule("CC-CFG-026")$description, one_failure,
+                  fixed = TRUE),
+            info = "a single rule is reported with what the rule says")
+
+# Several at once are a list, and a description each would bury it: identifier
+# and finding only, no short handle either.
+many_failures <- tryCatch(
+  validate_codecheck_yml_rules(fixture, spec_version = "2.0", quiet = TRUE),
+  error = conditionMessage)
+expect_true(grepl("CC-CFG-013", many_failures, fixed = TRUE))
+expect_true(grepl("CC-CFG-020", many_failures, fixed = TRUE))
+expect_false(grepl(codecheck_rule("CC-CFG-013")$description, many_failures,
+                   fixed = TRUE),
+             info = "a list of rules carries no descriptions")
+expect_false(grepl("report-doi-not-placeholder", many_failures, fixed = TRUE),
+             info = "a list of rules carries no rule names")
+
+# The same in the per-rule report: the lines that need attention say why, the
+# lines that passed stay short.
+report_2_0 <- capture.output(
+  validate_codecheck_yml_rules(fixture, spec_version = "2.0",
+                               stop_on_error = FALSE),
+  type = "message")
+orcid_line <- grep("CC-CFG-020", report_2_0, value = TRUE)
+expect_true(grepl(codecheck_rule("CC-CFG-020")$description, orcid_line,
+                  fixed = TRUE),
+            info = "a failing line says what the rule requires")
+passing_line <- grep("CC-CFG-004", report_2_0, value = TRUE)
+expect_false(grepl(codecheck_rule("CC-CFG-004")$description, passing_line,
+                   fixed = TRUE),
+             info = "a passing line does not repeat the rule")

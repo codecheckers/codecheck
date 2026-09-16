@@ -71,7 +71,7 @@ codecheck_spec_version <- function(configuration) {
 ##'   `error`. Set to `FALSE` to get the results back for reporting.
 ##' @param quiet Do not print the per-rule report.
 ##' @return Invisibly, a data frame with one row per rule and the columns `id`,
-##'   `name`, `severity`, `outcome` and `detail`. An outcome is `"ok"`,
+##'   `name`, `severity`, `outcome`, `detail` and the rule's `description`. An outcome is `"ok"`,
 ##'   `"error"`, `"warning"` or `"info"` for a rule that was checked,
 ##'   `"skipped"` when no verdict was possible, `"elsewhere"` for a rule one of
 ##'   the older validation functions enforces, and `"unchecked"` for one
@@ -112,13 +112,30 @@ validate_codecheck_yml_rules <- function(configuration,
 
   failed <- results$outcome == "error"
   if (stop_on_error && any(failed)) {
-    stop(sum(failed), " rule(s) failed for ", context$label, ":\n",
-         paste0("  ", results$id[failed], " ", results$name[failed], ": ",
-                results$detail[failed], collapse = "\n"),
-         call. = FALSE)
+    stop(rules_failure_message(results[failed, ], context$label), call. = FALSE)
   }
 
   invisible(results)
+}
+
+#' What to say when rules failed
+#'
+#' One failed rule is reported in full, with the rule's own words. Several are
+#' listed by identifier and finding only: the descriptions belong to the report,
+#' not to a list that has to stay readable.
+#'
+#' @param failed The failing rows of the results.
+#' @param label What was validated.
+#' @keywords internal
+#' @noRd
+rules_failure_message <- function(failed, label) {
+  if (nrow(failed) == 1) {
+    return(paste0("rule failed for ", label, ": ", rule_result_text(failed)))
+  }
+  paste0(nrow(failed), " rules failed for ", label, ":\n",
+         paste0("  ", failed$id,
+                ifelse(is.na(failed$detail), "", paste0(": ", failed$detail)),
+                collapse = "\n"))
 }
 
 #' Everything the check functions need about the file under validation
@@ -198,7 +215,26 @@ rule_result_row <- function(rule, outcome, detail) {
   data.frame(id = rule$id, name = rule$name, severity = rule$severity,
              outcome = outcome,
              detail = if (is.null(detail)) NA_character_ else detail,
+             description = rule$description,
              stringsAsFactors = FALSE)
+}
+
+#' One reported rule, in words
+#'
+#' A single rule is always reported with what the rule says, because an
+#' identifier on its own tells a reader nothing. Where several identifiers are
+#' listed or counted the descriptions would bury the list, so those carry the
+#' identifier alone.
+#'
+#' @param result One row of the results.
+#' @param with_name Include the rule's short handle.
+#' @keywords internal
+#' @noRd
+rule_result_text <- function(result, with_name = TRUE) {
+  paste0(result$id,
+         if (with_name) paste0(" ", result$name) else "",
+         if (is.na(result$detail)) "" else paste0(": ", result$detail),
+         " (", result$description, ")")
 }
 
 #' Print the per-rule report
@@ -213,12 +249,18 @@ report_rule_results <- function(results, context, spec_version, strict) {
 
   for (i in seq_len(nrow(results))) {
     result <- results[i, ]
-    detail <- if (is.na(result$detail)) "" else paste0(" - ", result$detail)
+    # A rule that has something to report says what it is about; one that
+    # passed, skipped or is checked elsewhere stays on one short line.
+    line <- if (result$outcome %in% c("error", "warning", "info")) {
+      rule_result_text(result)
+    } else {
+      paste0(result$id, " ", result$name,
+             if (is.na(result$detail)) "" else paste0(": ", result$detail))
+    }
     # cli_verbatim() rather than cli_text(), because a detail can contain
     # braces from the file under validation, which glue would try to
     # interpret. It keeps the whole report on one stream.
-    cli::cli_verbatim(paste0(rule_outcome_symbol(result$outcome), " ",
-                             result$id, " ", result$name, detail))
+    cli::cli_verbatim(paste0(rule_outcome_symbol(result$outcome), " ", line))
   }
 
   counts <- table(factor(results$outcome,

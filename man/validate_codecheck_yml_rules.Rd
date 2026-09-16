@@ -28,7 +28,7 @@ an error stays an error.}
 }
 \value{
 Invisibly, a data frame with one row per rule and the columns `id`,
-  `name`, `severity`, `outcome` and `detail`. An outcome is `"ok"`,
+  `name`, `severity`, `outcome`, `detail` and the rule's `description`. An outcome is `"ok"`,
   `"error"`, `"warning"` or `"info"` for a rule that was checked,
   `"skipped"` when no verdict was possible, `"elsewhere"` for a rule one of
   the older validation functions enforces, and `"unchecked"` for one
