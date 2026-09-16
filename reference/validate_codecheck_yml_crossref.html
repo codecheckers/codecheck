@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.29.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">validate_codecheck_yml_crossref</span><span class="op">(</span></span>
 <span>  yml_file <span class="op">=</span> <span class="st">"codecheck.yml"</span>,</span>
 <span>  strict <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  check_orcids <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  check_orcids <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  stop_on_error <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -61,38 +62,52 @@
 
 
 <dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, throw an error on any mismatch.
-If <code>FALSE</code> (default), only issue warnings.</p></dd>
+<dd><p>Logical. If <code>TRUE</code>, report warnings as errors.</p></dd>
 
 
 <dt id="arg-check-orcids">check_orcids<a class="anchor" aria-label="anchor" href="#arg-check-orcids"></a></dt>
-<dd><p>Logical. If <code>TRUE</code> (default), validate ORCID
-identifiers. If <code>FALSE</code>, skip ORCID validation.</p></dd>
+<dd><p>Logical. If <code>TRUE</code> (default), compare author ORCIDs
+with Crossref (`CC-MET-008`).</p></dd>
+
+
+<dt id="arg-stop-on-error">stop_on_error<a class="anchor" aria-label="anchor" href="#arg-stop-on-error"></a></dt>
+<dd><p>Logical. If <code>TRUE</code> (default), stop when a rule
+failed at severity error. Rules at severity warning only ever warn.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Invisibly returns a list with validation results:</p><dl><dt>valid</dt>
-<dd><p>Logical indicating if all checks passed</p></dd>
+<dd><p>Logical, <code>FALSE</code> if any rule failed at severity error or warning</p></dd>
 
     <dt>issues</dt>
-<dd><p>Character vector of any issues found</p></dd>
+<dd><p>Character vector of the failed rules, in words</p></dd>
 
     <dt>crossref_metadata</dt>
 <dd><p>The metadata retrieved from CrossRef (if available)</p></dd>
+
+    <dt>results</dt>
+<dd><p>The per-rule results, see [validate_codecheck_yml_rules()]</p></dd>
 
 
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Retrieves metadata from CrossRef for the paper's DOI and compares it with
-the local codecheck.yml metadata. Validates title and author information
-(names and ORCIDs against CrossRef data).</p>
-<p>This function is useful for ensuring consistency between the published paper
-metadata and the CODECHECK certificate, helping to catch typos, outdated
-information, or missing data.</p>
+    <p>Retrieves the Crossref record of the paper's DOI and compares it with the
+local codecheck.yml metadata: whether the reference resolves, the title, the
+number of authors, their names and their ORCIDs. These are the rules
+`CC-MET-004` to `CC-MET-008`, run through [validate_codecheck_yml_rules()]
+together with the two rules they depend on, `CC-CFG-016` paper-present and
+`CC-CFG-021` paper-reference, and reported at the severity the rule file of
+the declared specification version gives them.</p>
+<p>A Crossref record that cannot be retrieved, because the API is unreachable
+or rate limited, makes the comparisons skip. It never fails the validation.</p>
 <p>Note: For comprehensive validation including ORCID name verification and
 codechecker validation, use <code><a href="validate_contents_references.html">validate_contents_references()</a></code> instead.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p>[validate_codecheck_yml_rules()]</p></div>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

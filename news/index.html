@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.29.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,14 +39,39 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.29.0.9000" id="codecheck-02909000">codecheck 0.29.0.9000<a class="anchor" aria-label="anchor" href="#codecheck-02909000"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.30.0" id="codecheck-0300">codecheck 0.30.0<a class="anchor" aria-label="anchor" href="#codecheck-0300"></a></h2>
 <div class="section level3">
-<h3 id="bug-fixes-0-29-0-9000">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-29-0-9000"></a></h3>
-<ul><li>Fix <code>R CMD check --as-cran</code> failing with an error about <code>man/wikidata_model.Rd</code> and <code>man/WIKIDATA_MODEL.Rd</code> differing only by case, which is not portable across platforms.</li>
+<h3 id="new-features-0-30-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-30-0"></a></h3>
+<ul><li>The CODECHECK validation rules maintained in the register are bundled with the package and readable with <code><a href="../reference/codecheck_rules.html">codecheck_rules()</a></code>, <code><a href="../reference/codecheck_rule.html">codecheck_rule()</a></code> and <code><a href="../reference/rule_severity.html">rule_severity()</a></code>, one set per version of the configuration file specification (register#209).</li>
+<li>New <code><a href="../reference/update_codecheck_rules.html">update_codecheck_rules()</a></code> refreshes the bundled rules from the register, and <code><a href="../reference/codecheck_rules_provenance.html">codecheck_rules_provenance()</a></code> reports the register commit each bundled file came from and when it was fetched (register#209).</li>
+<li>New <code><a href="../reference/validate_codecheck_yml_rules.html">validate_codecheck_yml_rules()</a></code> validates a <code>codecheck.yml</code> against the rules of the specification version it declares, with one check function per rule and the severity taken from the rule file, so hardened requirements in 2.0 need no separate code path (register#209).</li>
+<li>New <code><a href="../reference/codecheck_spec_version.html">codecheck_spec_version()</a></code> reports which specification version a <code>codecheck.yml</code> declares, defaulting to the newest when the <code>version</code> node is absent (register#209).</li>
+<li>New test asserting that every rule in the register’s rule files is either implemented by a check function or explicitly recorded as not implemented, so a new rule cannot be ignored silently (register#209).</li>
+<li>
+<code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> now runs the rule checks instead of implementing the same requirements a second time, so its error messages name the rule that rejected a file, e.g. <code>CC-CFG-026 certificate-id-format</code> (register#209).</li>
+<li>A rule reported on its own now carries the rule’s description alongside its identifier, in both the per-rule report and the error messages; where several rules are listed at once, only identifiers and findings are shown (register#209).</li>
+<li>The ORCID and Crossref comparisons, <code>CC-MET-002</code> to <code>CC-MET-008</code>, are now rules of <code><a href="../reference/validate_codecheck_yml_rules.html">validate_codecheck_yml_rules()</a></code>, requesting each record once per file (register#209).</li>
+<li>
+<code><a href="../reference/validate_codecheck_yml_rules.html">validate_codecheck_yml_rules()</a></code> checks that the manifest files exist in the bundle (<code>CC-BUN-001</code>), and runs a selection of rules with its new <code>rules</code> argument (register#209).</li>
+<li>New <code><a href="../reference/validate_register_rules.html">validate_register_rules()</a></code> checks the certificate identifier sequence, the venue types and the venues of <code>register.csv</code> (<code>CC-REG-002</code>, <code>CC-REG-004</code>, <code>CC-REG-005</code>), and <code><a href="../reference/register_check.html">register_check()</a></code> runs it (register#209).</li>
+<li>The tagline of the persons page now splits the number of people into those who conducted checks and those who authored checked works, noting that some people are in both groups.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-30-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-30-0"></a></h3>
+<ul><li>An unreachable or rate-limited ORCID or Crossref API no longer fails <code><a href="../reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> or <code><a href="../reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code>; the comparisons are skipped instead (register#209).</li>
+<li>
+<code><a href="../reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> and <code><a href="../reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> report at the rule’s severity, so a missing codechecker, a codechecker without a name or a malformed ORCID now stops without <code>strict</code> (register#209).</li>
+<li>
+<code><a href="../reference/validate_codecheck_yml_orcid.html">validate_codecheck_yml_orcid()</a></code> reads ORCID records from the public API only, and its <code>skip_on_auth_error</code> argument no longer has an effect (register#209).</li>
+<li>
+<code><a href="../reference/validate_codecheck_yml.html">validate_codecheck_yml()</a></code> runs only the rules it enforces, so validating a certificate in <code><a href="../reference/register_check.html">register_check()</a></code> no longer makes requests for the others (register#209).</li>
+<li>A <code>codecheck.yml</code> that is not valid YAML or not UTF-8 is now reported as a failure of rule <code>CC-CFG-001</code> rather than as a parser error, and the remaining rules still report what they can (register#209).</li>
+<li>Fix <code>R CMD check --as-cran</code> failing with an error about <code>man/wikidata_model.Rd</code> and <code>man/WIKIDATA_MODEL.Rd</code> differing only by case, which is not portable across platforms.</li>
 <li>Fix a batch of <code>R CMD check</code> warnings and notes: non-ASCII characters in R sources, lost braces and an unknown <code>\n</code> macro in the generated documentation, undocumented and mismatched arguments, undeclared global variables, and <code>rprojroot</code> moving from Imports to Suggests (it is used by the shipped certificate templates, not by package code).</li>
 <li>The certificate template’s <code>Makefile</code> now ships as <code>Makefile.template</code> and is renamed when copied into a workspace, so its GNU make conditionals no longer trip the portability check.</li>
 <li>
 <code>License: MIT</code> now names the accompanying <code>LICENSE</code> file, as CRAN requires.</li>
+<li>Fix pandoc warning <code>Div at temp.md line 8 column 1 unclosed</code> for every certificate page, and align the JSON link with the cards.</li>
 </ul></div>
 </div>
     <div class="section level2">

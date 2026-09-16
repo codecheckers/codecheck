@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.29.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,8 @@
 
 <dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, throw an error on any mismatch.
-If <code>FALSE</code> (default), only issue warnings.</p></dd>
+If <code>FALSE</code> (default), a rule failed at severity error still stops,
+after both validations have run.</p></dd>
 
 
 <dt id="arg-validate-crossref">validate_crossref<a class="anchor" aria-label="anchor" href="#arg-validate-crossref"></a></dt>
@@ -81,10 +82,8 @@ If <code>FALSE</code> (default), only issue warnings.</p></dd>
 
 
 <dt id="arg-skip-on-auth-error">skip_on_auth_error<a class="anchor" aria-label="anchor" href="#arg-skip-on-auth-error"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, skip ORCID validation
-when authentication fails instead of throwing an error. Default is <code>FALSE</code>,
-which requires ORCID authentication. Set to <code>TRUE</code> to allow the function
-to work without ORCID authentication (e.g., CI/CD pipelines, test environments).</p></dd>
+<dd><p>Deprecated and without effect: an ORCID record
+that cannot be retrieved is always skipped.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -125,9 +124,6 @@ This provides comprehensive validation of all external references.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Validate only ORCID</span></span></span>
 <span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>validate_crossref <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># Skip ORCID validation if authentication is not available</span></span></span>
-<span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>skip_on_auth_error <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

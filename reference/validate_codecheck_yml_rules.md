@@ -1,0 +1,83 @@
+# Validate a \`codecheck.yml\` against the CODECHECK rules
+
+Runs the rules of one version of the configuration file specification,
+see \[codecheck_rules()\]. Which rules run follows from that version's
+rule file, so a rule added to a newer specification is not applied to a
+file that declares an older one.
+
+## Usage
+
+``` r
+validate_codecheck_yml_rules(
+  configuration,
+  spec_version = NULL,
+  rules = NULL,
+  strict = FALSE,
+  stop_on_error = TRUE,
+  quiet = FALSE
+)
+```
+
+## Arguments
+
+- configuration:
+
+  A parsed \`codecheck.yml\` as a list, or a path to one.
+
+- spec_version:
+
+  Specification version to validate against. Defaults to the version the
+  file declares, see \[codecheck_spec_version()\].
+
+- rules:
+
+  Identifiers of the rules to run, e.g. \`c("CC-MET-002",
+  "CC-MET-003")\`. The default, \`NULL\`, runs every active rule of the
+  specification version. Rules left out are not reported.
+
+- strict:
+
+  Escalate warnings to errors. It never works the other way: an error
+  stays an error.
+
+- stop_on_error:
+
+  Stop with an error when any rule failed at severity \`error\`. Set to
+  \`FALSE\` to get the results back for reporting.
+
+- quiet:
+
+  Do not print the per-rule report.
+
+## Value
+
+Invisibly, a data frame with one row per rule and the columns \`id\`,
+\`name\`, \`severity\`, \`outcome\`, \`detail\` and the rule's
+\`description\`. An outcome is \`"ok"\`, \`"error"\`, \`"warning"\` or
+\`"info"\` for a rule that was checked, \`"skipped"\` when no verdict
+was possible, \`"elsewhere"\` for a rule one of the older validation
+functions enforces, and \`"unchecked"\` for one nothing checks yet.
+
+## Details
+
+Each rule has one check function, shared by every version that has the
+rule. What differs between versions is the \`severity\` in the rule
+file, not the check: a \`MUST\` in 2.0 that was a \`SHOULD\` in 1.0 is
+the same check reported more loudly.
+
+A check that cannot reach a verdict, because a server is unreachable or
+the file is not on disk, is reported as skipped. "Could not check" never
+counts as a failed check.
+
+## See also
+
+\[codecheck_rules()\], \[codecheck_spec_version()\]
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+validate_codecheck_yml_rules("codecheck.yml")
+validate_codecheck_yml_rules("codecheck.yml", spec_version = "1.0")
+} # }
+```

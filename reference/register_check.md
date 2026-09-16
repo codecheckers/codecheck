@@ -11,7 +11,8 @@ register_check(
   from = nrow(register),
   to = 1,
   check_zenodo_policy = TRUE,
-  check_researchequals_policy = TRUE
+  check_researchequals_policy = TRUE,
+  venues_file = "venues.csv"
 )
 ```
 
@@ -43,10 +44,17 @@ register_check(
   membership in the CODECHECK collection and, for AGILEGIS certificates,
   in the Reproducible AGILE collection
 
+- venues_file:
+
+  Path to the \`venues.csv\` the \`Venue\` column is checked against
+
 ## Details
 
 \*\*Note\*\*: The validation of \`codecheck.yml\` files happens in
-function \`validate_codecheck_yml()\`. Certificate IDs must also be
+function \`validate_codecheck_yml()\`. The rules about the register as a
+whole - identifier sequence, venue types and venues - are run first with
+\[validate_register_rules()\]; a rule failed at severity error stops the
+check once every entry has been checked. Certificate IDs must also be
 unique across the whole register; this is checked once up front, over
 all rows, before any per-entry checks run.
 

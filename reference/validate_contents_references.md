@@ -24,7 +24,8 @@ validate_contents_references(
 - strict:
 
   Logical. If `TRUE`, throw an error on any mismatch. If `FALSE`
-  (default), only issue warnings.
+  (default), a rule failed at severity error still stops, after both
+  validations have run.
 
 - validate_crossref:
 
@@ -41,10 +42,8 @@ validate_contents_references(
 
 - skip_on_auth_error:
 
-  Logical. If `TRUE`, skip ORCID validation when authentication fails
-  instead of throwing an error. Default is `FALSE`, which requires ORCID
-  authentication. Set to `TRUE` to allow the function to work without
-  ORCID authentication (e.g., CI/CD pipelines, test environments).
+  Deprecated and without effect: an ORCID record that cannot be
+  retrieved is always skipped.
 
 ## Value
 
@@ -88,8 +87,5 @@ if (FALSE) { # \dontrun{
 
   # Validate only ORCID
   validate_contents_references(validate_crossref = FALSE)
-
-  # Skip ORCID validation if authentication is not available
-  validate_contents_references(skip_on_auth_error = TRUE)
 } # }
 ```

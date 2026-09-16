@@ -314,6 +314,19 @@ under the MIT license, see file `LICENSE`.
   : Return the metadata for the codecheck project in root folder of
   project
 
+- [`codecheck_rule()`](http://codecheck.org.uk/codecheck/reference/codecheck_rule.md)
+  : One CODECHECK validation rule
+
+- [`codecheck_rules()`](http://codecheck.org.uk/codecheck/reference/codecheck_rules.md)
+  [`codecheck_spec_versions()`](http://codecheck.org.uk/codecheck/reference/codecheck_rules.md)
+  : The CODECHECK validation rules
+
+- [`codecheck_rules_provenance()`](http://codecheck.org.uk/codecheck/reference/codecheck_rules_provenance.md)
+  : Where the bundled rules came from
+
+- [`codecheck_spec_version()`](http://codecheck.org.uk/codecheck/reference/codecheck_spec_version.md)
+  : The specification version a \`codecheck.yml\` is validated against
+
 - [`complete_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/complete_codecheck_yml.md)
   : Analyze and complete codecheck.yml with missing fields
 
@@ -811,6 +824,9 @@ under the MIT license, see file `LICENSE`.
 - [`ror_coverage_summary()`](http://codecheck.org.uk/codecheck/reference/ror_coverage_summary.md)
   : Summarise ROR coverage over the register
 
+- [`rule_severity()`](http://codecheck.org.uk/codecheck/reference/rule_severity.md)
+  : The severity of a CODECHECK validation rule
+
 - [`set_paper_title_references()`](http://codecheck.org.uk/codecheck/reference/set_paper_title_references.md)
   : Set "Title" and "Paper reference" columns and values to the
   register_table
@@ -829,6 +845,9 @@ under the MIT license, see file `LICENSE`.
 
 - [`update_certificate_from_github()`](http://codecheck.org.uk/codecheck/reference/update_certificate_from_github.md)
   : Update certificate ID from GitHub issue
+
+- [`update_codecheck_rules()`](http://codecheck.org.uk/codecheck/reference/update_codecheck_rules.md)
+  : Refresh the bundled CODECHECK validation rules
 
 - [`update_codecheck_yml_from_lifecycle()`](http://codecheck.org.uk/codecheck/reference/update_codecheck_yml_from_lifecycle.md)
   : Update codecheck.yml with Lifecycle Journal metadata
@@ -855,8 +874,14 @@ under the MIT license, see file `LICENSE`.
 - [`validate_codecheck_yml_orcid()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_orcid.md)
   : Validate codecheck.yml metadata against ORCID
 
+- [`validate_codecheck_yml_rules()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_rules.md)
+  : Validate a \`codecheck.yml\` against the CODECHECK rules
+
 - [`validate_contents_references()`](http://codecheck.org.uk/codecheck/reference/validate_contents_references.md)
   : Validate codecheck.yml metadata against external references
+
+- [`validate_register_rules()`](http://codecheck.org.uk/codecheck/reference/validate_register_rules.md)
+  : Validate the register against the CODECHECK rules
 
 - [`validate_wikidata_model()`](http://codecheck.org.uk/codecheck/reference/validate_wikidata_model.md)
   : Check the model's invariants

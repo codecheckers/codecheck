@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.29.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,8 @@
 <span>  from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">register</span><span class="op">)</span>,</span>
 <span>  to <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  check_zenodo_policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  check_researchequals_policy <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  check_researchequals_policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  venues_file <span class="op">=</span> <span class="st">"venues.csv"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -77,10 +78,17 @@
 <dt id="arg-check-researchequals-policy">check_researchequals_policy<a class="anchor" aria-label="anchor" href="#arg-check-researchequals-policy"></a></dt>
 <dd><p>Logical; if TRUE (the default), also audits the certificates published on ResearchEquals against the CODECHECK curation policy, including membership in the CODECHECK collection and, for AGILEGIS certificates, in the Reproducible AGILE collection</p></dd>
 
+
+<dt id="arg-venues-file">venues_file<a class="anchor" aria-label="anchor" href="#arg-venues-file"></a></dt>
+<dd><p>Path to the `venues.csv` the `Venue` column is checked against</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>**Note**: The validation of `codecheck.yml` files happens in function `validate_codecheck_yml()`.
+The rules about the register as a whole - identifier sequence, venue types
+and venues - are run first with [validate_register_rules()]; a rule failed at
+severity error stops the check once every entry has been checked.
 Certificate IDs must also be unique across the whole register; this is checked
 once up front, over all rows, before any per-entry checks run.</p>
 <p>Also checks the checked repository itself: organisation membership
