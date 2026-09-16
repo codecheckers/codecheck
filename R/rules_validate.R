@@ -130,18 +130,31 @@ rules_context <- function(configuration) {
     if (!file.exists(configuration)) {
       stop("No such codecheck.yml: ", configuration)
     }
-    lines <- readLines(configuration, warn = FALSE)
+    # The encoding check needs the raw bytes and must happen before the YAML
+    # parser sees them: an invalid byte inside a quoted scalar makes the parser
+    # fail with a scanner error rather than saying the file is not UTF-8.
+    raw_lines <- readLines(configuration, warn = FALSE, encoding = "bytes")
+    # Sanitise for the checks that work on the text: an invalid byte otherwise
+    # makes every string operation downstream fail, and the encoding itself is
+    # already reported by CC-CFG-001.
+    lines <- iconv(raw_lines, from = "UTF-8", to = "UTF-8", sub = "?")
+    # A file that does not parse is a failure of CC-CFG-001, not an exception:
+    # the driver reports it like any other rule, and the checks that need the
+    # parsed content skip for want of it.
+    parse_error <- NULL
     yml <- tryCatch(yaml::read_yaml(configuration), error = function(e) {
-      stop("CC-CFG-001 yaml-parses: ", configuration, " is not valid YAML: ",
-           conditionMessage(e), call. = FALSE)
+      parse_error <<- conditionMessage(e)
+      list()
     })
     return(list(yml = yml, path = configuration, lines = lines,
-                label = configuration))
+                raw_lines = raw_lines, parse_error = parse_error,
+                bundle_dir = dirname(configuration), label = configuration))
   }
   if (is.list(configuration)) {
     # A configuration in memory has no file to inspect, so the checks that are
     # about the file on disk skip rather than fail.
     return(list(yml = configuration, path = NULL, lines = NULL,
+                raw_lines = NULL, bundle_dir = NULL,
                 label = "the given configuration"))
   }
   stop("Could not load codecheck configuration from input '", configuration, "'")

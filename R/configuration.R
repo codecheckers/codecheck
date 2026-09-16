@@ -326,6 +326,7 @@ parse_repository_spec <- function(x) {
     stop("Malformed repository specification '", x, "'")
   }
   
+  # rule: CC-REG-003 repository-spec-format
   supported_repos <- c("github", "osf", "gitlab", "zenodo", "zenodo-sandbox")
   if (! type %in% supported_repos) {
     stop("Unsupported repository type '", type, "' - must be one of ", toString(supported_repos))
@@ -345,6 +346,7 @@ get_codecheck_yml_cached <- R.cache::addMemoization(get_codecheck_yml_uncached)
 #' 
 #' @export
 get_codecheck_yml <- function(x) {
+  # rule: CC-BUN-004 repository-reachable
   configuration <- get_codecheck_yml_cached(x)
   return(configuration)
 }
@@ -513,80 +515,78 @@ get_certificate_from_github_issue <- function(yml_file,
   ))
 }
 
+#' The rules `validate_codecheck_yml()` enforces
+#'
+#' The structural MUSTs this function has always stopped on, as rule
+#' identifiers. Kept explicit rather than "every error-severity rule" because
+#' this function gates the register rendering: a rule added to the catalogue,
+#' or hardened in a new specification version, must be adopted here on purpose
+#' and not by surprise.
+#'
+#' @keywords internal
+#' @noRd
+VALIDATE_YML_RULES <- c(
+  "CC-CFG-001", # yaml-parses, including the UTF-8 encoding
+  "CC-CFG-002", # explicit-document
+  "CC-CFG-004", # manifest-present
+  "CC-CFG-005", # manifest-item-file
+  "CC-CFG-008", # codechecker-present
+  "CC-CFG-009", # codechecker-name
+  "CC-CFG-019", # paper-author-name
+  "CC-CFG-025", # certificate-present
+  "CC-CFG-026", # certificate-id-format
+  "CC-CFG-027", # reference-is-url
+  "CC-MET-001"  # orcid-format
+)
+
 #' Validate a CODECHECK configuration
 #'
-#' This functions checks "MUST"-contents only, see https://codecheck.org.uk/spec/config/latest/
+#' Checks the `MUST`-contents of the configuration file specification, see
+#' <https://codecheck.org.uk/spec/config/latest/>.
+#'
+#' The structural checks are the rules of the specification version the file
+#' declares, run by [validate_codecheck_yml_rules()] - this function does not
+#' implement them a second time. It stops at the first failure, as it always
+#' has, whereas [validate_codecheck_yml_rules()] reports every rule.
+#'
+#' Which rules are enforced here is deliberately the set this function has
+#' always enforced, see `VALIDATE_YML_RULES`: it gates the register rendering,
+#' so widening it rejects certificates that are recorded and published today.
+#' Use [validate_codecheck_yml_rules()] for the full picture of a file.
 #'
 #' @param configuration R object of class `list`, or a path to a file
+#' @param spec_version Specification version to validate against, defaulting to
+#'   the version the file declares, see [codecheck_spec_version()].
 #' @return `TRUE` if the provided configuration is valid, otherwise the function stops with an error
 #' @author Daniel Nuest
 #' @importFrom rorcid check_dois
 #' @importFrom httr http_error http_status GET
+#' @seealso [validate_codecheck_yml_rules()] for all rules and their severities
 #'
 #' @export
-validate_codecheck_yml <- function(configuration) {
-  codecheck_yml <- NULL
-  is_file <- is.character(configuration) && file.exists(configuration)
-  if (is_file) {
-    # these two checks need the raw bytes, and must run before read_yaml():
-    # an invalid byte inside a quoted scalar makes the YAML parser itself
-    # fail with a cryptic scanner error rather than the message below
-    lines <- readLines(configuration, warn = FALSE, encoding = "bytes")
-
-    # MUST be UTF-8 encoded
-    assertthat::assert_that(all(validUTF8(lines)),
-                            msg = paste0(configuration, " is not valid UTF-8 encoded"))
-
-    # MUST start with the YAML document marker '---'
-    non_empty <- trimws(lines)
-    non_empty <- non_empty[nzchar(non_empty)]
-    assertthat::assert_that(length(non_empty) > 0 && identical(non_empty[1], "---"),
-                            msg = paste0(configuration,
-                                         " must start with the YAML document marker '---'"))
-
-    codecheck_yml <- yaml::read_yaml(configuration)
-  } else if (inherits(configuration, "list")) {
-    codecheck_yml <- configuration
-  } else {
-    stop("Could not load codecheck configuration from input '", configuration, "'")
+validate_codecheck_yml <- function(configuration, spec_version = NULL) {
+  results <- validate_codecheck_yml_rules(configuration,
+                                          spec_version = spec_version,
+                                          stop_on_error = FALSE,
+                                          quiet = TRUE)
+  results <- results[results$id %in% VALIDATE_YML_RULES, ]
+  # Every rule in the set is a MUST as far as this gate is concerned, whatever
+  # severity the declared specification version gives it: the register has
+  # always required a certificate identifier, which 1.0 only advises.
+  failed <- results[results$outcome %in% c("error", "warning", "info"), ]
+  if (nrow(failed) > 0) {
+    stop(failed$id[1], " ", failed$name[1], ": ", failed$detail[1],
+         call. = FALSE)
   }
 
-  # MUST have a non-empty certificate identifier matching the pattern NNNN-NNN
-  assertthat::assert_that(isTRUE(grepl("^\\d{4}-\\d{3}$", codecheck_yml$certificate)), # if certificate is missing, grepl returns a logical(0)
-                          msg = paste0("The certificate identifier '",
-                                       codecheck_yml$certificate,
-                                       "' is missing or invalid")
-                          )
-  
-  # MUST have manifest
-  assertthat::assert_that(assertthat::has_name(codecheck_yml, "manifest"),
-                          msg = paste0("codecheck.yml must have a root-level node 'manifest'",
-                                       "but the available ones are: ",
-                                       toString(names(codecheck_yml))
-                                       )
-                          )
-  
-  # each element of the manifest MUST have a file
-  sapply(X = codecheck_yml$manifest, FUN = function(manifest_item) {
-    assertthat::assert_that(assertthat::has_name(manifest_item, "file"))
-  })
-  
-  # each author MUST have a name
-  sapply(X = codecheck_yml$paper$authors, FUN = function(authors_item) {
-    assertthat::assert_that(assertthat::has_name(authors_item, "name"),
-                            msg = "All authors must have a 'name'.")
-  })
-  
-  # codechecker MUST have at least one entry
-  assertthat::assert_that(is.list(codecheck_yml$codechecker) && length(codecheck_yml$codechecker) > 0,
-                          msg = "codecheck.yml must have at least one 'codechecker' entry")
+  codecheck_yml <- if (is.character(configuration) &&
+                       file.exists(configuration)) {
+    yaml::read_yaml(configuration)
+  } else {
+    configuration
+  }
 
-  # codechecker MUST have a name
-  sapply(X = codecheck_yml$codechecker, FUN = function(codechecker_item) {
-    assertthat::assert_that(assertthat::has_name(codechecker_item, "name"),
-                            msg = "All codecheckers must have a 'name'.")
-  })
-  
+  # rule: CC-REP-001 report-doi-version-specific, CC-REP-002 report-doi-newest-version
   # the report MUST be a valid DOI
   assertthat::assert_that(codecheck_yml$report %in% rorcid::check_dois(codecheck_yml$report)$good,
                           msg = paste0(codecheck_yml$report, " is not a valid DOI"))

@@ -26,6 +26,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 
   # Warn about missing files but continue processing
   if (any(missing)) {
+    # rule: CC-BUN-001 manifest-files-exist
     warning("Manifest files missing:\n",
             paste(src_files[missing], collapse='\n'),
             "\nThese files will be marked as missing in the certificate.")

@@ -81,19 +81,19 @@ with_mocked_zenodo({
 invalid_yaml_path <- system.file("tinytest", "yaml", "certificate_id_missing", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "codecheck.yml"))
-}, pattern = "is missing or invalid")
+}, pattern = "CC-CFG-02[56]")
 
 # Test 10: validate_codecheck_yml() - invalid certificate pattern ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "certificate_id_invalid", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "codecheck1.yml"))
-}, pattern = "is missing or invalid")
+}, pattern = "CC-CFG-02[56]")
 
 # Test 11: validate_codecheck_yml() - missing manifest ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "manifest_missing", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "codecheck.yml"))
-}, pattern = "must have a root-level node 'manifest'")
+}, pattern = "CC-CFG-004 manifest-present")
 
 # Test 12: validate_codecheck_yml() - invalid report DOI ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "report_doi_invalid", package = "codecheck")
@@ -105,31 +105,31 @@ expect_error({
 invalid_yaml_path <- system.file("tinytest", "yaml", "author_name_missing", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "codecheck.yml"))
-}, pattern = "must have a 'name'")
+}, pattern = "CC-CFG-0(09|19)")
 
 # Test 14: validate_codecheck_yml() - missing codechecker name ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "codechecker_name_missing", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "codecheck.yml"))
-}, pattern = "must have a 'name'")
+}, pattern = "CC-CFG-0(09|19)")
 
 # Test 15: validate_codecheck_yml() - invalid ORCID format ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "orcids", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "invalid.yml"))
-}, pattern = "author's ORCID")
+}, pattern = "CC-MET-001 orcid-format")
 
 # Test 16: validate_codecheck_yml() - invalid checker ORCID format ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "orcids", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "invalid_checker.yml"))
-}, pattern = "checker's ORCID")
+}, pattern = "CC-MET-001 orcid-format")
 
 # Test 17: validate_codecheck_yml() - ORCID with URL prefix ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "orcids", package = "codecheck")
 expect_error({
   codecheck::validate_codecheck_yml(file.path(invalid_yaml_path, "with_url_prefix.yml"))
-}, pattern = "author's ORCID.*https://orcid.org")
+}, pattern = "CC-MET-001 orcid-format.*orcid.org")
 
 # Test 18: validate_codecheck_yml() - invalid repository URL ----
 invalid_yaml_path <- system.file("tinytest", "yaml", "repository_url_invalid", package = "codecheck")
@@ -142,7 +142,7 @@ with_mocked_zenodo({
 # Test 19: validate_codecheck_yml() - file doesn't exist ----
 expect_error({
   codecheck::validate_codecheck_yml("/nonexistent/path/codecheck.yml")
-}, pattern = "Could not load")
+}, pattern = "No such codecheck.yml")
 
 # Test 20: validate_codecheck_yml() - invalid input type ----
 expect_error({
@@ -245,7 +245,7 @@ long_cert_metadata <- list(
 
 expect_error({
   codecheck::validate_codecheck_yml(long_cert_metadata)
-}, pattern = "is missing or invalid")
+}, pattern = "CC-CFG-02[56]")
 
 # Test 27: Edge case - certificate ID with wrong format ----
 wrong_format_metadata <- list(
@@ -264,7 +264,7 @@ wrong_format_metadata <- list(
 
 expect_error({
   codecheck::validate_codecheck_yml(wrong_format_metadata)
-}, pattern = "is missing or invalid")
+}, pattern = "CC-CFG-02[56]")
 
 # Test 28: Empty manifest list ----
 empty_manifest_metadata <- list(
@@ -331,7 +331,7 @@ no_author_name_metadata <- list(
 
 expect_error({
   codecheck::validate_codecheck_yml(no_author_name_metadata)
-}, pattern = "must have a 'name'")
+}, pattern = "CC-CFG-0(09|19)")
 
 # Clean up
 test_dirs <- list.files(tempdir(), pattern = "^test_(missing|no_)", full.names = TRUE)

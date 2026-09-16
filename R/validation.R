@@ -392,6 +392,7 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
                      "  Local:    ", local_meta$paper$title, "\n",
                      "  CrossRef: ", crossref_meta$title[[1]])
       issues <- c(issues, issue)
+      # rule: CC-MET-005 crossref-title-match
       warning(issue)
     } else {
       message("\u2713 Title matches CrossRef metadata")
@@ -408,6 +409,7 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
       issue <- paste0("Author count mismatch: local has ", length(local_authors),
                      " authors, CrossRef has ", length(crossref_authors), " authors")
       issues <- c(issues, issue)
+      # rule: CC-MET-006 crossref-author-count-match
       warning(issue)
     }
 
@@ -447,6 +449,7 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
                          "  Local:    ", local_author$name, "\n",
                          "  CrossRef: ", crossref_name)
           issues <- c(issues, issue)
+          # rule: CC-MET-007 crossref-author-name-match
           warning(issue)
         } else {
           message("\u2713 Author ", i, " name matches: ", local_author$name)
@@ -465,6 +468,7 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
                            "  Local:    ", local_orcid, "\n",
                            "  CrossRef: ", crossref_orcid)
             issues <- c(issues, issue)
+            # rule: CC-MET-008 crossref-author-orcid-match
             warning(issue)
           } else {
             message("\u2713 Author ", i, " ORCID matches: ", local_orcid)
@@ -693,6 +697,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
         }
       }
 
+      # rule: CC-MET-002 orcid-resolves
       warning("Failed to retrieve ORCID record for ", orcid_id, ": ", error_msg)
       return(NULL)
     })
@@ -712,6 +717,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
           issue <- paste0("Author ", i, " has invalid ORCID format: ", author$ORCID,
                          " (should be NNNN-NNNN-NNNN-NNNX)")
           issues <- c(issues, issue)
+          # rule: CC-MET-001 orcid-format
           warning(issue)
           next
         }
@@ -743,6 +749,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
                            "  ORCID:  ", orcid_name, "\n",
                            "  (ORCID: ", author$ORCID, ")")
             issues <- c(issues, issue)
+            # rule: CC-MET-003 orcid-name-match
             warning(issue)
           } else {
             message("\u2713 Author ", i, " name matches ORCID: ", author$name, " (", author$ORCID, ")")
@@ -756,6 +763,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 
   # Validate codecheckers
   if (validate_codecheckers) {
+    # rule: CC-CFG-008 codechecker-present
     if (is.null(local_meta$codechecker) || length(local_meta$codechecker) == 0) {
       issue <- "No codechecker information found in codecheck.yml"
       issues <- c(issues, issue)
@@ -770,6 +778,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
         if (is.null(checker$name) || trimws(checker$name) == "") {
           issue <- paste0("Codechecker ", i, " is missing a name")
           issues <- c(issues, issue)
+          # rule: CC-CFG-009 codechecker-name
           warning(issue)
           next
         }
@@ -784,6 +793,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
             issue <- paste0("Codechecker ", i, " has invalid ORCID format: ", checker$ORCID,
                            " (should be NNNN-NNNN-NNNN-NNNX)")
             issues <- c(issues, issue)
+            # rule: CC-MET-001 orcid-format
             warning(issue)
             next
           }
@@ -1268,6 +1278,7 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
     }
 
     # Print warning message to console
+    # rule: CC-REP-001 report-doi-version-specific, CC-REP-002 report-doi-newest-version
     warning(paste(console_warnings, collapse = ". "), ". ",
             "Please set valid values before finalizing.",
             call. = FALSE)
@@ -1421,6 +1432,7 @@ validate_certificate_github_issue <- function(yml_file = "codecheck.yml",
         "If you are still working on it, consider reopening the issue."
       )
       warnings <- c(warnings, warning_msg)
+      # rule: CC-REG-006 issue-exists
       warning(warning_msg, call. = FALSE)
 
       if (strict) {
@@ -1435,6 +1447,7 @@ validate_certificate_github_issue <- function(yml_file = "codecheck.yml",
         "is UNASSIGNED. Please assign a codechecker to this issue."
       )
       warnings <- c(warnings, warning_msg)
+      # rule: CC-REG-007 issue-references-certificate
       warning(warning_msg, call. = FALSE)
 
       if (strict) {

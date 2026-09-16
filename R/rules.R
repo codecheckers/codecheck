@@ -135,7 +135,6 @@ rules_file <- function(spec_version) {
 #' @noRd
 rule_implementations <- function() {
   c(
-    "CC-MET-001" = "validate_codecheck_yml_orcid",
     "CC-MET-002" = "validate_codecheck_yml_orcid",
     "CC-MET-003" = "validate_codecheck_yml_orcid",
     "CC-MET-004" = "validate_codecheck_yml_crossref",
@@ -151,6 +150,8 @@ rule_implementations <- function() {
     "CC-REP-004" = "zenodo_policy_check",
     "CC-REP-005" = "zenodo_policy_check",
     "CC-REP-006" = "zenodo_policy_check",
+    "CC-REG-001" = "register_check",
+    "CC-REG-003" = "parse_repository_spec",
     "CC-REG-006" = "validate_certificate_github_issue",
     "CC-REG-007" = "validate_certificate_github_issue"
   )
@@ -168,14 +169,11 @@ rule_implementations <- function() {
 #' @noRd
 rules_not_implemented <- function() {
   c(
-    # Needs the bundle on disk, which the configuration checks do not have
-    "CC-BUN-002", "CC-BUN-003", "CC-BUN-005",
-    # Resolving every further reference, one request each
-    "CC-MET-009",
-    # Register-wide: these compare a certificate against every other entry in
-    # register.csv, so they belong to the rendering pipeline rather than to the
-    # validation of a single codecheck.yml
-    "CC-REG-001", "CC-REG-002", "CC-REG-003", "CC-REG-004", "CC-REG-005"
+    # Register-wide rules about columns of register.csv rather than about a
+    # codecheck.yml: nothing validates the Type column against the four known
+    # venue types, the Venue against venues.csv, or a certificate identifier
+    # against the year's sequence.
+    "CC-REG-002", "CC-REG-004", "CC-REG-005"
   )
 }
 

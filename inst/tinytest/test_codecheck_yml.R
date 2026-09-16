@@ -1,5 +1,9 @@
 tinytest::using(ttdo)
 
+# validate_codecheck_yml() runs the rules of R/rules_checks.R, so its messages
+# name the rule that rejected the file, see test_rules_validate.R for the rules
+# themselves.
+
 source("mocks.R")
 
 # valid codecheck.yml ----
@@ -8,28 +12,28 @@ expect_true(validate_codecheck_yml("yaml/codecheck.yml"))
 
 # certificate ID ----
 expect_error(validate_codecheck_yml("yaml/certificate_id_missing/codecheck.yml"),
-             pattern = "'' is missing or invalid")
+             pattern = "CC-CFG-025 certificate-present")
 expect_error(validate_codecheck_yml("yaml/certificate_id_invalid/codecheck1.yml"),
-             pattern = "'20XX-000' is missing or invalid")
+             pattern = "CC-CFG-026 certificate-id-format: '20XX-000'")
 expect_error(validate_codecheck_yml("yaml/certificate_id_invalid/codecheck2.yml"),
-             pattern = "'2025-99' is missing or invalid")
+             pattern = "CC-CFG-026 certificate-id-format: '2025-99'")
 expect_error(validate_codecheck_yml("yaml/certificate_id_invalid/codecheck3.yml"),
-             pattern = "'' is missing or invalid")
+             pattern = "CC-CFG-025 certificate-present")
 # manifest ----
 expect_error(validate_codecheck_yml("yaml/manifest_missing/codecheck.yml"),
-             pattern = "root-level node 'manifest'")
+             pattern = "CC-CFG-004 manifest-present")
 
 # YAML document marker '---' ----
 expect_error(validate_codecheck_yml("yaml/missing_document_marker/codecheck.yml"),
-             pattern = "must start with the YAML document marker '---'")
+             pattern = "CC-CFG-002 explicit-document")
 
 # UTF-8 encoding ----
 expect_error(validate_codecheck_yml("yaml/invalid_utf8/codecheck.yml"),
-             pattern = "is not valid UTF-8 encoded")
+             pattern = "CC-CFG-001 yaml-parses: the file is not valid UTF-8 encoded")
 
 # codechecker must have at least one entry ----
 expect_error(validate_codecheck_yml("yaml/codechecker_empty/codecheck.yml"),
-             pattern = "at least one 'codechecker' entry")
+             pattern = "CC-CFG-008 codechecker-present")
 
 # report DOI ----
 expect_error(validate_codecheck_yml("yaml/report_doi_invalid/codecheck.yml"),
@@ -41,17 +45,17 @@ expect_error(validate_codecheck_yml("yaml/report_doi_concept/codecheck.yml"),
 
 # ORCIDs ----
 expect_error(validate_codecheck_yml("yaml/orcids/invalid_checker.yml"),
-             pattern = "checker's ORCID '0000-abcd-0000-000X'")
+             pattern = "CC-MET-001 orcid-format: .*0000-abcd-0000-000X")
 expect_error(validate_codecheck_yml("yaml/orcids/invalid.yml"),
-             pattern = "author's ORCID '0000-not-an-orcid'")
+             pattern = "CC-MET-001 orcid-format: .*0000-not-an-orcid")
 expect_error(validate_codecheck_yml("yaml/orcids/with_url_prefix.yml"),
-             pattern = "author's ORCID 'https://orcid.org/0000")
+             pattern = "CC-MET-001 orcid-format: .*orcid.org/0000")
 
 # names ----
 expect_error(validate_codecheck_yml("yaml/author_name_missing/codecheck.yml"),
-             pattern = "authors must have a 'name'")
+             pattern = "CC-CFG-019 paper-author-name")
 expect_error(validate_codecheck_yml("yaml/codechecker_name_missing/codecheck.yml"),
-             pattern = "codecheckers must have a 'name'")
+             pattern = "CC-CFG-009 codechecker-name")
 
 # repository/ies ----
 # the repository URLs are answered by a mock: whether a given URL is reachable

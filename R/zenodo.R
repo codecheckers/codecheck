@@ -924,6 +924,7 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
   title <- if (is.character(m$title)) m$title else ""
   has_cert_text <- grepl("CODECHECK Certificate", title, fixed = TRUE)
   has_cert_text_lower <- grepl("CODECHECK certificate", title, fixed = TRUE)
+  # rule: CC-REP-004 zenodo-certificate-id-match
   has_cert_id <- grepl("[0-9]{4}-[0-9]{3}", title)
   if (has_cert_text && has_cert_id) {
     add("title", "pass", title)
@@ -996,6 +997,7 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
   # and record metadata alone cannot tell the two apart. It is reported as
   # "info" rather than "fail", so it never blocks compliance and is surfaced
   # to a human to judge, instead of being asserted as an error.
+  # rule: CC-REP-005 zenodo-codechecker-names-match, CC-REP-006 zenodo-codechecker-orcids-match
   creator_types <- unlist(lapply(m$creators, function(c) c$person_or_org$type))
   if (length(creator_types) == 0) {
     add("creators", "fail", "no creators")
@@ -1057,6 +1059,7 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
 
   # Files
   if (!is.null(files)) {
+    # rule: CC-REP-003 zenodo-files-present
     pdfs <- files[grepl("\\.pdf$", files, ignore.case = TRUE)]
     # the file must be present, and should specifically be named codecheck.pdf
     # (see #20); a differently-named PDF is a warning, not a failure

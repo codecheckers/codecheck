@@ -61,9 +61,37 @@ as_items <- function(node) {
 #' @keywords internal
 #' @noRd
 check_yaml_parses <- function(context) {
-  # The driver cannot build a context without parsing the file, so reaching
-  # this check at all means the parse worked.
-  rule_pass("parsed as YAML")
+  # The encoding is checked on the raw bytes and before the parse: an invalid
+  # byte inside a quoted scalar makes the YAML parser fail with a scanner error
+  # rather than saying the file is not UTF-8.
+  if (!is.null(context$raw_lines) && !all(validUTF8(context$raw_lines))) {
+    return(rule_fail("the file is not valid UTF-8 encoded"))
+  }
+  if (!is.null(context$parse_error)) {
+    return(rule_fail(paste("the file is not valid YAML:", context$parse_error)))
+  }
+  if (is.null(context$raw_lines)) rule_pass() else rule_pass("valid UTF-8 YAML")
+}
+
+#' @keywords internal
+#' @noRd
+check_orcid_format <- function(context) {
+  # Both the paper's authors and the codecheckers, because the rule is about
+  # the form of an ORCID wherever it appears in the file.
+  people <- c(as_items(context$yml$paper$authors),
+              as_items(context$yml$codechecker))
+  orcids <- unlist(lapply(people, function(person) person$ORCID))
+  if (length(orcids) == 0) {
+    return(rule_skip("no ORCID to inspect"))
+  }
+  malformed <- orcids[!grepl("^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$",
+                             orcids, perl = TRUE)]
+  if (length(malformed) == 0) {
+    rule_pass(paste(length(orcids), "ORCID(s)"))
+  } else {
+    rule_fail(paste("ORCIDs must be plain and without URL prefix, but found:",
+                    paste(malformed, collapse = ", ")))
+  }
 }
 
 #' @keywords internal
@@ -100,12 +128,12 @@ check_file_name_and_location <- function(context) {
 #' @keywords internal
 #' @noRd
 check_manifest_present <- function(context) {
-  manifest <- as_items(context$yml$manifest)
-  if (length(manifest) > 0) {
-    rule_pass(paste(length(manifest), "manifest item(s)"))
-  } else {
-    rule_fail("no manifest, or an empty one")
+  # The rule is about the node being there. An empty manifest is odd but not a
+  # violation, and the specification does not make it one.
+  if (is.null(context$yml$manifest)) {
+    return(rule_fail("no root-level manifest"))
   }
+  rule_pass(paste(length(as_items(context$yml$manifest)), "manifest item(s)"))
 }
 
 #' @keywords internal
@@ -512,6 +540,82 @@ check_no_placeholder_values <- function(context) {
   }
 }
 
+
+# --- the bundle on disk ----------------------------------------------------
+
+#' @keywords internal
+#' @noRd
+check_codecheck_directory_present <- function(context) {
+  if (is.null(context$bundle_dir)) {
+    return(rule_skip("no bundle on disk to inspect"))
+  }
+  directories <- file.path(context$bundle_dir, c("codecheck", ".codecheck"))
+  if (any(dir.exists(directories))) {
+    rule_pass(basename(directories[dir.exists(directories)][1]))
+  } else {
+    rule_fail("the bundle has no codecheck/ or .codecheck/ directory")
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_report_file_present <- function(context) {
+  if (is.null(context$bundle_dir)) {
+    return(rule_skip("no bundle on disk to inspect"))
+  }
+  directories <- file.path(context$bundle_dir, c("codecheck", ".codecheck"))
+  directories <- directories[dir.exists(directories)]
+  if (length(directories) == 0) {
+    return(rule_skip("no codecheck/ directory to look in"))
+  }
+  reports <- list.files(directories, pattern = "\\.pdf$", ignore.case = TRUE)
+  if (length(reports) > 0) {
+    rule_pass(paste(reports, collapse = ", "))
+  } else {
+    rule_fail("no certificate report in the codecheck/ directory")
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_licence_present <- function(context) {
+  if (is.null(context$bundle_dir)) {
+    return(rule_skip("no bundle on disk to inspect"))
+  }
+  licences <- list.files(context$bundle_dir,
+                         pattern = "^(LICEN[CS]E|COPYING)(\\..*)?$",
+                         ignore.case = TRUE)
+  if (length(licences) > 0) {
+    rule_pass(paste(licences, collapse = ", "))
+  } else {
+    rule_fail("the repository under check states no licence")
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_reference_other_resolves <- function(context) {
+  other <- context$yml$paper[["reference-other"]]
+  if (is.null(other) || !is.list(other) || !is.null(names(other))) {
+    return(rule_skip("no reference-other sequence"))
+  }
+  entries <- unlist(other)
+  entries <- entries[grepl("^https?://", entries)]
+  if (length(entries) == 0) {
+    return(rule_skip("no reference-other entry to resolve"))
+  }
+  results <- lapply(entries, url_resolves)
+  failed <- entries[vapply(results, function(r) r$status == "fail", logical(1))]
+  if (length(failed) > 0) {
+    return(rule_fail(paste("reference-other entries that do not resolve:",
+                           paste(failed, collapse = ", "))))
+  }
+  if (all(vapply(results, function(r) r$status == "skip", logical(1)))) {
+    return(rule_skip("could not reach any reference-other entry"))
+  }
+  rule_pass()
+}
+
 # --- helpers shared by several checks --------------------------------------
 
 #' Does a reference point directly at a PDF?
@@ -591,6 +695,11 @@ rule_checks <- function() {
     "CC-CFG-028" = "check_reference_prefers_doi",
     "CC-CFG-029" = "check_reference_other_is_list",
     "CC-CFG-030" = "check_reference_other_item_form",
-    "CC-CFG-031" = "check_reference_pdf_is_archived"
+    "CC-CFG-031" = "check_reference_pdf_is_archived",
+    "CC-MET-001" = "check_orcid_format",
+    "CC-MET-009" = "check_reference_other_resolves",
+    "CC-BUN-002" = "check_codecheck_directory_present",
+    "CC-BUN-003" = "check_report_file_present",
+    "CC-BUN-005" = "check_licence_present"
   )
 }

@@ -7,9 +7,12 @@
 * New `validate_codecheck_yml_rules()` validates a `codecheck.yml` against the rules of the specification version it declares, with one check function per rule and the severity taken from the rule file, so hardened requirements in 2.0 need no separate code path (register#209).
 * New `codecheck_spec_version()` reports which specification version a `codecheck.yml` declares, defaulting to the newest when the `version` node is absent (register#209).
 * New test asserting that every rule in the register's rule files is either implemented by a check function or explicitly recorded as not implemented, so a new rule cannot be ignored silently (register#209).
+* `validate_codecheck_yml()` now runs the rule checks instead of implementing the same requirements a second time, so its error messages name the rule that rejected a file, e.g. `CC-CFG-026 certificate-id-format` (register#209).
 * The tagline of the persons page now splits the number of people into those who conducted checks and those who authored checked works, noting that some people are in both groups.
 
 ## Bug Fixes
+
+* A `codecheck.yml` that is not valid YAML or not UTF-8 is now reported as a failure of rule `CC-CFG-001` rather than as a parser error, and the remaining rules still report what they can (register#209).
 
 * Fix `R CMD check --as-cran` failing with an error about `man/wikidata_model.Rd` and `man/WIKIDATA_MODEL.Rd` differing only by case, which is not portable across platforms.
 * Fix a batch of `R CMD check` warnings and notes: non-ASCII characters in R sources, lost braces and an unknown `\n` macro in the generated documentation, undocumented and mismatched arguments, undeclared global variables, and `rprojroot` moving from Imports to Suggests (it is used by the shipped certificate templates, not by package code).

@@ -152,3 +152,40 @@ expect_error(validate_codecheck_yml_rules("does-not-exist.yml"),
              pattern = "No such codecheck.yml")
 expect_error(validate_codecheck_yml_rules("yaml/invalid_utf8/codecheck.yml"),
              pattern = "CC-CFG-001|not valid YAML|invalid")
+
+# --- the bundle around the file ---
+
+# These rules are about the directory the codecheck.yml sits in, so they need a
+# bundle on disk rather than a fixture in memory.
+bundle <- file.path(tempdir(), "bundle")
+dir.create(file.path(bundle, "codecheck"), recursive = TRUE,
+           showWarnings = FALSE)
+writeLines("LICENSE", file.path(bundle, "LICENSE"))
+file.create(file.path(bundle, "codecheck", "codecheck.pdf"))
+yaml::write_yaml(complete, file.path(bundle, "codecheck.yml"))
+
+in_bundle <- validate_codecheck_yml_rules(file.path(bundle, "codecheck.yml"),
+                                          stop_on_error = FALSE, quiet = TRUE)
+expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-002"], "ok")
+expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-003"], "ok")
+expect_equal(in_bundle$outcome[in_bundle$id == "CC-BUN-005"], "ok")
+
+# The same file in a bare directory: the bundle rules report, the rest does not
+# change.
+bare <- file.path(tempdir(), "bare")
+dir.create(bare, showWarnings = FALSE)
+yaml::write_yaml(complete, file.path(bare, "codecheck.yml"))
+in_bare <- validate_codecheck_yml_rules(file.path(bare, "codecheck.yml"),
+                                        stop_on_error = FALSE, quiet = TRUE)
+expect_equal(in_bare$outcome[in_bare$id == "CC-BUN-002"], "warning")
+expect_equal(in_bare$outcome[in_bare$id == "CC-BUN-005"], "warning")
+# No codecheck/ directory to look in, so the report file cannot be judged.
+expect_equal(in_bare$outcome[in_bare$id == "CC-BUN-003"], "skipped")
+
+# A configuration in memory has no bundle at all, and skips rather than fails.
+no_bundle <- validate_codecheck_yml_rules(complete, stop_on_error = FALSE,
+                                          quiet = TRUE)
+expect_equal(no_bundle$outcome[no_bundle$id == "CC-BUN-002"], "skipped")
+expect_equal(no_bundle$outcome[no_bundle$id == "CC-BUN-005"], "skipped")
+
+unlink(c(bundle, bare), recursive = TRUE)

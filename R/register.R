@@ -606,6 +606,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
 
   # certificate IDs must be unique across the whole register, see #9; checked
   # once up front over all rows, not just the from:to range being audited
+  # rule: CC-REG-001 certificate-unique
   dup <- duplicated(register$Certificate) | duplicated(register$Certificate, fromLast = TRUE)
   if (any(dup)) {
     stop("Duplicate certificate ID(s) in register: ",
