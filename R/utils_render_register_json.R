@@ -642,6 +642,8 @@ build_codechecker_stats_field <- function(identifier, register_table) {
     name = if (!is.null(profile$name)) profile$name else NA_character_,
     orcid = nullable(profile$orcid),
     github_username = nullable(profile$github_handle),
+    fields = I(split_codechecker_list_field(profile$fields)),
+    languages = I(split_codechecker_list_field(profile$languages)),
     venue_count = nrow(venues),
     venues = lapply(seq_len(nrow(venues)), function(i) list(
       name = venues$Venue[i],
@@ -706,6 +708,11 @@ build_person_stats_field <- function(orcid, register_table) {
     orcid = orcid,
     github_username = nullable(profile$github_handle),
     wikidata = nullable(wikidata_id_for("person", orcid)),
+    # Self-described expertise from codecheckers.csv (register#168), always an
+    # array - empty for anyone who is not a volunteer codechecker. I() keeps a
+    # single item from being unboxed to a string by write_json(auto_unbox = TRUE).
+    fields = I(split_codechecker_list_field(profile$fields)),
+    languages = I(split_codechecker_list_field(profile$languages)),
     works_authored = length(authored_certs),
     checks_conducted = nrow(checked_table),
     venues = lapply(seq_len(nrow(venues)), function(i) list(

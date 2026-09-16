@@ -650,6 +650,8 @@ generate_work_schema_org <- function(doi, register_table) {
 #' the person by `@id`), and additionally a `ScholarlyArticle` per paper they
 #' authored, each with `author: \{"@id": person_id\}` pointing back the other
 #' way. A person with only one role simply has an empty list for the other.
+#' A codechecker's fields and languages from `codecheckers.csv` become the
+#' person's `knowsAbout` (register#168).
 #'
 #' @param orcid The person's ORCID.
 #' @param name The person's name.
@@ -668,6 +670,14 @@ generate_person_schema_org <- function(orcid, name, github_handle = NULL, regist
   person_qid <- wikidata_id_for("person", orcid)
   if (!is.null(person_qid)) {
     person$sameAs <- c(person$sameAs, wikidata_entity_url(person_qid))
+  }
+  # A codechecker's self-described fields and languages (register#168); I()
+  # keeps a single topic an array under toJSON(auto_unbox = TRUE).
+  profile <- resolve_codechecker_profile(orcid)
+  knows_about <- c(split_codechecker_list_field(profile$fields),
+                   split_codechecker_list_field(profile$languages))
+  if (length(knows_about) > 0) {
+    person$knowsAbout <- I(knows_about)
   }
 
   has_role <- "Role" %in% names(register_table)

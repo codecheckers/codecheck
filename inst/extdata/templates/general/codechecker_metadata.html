@@ -17,6 +17,12 @@
 {{#has_wikidata}}
 <li><i class="fa fa-database"></i> <span class="venue-metadata-label">Wikidata:</span> <a href="https://www.wikidata.org/wiki/{{wikidata}}" target="_blank" rel="noopener">{{wikidata}}</a></li>
 {{/has_wikidata}}
+{{#has_fields}}
+<li><i class="fa fa-flask"></i> <span class="venue-metadata-label">Fields:</span> {{fields}}</li>
+{{/has_fields}}
+{{#has_languages}}
+<li><i class="fa fa-code"></i> <span class="venue-metadata-label">Languages:</span> {{languages}}</li>
+{{/has_languages}}
 {{#has_venues}}
 <li><i class="fa fa-check-square-o"></i> <span class="venue-metadata-label">Contributed checks:</span> {{{venues_html}}}</li>
 {{/has_venues}}

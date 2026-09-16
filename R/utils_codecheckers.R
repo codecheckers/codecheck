@@ -150,6 +150,45 @@ codechecker_record_to_profile <- function(codechecker) {
   )
 }
 
+#' Split a free-text `fields` or `languages` entry into its items
+#'
+#' Codecheckers fill in both columns of `codecheckers.csv` by hand, as a
+#' comma-separated list whose items may carry a comment in parentheses - which
+#' may itself contain commas: `R (expert, package dev)` or `functional
+#' languages (Haskell, ML, LISP)`. So a comma separates items only outside
+#' parentheses. The items are kept as written otherwise, levels and all, since
+#' there is no controlled vocabulary to normalise them to (register#168).
+#'
+#' @param text The column value, possibly `NULL`, `NA` or `""`.
+#' @return A character vector of trimmed, non-empty items; `character(0)` if
+#'   there are none.
+#' @keywords internal
+split_codechecker_list_field <- function(text) {
+  if (is.null(text) || length(text) != 1 || is.na(text) || !nzchar(trimws(text))) {
+    return(character(0))
+  }
+
+  chars <- strsplit(text, "", fixed = TRUE)[[1]]
+  items <- character(0)
+  current <- character(0)
+  depth <- 0L
+  for (char in chars) {
+    if (char == "(") {
+      depth <- depth + 1L
+    } else if (char == ")") {
+      depth <- max(depth - 1L, 0L)
+    }
+    if (char == "," && depth == 0L) {
+      items <- c(items, paste(current, collapse = ""))
+      current <- character(0)
+    } else {
+      current <- c(current, char)
+    }
+  }
+  items <- trimws(c(items, paste(current, collapse = "")))
+  items[nzchar(items)]
+}
+
 #' Get codechecker profile information by ORCID
 #'
 #' Searches all three codechecker lists, see [all_codechecker_records()].
@@ -446,14 +485,15 @@ generate_contributed_venues_html <- function(register_table, table_details) {
   paste(entries, collapse = ", ")
 }
 
-#' Generate the codechecker metadata HTML panel (avatar + ORCID + GitHub + venues)
+#' Generate the codechecker metadata HTML panel (avatar + ORCID + GitHub + expertise + venues)
 #'
 #' Renders a `venue-metadata`-style panel for a codechecker's own page: a
 #' GitHub avatar (a plain `https://github.com/<handle>.png` image - GitHub
 #' serves this directly, so no API call or caching is needed, unlike
 #' OpenAlex/CrossRef lookups elsewhere), a property list with the
-#' codechecker's ORCID and GitHub profile link (register#75), and the
-#' contributed-venues list (register#74/#189/#83) as a further row in the
+#' codechecker's ORCID and GitHub profile link (register#75), their
+#' self-described fields and languages from `codecheckers.csv` (register#168),
+#' and the contributed-venues list (register#74/#189/#83) as further rows in the
 #' same list, rather than as separate text above the panel. Reuses the
 #' `.venue-metadata`/`.venue-metadata-label` CSS classes already used by the
 #' venue panel.
@@ -482,6 +522,13 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
   }
   has_github <- !is.null(profile$github_handle) && nzchar(profile$github_handle)
 
+  # Self-described expertise from codecheckers.csv (register#168): the same
+  # items stats.json lists, re-joined so "a,b" and "a, b" read alike.
+  fields <- split_codechecker_list_field(profile$fields)
+  languages <- split_codechecker_list_field(profile$languages)
+  has_fields <- length(fields) > 0
+  has_languages <- length(languages) > 0
+
   # The person's Wikidata item, where the register knows one (register#50).
   # Shown next to the other identifiers rather than only in the page's
   # metadata: a reader looking for the record should not have to read the head.
@@ -502,7 +549,7 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
     ""
   }
 
-  if (!has_orcid && !has_github && !has_venues) {
+  if (!has_orcid && !has_github && !has_venues && !has_fields && !has_languages) {
     return("")
   }
 
@@ -516,6 +563,10 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
     orcid = if (has_orcid) profile$orcid else NULL,
     has_wikidata = has_wikidata,
     wikidata = wikidata,
+    has_fields = has_fields,
+    fields = paste(fields, collapse = ", "),
+    has_languages = has_languages,
+    languages = paste(languages, collapse = ", "),
     has_venues = has_venues,
     venues_html = venues_html,
     has_type_chart = has_type_chart,

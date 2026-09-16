@@ -1,5 +1,6 @@
 tinytest::using(ttdo)
 
+source("mocks.R")
 source(system.file("extdata", "config.R", package = "codecheck"))
 
 # Unit tests: get_codechecker_venues() ----
@@ -176,3 +177,78 @@ expect_false(grepl("Wikidata", without_item, fixed = TRUE))
 # in CONFIG would follow the next file. (on.exit() is no use here - at top
 # level it fires at the end of its own statement.)
 CONFIG$WIKIDATA_IDS <- NULL
+
+# Unit tests: fields and languages on a person page (register#168) ----
+
+volunteer_profile <- list(
+  name = "A Person", github_handle = "aperson", orcid = "0000-0000-0000-0001",
+  fields = "geo,maps & models", languages = "R (expert, package dev), Python",
+  source = "volunteer"
+)
+institutional_profile <- list(
+  name = "B Person", github_handle = "bperson", orcid = "0000-0000-0000-0002",
+  fields = NA_character_, languages = NA_character_, source = "institutional"
+)
+mocked_profiles <- list(
+  resolve_codechecker_profile = function(identifier) {
+    if (identifier == "0000-0000-0000-0001") volunteer_profile else institutional_profile
+  },
+  wikidata_id_for = function(...) NULL
+)
+person_rows <- data.frame(
+  Certificate = "2026-001", Repository = "github::codecheckers/x",
+  `Check date` = "2026-01-02", Role = "codechecker", Venue = "codecheck",
+  Type = "community", `Certificate ID` = "2026-001",
+  stringsAsFactors = FALSE, check.names = FALSE
+)
+
+with_mocked_codecheck(mocked_profiles, {
+  # The panel shows the items re-joined, HTML-escaped
+  panel <- codecheck:::generate_codechecker_metadata_html("0000-0000-0000-0001")
+  expect_true(grepl(">Fields:</span> geo, maps &amp; models</li>", panel, fixed = TRUE))
+  expect_true(grepl(">Languages:</span> R (expert, package dev), Python</li>", panel, fixed = TRUE))
+
+  # ...and has no such rows for a codechecker without them
+  panel_institutional <- codecheck:::generate_codechecker_metadata_html("0000-0000-0000-0002")
+  expect_false(grepl("Fields:", panel_institutional, fixed = TRUE))
+  expect_false(grepl("Languages:", panel_institutional, fixed = TRUE))
+
+  # stats.json lists the items as arrays, empty ones included
+  stats <- codecheck:::build_person_stats_field("0000-0000-0000-0001", person_rows)
+  expect_equal(as.character(stats$fields), c("geo", "maps & models"))
+  expect_equal(as.character(stats$languages), c("R (expert, package dev)", "Python"))
+  stats_json <- jsonlite::fromJSON(jsonlite::toJSON(stats, auto_unbox = TRUE), simplifyVector = FALSE)
+  expect_equal(length(stats_json$fields), 2L)
+
+  stats_empty <- codecheck:::build_person_stats_field("0000-0000-0000-0002", person_rows)
+  empty_json <- as.character(jsonlite::toJSON(stats_empty, auto_unbox = TRUE))
+  expect_true(grepl('"fields":[]', empty_json, fixed = TRUE))
+  expect_true(grepl('"languages":[]', empty_json, fixed = TRUE))
+
+  # A single item stays an array rather than being unboxed to a string
+  single <- volunteer_profile
+  single$fields <- "geo"
+  single$languages <- NA_character_
+  with_mocked_codecheck(list(resolve_codechecker_profile = function(identifier) single), {
+    single_json <- as.character(jsonlite::toJSON(
+      codecheck:::build_person_stats_field("0000-0000-0000-0001", person_rows), auto_unbox = TRUE))
+    expect_true(grepl('"fields":["geo"]', single_json, fixed = TRUE))
+
+    single_ld <- jsonlite::fromJSON(codecheck:::generate_person_schema_org(
+      "0000-0000-0000-0001", "A Person", "aperson", person_rows), simplifyVector = FALSE)
+    person_ld <- Filter(function(n) identical(n[["@type"]], "Person"), single_ld[["@graph"]])[[1]]
+    expect_equal(person_ld$knowsAbout, list("geo"))
+  })
+
+  # Schema.org: fields and languages together as knowsAbout
+  jsonld <- jsonlite::fromJSON(codecheck:::generate_person_schema_org(
+    "0000-0000-0000-0001", "A Person", "aperson", person_rows), simplifyVector = FALSE)
+  person <- Filter(function(n) identical(n[["@type"]], "Person"), jsonld[["@graph"]])[[1]]
+  expect_equal(unlist(person$knowsAbout),
+               c("geo", "maps & models", "R (expert, package dev)", "Python"))
+
+  jsonld_institutional <- jsonlite::fromJSON(codecheck:::generate_person_schema_org(
+    "0000-0000-0000-0002", "B Person", "bperson", person_rows), simplifyVector = FALSE)
+  person_institutional <- Filter(function(n) identical(n[["@type"]], "Person"), jsonld_institutional[["@graph"]])[[1]]
+  expect_null(person_institutional$knowsAbout)
+})

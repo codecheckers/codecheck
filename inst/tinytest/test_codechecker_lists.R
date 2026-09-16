@@ -2,6 +2,23 @@ tinytest::using(ttdo)
 
 source(system.file("extdata", "config.R", package = "codecheck"))
 
+# Unit tests: split_codechecker_list_field() (register#168) ----
+
+split_field <- codecheck:::split_codechecker_list_field
+expect_equal(split_field("a,b"), c("a", "b"))
+expect_equal(split_field("a, b"), c("a", "b"))
+# A comma inside parentheses belongs to the item's comment
+expect_equal(split_field("R (expert, package dev)"), "R (expert, package dev)")
+expect_equal(split_field("Python (expert),C/C++/CUDA (intermediate), R (basic)"),
+             c("Python (expert)", "C/C++/CUDA (intermediate)", "R (basic)"))
+expect_equal(split_field("functional languages (Haskell, ML, LISP), make"),
+             c("functional languages (Haskell, ML, LISP)", "make"))
+# Stray and trailing commas leave no empty items
+expect_equal(split_field("a,, b,"), c("a", "b"))
+expect_equal(split_field(NA_character_), character(0))
+expect_equal(split_field(""), character(0))
+expect_equal(split_field(NULL), character(0))
+
 # Unit tests: normalize_codechecker_list() ----
 
 expect_equal(nrow(codecheck:::normalize_codechecker_list(NULL)), 0)
