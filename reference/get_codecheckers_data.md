@@ -13,4 +13,4 @@ get_codecheckers_data()
 ## Value
 
 A data frame with columns: name, handle, ORCID, contact, fields,
-languages
+languages, fediverse

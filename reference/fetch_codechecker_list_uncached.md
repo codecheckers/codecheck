@@ -19,4 +19,4 @@ fetch_codechecker_list_uncached(url)
 
 ## Value
 
-A data frame with the columns of \[CODECHECKER_LIST_COLUMNS\].
+The list as read, or \`NULL\` when it could not be fetched.

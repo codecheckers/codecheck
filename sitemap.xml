@@ -170,6 +170,8 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_cert_pdf_from_zip.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_citation_meta_date.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_schema_org_date_published.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/fediverse_handle.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/fediverse_profile_url.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/fetch_codechecker_list_uncached.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/format_check_date.html</loc></url>
@@ -299,6 +301,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/library_expected_files.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/libs_are_current.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/list_manifest_files.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/load_person_fediverse.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/load_venues_config.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/load_wikibase_register.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/load_wikidata_ids.html</loc></url>
@@ -324,6 +327,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/parse_partial_publication_date.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/parse_repository_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/parse_venue_identifiers.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/person_fediverse.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/person_organisations_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/person_record_dates.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/plan_wikibase_entities.html</loc></url>
@@ -398,6 +402,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_codechecker_list_field.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_github_repo_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_person_name.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/split_venue_hashtags.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/sync_persons_file.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/truncate_text.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/type_breakdown_text.html</loc></url>
