@@ -641,6 +641,9 @@ check_reference_other_resolves <- function(context) {
 check_orcid_resolves <- function(context) {
   people <- context_people(context)
   people <- people[vapply(people, function(p) is_orcid(p$ORCID), logical(1))]
+  # The template's placeholder is well-formed but no one's ORCID; it is reported
+  # by CC-CFG-023 no-placeholder-values, not looked up.
+  people <- people[!vapply(people, function(p) is_orcid_placeholder(p$ORCID), logical(1))]
   if (length(people) == 0) {
     return(rule_skip("no well-formed ORCID to look up"))
   }
@@ -666,7 +669,7 @@ check_orcid_resolves <- function(context) {
 check_orcid_name_match <- function(context) {
   people <- context_people(context)
   people <- people[vapply(people, function(p) {
-    is_orcid(p$ORCID) && has_value(p$name)
+    is_orcid(p$ORCID) && !is_orcid_placeholder(p$ORCID) && has_value(p$name)
   }, logical(1))]
   if (length(people) == 0) {
     return(rule_skip("no named person with a well-formed ORCID"))
@@ -980,6 +983,13 @@ crossref_author_name <- function(author) {
 is_orcid <- function(value) {
   has_value(value) &&
     grepl("^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$", value, perl = TRUE)
+}
+
+#' Is an ORCID the template's placeholder, see CC-CFG-023?
+#' @keywords internal
+#' @noRd
+is_orcid_placeholder <- function(orcid) {
+  identical(trimws(as.character(orcid)), "0000-0000-0000-0000")
 }
 
 #' @keywords internal

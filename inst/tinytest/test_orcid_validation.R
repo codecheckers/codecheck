@@ -253,6 +253,17 @@ expect_warning(result_missing <- with_mocked_codecheck(
   suppressMessages(validate_codecheck_yml_orcid(test_yml))), pattern = "CC-MET-002")
 expect_false(result_missing$valid)
 
+# Test 15a2: the template's placeholder ORCID is not looked up, CC-CFG-023
+# reports it; the certificate templates validate with strict = TRUE
+writeLines(sub("0000-0001-8607-8025", "0000-0000-0000-0000", readLines(test_yml)), test_yml)
+requested <- character(0)
+result_placeholder <- with_mocked_codecheck(
+  list(codecheck_GET = function(url, ...) { requested <<- c(requested, url); mock_response(url, 404L) }),
+  suppressMessages(validate_codecheck_yml_orcid(test_yml, strict = TRUE)))
+expect_true(result_placeholder$valid)
+expect_equal(length(requested), 0)
+writeLines(sub("0000-0000-0000-0000", "0000-0001-8607-8025", readLines(test_yml)), test_yml)
+
 # Test 15b: an unreachable ORCID API skips, it does not fail
 result_offline <- with_mocked_codecheck(
   list(codecheck_GET = function(url, ...) stop("Could not resolve host")),

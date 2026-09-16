@@ -83,3 +83,30 @@ mock_codecheck_yml <- function(..., fixture = "zenodo-sandbox") {
 mock_get_codecheck_yml <- function(config = mock_codecheck_yml()) {
   function(x, ...) config
 }
+
+
+#' Answer zen4R's vocabulary lookups without the Zenodo API.
+#'
+#' zen4R checks every licence, language and resource type it is given against
+#' the live Zenodo API, from a ZenodoManager it creates itself, so the codecheck
+#' namespace mocks above cannot reach it. A Zenodo outage then aborted the test
+#' run: a 504 page is not JSON, and zen4R fails parsing it. The three lookups
+#' are replaced on the R6 class, which every new ZenodoManager picks up, and
+#' simply accept the identifier they are asked about.
+#'
+#' @return A function that puts the original methods back; call it at the end
+#'   of the test file.
+mock_zenodo_vocabularies <- function() {
+  methods <- c("getLicenseById", "getLanguageById", "getResourceTypeById")
+  originals <- zen4R::ZenodoManager$public_methods[methods]
+  for (method in methods) {
+    zen4R::ZenodoManager$set("public", method, function(id) list(id = id),
+                             overwrite = TRUE)
+  }
+  function() {
+    for (method in methods) {
+      zen4R::ZenodoManager$set("public", method, originals[[method]],
+                               overwrite = TRUE)
+    }
+  }
+}

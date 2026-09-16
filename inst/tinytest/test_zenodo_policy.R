@@ -3,6 +3,11 @@
 # curate_zenodo_record(). All tests run offline against fixtures and mocks.
 
 library(tinytest)
+source("mocks.R")
+
+# zen4R looks licences, languages and resource types up on Zenodo itself;
+# answered locally, so a Zenodo outage cannot abort the test run.
+restore_zenodo_vocabularies <- mock_zenodo_vocabularies()
 
 fixture <- function(name) {
   path <- system.file("tinytest", "fixtures", name, package = "codecheck")
@@ -477,7 +482,6 @@ expect_equal(ids, c("other-open", "cc-by-4.0"))
 # register stores the report DOI as published, so curation aimed at that id gets
 # "Not found" - which says nothing about why (certificate 2023-011, whose record
 # 8359199 is now 8359200).
-source("mocks.R")
 
 redirecting <- function(location) {
   function(url, ...) {
@@ -521,3 +525,5 @@ with_mocked_codecheck(
   list(codecheck_GET = function(url, ...) stop("connection refused")),
   expect_equal(codecheck:::zenodo_current_record_id("123"), "123")
 )
+
+restore_zenodo_vocabularies()
