@@ -2,6 +2,31 @@
 
 ## codecheck (development version)
 
+### New Features
+
+- [`codecheck_spec_version()`](http://codecheck.org.uk/codecheck/reference/codecheck_spec_version.md)
+  chooses the specification version rather than assuming it: a file that
+  names a version is read by that, including the historical
+  `https://codecheck.org.uk/spec/1.0` form that certificates from 2020
+  carry; a file that names none is judged by the requirements that were
+  current when it was checked (`check_time`, or the new `modified`
+  argument); only a file that cannot be dated falls back to the newest
+  version. A configuration from 2020 is no longer reported against
+  requirements published in 2026. See “Choosing the specification
+  version” in the register’s `RULES.md`.
+- [`register_clear_cache()`](http://codecheck.org.uk/codecheck/reference/register_clear_cache.md)
+  takes certificate identifiers to refresh only what is cached about
+  those certificates, keeping the rest of the cache
+  (`make clean_cert CERT_ID=...` in the register).
+
+### Bug Fixes
+
+- Rule `CC-MET-001` orcid-format now also checks an ORCID’s check digit,
+  so a mistyped ORCID is caught before it is looked up (register#209).
+- Rule `CC-MET-003` orcid-name-match no longer reports a name as
+  different from its ORCID record only because of diacritics,
+  e.g. Grišiūtė and Grisiute (register#209).
+
 ## codecheck 0.30.0
 
 ### New Features
