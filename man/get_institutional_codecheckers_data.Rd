@@ -7,8 +7,9 @@
 get_institutional_codecheckers_data()
 }
 \value{
-A data frame with columns: name, handle, ORCID, contact, fields, languages
-  (the last three are `NA` - the institution is the point of contact)
+A data frame with columns: name, handle, ORCID, contact, fields, languages,
+  fediverse (contact, fields and languages are `NA` - the institution is the
+  point of contact)
 }
 \description{
 Fetch and cache institutional-codecheckers.csv data from GitHub

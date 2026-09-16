@@ -21,4 +21,9 @@ of the register renders the same links without network access, and a person
 whose item appears is visible in the register's own history rather than only
 in a cache directory.
 }
+\details{
+The file carries more than this function writes - a `fediverse` column, say
+(register#217) - so every other column, and every row without an item, is
+kept as it was.
+}
 \keyword{internal}

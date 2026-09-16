@@ -129,6 +129,10 @@ register_orcids <- function(register_table) {
 #' whose item appears is visible in the register's own history rather than only
 #' in a cache directory.
 #'
+#' The file carries more than this function writes - a `fediverse` column, say
+#' (register#217) - so every other column, and every row without an item, is
+#' kept as it was.
+#'
 #' @param persons_file path to the CSV, or `NULL` to neither read nor write
 #' @param resolved the ORCID-to-QID mapping this render resolved
 #' @return the merged mapping
@@ -137,10 +141,13 @@ sync_persons_file <- function(persons_file, resolved) {
   if (is.null(persons_file)) return(resolved)
 
   known <- stats::setNames(character(0), character(0))
+  people <- data.frame(orcid = character(0), wikidata = character(0), stringsAsFactors = FALSE)
   if (file.exists(persons_file)) {
-    people <- utils::read.csv(persons_file, stringsAsFactors = FALSE)
-    if (all(c("orcid", "wikidata") %in% names(people))) {
-      keep <- !is.na(people$wikidata) & nzchar(people$wikidata)
+    read <- utils::read.csv(persons_file, stringsAsFactors = FALSE, colClasses = "character",
+                            na.strings = character(0))
+    if (all(c("orcid", "wikidata") %in% names(read))) {
+      people <- read
+      keep <- nzchar(people$wikidata)
       known <- stats::setNames(people$wikidata[keep], people$orcid[keep])
     } else {
       cli::cli_alert_warning("{.path {persons_file}} has no {.field orcid} and {.field wikidata} columns, ignoring it")
@@ -152,11 +159,17 @@ sync_persons_file <- function(persons_file, resolved) {
   merged <- merged[order(names(merged))]
 
   if (!identical(merged, known[order(names(known))])) {
-    utils::write.csv(
-      data.frame(orcid = names(merged), wikidata = unname(merged),
-                 stringsAsFactors = FALSE),
-      persons_file, row.names = FALSE, quote = FALSE
-    )
+    added <- setdiff(names(merged), people$orcid)
+    if (length(added) > 0) {
+      new_rows <- as.data.frame(stats::setNames(rep(list(rep("", length(added))), ncol(people)), names(people)),
+                                stringsAsFactors = FALSE)
+      new_rows$orcid <- added
+      people <- rbind(people, new_rows)
+    }
+    in_merged <- people$orcid %in% names(merged)
+    people$wikidata[in_merged] <- unname(merged[people$orcid[in_merged]])
+    people <- people[order(people$orcid), , drop = FALSE]
+    utils::write.csv(people, persons_file, row.names = FALSE, quote = FALSE, na = "")
     cli::cli_alert_success("{length(merged)} person item{?s} recorded in {.file {persons_file}}")
   }
 

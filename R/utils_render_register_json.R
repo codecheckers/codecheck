@@ -615,6 +615,8 @@ build_venue_stats_field <- function(venue_name, venue_type) {
     contact_name = fields$contact_name,
     contact_email = fields$contact_email,
     description = fields$description,
+    fediverse = fields$fediverse,
+    hashtags = I(fields$hashtags),
     identifiers = lapply(fields$identifiers, function(i) list(
       name = i$name,
       icon = nullable(i$icon),
@@ -642,6 +644,7 @@ build_codechecker_stats_field <- function(identifier, register_table) {
     name = if (!is.null(profile$name)) profile$name else NA_character_,
     orcid = nullable(profile$orcid),
     github_username = nullable(profile$github_handle),
+    fediverse = nullable(person_fediverse(profile$orcid, profile)),
     fields = I(split_codechecker_list_field(profile$fields)),
     languages = I(split_codechecker_list_field(profile$languages)),
     venue_count = nrow(venues),
@@ -708,6 +711,7 @@ build_person_stats_field <- function(orcid, register_table) {
     orcid = orcid,
     github_username = nullable(profile$github_handle),
     wikidata = nullable(wikidata_id_for("person", orcid)),
+    fediverse = nullable(person_fediverse(orcid, profile)),
     # Self-described expertise from codecheckers.csv (register#168), always an
     # array - empty for anyone who is not a volunteer codechecker. I() keeps a
     # single item from being unboxed to a string by write_json(auto_unbox = TRUE).

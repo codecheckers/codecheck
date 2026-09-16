@@ -14,7 +14,7 @@ A data frame with exactly the columns of [CODECHECKER_LIST_COLUMNS].
 }
 \description{
 The three lists differ: only `codecheckers.csv` has `contact`, `fields` and
-`languages`, and `institutional-codecheckers.csv` additionally has
+`languages`, a list read before register#217 has no `fediverse`, and `institutional-codecheckers.csv` additionally has
 `institution`, which is of no interest here. Missing columns are filled with
 `NA` rather than treated as an error, so that a list whose columns change -
 or a list read before its `ORCID` column landed - degrades to "no profile

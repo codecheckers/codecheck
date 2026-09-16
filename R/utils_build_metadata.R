@@ -326,6 +326,8 @@ generate_codechecker_schema_org <- function(codechecker_orcid, codechecker_name,
   if (!is.null(codechecker_github) && codechecker_github != "" && codechecker_github != "NA") {
     person$sameAs <- paste0("https://github.com/", codechecker_github)
   }
+  person$sameAs <- c(person$sameAs, fediverse_profile_url(
+    person_fediverse(codechecker_orcid, resolve_codechecker_profile(codechecker_orcid))))
 
   # Build array of Review entities (codechecks)
   reviews <- list()
@@ -487,6 +489,7 @@ generate_venue_schema_org <- function(venue_name, venue_type, register_table) {
   if (!is.null(venue_id)) venue_entity$`@id` <- venue_id
   if (!is.null(page_url)) venue_entity$url <- page_url
   if (has_value(fields$website_url)) venue_entity$sameAs <- fields$website_url
+  venue_entity$sameAs <- c(venue_entity$sameAs, fediverse_profile_url(fields$fediverse))
   if (has_value(fields$description)) venue_entity$description <- fields$description
   if (has_value(fields$logo_url)) {
     venue_entity$logo <- list(`@type` = "ImageObject", url = fields$logo_url)
@@ -674,6 +677,7 @@ generate_person_schema_org <- function(orcid, name, github_handle = NULL, regist
   # A codechecker's self-described fields and languages (register#168); I()
   # keeps a single topic an array under toJSON(auto_unbox = TRUE).
   profile <- resolve_codechecker_profile(orcid)
+  person$sameAs <- c(person$sameAs, fediverse_profile_url(person_fediverse(orcid, profile)))
   knows_about <- c(split_codechecker_list_field(profile$fields),
                    split_codechecker_list_field(profile$languages))
   if (length(knows_about) > 0) {

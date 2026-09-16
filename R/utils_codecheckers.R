@@ -24,7 +24,7 @@ CODECHECKER_LIST_URLS <- c(
 
 #' The columns a codechecker list is normalised to
 #' @keywords internal
-CODECHECKER_LIST_COLUMNS <- c("name", "handle", "ORCID", "contact", "fields", "languages")
+CODECHECKER_LIST_COLUMNS <- c("name", "handle", "ORCID", "contact", "fields", "languages", "fediverse")
 
 #' Fetch one codechecker list from GitHub
 #'
@@ -34,27 +34,34 @@ CODECHECKER_LIST_COLUMNS <- c("name", "handle", "ORCID", "contact", "fields", "l
 #' column - see [normalize_codechecker_list()].
 #'
 #' @param url Raw URL of the CSV.
-#' @return A data frame with the columns of [CODECHECKER_LIST_COLUMNS].
+#' @return The list as read, or `NULL` when it could not be fetched.
 #' @importFrom utils read.csv
 #' @keywords internal
 fetch_codechecker_list_uncached <- function(url) {
   tryCatch({
-    normalize_codechecker_list(read.csv(url, stringsAsFactors = FALSE, strip.white = TRUE))
+    read.csv(url, stringsAsFactors = FALSE, strip.white = TRUE)
   }, error = function(e) {
     warning("Failed to fetch ", basename(url), ": ", e$message)
-    normalize_codechecker_list(NULL)
+    NULL
   })
 }
 
 # Memoize the fetch for caching, so a render reads each list once. The
 # memoized wrapper takes `...`, so it is a separate binding - documenting it
 # under the same name would put the wrapper's formals in the Rd usage.
-fetch_codechecker_list <- R.cache::addMemoization(fetch_codechecker_list_uncached)
+fetch_codechecker_list_cached <- R.cache::addMemoization(fetch_codechecker_list_uncached)
+
+# Normalised after the cache rather than before it, so that a cache written
+# before a column was added (fediverse, register#217) still yields every
+# column instead of needing to be cleared.
+fetch_codechecker_list <- function(url) {
+  normalize_codechecker_list(fetch_codechecker_list_cached(url))
+}
 
 #' Bring a codechecker list to a common set of columns
 #'
 #' The three lists differ: only `codecheckers.csv` has `contact`, `fields` and
-#' `languages`, and `institutional-codecheckers.csv` additionally has
+#' `languages`, a list read before register#217 has no `fediverse`, and `institutional-codecheckers.csv` additionally has
 #' `institution`, which is of no interest here. Missing columns are filled with
 #' `NA` rather than treated as an error, so that a list whose columns change -
 #' or a list read before its `ORCID` column landed - degrades to "no profile
@@ -86,7 +93,8 @@ normalize_codechecker_list <- function(codecheckers) {
 #' two lists and [all_codechecker_records()] for the three of them combined,
 #' which is what the profile lookups below search.
 #'
-#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages
+#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages,
+#'   fediverse
 #' @export
 get_codecheckers_data <- function() {
   fetch_codechecker_list(CODECHECKER_LIST_URLS[["volunteer"]])
@@ -94,8 +102,9 @@ get_codecheckers_data <- function() {
 
 #' Fetch and cache institutional-codecheckers.csv data from GitHub
 #'
-#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages
-#'   (the last three are `NA` - the institution is the point of contact)
+#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages,
+#'   fediverse (contact, fields and languages are `NA` - the institution is the
+#'   point of contact)
 #' @export
 get_institutional_codecheckers_data <- function() {
   fetch_codechecker_list(CODECHECKER_LIST_URLS[["institutional"]])
@@ -103,8 +112,8 @@ get_institutional_codecheckers_data <- function() {
 
 #' Fetch and cache agile-codecheckers.csv data from GitHub
 #'
-#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages
-#'   (the last three are `NA`)
+#' @return A data frame with columns: name, handle, ORCID, contact, fields, languages,
+#'   fediverse (contact, fields and languages are `NA`)
 #' @export
 get_agile_codecheckers_data <- function() {
   fetch_codechecker_list(CODECHECKER_LIST_URLS[["agile"]])
@@ -146,6 +155,7 @@ codechecker_record_to_profile <- function(codechecker) {
     orcid = if (blank(codechecker$ORCID)) NULL else codechecker$ORCID,
     fields = codechecker$fields,
     languages = codechecker$languages,
+    fediverse = fediverse_handle(codechecker$fediverse),
     source = codechecker$source
   )
 }
@@ -195,7 +205,7 @@ split_codechecker_list_field <- function(text) {
 #'
 #' @param orcid The ORCID identifier (without URL prefix)
 #' @return A list with profile information (name, github_handle, orcid, fields,
-#'         languages, source) or NULL if not found
+#'         languages, fediverse, source) or NULL if not found
 #' @export
 get_codechecker_profile <- function(orcid) {
   if (is.null(orcid) || is.na(orcid) || orcid == "" || orcid == "0000-0000-0000-0000") {
@@ -222,7 +232,7 @@ get_codechecker_profile <- function(orcid) {
 #'
 #' @param handle The GitHub handle (without @ prefix)
 #' @return A list with profile information (name, github_handle, orcid, fields,
-#'         languages, source) or NULL if not found
+#'         languages, fediverse, source) or NULL if not found
 #' @export
 get_codechecker_profile_by_handle <- function(handle) {
   if (is.null(handle) || is.na(handle) || handle == "") {
@@ -535,6 +545,11 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
   wikidata <- wikidata_id_for("person", if (has_orcid) profile$orcid else identifier)
   has_wikidata <- !is.null(wikidata)
 
+  # The person's fediverse account (register#217), as a rel="me" link so that
+  # the account can verify the page back.
+  fediverse <- person_fediverse(if (has_orcid) profile$orcid else NULL, profile)
+  has_fediverse <- !is.null(fediverse)
+
   venues_html <- if (!is.null(register_table)) generate_contributed_venues_html(register_table, table_details) else ""
   has_venues <- nzchar(venues_html)
 
@@ -563,6 +578,9 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
     orcid = if (has_orcid) profile$orcid else NULL,
     has_wikidata = has_wikidata,
     wikidata = wikidata,
+    has_fediverse = has_fediverse,
+    fediverse = fediverse,
+    fediverse_url = fediverse_profile_url(fediverse),
     has_fields = has_fields,
     fields = paste(fields, collapse = ", "),
     has_languages = has_languages,

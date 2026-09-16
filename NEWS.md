@@ -2,12 +2,16 @@
 
 ## New Features
 
+* Fediverse accounts and venue hashtags (register#217): the codechecker lists and the register's `persons.csv` have a `fediverse` column (`@user@instance`), and `venues.csv` has `fediverse` and `hashtags` (`;`-separated, without `#`). Person and venue pages show the account as a `rel="me"` link, their Schema.org metadata list it under `sameAs`, and the `index.json` of a person, codechecker or venue carries it; venue pages and JSON also list the hashtags. `persons.csv` accounts win over the codechecker lists, and a value that is not `@user@instance` is ignored rather than linked.
+
 * `codecheck_spec_version()` chooses the specification version rather than assuming it: a file that names a version is read by that, including the historical `https://codecheck.org.uk/spec/1.0` form that certificates from 2020 carry; a file that names none is judged by the requirements that were current when it was checked (`check_time`, or the new `modified` argument); only a file that cannot be dated falls back to the newest version. A configuration from 2020 is no longer reported against requirements published in 2026. See "Choosing the specification version" in the register's `RULES.md`.
 * Person pages show a codechecker's fields and languages from `codecheckers.csv`, their `stats.json` lists them as `fields` and `languages` arrays, and their Schema.org metadata as `knowsAbout`. An entry is split at commas outside parentheses, so `R (expert, package dev)` stays one item (register#168).
 * `register_clear_cache()` takes certificate identifiers to refresh only what is cached about those certificates, keeping the rest of the cache (`make clean_cert CERT_ID=...` in the register).
 
 ## Bug Fixes
 
+* Writing `persons.csv` after resolving Wikidata items keeps the file's other columns and the rows without an item, instead of rewriting it with `orcid` and `wikidata` only (register#217).
+* A codechecker list cached before a column was added is normalised again on read, so it no longer needs `register_clear_cache()` to show the new column.
 * Rule `CC-MET-001` orcid-format now also checks an ORCID's check digit, so a mistyped ORCID is caught before it is looked up (register#209).
 * Rule `CC-MET-003` orcid-name-match no longer reports a name as different from its ORCID record only because of diacritics, e.g. Grišiūtė and Grisiute (register#209).
 

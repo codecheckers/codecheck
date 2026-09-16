@@ -7,7 +7,8 @@
 get_codecheckers_data()
 }
 \value{
-A data frame with columns: name, handle, ORCID, contact, fields, languages
+A data frame with columns: name, handle, ORCID, contact, fields, languages,
+  fediverse
 }
 \description{
 The volunteer codechecker list. See [CODECHECKER_LIST_URLS] for the other

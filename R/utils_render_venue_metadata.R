@@ -87,8 +87,9 @@ parse_venue_identifiers <- function(identifiers_str) {
 #'   GitHub issue label values instead.
 #'
 #' @return A list with `venue_type`, `logo_url`, `website_url`,
-#'   `contact_name`, `contact_email` and `description` (each `NA_character_`
-#'   when not set), and `identifiers` (a list of `name`/`icon`/`value`/`link`
+#'   `contact_name`, `contact_email`, `description` and `fediverse` (each
+#'   `NA_character_` when not set), `hashtags` (a character vector without `#`,
+#'   possibly empty, see [split_venue_hashtags()]), and `identifiers` (a list of `name`/`icon`/`value`/`link`
 #'   lists, possibly empty - see [parse_venue_identifiers()]).
 #' @keywords internal
 get_venue_metadata_fields <- function(venue_row, venue_type = NULL) {
@@ -100,6 +101,8 @@ get_venue_metadata_fields <- function(venue_row, venue_type = NULL) {
     if (is.na(value) || !nzchar(value)) NA_character_ else value
   }
 
+  fediverse <- fediverse_handle(get_col("fediverse"))
+
   list(
     venue_type = if (!is.null(venue_type) && !is.na(venue_type) && nzchar(venue_type)) venue_type else NA_character_,
     logo_url = get_col("logo_url"),
@@ -107,6 +110,10 @@ get_venue_metadata_fields <- function(venue_row, venue_type = NULL) {
     contact_name = get_col("contact_name"),
     contact_email = get_col("contact_email"),
     description = get_col("description"),
+    # The venue's own account and hashtags, for announcing its certificates
+    # (register#217). A malformed account is left out rather than linked.
+    fediverse = if (is.null(fediverse)) NA_character_ else fediverse,
+    hashtags = split_venue_hashtags(get_col("hashtags")),
     identifiers = parse_venue_identifiers(get_col("identifiers")),
     # The organisation page for this venue's ROR, when the register's people
     # put one there (register#53). A venue commissioned the check, the
@@ -142,6 +149,8 @@ generate_venue_metadata_html <- function(venue_row, venue_type = NULL) {
   has_contact <- has_contact_name || has_contact_email
   has_description <- has_value(fields$description)
   has_identifiers <- length(fields$identifiers) > 0
+  has_fediverse <- has_value(fields$fediverse)
+  has_hashtags <- length(fields$hashtags) > 0
 
   template_path <- system.file("extdata", "templates/general/venue_metadata.html", package = "codecheck")
   template <- paste(readLines(template_path, warn = FALSE), collapse = "\n")
@@ -174,6 +183,11 @@ generate_venue_metadata_html <- function(venue_row, venue_type = NULL) {
     description = fields$description,
     has_identifiers = has_identifiers,
     identifiers = fields$identifiers,
+    has_fediverse = has_fediverse,
+    fediverse = fields$fediverse,
+    fediverse_url = if (has_fediverse) fediverse_profile_url(fields$fediverse) else NULL,
+    has_hashtags = has_hashtags,
+    hashtags = paste0("#", fields$hashtags, collapse = " "),
     has_organisation = has_value(fields$organisation_ror),
     # a venue page lives at docs/venues/<type_plural>/<slug>/
     organisation_url = paste0("../../../organisations/", fields$organisation_ror, "/")
@@ -208,6 +222,8 @@ generate_venue_metadata_yaml <- function(venue_row, venue_type = NULL) {
   if (has_value(fields$contact_name)) yaml_list$contact_name <- fields$contact_name
   if (has_value(fields$contact_email)) yaml_list$contact_email <- fields$contact_email
   if (has_value(fields$description)) yaml_list$description <- fields$description
+  if (has_value(fields$fediverse)) yaml_list$fediverse <- fields$fediverse
+  if (length(fields$hashtags) > 0) yaml_list$hashtags <- fields$hashtags
   if (length(fields$identifiers) > 0) {
     yaml_list$identifiers <- lapply(fields$identifiers, function(i) {
       entry <- list(name = i$name, value = i$value)

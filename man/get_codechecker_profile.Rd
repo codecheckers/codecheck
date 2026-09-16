@@ -11,7 +11,7 @@ get_codechecker_profile(orcid)
 }
 \value{
 A list with profile information (name, github_handle, orcid, fields,
-        languages, source) or NULL if not found
+        languages, fediverse, source) or NULL if not found
 }
 \description{
 Searches all three codechecker lists, see [all_codechecker_records()].

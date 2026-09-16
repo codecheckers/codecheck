@@ -139,6 +139,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       # After preprocessing: the certificate items come from register.csv, and
       # the works are only resolved once something has been exported.
       load_wikidata_ids(register_table, persons_file)
+      load_person_fediverse(persons_file)
       # Setting number of codechecks now for later use. This is done to avoid double counting codechecks
       # done by multiple authors.
       CONFIG$NO_CODECHECKS <- nrow(register_table)
@@ -358,6 +359,7 @@ register_render_cert <- function(cert_id,
     preprocess_register(register[register$Certificate == cert_id, , drop = FALSE],
                         filter_by = c("works", "persons")),
     persons_file)
+  load_person_fediverse(persons_file)
 
   # Setup shared libraries (needed for HTML rendering)
   setup_external_libraries()

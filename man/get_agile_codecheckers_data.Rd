@@ -7,8 +7,8 @@
 get_agile_codecheckers_data()
 }
 \value{
-A data frame with columns: name, handle, ORCID, contact, fields, languages
-  (the last three are `NA`)
+A data frame with columns: name, handle, ORCID, contact, fields, languages,
+  fediverse (contact, fields and languages are `NA`)
 }
 \description{
 Fetch and cache agile-codecheckers.csv data from GitHub

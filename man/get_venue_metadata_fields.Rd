@@ -17,8 +17,9 @@ GitHub issue label values instead.}
 }
 \value{
 A list with `venue_type`, `logo_url`, `website_url`,
-  `contact_name`, `contact_email` and `description` (each `NA_character_`
-  when not set), and `identifiers` (a list of `name`/`icon`/`value`/`link`
+  `contact_name`, `contact_email`, `description` and `fediverse` (each
+  `NA_character_` when not set), `hashtags` (a character vector without `#`,
+  possibly empty, see [split_venue_hashtags()]), and `identifiers` (a list of `name`/`icon`/`value`/`link`
   lists, possibly empty - see [parse_venue_identifiers()]).
 }
 \description{

@@ -133,6 +133,10 @@ expect_true(grepl("contact_name: Jane Doe", agile_md, fixed = TRUE))
 expect_true(grepl("contact_email: jane@example.org", agile_md, fixed = TRUE))
 expect_true(grepl("name: ROR", agile_md, fixed = TRUE))
 expect_true(grepl("url: https://ror.org/05wg1m734", agile_md, fixed = TRUE))
+# The venue's fediverse account and hashtags (register#217)
+expect_true(grepl("fediverse: '@agile@fediscience.org'", agile_md, fixed = TRUE))
+expect_true(grepl("- AGILEGIS", agile_md, fixed = TRUE))
+expect_true(grepl("- GIScience", agile_md, fixed = TRUE))
 # The venue type moved from the title into the metadata (register#84 followup).
 # The title is YAML-quoted (add_markdown_title()) so that a work page's title -
 # which can contain a colon ("svaRetro and svaNUMT: Modular packages...") -
@@ -158,6 +162,9 @@ expect_false(grepl("contact_name", gigabyte_md, fixed = TRUE))
 # as a Markdown indented code block instead of a raw HTML block.
 agile_html <- readLines(file.path("docs", "venues", "conferences", "agilegis", "index.html"))
 agile_html <- paste(agile_html, collapse = "\n")
+# The venue's fediverse account as a rel="me" link, and its hashtags (register#217)
+expect_true(grepl('href="https://fediscience.org/@agile" target="_blank" rel="me noopener"', agile_html, fixed = TRUE))
+expect_true(grepl("#AGILEGIS #GIScience", agile_html, fixed = TRUE))
 expect_true(grepl('<div class="venue-metadata">', agile_html, fixed = TRUE))
 expect_true(grepl("<p class=\"venue-metadata-description\">", agile_html, fixed = TRUE))
 expect_false(grepl("<pre><code>", agile_html, fixed = TRUE))
