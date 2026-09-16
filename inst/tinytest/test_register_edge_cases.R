@@ -9,6 +9,22 @@ suppressMessages({
 source(system.file("extdata", "config.R", package = "codecheck"))
 source("mocks.R")
 
+# These tests are about the shape of the register - empty, NA, UTF-8, several
+# platforms - not about what remote services answer. Two steps of every render
+# go to the network regardless of the register: downloading Bootstrap and the
+# other front-end libraries into each test's fresh docs/libs, and resolving each
+# certificate's PDF link, which for the Zenodo sandbox record fails, is not
+# cached (so a transient failure is retried) and is therefore requested again,
+# with retries, for every page. Together they made this file take over four
+# minutes. Both are tested on their own in test_external_libs.R and
+# test_cert_link.R.
+render_register <- function(...) {
+  with_mocked_codecheck(
+    list(setup_external_libraries = function(...) invisible(NULL),
+         get_cert_link = function(...) NULL),
+    codecheck::register_render(...))
+}
+
 # read fixtures now, before the tests below setwd() into temporary directories
 codechecker_without_ids <- mock_codecheck_yml(
   codechecker = list(list(name = "Anonymous Checker")),
@@ -36,7 +52,7 @@ expect_error({
   writeLines("name,longname,label", "venues.csv")
 
   suppressMessages({
-    result <- codecheck::register_render(
+    result <- render_register(
       register = empty_register,
       outputs = c("json"),
       from = 1,
@@ -71,7 +87,7 @@ setwd(test_dir)
 writeLines("name,longname,label\ntest,Test Venue,community", "venues.csv")
 
 suppressMessages({
-  result <- codecheck::register_render(
+  result <- render_register(
     register = single_register,
     outputs = c("json"),
     from = 1,
@@ -105,7 +121,7 @@ expect_silent({
   writeLines("name,longname,label\ntest venue,Test Venue,community", "venues.csv")
 
   suppressMessages({
-    result <- codecheck::register_render(
+    result <- render_register(
       register = test_register,
       outputs = c("json"),
       from = 1,
@@ -145,7 +161,7 @@ expect_silent({
   writeLines("name,longname,label\nCafé Scïence Tëst,Café Science Test,conference", "venues.csv")
 
   suppressMessages({
-    result <- codecheck::register_render(
+    result <- render_register(
       register = utf8_register,
       outputs = c("json"),
       from = 1,
@@ -179,7 +195,7 @@ expect_silent({
   writeLines("name,longname,label\nTest & Demo,Test and Demo,community", "venues.csv")
 
   suppressMessages({
-    result <- codecheck::register_render(
+    result <- render_register(
       register = special_char_register,
       outputs = c("json"),
       from = 1,
@@ -223,7 +239,7 @@ multi_platform_register <- data.frame(
          # no GitHub lookup either, so the fallback cannot rescue the name
          get_github_handle_by_name = function(name, ...) NULL),
     suppressMessages({
-      result <- codecheck::register_render(
+      result <- render_register(
         register = multi_platform_register,
         outputs = c("json"),
         from = 1,
@@ -270,7 +286,7 @@ expect_silent({
   writeLines("name,longname,label\ntest,Test Venue,community", "venues.csv")
 
   suppressMessages({
-    result <- codecheck::register_render(
+    result <- render_register(
       register = na_issue_register,
       outputs = c("json"),
       from = 1,
@@ -304,7 +320,7 @@ expect_silent({
   writeLines("name,longname,label\ntest,Test Venue,community", "venues.csv")
 
   suppressMessages({
-    result <- codecheck::register_render(
+    result <- render_register(
       register = mixed_issue_register,
       outputs = c("json"),
       from = 1,
@@ -340,7 +356,7 @@ expect_silent({
 
   suppressMessages({
     # Only process entries 3-5
-    result <- codecheck::register_render(
+    result <- render_register(
       register = large_register,
       outputs = c("json"),
       from = 3,
@@ -378,7 +394,7 @@ expect_silent({
   writeLines("name,longname,label\nTestJournal,Test Journal,journal\nTestConf,Test Conference,conference\nTestComm,Test Community,community\nTestInst,Test Institution,institution", "venues.csv")
 
   suppressMessages({
-    result <- codecheck::register_render(
+    result <- render_register(
       register = venue_types_register,
       outputs = c("json"),
       from = 1,
