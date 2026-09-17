@@ -38,6 +38,8 @@
 
 ### Bug Fixes
 
+- The link text of a fediverse account on person and venue pages is no
+  longer turned into citation spans by pandoc (register#217).
 - A `persons.csv` whose `fediverse` column has no account in it no
   longer stops
   [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)

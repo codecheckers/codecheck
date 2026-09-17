@@ -49,7 +49,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>A <code>persons.csv</code> whose <code>fediverse</code> column has no account in it no longer stops <code><a href="../reference/register_render.html">register_render()</a></code> with “attempt to set an attribute on NULL” (register#217).</li>
+<ul><li>The link text of a fediverse account on person and venue pages is no longer turned into citation spans by pandoc (register#217).</li>
+<li>A <code>persons.csv</code> whose <code>fediverse</code> column has no account in it no longer stops <code><a href="../reference/register_render.html">register_render()</a></code> with “attempt to set an attribute on NULL” (register#217).</li>
 <li>Writing <code>persons.csv</code> after resolving Wikidata items keeps the file’s other columns and the rows without an item, instead of rewriting it with <code>orcid</code> and <code>wikidata</code> only (register#217).</li>
 <li>A codechecker list cached before a column was added is normalised again on read, so it no longer needs <code><a href="../reference/register_clear_cache.html">register_clear_cache()</a></code> to show the new column.</li>
 <li>Rule <code>CC-MET-001</code> orcid-format now also checks an ORCID’s check digit, so a mistyped ORCID is caught before it is looked up (register#209).</li>
