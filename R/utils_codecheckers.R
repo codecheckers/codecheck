@@ -579,7 +579,7 @@ generate_codechecker_metadata_html <- function(identifier, register_table = NULL
     has_wikidata = has_wikidata,
     wikidata = wikidata,
     has_fediverse = has_fediverse,
-    fediverse = fediverse,
+    fediverse_text = fediverse_link_text(fediverse),
     fediverse_url = fediverse_profile_url(fediverse),
     has_fields = has_fields,
     fields = paste(fields, collapse = ", "),

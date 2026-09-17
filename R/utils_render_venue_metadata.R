@@ -184,7 +184,7 @@ generate_venue_metadata_html <- function(venue_row, venue_type = NULL) {
     has_identifiers = has_identifiers,
     identifiers = fields$identifiers,
     has_fediverse = has_fediverse,
-    fediverse = fields$fediverse,
+    fediverse_text = if (has_fediverse) fediverse_link_text(fields$fediverse) else NULL,
     fediverse_url = if (has_fediverse) fediverse_profile_url(fields$fediverse) else NULL,
     has_hashtags = has_hashtags,
     hashtags = paste0("#", fields$hashtags, collapse = " "),

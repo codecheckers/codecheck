@@ -39,6 +39,23 @@ fediverse_profile_url <- function(handle) {
   paste0("https://", parts[2], "/@", parts[1])
 }
 
+#' The text of a link to a fediverse account
+#'
+#' `@user@instance` with each `@` written as `&#64;`. The pages go through
+#' pandoc, which reads `@word` in Markdown as a citation key and wraps it in a
+#' citation span; an entity is text to it.
+#'
+#' @param handle An account, see [fediverse_handle()].
+#' @return The HTML text, or `NULL` when `handle` is not an account.
+#' @keywords internal
+fediverse_link_text <- function(handle) {
+  handle <- fediverse_handle(handle)
+  if (is.null(handle)) return(NULL)
+  # fediverse_handle() admits only letters, digits, _ . - and @, so nothing
+  # else needs escaping.
+  gsub("@", "&#64;", handle, fixed = TRUE)
+}
+
 #' Read the fediverse accounts recorded in persons.csv
 #'
 #' Fills `CONFIG$PERSON_FEDIVERSE`, a named character vector from ORCID to

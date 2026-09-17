@@ -17,6 +17,8 @@ expect_null(codecheck:::fediverse_handle(NULL))
 expect_equal(codecheck:::fediverse_profile_url("@codecheck@fediscience.org"),
              "https://fediscience.org/@codecheck")
 expect_null(codecheck:::fediverse_profile_url("not an account"))
+# pandoc reads @word as a citation, so the link text carries entities
+expect_equal(codecheck:::fediverse_link_text("@codecheck@fediscience.org"), "&#64;codecheck&#64;fediscience.org")
 
 # Unit tests: split_venue_hashtags() ----
 
