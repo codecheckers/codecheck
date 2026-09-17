@@ -12,6 +12,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/authors.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/index.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/news/index.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/CODECHECKER_LIST_CACHE_DIRS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/CODECHECKER_LIST_COLUMNS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/CODECHECKER_LIST_URLS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/CODECHECK_MIN_LIB_FILE_SIZE.html</loc></url>
@@ -173,6 +174,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/fediverse_handle.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/fediverse_link_text.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/fediverse_profile_url.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/fetch_codechecker_list.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/fetch_codechecker_list_uncached.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/format_check_date.html</loc></url>
@@ -302,6 +304,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/library_expected_files.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/libs_are_current.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/list_manifest_files.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/load_codechecker_lists.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/load_person_fediverse.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/load_venues_config.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/load_wikibase_register.html</loc></url>
