@@ -121,6 +121,9 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       # Load venues configuration
       load_venues_config(venues_file)
 
+      # Read the codechecker lists fresh, before render workers are forked
+      load_codechecker_lists()
+
       # Setup external libraries locally (Bootstrap, Font Awesome, Academicons, etc.)
       setup_external_libraries()
 
@@ -351,6 +354,7 @@ register_render_cert <- function(cert_id,
 
   # Load venues configuration
   load_venues_config(venues_file)
+  load_codechecker_lists()
 
   # Only this certificate's row is enriched: preprocessing the whole register
   # here would make rendering one certificate cost as much as rendering all of

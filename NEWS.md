@@ -13,7 +13,7 @@
 * The link text of a fediverse account on person and venue pages is no longer turned into citation spans by pandoc (register#217).
 * A `persons.csv` whose `fediverse` column has no account in it no longer stops `register_render()` with "attempt to set an attribute on NULL" (register#217).
 * Writing `persons.csv` after resolving Wikidata items keeps the file's other columns and the rows without an item, instead of rewriting it with `orcid` and `wikidata` only (register#217).
-* A codechecker list cached before a column was added is normalised again on read, so it no longer needs `register_clear_cache()` to show the new column.
+* Every render reads the codechecker lists fresh from GitHub, using the cached copy only when that fails, so a copy cached before the `fediverse` column no longer hides all accounts until the cache is cleared (register#217).
 * Rule `CC-MET-001` orcid-format now also checks an ORCID's check digit, so a mistyped ORCID is caught before it is looked up (register#209).
 * Rule `CC-MET-003` orcid-name-match no longer reports a name as different from its ORCID record only because of diacritics, e.g. Grišiūtė and Grisiute (register#209).
 

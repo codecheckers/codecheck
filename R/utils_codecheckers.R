@@ -28,10 +28,8 @@ CODECHECKER_LIST_COLUMNS <- c("name", "handle", "ORCID", "contact", "fields", "l
 
 #' Fetch one codechecker list from GitHub
 #'
-#' A failed fetch is a warning and an empty data frame, never an error: a
-#' render without network access should still produce pages, just without the
-#' profile panel. The same holds for a list that does not (yet) carry every
-#' column - see [normalize_codechecker_list()].
+#' A failed fetch is a warning and `NULL`, never an error, see
+#' [fetch_codechecker_list()] for what a render does then.
 #'
 #' @param url Raw URL of the CSV.
 #' @return The list as read, or `NULL` when it could not be fetched.
@@ -46,16 +44,75 @@ fetch_codechecker_list_uncached <- function(url) {
   })
 }
 
-# Memoize the fetch for caching, so a render reads each list once. The
-# memoized wrapper takes `...`, so it is a separate binding - documenting it
-# under the same name would put the wrapper's formals in the Rd usage.
-fetch_codechecker_list_cached <- R.cache::addMemoization(fetch_codechecker_list_uncached)
+# The lists fetched in this R session, by URL. See fetch_codechecker_list().
+codechecker_list_session <- new.env(parent = emptyenv())
 
-# Normalised after the cache rather than before it, so that a cache written
-# before a column was added (fediverse, register#217) still yields every
-# column instead of needing to be cleared.
-fetch_codechecker_list <- function(url) {
-  normalize_codechecker_list(fetch_codechecker_list_cached(url))
+#' Cache subdirectory of the last codechecker lists fetched successfully
+#' @keywords internal
+CODECHECKER_LIST_CACHE_DIRS <- c("codecheck", "codechecker_lists")
+
+#' Read one codechecker list, fresh from GitHub once per session
+#'
+#' The lists change whenever somebody registers or adds an account, so they
+#' are read from GitHub again in every R session rather than kept in the cache
+#' indefinitely: a copy memoized before the `fediverse` column was added kept
+#' every account off the person pages until the cache was cleared by hand
+#' (register#217). Within a session the list is read once, so the many profile
+#' lookups of a render do not each make a request; [register_render()] reads
+#' all three lists up front via [load_codechecker_lists()], so that the forked
+#' render workers inherit them.
+#'
+#' Every successful fetch is also written to the cache, and only used when a
+#' later fetch fails, with a warning: a render without network access still
+#' shows the profiles as last seen, and only without any copy does it produce
+#' pages without the profile panel. A list that does not (yet) carry every
+#' column is fine either way, see [normalize_codechecker_list()].
+#'
+#' @param url Raw URL of the CSV.
+#' @param refresh Read the list from GitHub even if this session already has.
+#' @param fetch Function of the URL returning the list or `NULL`, for tests.
+#' @return A data frame with the columns of [CODECHECKER_LIST_COLUMNS].
+#' @keywords internal
+fetch_codechecker_list <- function(url, refresh = FALSE,
+                                   fetch = fetch_codechecker_list_uncached) {
+  if (!refresh && exists(url, envir = codechecker_list_session, inherits = FALSE)) {
+    return(get(url, envir = codechecker_list_session, inherits = FALSE))
+  }
+
+  key <- list(url)
+  records <- fetch(url)
+  if (!is.null(records)) {
+    tryCatch(R.cache::saveCache(records, key = key, dirs = CODECHECKER_LIST_CACHE_DIRS),
+             error = function(e) {
+               warning("Could not cache ", basename(url), ": ", conditionMessage(e))
+             })
+  } else {
+    records <- tryCatch(R.cache::loadCache(key = key, dirs = CODECHECKER_LIST_CACHE_DIRS),
+                        error = function(e) NULL)
+    if (!is.null(records)) {
+      warning("Using the cached copy of ", basename(url), ", which may be outdated")
+    }
+  }
+
+  # Normalised after the cache rather than before it, so that a copy cached
+  # before a column was added still yields every column.
+  records <- normalize_codechecker_list(records)
+  assign(url, records, envir = codechecker_list_session)
+  records
+}
+
+#' Read all codechecker lists fresh from GitHub
+#'
+#' Called at the start of [register_render()], so that every render uses the
+#' lists as they are now, also when run twice in one R session.
+#'
+#' @return The number of lists read, invisibly.
+#' @keywords internal
+load_codechecker_lists <- function() {
+  for (url in CODECHECKER_LIST_URLS) {
+    fetch_codechecker_list(url, refresh = TRUE)
+  }
+  invisible(length(CODECHECKER_LIST_URLS))
 }
 
 #' Bring a codechecker list to a common set of columns

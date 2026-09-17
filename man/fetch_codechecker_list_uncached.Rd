@@ -13,9 +13,7 @@ fetch_codechecker_list_uncached(url)
 The list as read, or `NULL` when it could not be fetched.
 }
 \description{
-A failed fetch is a warning and an empty data frame, never an error: a
-render without network access should still produce pages, just without the
-profile panel. The same holds for a list that does not (yet) carry every
-column - see [normalize_codechecker_list()].
+A failed fetch is a warning and `NULL`, never an error, see
+[fetch_codechecker_list()] for what a render does then.
 }
 \keyword{internal}
