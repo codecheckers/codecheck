@@ -38,6 +38,10 @@
 
 ### Bug Fixes
 
+- A `persons.csv` whose `fediverse` column has no account in it no
+  longer stops
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  with “attempt to set an attribute on NULL” (register#217).
 - Writing `persons.csv` after resolving Wikidata items keeps the file’s
   other columns and the rows without an item, instead of rewriting it
   with `orcid` and `wikidata` only (register#217).
