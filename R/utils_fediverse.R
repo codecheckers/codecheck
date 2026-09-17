@@ -53,9 +53,14 @@ load_person_fediverse <- function(persons_file = NULL) {
   if (!is.null(persons_file) && file.exists(persons_file)) {
     people <- utils::read.csv(persons_file, stringsAsFactors = FALSE, colClasses = "character")
     if (all(c("orcid", "fediverse") %in% names(people))) {
-      handles <- lapply(people$fediverse, fediverse_handle)
-      keep <- !vapply(handles, is.null, logical(1))
-      accounts <- stats::setNames(unlist(handles[keep]), toupper(people$orcid[keep]))
+      handles <- vapply(people$fediverse, function(value) {
+        handle <- fediverse_handle(value)
+        if (is.null(handle)) NA_character_ else handle
+      }, character(1), USE.NAMES = FALSE)
+      # A column with no account in it - the register's, until people add
+      # theirs - is an empty lookup, not an error.
+      keep <- !is.na(handles)
+      accounts <- stats::setNames(handles[keep], toupper(people$orcid[keep]))
     }
   }
   CONFIG$PERSON_FEDIVERSE <- accounts

@@ -53,6 +53,12 @@ expect_equal(codecheck:::person_fediverse("0000-0000-0000-0002", profile), "@ape
 expect_equal(codecheck:::person_fediverse("0000-0000-0000-000x"), "@x@example.social")
 expect_null(codecheck:::person_fediverse("0000-0000-0000-0003"))
 
+# A column with no account in it is an empty lookup, as in the register today
+empty_column <- tempfile(fileext = ".csv")
+writeLines(c("orcid,wikidata,fediverse", "0000-0000-0000-0001,Q1,", "0000-0000-0000-0002,,"), empty_column)
+expect_silent(codecheck:::load_person_fediverse(empty_column))
+expect_null(codecheck:::person_fediverse("0000-0000-0000-0001"))
+
 # A file without the column is an empty lookup
 no_column <- tempfile(fileext = ".csv")
 writeLines(c("orcid,wikidata", "0000-0000-0000-0001,Q1"), no_column)
