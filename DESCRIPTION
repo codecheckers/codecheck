@@ -51,6 +51,10 @@ Imports:
     parallel,
     tools,
     xml2
+SystemRequirements: C++17, cmake, pandoc (>= 2.0), Poppler C++ API
+    (libpoppler-cpp-dev), librsvg2 (librsvg2-dev), ImageMagick++
+    (libmagick++-dev), libgit2, libssl, libxml2, libcurl, libicu, libuv,
+    libsecret; LaTeX (e.g. TinyTeX) for rendering certificates
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr

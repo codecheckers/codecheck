@@ -6,6 +6,7 @@
 
 * `codecheck_spec_version()` chooses the specification version rather than assuming it: a file that names a version is read by that, including the historical `https://codecheck.org.uk/spec/1.0` form that certificates from 2020 carry; a file that names none is judged by the requirements that were current when it was checked (`check_time`, or the new `modified` argument); only a file that cannot be dated falls back to the newest version. A configuration from 2020 is no longer reported against requirements published in 2026. See "Choosing the specification version" in the register's `RULES.md`.
 * Person pages show a codechecker's fields and languages from `codecheckers.csv`, their `stats.json` lists them as `fields` and `languages` arrays, and their Schema.org metadata as `knowsAbout`. An entry is split at commas outside parentheses, so `R (expert, package dev)` stays one item (register#168).
+* The README and `DESCRIPTION` list the system libraries needed to install the package, e.g. `libpoppler-cpp-dev` and `libmagick++-dev` on Debian/Ubuntu (closes codecheckers/codecheck#91).
 * `register_clear_cache()` takes certificate identifiers to refresh only what is cached about those certificates, keeping the rest of the cache (`make clean_cert CERT_ID=...` in the register).
 
 ## Bug Fixes
