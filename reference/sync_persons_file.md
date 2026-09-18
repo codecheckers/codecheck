@@ -25,9 +25,3 @@ sync_persons_file(persons_file, resolved)
 ## Value
 
 the merged mapping
-
-## Details
-
-The file carries more than this function writes - a \`fediverse\`
-column, say (register#217) - so every other column, and every row
-without an item, is kept as it was.

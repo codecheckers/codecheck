@@ -17,7 +17,7 @@ same information."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ same information."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Extract a venue's structured metadata fields</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/utils_render_venue_metadata.R" class="external-link"><code>R/utils_render_venue_metadata.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.30.0/R/utils_render_venue_metadata.R" class="external-link"><code>R/utils_render_venue_metadata.R</code></a></small>
       <div class="d-none name"><code>get_venue_metadata_fields.Rd</code></div>
     </div>
 
@@ -82,9 +82,8 @@ GitHub issue label values instead.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with `venue_type`, `logo_url`, `website_url`,
-  `contact_name`, `contact_email`, `description` and `fediverse` (each
-  `NA_character_` when not set), `hashtags` (a character vector without `#`,
-  possibly empty, see [split_venue_hashtags()]), and `identifiers` (a list of `name`/`icon`/`value`/`link`
+  `contact_name`, `contact_email` and `description` (each `NA_character_`
+  when not set), and `identifiers` (a list of `name`/`icon`/`value`/`link`
   lists, possibly empty - see [parse_venue_identifiers()]).</p>
     </div>
 

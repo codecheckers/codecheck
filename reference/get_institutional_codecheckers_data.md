@@ -11,5 +11,5 @@ get_institutional_codecheckers_data()
 ## Value
 
 A data frame with columns: name, handle, ORCID, contact, fields,
-languages, fediverse (contact, fields and languages are \`NA\` - the
-institution is the point of contact)
+languages (the last three are \`NA\` - the institution is the point of
+contact)

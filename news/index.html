@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,29 +35,9 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/codecheckers/codecheck/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/codecheckers/codecheck/blob/0.30.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
-<div class="section level3">
-<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
-<ul><li><p>Fediverse accounts and venue hashtags (register#217): the codechecker lists and the register’s <code>persons.csv</code> have a <code>fediverse</code> column (<code>@user@instance</code>), and <code>venues.csv</code> has <code>fediverse</code> and <code>hashtags</code> (<code>;</code>-separated, without <code>#</code>). Person and venue pages show the account as a <code>rel="me"</code> link, their Schema.org metadata list it under <code>sameAs</code>, and the <code>index.json</code> of a person, codechecker or venue carries it; venue pages and JSON also list the hashtags. <code>persons.csv</code> accounts win over the codechecker lists, and a value that is not <code>@user@instance</code> is ignored rather than linked.</p></li>
-<li><p><code><a href="../reference/codecheck_spec_version.html">codecheck_spec_version()</a></code> chooses the specification version rather than assuming it: a file that names a version is read by that, including the historical <code>https://codecheck.org.uk/spec/1.0</code> form that certificates from 2020 carry; a file that names none is judged by the requirements that were current when it was checked (<code>check_time</code>, or the new <code>modified</code> argument); only a file that cannot be dated falls back to the newest version. A configuration from 2020 is no longer reported against requirements published in 2026. See “Choosing the specification version” in the register’s <code>RULES.md</code>.</p></li>
-<li><p>Person pages show a codechecker’s fields and languages from <code>codecheckers.csv</code>, their <code>stats.json</code> lists them as <code>fields</code> and <code>languages</code> arrays, and their Schema.org metadata as <code>knowsAbout</code>. An entry is split at commas outside parentheses, so <code>R (expert, package dev)</code> stays one item (register#168).</p></li>
-<li><p>The README and <code>DESCRIPTION</code> list the system libraries needed to install the package, e.g. <code>libpoppler-cpp-dev</code> and <code>libmagick++-dev</code> on Debian/Ubuntu (closes codecheckers/codecheck#91).</p></li>
-<li><p><code><a href="../reference/register_clear_cache.html">register_clear_cache()</a></code> takes certificate identifiers to refresh only what is cached about those certificates, keeping the rest of the cache (<code>make clean_cert CERT_ID=...</code> in the register).</p></li>
-</ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>The link text of a fediverse account on person and venue pages is no longer turned into citation spans by pandoc (register#217).</li>
-<li>A <code>persons.csv</code> whose <code>fediverse</code> column has no account in it no longer stops <code><a href="../reference/register_render.html">register_render()</a></code> with “attempt to set an attribute on NULL” (register#217).</li>
-<li>Writing <code>persons.csv</code> after resolving Wikidata items keeps the file’s other columns and the rows without an item, instead of rewriting it with <code>orcid</code> and <code>wikidata</code> only (register#217).</li>
-<li>Every render reads the codechecker lists fresh from GitHub, using the cached copy only when that fails, so a copy cached before the <code>fediverse</code> column no longer hides all accounts until the cache is cleared (register#217).</li>
-<li>Rule <code>CC-MET-001</code> orcid-format now also checks an ORCID’s check digit, so a mistyped ORCID is caught before it is looked up (register#209).</li>
-<li>Rule <code>CC-MET-003</code> orcid-name-match no longer reports a name as different from its ORCID record only because of diacritics, e.g. Grišiūtė and Grisiute (register#209).</li>
-</ul></div>
-</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.30.0" id="codecheck-0300">codecheck 0.30.0<a class="anchor" aria-label="anchor" href="#codecheck-0300"></a></h2>
 <div class="section level3">

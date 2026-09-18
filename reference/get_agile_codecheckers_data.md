@@ -11,4 +11,4 @@ get_agile_codecheckers_data()
 ## Value
 
 A data frame with columns: name, handle, ORCID, contact, fields,
-languages, fediverse (contact, fields and languages are \`NA\`)
+languages (the last three are \`NA\`)

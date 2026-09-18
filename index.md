@@ -11,23 +11,6 @@ processes, visit <https://codecheck.org.uk/>.
 
 ## Installation
 
-Several of the package’s dependencies are compiled against system
-libraries, so install those first. On Debian/Ubuntu:
-
-``` sh
-sudo apt-get install -y libpoppler-cpp-dev librsvg2-dev libmagick++-dev \
-  libgit2-dev libuv1-dev libsecret-1-dev libssh2-1-dev libxml2-dev \
-  libcurl4-openssl-dev libssl-dev libicu-dev libjpeg-dev gsfonts poppler-data \
-  cmake make git pandoc
-```
-
-On macOS with [Homebrew](https://brew.sh/):
-`brew install poppler librsvg imagemagick libgit2 pandoc`. On Fedora:
-`sudo dnf install poppler-cpp-devel librsvg2-devel ImageMagick-c++-devel libgit2-devel pandoc`.
-For other distributions,
-`remotes::system_requirements("ubuntu", "22.04", package = "codecheck")`
-prints the current list of required packages.
-
 The package is not on [CRAN](https://CRAN.R-project.org) yet. Install
 the current version from
 [GitHub](https://github.com/codecheckers/codecheck) with:
@@ -37,9 +20,6 @@ the current version from
 # install.packages("remotes")
 remotes::install_github("codecheckers/codecheck")
 ```
-
-Rendering a certificate also needs a LaTeX installation,
-e.g. [`tinytex::install_tinytex()`](https://rdrr.io/pkg/tinytex/man/install_tinytex.html).
 
 ## Quick Start
 
