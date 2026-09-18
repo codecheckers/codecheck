@@ -31,6 +31,10 @@
   entry is split at commas outside parentheses, so
   `R (expert, package dev)` stays one item (register#168).
 
+- The README and `DESCRIPTION` list the system libraries needed to
+  install the package, e.g. `libpoppler-cpp-dev` and `libmagick++-dev`
+  on Debian/Ubuntu (closes codecheckers/codecheck#91).
+
 - [`register_clear_cache()`](http://codecheck.org.uk/codecheck/reference/register_clear_cache.md)
   takes certificate identifiers to refresh only what is cached about
   those certificates, keeping the rest of the cache

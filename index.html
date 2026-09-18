@@ -64,10 +64,17 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
+<p>Several of the package’s dependencies are compiled against system libraries, so install those first. On Debian/Ubuntu:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> libpoppler-cpp-dev librsvg2-dev libmagick++-dev <span class="dt">\</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  libgit2-dev libuv1-dev libsecret-1-dev libssh2-1-dev libxml2-dev <span class="dt">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  libcurl4-openssl-dev libssl-dev libicu-dev libjpeg-dev gsfonts poppler-data <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  cmake make git pandoc</span></code></pre></div>
+<p>On macOS with <a href="https://brew.sh/" class="external-link">Homebrew</a>: <code>brew install poppler librsvg imagemagick libgit2 pandoc</code>. On Fedora: <code>sudo dnf install poppler-cpp-devel librsvg2-devel ImageMagick-c++-devel libgit2-devel pandoc</code>. For other distributions, <code>remotes::system_requirements("ubuntu", "22.04", package = "codecheck")</code> prints the current list of required packages.</p>
 <p>The package is not on <a href="https://CRAN.R-project.org" class="external-link">CRAN</a> yet. Install the current version from <a href="https://github.com/codecheckers/codecheck" class="external-link">GitHub</a> with:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"codecheckers/codecheck"</span><span class="op">)</span></span></code></pre></div>
+<p>Rendering a certificate also needs a LaTeX installation, e.g. <code><a href="https://rdrr.io/pkg/tinytex/man/install_tinytex.html" class="external-link">tinytex::install_tinytex()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
@@ -123,7 +130,7 @@
 <h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
 </h2>
 <p>The package uses <a href="https://cran.r-project.org/package=tinytest" class="external-link"><code>tinytest</code></a> for tests. Run <code>test_all("/path/to/package")</code> to run all tests interactively. Even better, run the tests in a fresh install and temporary directory using</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># assuming . is the package path</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/markvanderloo/tinytest" class="external-link">tinytest</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/tinytest/man/build_install_test.html" class="external-link">build_install_test</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
