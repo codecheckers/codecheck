@@ -9,6 +9,9 @@ The latest version of the package can be installed using:
 remotes::install_github("codecheckers/codecheck")
 ```
 
+Some dependencies need system libraries, see the [system requirements in
+the README](https://github.com/codecheckers/codecheck#installation).
+
 ## Pre-requisites for being a CODECHECKER using the codecheck R package
 
 1.  Member of the GitHub codecheckers community.

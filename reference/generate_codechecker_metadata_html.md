@@ -1,14 +1,15 @@
-# Generate the codechecker metadata HTML panel (avatar + ORCID + GitHub + venues)
+# Generate the codechecker metadata HTML panel (avatar + ORCID + GitHub + expertise + venues)
 
 Renders a \`venue-metadata\`-style panel for a codechecker's own page: a
 GitHub avatar (a plain \`https://github.com/\<handle\>.png\` image -
 GitHub serves this directly, so no API call or caching is needed, unlike
 OpenAlex/CrossRef lookups elsewhere), a property list with the
-codechecker's ORCID and GitHub profile link (register#75), and the
-contributed-venues list (register#74/#189/#83) as a further row in the
-same list, rather than as separate text above the panel. Reuses the
-\`.venue-metadata\`/\`.venue-metadata-label\` CSS classes already used
-by the venue panel.
+codechecker's ORCID and GitHub profile link (register#75), their
+self-described fields and languages from \`codecheckers.csv\`
+(register#168), and the contributed-venues list (register#74/#189/#83)
+as further rows in the same list, rather than as separate text above the
+panel. Reuses the \`.venue-metadata\`/\`.venue-metadata-label\` CSS
+classes already used by the venue panel.
 
 ## Usage
 

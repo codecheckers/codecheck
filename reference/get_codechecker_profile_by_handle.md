@@ -17,4 +17,4 @@ get_codechecker_profile_by_handle(handle)
 ## Value
 
 A list with profile information (name, github_handle, orcid, fields,
-languages, source) or NULL if not found
+languages, fediverse, source) or NULL if not found

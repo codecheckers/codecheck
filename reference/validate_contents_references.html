@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,7 +35,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Validate codecheck.yml metadata against external references</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.30.0/R/validation.R" class="external-link"><code>R/validation.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/validation.R" class="external-link"><code>R/validation.R</code></a></small>
       <div class="d-none name"><code>validate_contents_references.Rd</code></div>
     </div>
 
@@ -48,10 +48,11 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">validate_contents_references</span><span class="op">(</span></span>
 <span>  yml_file <span class="op">=</span> <span class="st">"codecheck.yml"</span>,</span>
 <span>  strict <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  validate_crossref <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  validate_metadata <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  validate_orcid <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  check_orcids <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  skip_on_auth_error <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  skip_on_auth_error <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  validate_crossref <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -69,8 +70,8 @@ If <code>FALSE</code> (default), a rule failed at severity error still stops,
 after both validations have run.</p></dd>
 
 
-<dt id="arg-validate-crossref">validate_crossref<a class="anchor" aria-label="anchor" href="#arg-validate-crossref"></a></dt>
-<dd><p>Logical. If <code>TRUE</code> (default), validate against CrossRef.</p></dd>
+<dt id="arg-validate-metadata">validate_metadata<a class="anchor" aria-label="anchor" href="#arg-validate-metadata"></a></dt>
+<dd><p>Logical. If <code>TRUE</code> (default), validate against OpenAlex.</p></dd>
 
 
 <dt id="arg-validate-orcid">validate_orcid<a class="anchor" aria-label="anchor" href="#arg-validate-orcid"></a></dt>
@@ -78,12 +79,16 @@ after both validations have run.</p></dd>
 
 
 <dt id="arg-check-orcids">check_orcids<a class="anchor" aria-label="anchor" href="#arg-check-orcids"></a></dt>
-<dd><p>Logical. If <code>TRUE</code> (default), validate ORCID identifiers in CrossRef check.</p></dd>
+<dd><p>Logical. If <code>TRUE</code> (default), validate ORCID identifiers in the metadata check.</p></dd>
 
 
 <dt id="arg-skip-on-auth-error">skip_on_auth_error<a class="anchor" aria-label="anchor" href="#arg-skip-on-auth-error"></a></dt>
 <dd><p>Deprecated and without effect: an ORCID record
 that cannot be retrieved is always skipped.</p></dd>
+
+
+<dt id="arg-validate-crossref">validate_crossref<a class="anchor" aria-label="anchor" href="#arg-validate-crossref"></a></dt>
+<dd><p>Deprecated, the former name of <code>validate_metadata</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -91,8 +96,8 @@ that cannot be retrieved is always skipped.</p></dd>
     <p>Invisibly returns a list with validation results:</p><dl><dt>valid</dt>
 <dd><p>Logical indicating if all checks passed</p></dd>
 
-    <dt>crossref_result</dt>
-<dd><p>Results from CrossRef validation (if performed)</p></dd>
+    <dt>metadata_result</dt>
+<dd><p>Results from the OpenAlex validation (if performed)</p></dd>
 
     <dt>orcid_result</dt>
 <dd><p>Results from ORCID validation (if performed)</p></dd>
@@ -102,7 +107,7 @@ that cannot be retrieved is always skipped.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Wrapper function that validates codecheck.yml metadata against both
-CrossRef (for paper metadata) and ORCID (for author and codechecker information).
+OpenAlex (for paper metadata) and ORCID (for author and codechecker information).
 This provides comprehensive validation of all external references.</p>
     </div>
     <div class="section level2">
@@ -119,11 +124,11 @@ This provides comprehensive validation of all external references.</p>
 <span class="r-in"><span>  <span class="co"># Validate with strict error checking</span></span></span>
 <span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>strict <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># Validate only CrossRef</span></span></span>
+<span class="r-in"><span>  <span class="co"># Validate only against OpenAlex</span></span></span>
 <span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>validate_orcid <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Validate only ORCID</span></span></span>
-<span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>validate_crossref <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">validate_contents_references</span><span class="op">(</span>validate_metadata <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

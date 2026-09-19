@@ -21,7 +21,7 @@ affect the resulting page images."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ affect the resulting page images."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Poppler (via pdftools) reports PDF parsing problems by printing "PDF error: ..." lines directly to R's message connection rather than raising a condition on them, so they bypass ordinary error handling and, uncaptured, flood the console - one line per malformed glyph or object, sometimes hundreds per certificate. This splits captured poppler output into messages that mean the PDF is genuinely broken (unparsable, not really a PDF) versus cosmetic rendering quirks that poppler recovers from on its own (e.g. malformed embedded fonts) and that don't affect the resulting page images.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/0.30.0/R/utils_download_certs.R" class="external-link"><code>R/utils_download_certs.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/R/utils_download_certs.R" class="external-link"><code>R/utils_download_certs.R</code></a></small>
       <div class="d-none name"><code>classify_poppler_log.Rd</code></div>
     </div>
 

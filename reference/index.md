@@ -337,7 +337,7 @@
 
 - [`generate_codechecker_metadata_html()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_metadata_html.md)
   : Generate the codechecker metadata HTML panel (avatar + ORCID +
-  GitHub + venues)
+  GitHub + expertise + venues)
 
 - [`generate_codechecker_metadata_yaml()`](http://codecheck.org.uk/codecheck/reference/generate_codechecker_metadata_yaml.md)
   : Generate the codechecker metadata YAML frontmatter block for
@@ -752,6 +752,9 @@
 
 - [`validate_codecheck_yml_crossref()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_crossref.md)
   : Validate codecheck.yml metadata against CrossRef
+
+- [`validate_codecheck_yml_metadata()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_metadata.md)
+  : Validate codecheck.yml metadata against an open scholarly database
 
 - [`validate_codecheck_yml_orcid()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_orcid.md)
   : Validate codecheck.yml metadata against ORCID
