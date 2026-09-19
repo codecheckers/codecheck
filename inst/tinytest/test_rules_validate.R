@@ -3,8 +3,8 @@
 
 library(codecheck)
 
-# The rules that ask ORCID, Crossref or a URL are tested with mocked services
-# in test_crossref_validation.R and test_orcid_validation.R. Here every request
+# The rules that ask ORCID, OpenAlex or a URL are tested with mocked services
+# in test_paper_metadata_validation.R and test_orcid_validation.R. Here every request
 # fails, so those rules skip, as they do offline, and the outcomes below do not
 # depend on the machine or on what a remote record says today. Restored at the
 # end of the file.
@@ -297,7 +297,7 @@ expect_equal(sort(validate_codecheck_yml_rules(complete, rules = c("CC-CFG-004",
              info = "only the selected rules are reported")
 requests <- character(0)
 tryCatch(validate_codecheck_yml(complete), error = function(e) NULL)
-expect_true(!any(grepl("orcid|crossref|handles", requests)),
-            info = "validate_codecheck_yml() does not look up ORCID or Crossref")
+expect_true(!any(grepl("orcid|openalex|handles", requests)),
+            info = "validate_codecheck_yml() does not look up ORCID or OpenAlex")
 
 assignInNamespace("codecheck_GET", online_GET, ns = "codecheck")

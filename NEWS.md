@@ -7,6 +7,9 @@
 * `codecheck_spec_version()` chooses the specification version rather than assuming it: a file that names a version is read by that, including the historical `https://codecheck.org.uk/spec/1.0` form that certificates from 2020 carry; a file that names none is judged by the requirements that were current when it was checked (`check_time`, or the new `modified` argument); only a file that cannot be dated falls back to the newest version. A configuration from 2020 is no longer reported against requirements published in 2026. See "Choosing the specification version" in the register's `RULES.md`.
 * Person pages show a codechecker's fields and languages from `codecheckers.csv`, their `stats.json` lists them as `fields` and `languages` arrays, and their Schema.org metadata as `knowsAbout`. An entry is split at commas outside parentheses, so `R (expert, package dev)` stays one item (register#168).
 * The README and `DESCRIPTION` list the system libraries needed to install the package, e.g. `libpoppler-cpp-dev` and `libmagick++-dev` on Debian/Ubuntu (closes codecheckers/codecheck#91).
+* Rules `CC-MET-005` to `CC-MET-008` compare the paper metadata with OpenAlex instead of Crossref, which covers arXiv DOIs and holds far more author ORCIDs (closes codecheckers/codecheck#92).
+* New `validate_codecheck_yml_metadata()` runs those rules; `validate_codecheck_yml_crossref()` is deprecated and calls it (codecheck#92).
+* `validate_contents_references()` takes `validate_metadata` in place of the deprecated `validate_crossref` and returns `metadata_result` (codecheck#92).
 * `register_clear_cache()` takes certificate identifiers to refresh only what is cached about those certificates, keeping the rest of the cache (`make clean_cert CERT_ID=...` in the register).
 
 ## Bug Fixes

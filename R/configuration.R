@@ -566,7 +566,7 @@ VALIDATE_YML_RULES <- c(
 #' @export
 validate_codecheck_yml <- function(configuration, spec_version = NULL) {
   # Only the gate's own rules run, so that validating every certificate in
-  # register_check() makes no requests to ORCID, Crossref or the report DOI.
+  # register_check() makes no requests to ORCID, OpenAlex or the report DOI.
   results <- validate_codecheck_yml_rules(configuration,
                                           spec_version = spec_version,
                                           rules = VALIDATE_YML_RULES,

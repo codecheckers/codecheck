@@ -660,7 +660,7 @@ check_reference_other_resolves <- function(context) {
   rule_pass()
 }
 
-# --- external records: ORCID and Crossref ---------------------------------
+# --- external records: ORCID and OpenAlex ---------------------------------
 
 #' @keywords internal
 #' @noRd
@@ -727,25 +727,26 @@ check_orcid_name_match <- function(context) {
 #' @keywords internal
 #' @noRd
 check_paper_reference_resolves <- function(context) {
-  crossref <- context_crossref(context)
-  switch(crossref$status,
-    ok = rule_pass(paste("Crossref record for", crossref$doi)),
-    datacite = rule_pass(paste(crossref$doi, "resolves, but is not a Crossref DOI")),
-    not_found = rule_fail(paste(crossref$doi, "is not a registered DOI")),
-    not_doi = url_resolves(crossref$reference),
-    rule_skip(crossref$detail)
+  paper <- context_paper_metadata(context)
+  switch(paper$status,
+    ok = rule_pass(paste(c(paste("OpenAlex record for", paper$doi), paper$detail),
+                         collapse = "; ")),
+    unindexed = rule_pass(paste(paper$doi, "resolves, but is not in OpenAlex")),
+    not_found = rule_fail(paste(paper$doi, "is not a registered DOI")),
+    not_doi = url_resolves(paper$reference),
+    rule_skip(paper$detail)
   )
 }
 
 #' @keywords internal
 #' @noRd
-check_crossref_title_match <- function(context) {
-  crossref <- context_crossref(context)
-  if (crossref$status != "ok") {
-    return(rule_skip(crossref_skip_detail(crossref)))
+check_paper_title_match <- function(context) {
+  paper <- context_paper_metadata(context)
+  if (paper$status != "ok") {
+    return(rule_skip(paper_metadata_skip_detail(paper)))
   }
   local <- context$yml$paper$title
-  remote <- unlist(crossref$record$title)
+  remote <- unlist(paper$record$title)
   if (!has_value(local) || !has_value(remote)) {
     return(rule_skip("no title to compare"))
   }
@@ -755,38 +756,38 @@ check_crossref_title_match <- function(context) {
   if (identical(normalise(local), normalise(remote[1]))) {
     rule_pass()
   } else {
-    rule_fail(paste0("'", local, "' is '", remote[1], "' on Crossref"))
+    rule_fail(paste0("'", local, "' is '", remote[1], "' on OpenAlex"))
   }
 }
 
 #' @keywords internal
 #' @noRd
-check_crossref_author_count_match <- function(context) {
-  crossref <- context_crossref(context)
-  if (crossref$status != "ok") {
-    return(rule_skip(crossref_skip_detail(crossref)))
+check_paper_author_count_match <- function(context) {
+  paper <- context_paper_metadata(context)
+  if (paper$status != "ok") {
+    return(rule_skip(paper_metadata_skip_detail(paper)))
   }
   local <- as_items(context$yml$paper$authors)
-  remote <- crossref$record$author
+  remote <- paper$record$author
   if (length(local) == 0 || length(remote) == 0) {
     return(rule_skip("no authors to compare"))
   }
   if (length(local) == length(remote)) {
     rule_pass(paste(length(local), "author(s)"))
   } else {
-    rule_fail(paste(length(local), "author(s) here,", length(remote), "on Crossref"))
+    rule_fail(paste(length(local), "author(s) here,", length(remote), "on OpenAlex"))
   }
 }
 
 #' @keywords internal
 #' @noRd
-check_crossref_author_name_match <- function(context) {
-  crossref <- context_crossref(context)
-  if (crossref$status != "ok") {
-    return(rule_skip(crossref_skip_detail(crossref)))
+check_paper_author_name_match <- function(context) {
+  paper <- context_paper_metadata(context)
+  if (paper$status != "ok") {
+    return(rule_skip(paper_metadata_skip_detail(paper)))
   }
   local <- as_items(context$yml$paper$authors)
-  remote <- crossref$record$author
+  remote <- paper$record$author
   # Compared by position, as far as both lists go: the count is CC-MET-006.
   pairs <- seq_len(min(length(local), length(remote)))
   pairs <- pairs[vapply(pairs, function(i) has_value(local[[i]]$name), logical(1))]
@@ -795,10 +796,10 @@ check_crossref_author_name_match <- function(context) {
   }
   mismatches <- character(0)
   for (i in pairs) {
-    remote_name <- crossref_author_name(remote[[i]])
+    remote_name <- remote[[i]]$name
     if (!names_match(local[[i]]$name, remote_name)) {
       mismatches <- c(mismatches, paste0("author ", i, " '", local[[i]]$name,
-                                         "' is '", remote_name, "' on Crossref"))
+                                         "' is '", remote_name, "' on OpenAlex"))
     }
   }
   if (length(mismatches) == 0) {
@@ -810,13 +811,13 @@ check_crossref_author_name_match <- function(context) {
 
 #' @keywords internal
 #' @noRd
-check_crossref_author_orcid_match <- function(context) {
-  crossref <- context_crossref(context)
-  if (crossref$status != "ok") {
-    return(rule_skip(crossref_skip_detail(crossref)))
+check_paper_author_orcid_match <- function(context) {
+  paper <- context_paper_metadata(context)
+  if (paper$status != "ok") {
+    return(rule_skip(paper_metadata_skip_detail(paper)))
   }
   local <- as_items(context$yml$paper$authors)
-  remote <- crossref$record$author
+  remote <- paper$record$author
   # Only where both sides give an ORCID: an ORCID the publisher did not
   # deposit is not a mismatch.
   pairs <- seq_len(min(length(local), length(remote)))
@@ -824,7 +825,7 @@ check_crossref_author_orcid_match <- function(context) {
     has_value(local[[i]]$ORCID) && has_value(remote[[i]]$ORCID)
   }, logical(1))]
   if (length(pairs) == 0) {
-    return(rule_skip("no author with an ORCID both here and on Crossref"))
+    return(rule_skip("no author with an ORCID both here and on OpenAlex"))
   }
   mismatches <- character(0)
   for (i in pairs) {
@@ -832,7 +833,7 @@ check_crossref_author_orcid_match <- function(context) {
     there <- strip_orcid_prefix(remote[[i]]$ORCID)
     if (!identical(here, there)) {
       mismatches <- c(mismatches, paste0("author ", i, " ", here, " is ",
-                                         there, " on Crossref"))
+                                         there, " on OpenAlex"))
     }
   }
   if (length(mismatches) == 0) {
@@ -898,30 +899,33 @@ context_orcid <- function(context, orcid) {
   record
 }
 
-#' The Crossref record of the paper, requested once per validation run
+#' What OpenAlex knows about the paper, requested once per validation run
 #'
-#' A DOI Crossref does not know is looked up in the DOI handle system before it
-#' is called unregistered, because a DataCite DOI (a Zenodo or OSF preprint, for
-#' example) is a perfectly good paper reference with no Crossref record.
+#' OpenAlex rather than Crossref because Crossref stopped answering the
+#' question: of ten register DOIs sampled, Crossref had seven records (the
+#' arXiv DOIs are DataCite, not Crossref) and an ORCID for seven authors of
+#' twenty-seven, against OpenAlex's nine records and twenty ORCIDs of
+#' thirty-two, see codecheckers/codecheck#92. A DOI OpenAlex does not index is
+#' looked up in the DOI handle system before it is called unregistered.
 #'
-#' @return A list with `status`, one of `"ok"` (with `record`), `"datacite"`
-#'   (registered, but not with Crossref), `"not_found"`, `"not_doi"` (with
+#' @return A list with `status`, one of `"ok"` (with `record`), `"unindexed"`
+#'   (registered, but not in OpenAlex), `"not_found"`, `"not_doi"` (with
 #'   `reference`), `"none"`, `"placeholder"` or `"unreachable"`, plus `doi`
 #'   and `detail`.
 #' @keywords internal
 #' @noRd
-context_crossref <- function(context) {
-  if (!is.null(context$lookups$crossref)) {
-    return(context$lookups$crossref)
+context_paper_metadata <- function(context) {
+  if (!is.null(context$lookups$paper_metadata)) {
+    return(context$lookups$paper_metadata)
   }
-  result <- lookup_crossref(context$yml$paper$reference)
-  assign("crossref", result, envir = context$lookups)
+  result <- lookup_openalex_paper(context$yml$paper$reference)
+  assign("paper_metadata", result, envir = context$lookups)
   result
 }
 
 #' @keywords internal
 #' @noRd
-lookup_crossref <- function(reference) {
+lookup_openalex_paper <- function(reference) {
   if (!has_value(reference)) {
     return(list(status = "none", detail = "no paper reference"))
   }
@@ -936,26 +940,39 @@ lookup_crossref <- function(reference) {
                 detail = "the paper reference is not a DOI"))
   }
 
-  response <- tryCatch(
-    codecheck_GET(paste0("https://api.crossref.org/works/", doi)),
-    error = function(e) e)
+  # The filter endpoint rather than /works/doi:..., because a DOI that OpenAlex
+  # holds twice - it happens - is then a list of two rather than an error.
+  url <- paste0("https://api.openalex.org/works?filter=doi:",
+                utils::URLencode(doi, reserved = TRUE))
+  response <- tryCatch(codecheck_GET_openalex(url), error = function(e) e)
   if (inherits(response, "error")) {
     return(list(status = "unreachable", doi = doi,
-                detail = paste("could not reach Crossref:", conditionMessage(response))))
+                detail = paste("could not reach OpenAlex:", conditionMessage(response))))
+  }
+  if (is.null(response)) {
+    return(list(status = "unreachable", doi = doi,
+                detail = paste("could not reach OpenAlex for", doi)))
   }
   status <- httr::status_code(response)
   if (status == 200) {
-    record <- tryCatch(
+    results <- tryCatch(
       jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
-                         simplifyVector = FALSE)$message,
+                         simplifyVector = FALSE)$results,
       error = function(e) NULL)
-    if (!is.null(record)) {
-      return(list(status = "ok", doi = doi, record = record, detail = NULL))
+    if (length(results) > 0) {
+      return(list(status = "ok", doi = doi,
+                  record = openalex_paper_record(results[[1]]),
+                  # Several records for one DOI means the comparisons ran
+                  # against whichever OpenAlex listed first, which is worth
+                  # saying rather than deciding silently.
+                  detail = if (length(results) > 1) {
+                    paste("OpenAlex has", length(results), "records for", doi,
+                          "- compared with the first")
+                  }))
     }
-  }
-  if (status != 404) {
+  } else if (status != 404) {
     return(list(status = "unreachable", doi = doi,
-                detail = paste("Crossref answered", status, "for", doi)))
+                detail = paste("OpenAlex answered", status, "for", doi)))
   }
 
   handle <- tryCatch(
@@ -964,23 +981,40 @@ lookup_crossref <- function(reference) {
   if (inherits(handle, "error") ||
       !httr::status_code(handle) %in% c(200, 404)) {
     return(list(status = "unreachable", doi = doi,
-                detail = paste(doi, "is not on Crossref and doi.org could not be reached")))
+                detail = paste(doi, "is not in OpenAlex and doi.org could not be reached")))
   }
   if (httr::status_code(handle) == 200) {
-    list(status = "datacite", doi = doi, detail = paste(doi, "has no Crossref record"))
+    list(status = "unindexed", doi = doi, detail = paste(doi, "is not in OpenAlex"))
   } else {
     list(status = "not_found", doi = doi, detail = paste(doi, "is not a registered DOI"))
   }
 }
 
-#' Why a Crossref comparison could not run
+#' An OpenAlex work as the metadata rules read it
+#'
+#' OpenAlex gives one `display_name` per author where Crossref gave `given` and
+#' `family` separately. `names_match()` compares the significant words of two
+#' names either way round, so the whole name is what it needs.
+#'
+#' @return A list with `title` and `author`, a list of `name` and `ORCID`
 #' @keywords internal
 #' @noRd
-crossref_skip_detail <- function(crossref) {
-  if (crossref$status %in% c("datacite", "not_found", "not_doi")) {
-    "no Crossref record to compare against"
+openalex_paper_record <- function(work) {
+  authors <- lapply(work$authorships, function(authorship) {
+    list(name = trimws(as.character(authorship$author$display_name %||% "")),
+         ORCID = authorship$author$orcid)
+  })
+  list(title = work$title %||% work$display_name, author = authors)
+}
+
+#' Why a comparison with OpenAlex could not run
+#' @keywords internal
+#' @noRd
+paper_metadata_skip_detail <- function(paper) {
+  if (paper$status %in% c("unindexed", "not_found", "not_doi")) {
+    "no OpenAlex record to compare against"
   } else {
-    crossref$detail
+    paper$detail
   }
 }
 
@@ -991,16 +1025,6 @@ doi_from_reference <- function(reference) {
   doi <- sub("^https?://(dx\\.)?doi\\.org/", "", reference, ignore.case = TRUE)
   doi <- sub("^doi:\\s*", "", doi, ignore.case = TRUE)
   if (grepl("^10\\.[0-9]{4,}/\\S+$", doi)) doi else NA_character_
-}
-
-#' @keywords internal
-#' @noRd
-crossref_author_name <- function(author) {
-  if (!is.null(author$name)) {
-    return(author$name)
-  }
-  trimws(paste(if (is.null(author$given)) "" else author$given,
-               if (is.null(author$family)) "" else author$family))
 }
 
 #' Is a value a well-formed ORCID?
@@ -1246,10 +1270,10 @@ rule_checks <- function() {
     "CC-MET-002" = "check_orcid_resolves",
     "CC-MET-003" = "check_orcid_name_match",
     "CC-MET-004" = "check_paper_reference_resolves",
-    "CC-MET-005" = "check_crossref_title_match",
-    "CC-MET-006" = "check_crossref_author_count_match",
-    "CC-MET-007" = "check_crossref_author_name_match",
-    "CC-MET-008" = "check_crossref_author_orcid_match",
+    "CC-MET-005" = "check_paper_title_match",
+    "CC-MET-006" = "check_paper_author_count_match",
+    "CC-MET-007" = "check_paper_author_name_match",
+    "CC-MET-008" = "check_paper_author_orcid_match",
     "CC-MET-009" = "check_reference_other_resolves",
     "CC-BUN-001" = "check_manifest_files_exist",
     "CC-BUN-002" = "check_codecheck_directory_present",

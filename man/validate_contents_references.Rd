@@ -7,10 +7,11 @@
 validate_contents_references(
   yml_file = "codecheck.yml",
   strict = FALSE,
-  validate_crossref = TRUE,
+  validate_metadata = TRUE,
   validate_orcid = TRUE,
   check_orcids = TRUE,
-  skip_on_auth_error = FALSE
+  skip_on_auth_error = FALSE,
+  validate_crossref = NULL
 )
 }
 \arguments{
@@ -20,20 +21,22 @@ validate_contents_references(
 If \code{FALSE} (default), a rule failed at severity error still stops,
 after both validations have run.}
 
-\item{validate_crossref}{Logical. If \code{TRUE} (default), validate against CrossRef.}
+\item{validate_metadata}{Logical. If \code{TRUE} (default), validate against OpenAlex.}
 
 \item{validate_orcid}{Logical. If \code{TRUE} (default), validate against ORCID.}
 
-\item{check_orcids}{Logical. If \code{TRUE} (default), validate ORCID identifiers in CrossRef check.}
+\item{check_orcids}{Logical. If \code{TRUE} (default), validate ORCID identifiers in the metadata check.}
 
 \item{skip_on_auth_error}{Deprecated and without effect: an ORCID record
 that cannot be retrieved is always skipped.}
+
+\item{validate_crossref}{Deprecated, the former name of \code{validate_metadata}.}
 }
 \value{
 Invisibly returns a list with validation results:
   \describe{
     \item{valid}{Logical indicating if all checks passed}
-    \item{crossref_result}{Results from CrossRef validation (if performed)}
+    \item{metadata_result}{Results from the OpenAlex validation (if performed)}
     \item{orcid_result}{Results from ORCID validation (if performed)}
   }
 }
@@ -42,7 +45,7 @@ Validate codecheck.yml metadata against external references
 }
 \details{
 Wrapper function that validates codecheck.yml metadata against both
-CrossRef (for paper metadata) and ORCID (for author and codechecker information).
+OpenAlex (for paper metadata) and ORCID (for author and codechecker information).
 This provides comprehensive validation of all external references.
 }
 \examples{
@@ -53,11 +56,11 @@ This provides comprehensive validation of all external references.
   # Validate with strict error checking
   validate_contents_references(strict = TRUE)
 
-  # Validate only CrossRef
+  # Validate only against OpenAlex
   validate_contents_references(validate_orcid = FALSE)
 
   # Validate only ORCID
-  validate_contents_references(validate_crossref = FALSE)
+  validate_contents_references(validate_metadata = FALSE)
 }
 }
 \author{

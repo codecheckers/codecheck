@@ -305,9 +305,9 @@ rules_failure_message <- function(failed, label) {
 #' Everything the check functions need about the file under validation
 #'
 #' `lookups` is an environment, so that the answers of external services are
-#' shared by every check of one validation run: the Crossref record and each
+#' shared by every check of one validation run: the OpenAlex record and each
 #' ORCID record are requested once per file, however many rules read them. See
-#' `context_crossref()` and `context_orcid()`.
+#' `context_paper_metadata()` and `context_orcid()`.
 #'
 #' @keywords internal
 #' @noRd

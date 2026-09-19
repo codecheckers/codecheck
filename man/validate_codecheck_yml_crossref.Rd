@@ -17,53 +17,21 @@ validate_codecheck_yml_crossref(
 \item{strict}{Logical. If \code{TRUE}, report warnings as errors.}
 
 \item{check_orcids}{Logical. If \code{TRUE} (default), compare author ORCIDs
-with Crossref (`CC-MET-008`).}
+with OpenAlex (`CC-MET-008`).}
 
 \item{stop_on_error}{Logical. If \code{TRUE} (default), stop when a rule
 failed at severity error. Rules at severity warning only ever warn.}
 }
 \value{
-Invisibly returns a list with validation results:
-  \describe{
-    \item{valid}{Logical, \code{FALSE} if any rule failed at severity error or warning}
-    \item{issues}{Character vector of the failed rules, in words}
-    \item{crossref_metadata}{The metadata retrieved from CrossRef (if available)}
-    \item{results}{The per-rule results, see [validate_codecheck_yml_rules()]}
-  }
+Invisibly, what [validate_codecheck_yml_metadata()] returns, plus
+  `crossref_metadata`
 }
 \description{
-Validate codecheck.yml metadata against CrossRef
-}
-\details{
-Retrieves the Crossref record of the paper's DOI and compares it with the
-local codecheck.yml metadata: whether the reference resolves, the title, the
-number of authors, their names and their ORCIDs. These are the rules
-`CC-MET-004` to `CC-MET-008`, run through [validate_codecheck_yml_rules()]
-together with the two rules they depend on, `CC-CFG-016` paper-present and
-`CC-CFG-021` paper-reference, and reported at the severity the rule file of
-the declared specification version gives them.
-
-A Crossref record that cannot be retrieved, because the API is unreachable
-or rate limited, makes the comparisons skip. It never fails the validation.
-
-Note: For comprehensive validation including ORCID name verification and
-codechecker validation, use \code{validate_contents_references()} instead.
-}
-\examples{
-\dontrun{
-  # Validate with warnings only
-  result <- validate_codecheck_yml_crossref()
-
-  # Validate with strict error checking
-  validate_codecheck_yml_crossref(strict = TRUE)
-
-  # Skip ORCID validation
-  validate_codecheck_yml_crossref(check_orcids = FALSE)
-}
+Deprecated, and no longer a Crossref lookup: use
+[validate_codecheck_yml_metadata()], which asks OpenAlex. The returned list
+carries the record as `crossref_metadata` as well as `metadata`, so code
+written against the old name keeps working.
 }
 \seealso{
-[validate_codecheck_yml_rules()]
-}
-\author{
-Daniel Nuest
+[validate_codecheck_yml_metadata()]
 }

@@ -262,34 +262,34 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 }
 
 
-##' Validate codecheck.yml metadata against CrossRef
+##' Validate codecheck.yml metadata against an open scholarly database
 ##'
-##' Retrieves the Crossref record of the paper's DOI and compares it with the
-##' local codecheck.yml metadata: whether the reference resolves, the title, the
-##' number of authors, their names and their ORCIDs. These are the rules
+##' Retrieves what OpenAlex knows about the paper's DOI and compares it with
+##' the local codecheck.yml metadata: whether the reference resolves, the title,
+##' the number of authors, their names and their ORCIDs. These are the rules
 ##' `CC-MET-004` to `CC-MET-008`, run through [validate_codecheck_yml_rules()]
 ##' together with the two rules they depend on, `CC-CFG-016` paper-present and
 ##' `CC-CFG-021` paper-reference, and reported at the severity the rule file of
 ##' the declared specification version gives them.
 ##'
-##' A Crossref record that cannot be retrieved, because the API is unreachable
-##' or rate limited, makes the comparisons skip. It never fails the validation.
+##' A record that cannot be retrieved, because the API is unreachable or rate
+##' limited, makes the comparisons skip. It never fails the validation.
 ##'
 ##' Note: For comprehensive validation including ORCID name verification and
 ##' codechecker validation, use \code{validate_contents_references()} instead.
 ##'
-##' @title Validate codecheck.yml metadata against CrossRef
+##' @title Validate codecheck.yml metadata against an open scholarly database
 ##' @param yml_file Path to the codecheck.yml file (defaults to "./codecheck.yml")
 ##' @param strict Logical. If \code{TRUE}, report warnings as errors.
 ##' @param check_orcids Logical. If \code{TRUE} (default), compare author ORCIDs
-##'   with Crossref (`CC-MET-008`).
+##'   with OpenAlex (`CC-MET-008`).
 ##' @param stop_on_error Logical. If \code{TRUE} (default), stop when a rule
 ##'   failed at severity error. Rules at severity warning only ever warn.
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
 ##'     \item{valid}{Logical, \code{FALSE} if any rule failed at severity error or warning}
 ##'     \item{issues}{Character vector of the failed rules, in words}
-##'     \item{crossref_metadata}{The metadata retrieved from CrossRef (if available)}
+##'     \item{metadata}{The metadata retrieved from OpenAlex (if available)}
 ##'     \item{results}{The per-rule results, see [validate_codecheck_yml_rules()]}
 ##'   }
 ##' @author Daniel Nuest
@@ -298,15 +298,15 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
 ##' @examples
 ##' \dontrun{
 ##'   # Validate with warnings only
-##'   result <- validate_codecheck_yml_crossref()
+##'   result <- validate_codecheck_yml_metadata()
 ##'
 ##'   # Validate with strict error checking
-##'   validate_codecheck_yml_crossref(strict = TRUE)
+##'   validate_codecheck_yml_metadata(strict = TRUE)
 ##'
 ##'   # Skip ORCID validation
-##'   validate_codecheck_yml_crossref(check_orcids = FALSE)
+##'   validate_codecheck_yml_metadata(check_orcids = FALSE)
 ##' }
-validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
+validate_codecheck_yml_metadata <- function(yml_file = "codecheck.yml",
                                             strict = FALSE,
                                             check_orcids = TRUE,
                                             stop_on_error = TRUE) {
@@ -316,13 +316,37 @@ validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
   validation <- validate_rules_on_file(yml_file, rules, strict = strict,
                                        stop_on_error = stop_on_error)
 
-  crossref <- validation$context$lookups$crossref
+  paper <- validation$context$lookups$paper_metadata
   invisible(list(
     valid = validation$valid,
     issues = validation$issues,
-    crossref_metadata = if (is.null(crossref)) NULL else crossref$record,
+    metadata = if (is.null(paper)) NULL else paper$record,
     results = validation$results
   ))
+}
+
+##' Validate codecheck.yml metadata against CrossRef
+##'
+##' Deprecated, and no longer a Crossref lookup: use
+##' [validate_codecheck_yml_metadata()], which asks OpenAlex. The returned list
+##' carries the record as `crossref_metadata` as well as `metadata`, so code
+##' written against the old name keeps working.
+##'
+##' @inheritParams validate_codecheck_yml_metadata
+##' @return Invisibly, what [validate_codecheck_yml_metadata()] returns, plus
+##'   `crossref_metadata`
+##' @seealso [validate_codecheck_yml_metadata()]
+##' @export
+validate_codecheck_yml_crossref <- function(yml_file = "codecheck.yml",
+                                            strict = FALSE,
+                                            check_orcids = TRUE,
+                                            stop_on_error = TRUE) {
+  .Deprecated("validate_codecheck_yml_metadata")
+  result <- validate_codecheck_yml_metadata(yml_file = yml_file, strict = strict,
+                                            check_orcids = check_orcids,
+                                            stop_on_error = stop_on_error)
+  result$crossref_metadata <- result$metadata
+  invisible(result)
 }
 
 #' Run a selection of rules on a file, the way the older validators report
@@ -496,7 +520,7 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##' Validate codecheck.yml metadata against external references
 ##'
 ##' Wrapper function that validates codecheck.yml metadata against both
-##' CrossRef (for paper metadata) and ORCID (for author and codechecker information).
+##' OpenAlex (for paper metadata) and ORCID (for author and codechecker information).
 ##' This provides comprehensive validation of all external references.
 ##'
 ##' @title Validate codecheck.yml metadata against external references
@@ -504,15 +528,16 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##' @param strict Logical. If \code{TRUE}, throw an error on any mismatch.
 ##'   If \code{FALSE} (default), a rule failed at severity error still stops,
 ##'   after both validations have run.
-##' @param validate_crossref Logical. If \code{TRUE} (default), validate against CrossRef.
+##' @param validate_metadata Logical. If \code{TRUE} (default), validate against OpenAlex.
 ##' @param validate_orcid Logical. If \code{TRUE} (default), validate against ORCID.
-##' @param check_orcids Logical. If \code{TRUE} (default), validate ORCID identifiers in CrossRef check.
+##' @param check_orcids Logical. If \code{TRUE} (default), validate ORCID identifiers in the metadata check.
+##' @param validate_crossref Deprecated, the former name of \code{validate_metadata}.
 ##' @param skip_on_auth_error Deprecated and without effect: an ORCID record
 ##'   that cannot be retrieved is always skipped.
 ##' @return Invisibly returns a list with validation results:
 ##'   \describe{
 ##'     \item{valid}{Logical indicating if all checks passed}
-##'     \item{crossref_result}{Results from CrossRef validation (if performed)}
+##'     \item{metadata_result}{Results from the OpenAlex validation (if performed)}
 ##'     \item{orcid_result}{Results from ORCID validation (if performed)}
 ##'   }
 ##' @author Daniel Nuest
@@ -525,37 +550,42 @@ validate_codecheck_yml_orcid <- function(yml_file = "codecheck.yml",
 ##'   # Validate with strict error checking
 ##'   validate_contents_references(strict = TRUE)
 ##'
-##'   # Validate only CrossRef
+##'   # Validate only against OpenAlex
 ##'   validate_contents_references(validate_orcid = FALSE)
 ##'
 ##'   # Validate only ORCID
-##'   validate_contents_references(validate_crossref = FALSE)
+##'   validate_contents_references(validate_metadata = FALSE)
 ##' }
 validate_contents_references <- function(yml_file = "codecheck.yml",
                                          strict = FALSE,
-                                         validate_crossref = TRUE,
+                                         validate_metadata = TRUE,
                                          validate_orcid = TRUE,
                                          check_orcids = TRUE,
-                                         skip_on_auth_error = FALSE) {
+                                         skip_on_auth_error = FALSE,
+                                         validate_crossref = NULL) {
+  if (!is.null(validate_crossref)) {
+    .Deprecated(msg = "'validate_crossref' is deprecated, use 'validate_metadata'")
+    validate_metadata <- validate_crossref
+  }
 
-  crossref_result <- NULL
+  metadata_result <- NULL
   orcid_result <- NULL
   all_valid <- TRUE
 
-  # Run CrossRef validation
-  if (validate_crossref) {
+  # Run the paper metadata validation
+  if (validate_metadata) {
     message("\n", rep("=", 80))
-    message("CROSSREF VALIDATION")
+    message("PAPER METADATA VALIDATION")
     message(rep("=", 80), "\n")
 
-    crossref_result <- validate_codecheck_yml_crossref(
+    metadata_result <- validate_codecheck_yml_metadata(
       yml_file = yml_file,
       strict = strict,
       check_orcids = check_orcids,
       stop_on_error = FALSE  # the ORCID validation still has to run
     )
 
-    if (!crossref_result$valid) {
+    if (!metadata_result$valid) {
       all_valid <- FALSE
     }
   }
@@ -580,7 +610,7 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
   # Final result
   if (!all_valid) {
     total_issues <- 0
-    if (!is.null(crossref_result)) total_issues <- total_issues + length(crossref_result$issues)
+    if (!is.null(metadata_result)) total_issues <- total_issues + length(metadata_result$issues)
     if (!is.null(orcid_result)) total_issues <- total_issues + length(orcid_result$issues)
 
     message("\n", rep("=", 80))
@@ -590,11 +620,11 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
     # A rule that failed at severity error stops, and with strict every
     # warning already is one.
     failed_errors <- sum(
-      if (!is.null(crossref_result)) crossref_result$results$outcome == "error" else 0,
+      if (!is.null(metadata_result)) metadata_result$results$outcome == "error" else 0,
       if (!is.null(orcid_result)) orcid_result$results$outcome == "error" else 0)
     if (strict || failed_errors > 0) {
       all_issues <- c()
-      if (!is.null(crossref_result)) all_issues <- c(all_issues, crossref_result$issues)
+      if (!is.null(metadata_result)) all_issues <- c(all_issues, metadata_result$issues)
       if (!is.null(orcid_result)) all_issues <- c(all_issues, orcid_result$issues)
 
       stop("Validation failed with ", total_issues, " issue(s):\n",
@@ -608,7 +638,7 @@ validate_contents_references <- function(yml_file = "codecheck.yml",
 
   invisible(list(
     valid = all_valid,
-    crossref_result = crossref_result,
+    metadata_result = metadata_result,
     orcid_result = orcid_result
   ))
 }

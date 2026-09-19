@@ -171,27 +171,27 @@ codechecker:
   - name: Test Checker
 ", file = test_yml)
 
-# Should work with placeholder DOI (skips CrossRef validation)
+# Should work with placeholder DOI (skips the paper metadata validation)
 result <- suppressMessages(validate_contents_references(test_yml, strict = FALSE, skip_on_auth_error = TRUE))
 expect_true(is.list(result))
 expect_true("valid" %in% names(result))
-expect_true("crossref_result" %in% names(result))
+expect_true("metadata_result" %in% names(result))
 expect_true("orcid_result" %in% names(result))
 
-# Test 10: validate_contents_references with only CrossRef
-result_crossref_only <- suppressMessages(
+# Test 10: validate_contents_references with only the paper metadata
+result_metadata_only <- suppressMessages(
   validate_contents_references(test_yml, strict = FALSE, validate_orcid = FALSE)
 )
-expect_true(is.list(result_crossref_only))
-expect_true(!is.null(result_crossref_only$crossref_result))
-expect_true(is.null(result_crossref_only$orcid_result))
+expect_true(is.list(result_metadata_only))
+expect_true(!is.null(result_metadata_only$metadata_result))
+expect_true(is.null(result_metadata_only$orcid_result))
 
 # Test 11: validate_contents_references with only ORCID
 result_orcid_only <- suppressMessages(
-  validate_contents_references(test_yml, strict = FALSE, validate_crossref = FALSE, skip_on_auth_error = TRUE)
+  validate_contents_references(test_yml, strict = FALSE, validate_metadata = FALSE, skip_on_auth_error = TRUE)
 )
 expect_true(is.list(result_orcid_only))
-expect_true(is.null(result_orcid_only$crossref_result))
+expect_true(is.null(result_orcid_only$metadata_result))
 expect_true(!is.null(result_orcid_only$orcid_result))
 
 # Test 12: Return structure validation (without real ORCID API call)
@@ -297,7 +297,7 @@ result_combined <- suppressMessages(
   validate_contents_references(
     test_yml,
     strict = FALSE,
-    validate_crossref = FALSE,
+    validate_metadata = FALSE,
     skip_on_auth_error = TRUE
   )
 )
