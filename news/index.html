@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.30.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.31.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,22 +39,28 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.31.0" id="codecheck-0310">codecheck 0.31.0<a class="anchor" aria-label="anchor" href="#codecheck-0310"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
-<ul><li><p>Fediverse accounts and venue hashtags (register#217): the codechecker lists and the register’s <code>persons.csv</code> have a <code>fediverse</code> column (<code>@user@instance</code>), and <code>venues.csv</code> has <code>fediverse</code> and <code>hashtags</code> (<code>;</code>-separated, without <code>#</code>). Person and venue pages show the account as a <code>rel="me"</code> link, their Schema.org metadata list it under <code>sameAs</code>, and the <code>index.json</code> of a person, codechecker or venue carries it; venue pages and JSON also list the hashtags. <code>persons.csv</code> accounts win over the codechecker lists, and a value that is not <code>@user@instance</code> is ignored rather than linked.</p></li>
-<li><p><code><a href="../reference/codecheck_spec_version.html">codecheck_spec_version()</a></code> chooses the specification version rather than assuming it: a file that names a version is read by that, including the historical <code>https://codecheck.org.uk/spec/1.0</code> form that certificates from 2020 carry; a file that names none is judged by the requirements that were current when it was checked (<code>check_time</code>, or the new <code>modified</code> argument); only a file that cannot be dated falls back to the newest version. A configuration from 2020 is no longer reported against requirements published in 2026. See “Choosing the specification version” in the register’s <code>RULES.md</code>.</p></li>
-<li><p>Person pages show a codechecker’s fields and languages from <code>codecheckers.csv</code>, their <code>stats.json</code> lists them as <code>fields</code> and <code>languages</code> arrays, and their Schema.org metadata as <code>knowsAbout</code>. An entry is split at commas outside parentheses, so <code>R (expert, package dev)</code> stays one item (register#168).</p></li>
-<li><p>The README and <code>DESCRIPTION</code> list the system libraries needed to install the package, e.g. <code>libpoppler-cpp-dev</code> and <code>libmagick++-dev</code> on Debian/Ubuntu (closes codecheckers/codecheck#91).</p></li>
-<li><p>Rules <code>CC-MET-005</code> to <code>CC-MET-008</code> compare the paper metadata with OpenAlex instead of Crossref, which covers arXiv DOIs and holds far more author ORCIDs (closes codecheckers/codecheck#92).</p></li>
-<li><p>The bundled rule files are refreshed from the register: <code>CC-MET-005</code> to <code>CC-MET-008</code> are renamed <code>paper-*</code>, keeping their identifiers (register#220).</p></li>
-<li><p>New <code><a href="../reference/validate_codecheck_yml_metadata.html">validate_codecheck_yml_metadata()</a></code> runs those rules; <code><a href="../reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> is deprecated and calls it (codecheck#92).</p></li>
-<li><p><code><a href="../reference/validate_contents_references.html">validate_contents_references()</a></code> takes <code>validate_metadata</code> in place of the deprecated <code>validate_crossref</code> and returns <code>metadata_result</code> (codecheck#92).</p></li>
-<li><p><code><a href="../reference/register_clear_cache.html">register_clear_cache()</a></code> takes certificate identifiers to refresh only what is cached about those certificates, keeping the rest of the cache (<code>make clean_cert CERT_ID=...</code> in the register).</p></li>
+<h3 id="new-features-0-31-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-31-0"></a></h3>
+<ul><li>The codechecker lists and the register’s <code>persons.csv</code> take a <code>fediverse</code> account (<code>@user@instance</code>), shown as a <code>rel="me"</code> link on person pages, under <code>sameAs</code> in their Schema.org metadata and in their <code>index.json</code> (register#217).</li>
+<li>
+<code>venues.csv</code> takes a <code>fediverse</code> account and <code>hashtags</code>, shown on venue pages and in their JSON (register#217).</li>
+<li>
+<code><a href="../reference/codecheck_spec_version.html">codecheck_spec_version()</a></code> uses the version a <code>codecheck.yml</code> names, including the historical <code>https://codecheck.org.uk/spec/1.0</code>, and otherwise the version current at its <code>check_time</code> or the new <code>modified</code> argument, instead of always the newest.</li>
+<li>Person pages, their <code>stats.json</code> and their Schema.org metadata (<code>knowsAbout</code>) list a codechecker’s fields and languages from <code>codecheckers.csv</code> (register#168).</li>
+<li>The README and <code>DESCRIPTION</code> list the system libraries needed to install the package, e.g. <code>libpoppler-cpp-dev</code> and <code>libmagick++-dev</code> on Debian/Ubuntu (closes codecheckers/codecheck#91).</li>
+<li>Rules <code>CC-MET-005</code> to <code>CC-MET-008</code> compare the paper metadata with OpenAlex instead of Crossref, which covers arXiv DOIs and holds far more author ORCIDs (closes codecheckers/codecheck#92).</li>
+<li>The bundled rule files are refreshed from the register: <code>CC-MET-005</code> to <code>CC-MET-008</code> are renamed <code>paper-*</code>, keeping their identifiers (register#220).</li>
+<li>New <code><a href="../reference/validate_codecheck_yml_metadata.html">validate_codecheck_yml_metadata()</a></code> runs those rules; <code><a href="../reference/validate_codecheck_yml_crossref.html">validate_codecheck_yml_crossref()</a></code> is deprecated and calls it (codecheck#92).</li>
+<li>
+<code><a href="../reference/validate_contents_references.html">validate_contents_references()</a></code> takes <code>validate_metadata</code> in place of the deprecated <code>validate_crossref</code> and returns <code>metadata_result</code> (codecheck#92).</li>
+<li>
+<code><a href="../reference/register_clear_cache.html">register_clear_cache()</a></code> takes certificate identifiers to refresh only what is cached about those certificates, keeping the rest of the cache (<code>make clean_cert CERT_ID=...</code> in the register).</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>
+<h3 id="bug-fixes-0-31-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-31-0"></a></h3>
+<ul><li>The manifest table in the certificate escapes <code>&amp;</code>, <code>%</code> and <code>#</code> in file comments and shows <code>missing</code> as the size of a missing file, instead of failing to compile (closes codecheckers/codecheck#93).</li>
+<li>
 <code>DESCRIPTION</code> requires R 4.4.0, the version that added the <code>%||%</code> operator the package uses throughout, instead of claiming to work on R 4.0.0.</li>
 <li>The link text of a fediverse account on person and venue pages is no longer turned into citation spans by pandoc (register#217).</li>
 <li>A <code>persons.csv</code> whose <code>fediverse</code> column has no account in it no longer stops <code><a href="../reference/register_render.html">register_render()</a></code> with “attempt to set an attribute on NULL” (register#217).</li>
