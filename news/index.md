@@ -39,6 +39,10 @@
   OpenAlex instead of Crossref, which covers arXiv DOIs and holds far
   more author ORCIDs (closes codecheckers/codecheck#92).
 
+- The bundled rule files are refreshed from the register: `CC-MET-005`
+  to `CC-MET-008` are renamed `paper-*`, keeping their identifiers
+  (register#220).
+
 - New
   [`validate_codecheck_yml_metadata()`](http://codecheck.org.uk/codecheck/reference/validate_codecheck_yml_metadata.md)
   runs those rules;
