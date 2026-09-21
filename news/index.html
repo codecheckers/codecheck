@@ -54,7 +54,9 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>The link text of a fediverse account on person and venue pages is no longer turned into citation spans by pandoc (register#217).</li>
+<ul><li>
+<code>DESCRIPTION</code> requires R 4.4.0, the version that added the <code>%||%</code> operator the package uses throughout, instead of claiming to work on R 4.0.0.</li>
+<li>The link text of a fediverse account on person and venue pages is no longer turned into citation spans by pandoc (register#217).</li>
 <li>A <code>persons.csv</code> whose <code>fediverse</code> column has no account in it no longer stops <code><a href="../reference/register_render.html">register_render()</a></code> with “attempt to set an attribute on NULL” (register#217).</li>
 <li>Writing <code>persons.csv</code> after resolving Wikidata items keeps the file’s other columns and the rows without an item, instead of rewriting it with <code>orcid</code> and <code>wikidata</code> only (register#217).</li>
 <li>Every render reads the codechecker lists fresh from GitHub, using the cached copy only when that fails, so a copy cached before the <code>fediverse</code> column no longer hides all accounts until the cache is cleared (register#217).</li>

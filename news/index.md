@@ -60,6 +60,9 @@
 
 ### Bug Fixes
 
+- `DESCRIPTION` requires R 4.4.0, the version that added the `%||%`
+  operator the package uses throughout, instead of claiming to work on R
+  4.0.0.
 - The link text of a fediverse account on person and venue pages is no
   longer turned into citation spans by pandoc (register#217).
 - A `persons.csv` whose `fediverse` column has no account in it no
