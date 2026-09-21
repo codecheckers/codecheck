@@ -27,6 +27,14 @@ as_latex_url  <- function(x) {
   str_replace_all(x, .url_regexp, wrapit)
 }
 
+## Escape the characters that break a LaTeX table cell: & starts a new cell,
+## % comments out the rest of the row, # is a macro parameter. Other specials
+## are left alone so that deliberate math ($x_1$) and commands still work.
+## Already escaped characters (\&) are not escaped twice.
+.escape_latex_table_text <- function(x) {
+  gsub("(?<!\\\\)([&%#])", "\\\\\\1", x, perl = TRUE)
+}
+
 
 .name_with_orcid <- function(person, add.orcid=TRUE) {
   name <- person$name
@@ -111,6 +119,9 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
                                       align=c('l', 'p{6cm}', 'p{6cm}', 'p{2cm}')
                                       ) {
   m = manifest_df[, c("output", "comment", "size")]
+  m$comment = .escape_latex_table_text(m$comment)
+  m$size = ifelse(is.na(m$size), "missing",
+                  formatC(m$size, format = "f", digits = 0))
 
   # Safely get repository URL
   # Handle NULL, empty, or list (multiple repositories)

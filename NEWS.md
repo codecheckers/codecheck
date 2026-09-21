@@ -1,11 +1,11 @@
-# codecheck (development version)
+# codecheck 0.31.0
 
 ## New Features
 
-* Fediverse accounts and venue hashtags (register#217): the codechecker lists and the register's `persons.csv` have a `fediverse` column (`@user@instance`), and `venues.csv` has `fediverse` and `hashtags` (`;`-separated, without `#`). Person and venue pages show the account as a `rel="me"` link, their Schema.org metadata list it under `sameAs`, and the `index.json` of a person, codechecker or venue carries it; venue pages and JSON also list the hashtags. `persons.csv` accounts win over the codechecker lists, and a value that is not `@user@instance` is ignored rather than linked.
-
-* `codecheck_spec_version()` chooses the specification version rather than assuming it: a file that names a version is read by that, including the historical `https://codecheck.org.uk/spec/1.0` form that certificates from 2020 carry; a file that names none is judged by the requirements that were current when it was checked (`check_time`, or the new `modified` argument); only a file that cannot be dated falls back to the newest version. A configuration from 2020 is no longer reported against requirements published in 2026. See "Choosing the specification version" in the register's `RULES.md`.
-* Person pages show a codechecker's fields and languages from `codecheckers.csv`, their `stats.json` lists them as `fields` and `languages` arrays, and their Schema.org metadata as `knowsAbout`. An entry is split at commas outside parentheses, so `R (expert, package dev)` stays one item (register#168).
+* The codechecker lists and the register's `persons.csv` take a `fediverse` account (`@user@instance`), shown as a `rel="me"` link on person pages, under `sameAs` in their Schema.org metadata and in their `index.json` (register#217).
+* `venues.csv` takes a `fediverse` account and `hashtags`, shown on venue pages and in their JSON (register#217).
+* `codecheck_spec_version()` uses the version a `codecheck.yml` names, including the historical `https://codecheck.org.uk/spec/1.0`, and otherwise the version current at its `check_time` or the new `modified` argument, instead of always the newest.
+* Person pages, their `stats.json` and their Schema.org metadata (`knowsAbout`) list a codechecker's fields and languages from `codecheckers.csv` (register#168).
 * The README and `DESCRIPTION` list the system libraries needed to install the package, e.g. `libpoppler-cpp-dev` and `libmagick++-dev` on Debian/Ubuntu (closes codecheckers/codecheck#91).
 * Rules `CC-MET-005` to `CC-MET-008` compare the paper metadata with OpenAlex instead of Crossref, which covers arXiv DOIs and holds far more author ORCIDs (closes codecheckers/codecheck#92).
 * The bundled rule files are refreshed from the register: `CC-MET-005` to `CC-MET-008` are renamed `paper-*`, keeping their identifiers (register#220).
@@ -15,6 +15,7 @@
 
 ## Bug Fixes
 
+* The manifest table in the certificate escapes `&`, `%` and `#` in file comments and shows `missing` as the size of a missing file, instead of failing to compile (closes codecheckers/codecheck#93).
 * `DESCRIPTION` requires R 4.4.0, the version that added the `%||%` operator the package uses throughout, instead of claiming to work on R 4.0.0.
 * The link text of a fediverse account on person and venue pages is no longer turned into citation spans by pandoc (register#217).
 * A `persons.csv` whose `fediverse` column has no account in it no longer stops `register_render()` with "attempt to set an attribute on NULL" (register#217).
