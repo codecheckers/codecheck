@@ -16,3 +16,7 @@
 "2026-09-06T21:04:57+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1788721456169/","fix-2023-011","submitted","fix-2023-011","corrected P356 on Q141269577 from the concept DOI ...8359199 to the version DOI ...8359200"
 "2026-09-07T09:54:45+0200","wikidata","quickstatements","batch",NA,"merge-2020-001","submitted","merge-2020-001","merged Q141269511 into Q116702174; the Den line was rejected (label+description already taken by the source), so the source kept its description and no redirect was created"
 "2026-09-07T10:03:32+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1788768056166","merge-2020-001-cleanup","submitted","merge-2020-001-cleanup","cleared the source description, aligned the target description, merged again; Q141269511 now redirects to Q116702174"
+"2026-09-24T12:49:54+0200","wikibase","edit","page","Main Page","main","done",NA,NA
+"2026-09-24T12:49:55+0200","wikibase","edit","page","Project:About","about","done",NA,NA
+"2026-09-24T12:49:56+0200","wikibase","edit","page","Project:Certificates","certificates","done",NA,NA
+"2026-09-24T12:49:57+0200","wikibase","edit","page","Project:Wikidata export","wikidata_export","done",NA,NA
