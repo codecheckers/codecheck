@@ -57,6 +57,7 @@ came from. Generated, and overwritten by every load.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">wikibase_certificates_wikitext</span><span class="op">(</span></span>
 <span>  <span class="va">written</span>,</span>
 <span>  <span class="va">certificates</span>,</span>
+<span>  register_qids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  generated_at <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -71,6 +72,11 @@ came from. Generated, and overwritten by every load.</p>
 
 <dt id="arg-certificates">certificates<a class="anchor" aria-label="anchor" href="#arg-certificates"></a></dt>
 <dd><p>the certificate rows, for the fields the table shows</p></dd>
+
+
+<dt id="arg-register-qids">register_qids<a class="anchor" aria-label="anchor" href="#arg-register-qids"></a></dt>
+<dd><p>the certificates' Wikidata items as `register.csv`
+records them, see [read_register_wikidata()]</p></dd>
 
 
 <dt id="arg-generated-at">generated_at<a class="anchor" aria-label="anchor" href="#arg-generated-at"></a></dt>

@@ -11,6 +11,7 @@ register page it came from. Generated, and overwritten by every load.
 wikibase_certificates_wikitext(
   written,
   certificates,
+  register_qids = character(0),
   generated_at = Sys.time()
 )
 ```
@@ -24,6 +25,11 @@ wikibase_certificates_wikitext(
 - certificates:
 
   the certificate rows, for the fields the table shows
+
+- register_qids:
+
+  the certificates' Wikidata items as \`register.csv\` records them, see
+  \[read_register_wikidata()\]
 
 - generated_at:
 

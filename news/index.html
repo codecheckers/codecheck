@@ -40,6 +40,20 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
+<div class="section level3">
+<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li>New <code><a href="../reference/publish_wikibase_pages.html">publish_wikibase_pages()</a></code> rewrites every generated page on the CODECHECK Wikibase from the register and the instance as they are now, skipping pages that have not changed (<code>make wikibase</code> in the register, register#50).</li>
+<li>The Wikibase Main Page is generated too, and lists every generated page, including <code>Project:Example queries</code> (register#50).</li>
+<li>
+<code>Project:Certificates</code> links each certificate’s Wikidata item, as recorded in <code>register.csv</code> (register#50).</li>
+<li>
+<code>Project:Wikidata export</code> lists the QuickStatements batches the edit log records as run, and whether <code>register.csv</code> holds each certificate’s item (register#50).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>
+<code>Project:Wikidata export</code> says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.31.0" id="codecheck-0310">codecheck 0.31.0<a class="anchor" aria-label="anchor" href="#codecheck-0310"></a></h2>

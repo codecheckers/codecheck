@@ -62,7 +62,7 @@
                         <h4 data-toc-skip class="author">Daniel
 Nüst</h4>
             
-            <h4 data-toc-skip class="date">2026-09-21</h4>
+            <h4 data-toc-skip class="date">2026-09-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_wikidata.Rmd" class="external-link"><code>vignettes/codecheck_wikidata.Rmd</code></a></small>
       <div class="d-none name"><code>codecheck_wikidata.Rmd</code></div>
@@ -232,7 +232,9 @@ checked work against Wikidata, works out what exists and what would be
 created, writes the QuickStatements batches to <code>wikidata/</code>,
 and (with <code>publish = TRUE</code>) puts the whole preview on the
 Wikibase as <a href="https://codecheck.wikibase.cloud/wiki/Project:Wikidata_export" class="external-link">Project:Wikidata
-export</a> so it can be reviewed by somebody who does not run R.</p>
+export</a> so it can be reviewed by somebody who does not run R. The
+page shows the export as it stands when it is written; step 9 brings it
+up to date once the batches have run.</p>
 <p>Read the summary it prints. It tells you how many works are already
 on Wikidata, how many would be created, and how many certificates cannot
 yet state <code>review of</code>.</p>
@@ -432,6 +434,31 @@ reviews.</p>
 <p><strong>A certificate that states no <code>review of</code></strong>
 either checks a work with no DOI (8 of them), or was created before the
 works batch ran.</p>
+<p>Once every certificate is there, record the items in the register, so
+the certificate pages can link them:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/verify_wikidata_export.html">verify_wikidata_export</a></span><span class="op">(</span><span class="st">"../register"</span>, update_register <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="step-9-publish-the-pages">Step 9: publish the pages<a class="anchor" aria-label="anchor" href="#step-9-publish-the-pages"></a>
+</h2>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/publish_wikibase_pages.html">publish_wikibase_pages</a></span><span class="op">(</span><span class="st">"../register"</span>, log_file <span class="op">=</span> <span class="st">"wikidata/wikibase-log.csv"</span><span class="op">)</span>  <span class="co"># what would change</span></span>
+<span><span class="fu"><a href="../reference/publish_wikibase_pages.html">publish_wikibase_pages</a></span><span class="op">(</span><span class="st">"../register"</span>, log_file <span class="op">=</span> <span class="st">"wikidata/wikibase-log.csv"</span>, dry_run <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>Each page on the instance is otherwise written by the step it belongs
+to, and describes the export as it was then: the Wikidata export page
+from step 3 still lists every certificate as <em>to create</em>. This
+rewrites all of them - the Main Page, the data model, the example
+queries, the certificate index and the Wikidata export page - from the
+register and the instance as they are now, and leaves a page alone when
+nothing but its timestamp would change. With the edit log, the Wikidata
+export page lists the batches that ran, with their QuickStatements or
+EditGroups records.</p>
+<p>In the register, <code>make wikibase</code> is the dry run and
+<code>make wikibase APPLY=1</code> writes; both read the edit log from
+<code>../codecheck/wikidata/wikibase-log.csv</code> unless
+<code>WIKIBASE_LOG</code> names another. They read
+<code>docs/register.json</code>, so render first.</p>
 </div>
 <div class="section level2">
 <h2 id="the-edit-log">The edit log<a class="anchor" aria-label="anchor" href="#the-edit-log"></a>
@@ -441,7 +468,7 @@ write appends a row: time, target, action, kind, id, label, status,
 batch, detail. It covers both halves of the export - the API writes to
 the Wikibase, and the QuickStatements batches prepared for and submitted
 to Wikidata.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log</span> <span class="op">&lt;-</span> <span class="fu">codecheck</span><span class="fu">:::</span><span class="fu"><a href="../reference/wikibase_log_read.html">wikibase_log_read</a></span><span class="op">(</span><span class="st">"wikibase-log.csv"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">log</span>, <span class="va">target</span> <span class="op">==</span> <span class="st">"wikidata"</span><span class="op">)</span></span></code></pre></div>
 </div>

@@ -2,6 +2,27 @@
 
 ## codecheck (development version)
 
+### New Features
+
+- New
+  [`publish_wikibase_pages()`](http://codecheck.org.uk/codecheck/reference/publish_wikibase_pages.md)
+  rewrites every generated page on the CODECHECK Wikibase from the
+  register and the instance as they are now, skipping pages that have
+  not changed (`make wikibase` in the register, register#50).
+- The Wikibase Main Page is generated too, and lists every generated
+  page, including `Project:Example queries` (register#50).
+- `Project:Certificates` links each certificate’s Wikidata item, as
+  recorded in `register.csv` (register#50).
+- `Project:Wikidata export` lists the QuickStatements batches the edit
+  log records as run, and whether `register.csv` holds each
+  certificate’s item (register#50).
+
+### Bug Fixes
+
+- `Project:Wikidata export` says whether the export has run, instead of
+  claiming nothing has been sent, and lists the certificates whose
+  checked work has no DOI (register#50).
+
 ## codecheck 0.31.0
 
 ### New Features

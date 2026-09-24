@@ -630,6 +630,9 @@
 - [`prune_libs()`](http://codecheck.org.uk/codecheck/reference/prune_libs.md)
   : Prune Unreferenced Library Directories
 
+- [`publish_wikibase_pages()`](http://codecheck.org.uk/codecheck/reference/publish_wikibase_pages.md)
+  : Rewrite the generated pages on the CODECHECK Wikibase
+
 - [`quickstatements_submitted()`](http://codecheck.org.uk/codecheck/reference/quickstatements_submitted.md)
   : Record that a QuickStatements batch was actually submitted
 
