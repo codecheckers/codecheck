@@ -131,14 +131,22 @@ expect_false(any(grepl("^[ \t]", page[!in_query])))
 # Writing it ----
 
 sent <- list()
-with_mocked_codecheck(list(wikibase_post = function(session, params, what) {
-  sent[[length(sent) + 1L]] <<- params
-  list(edit = list(result = "Success"))
-}), {
-  written <- codecheck:::write_wikibase_examples_page(NULL, plan)
+context <- new.env()
+context$plan <- plan
+with_mocked_codecheck(list(
+  wikibase_post = function(session, params, what) {
+    sent[[length(sent) + 1L]] <<- params
+    list(edit = list(result = "Success"))
+  },
+  wikibase_page_content = function(handle, titles) stats::setNames(rep(NA_character_, length(titles)), titles)
+), {
+  written <- codecheck:::write_wikibase_pages(NULL, list(
+    example_queries = codecheck:::wikibase_page_wikitext("example_queries", context)
+  ), summary = "test")
 })
 expect_equal(length(sent), 1L)
 expect_equal(sent[[1]]$title, "Project:Example queries")
 expect_equal(sent[[1]]$action, "edit")
 expect_equal(sent[[1]]$bot, 1)
-expect_equal(written, "Project:Example queries")
+expect_equal(written$title, "Project:Example queries")
+expect_equal(written$status, "written")

@@ -95,6 +95,7 @@ preview <- data.frame(
   commands = c(0L, 6L, 0L, 14L), stringsAsFactors = FALSE
 )
 certificates <- data.frame(
+  `Certificate ID` = c("2020-001", "2020-002"),
   `Paper reference` = c("https://doi.org/10.1093/gigascience/giaa026",
                         "https://doi.org/10.1234/missing"),
   Report = c("https://doi.org/10.5281/zenodo.3674056",
@@ -119,8 +120,12 @@ expect_false(grepl("\t", page, fixed = TRUE))
 # Each row carries both items: the work's, and the certificate that reviews it
 # (register#50). A reader of the page needs the certificate's item to find the
 # exported record on Wikidata at all - nothing else on the page names it.
-expect_true(grepl("! DOI !! Title !! Venue !! Wikidata work !! Wikidata certificate",
+expect_true(grepl("! Certificate !! Checked work !! Title !! Venue !! Wikidata work !! Wikidata certificate",
                   page, fixed = TRUE))
+# Without the register's QIDs there is nothing to compare, so no column for it.
+expect_false(grepl("In register.csv", page, fixed = TRUE))
+# Something is still to create, so the page says the export has only partly run.
+expect_true(grepl("The export has partly run", page, fixed = TRUE))
 expect_true(grepl("https://www.wikidata.org/wiki/Q130000001", page, fixed = TRUE))
 
 # A certificate the preview knows nothing about leaves the cell empty rather

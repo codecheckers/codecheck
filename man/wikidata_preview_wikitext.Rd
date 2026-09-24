@@ -2,21 +2,29 @@
 % Please edit documentation in R/wikidata_export.R
 \name{wikidata_preview_wikitext}
 \alias{wikidata_preview_wikitext}
-\title{The wiki page showing what the Wikidata export would do}
+\title{The wiki page showing the state of the Wikidata export}
 \usage{
 wikidata_preview_wikitext(
   preview,
   certificates,
   batches,
+  submitted = NULL,
+  register_qids = character(0),
   generated_at = Sys.time()
 )
 }
 \arguments{
-\item{preview}{the table [preview_wikidata_export()] built}
+\item{preview}{the table [wikidata_export_plan()] built}
 
-\item{certificates}{the certificate rows, for titles and links}
+\item{certificates}{the certificate rows, one table row each}
 
 \item{batches}{the QuickStatements batches, as attached to the preview}
+
+\item{submitted}{the batches recorded as run, see
+[wikidata_submitted_batches()]}
+
+\item{register_qids}{the certificates' items as `register.csv` records them,
+see [read_register_wikidata()]; empty to leave the column out}
 
 \item{generated_at}{the timestamp to stamp the page with}
 }
@@ -24,9 +32,11 @@ wikidata_preview_wikitext(
 the page's wikitext
 }
 \description{
-The Wikibase mirror is where this work can be looked at before any of it
-reaches Wikidata, so the preview belongs there too: which works already have
-items, which would be created, and the commands themselves, in the two
-batches they have to run in.
+The Wikibase mirror is where this work can be looked at by somebody who does
+not run R, so the export's state belongs there too: which certificates and
+checked works have items on Wikidata, which are still to be created, the
+commands for those, and the batches that have already run. The page says
+which of those stages the export is at, so that it stays true after the
+batches have been pasted rather than describing the export as it was before.
 }
 \keyword{internal}

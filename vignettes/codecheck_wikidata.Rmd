@@ -167,6 +167,8 @@ exists and what would be created, writes the QuickStatements batches to
 Wikibase as
 [Project:Wikidata export](https://codecheck.wikibase.cloud/wiki/Project:Wikidata_export)
 so it can be reviewed by somebody who does not run R.
+The page shows the export as it stands when it is written; step 9 brings it up
+to date once the batches have run.
 
 Read the summary it prints. It tells you how many works are already on
 Wikidata, how many would be created, and how many certificates cannot yet state
@@ -388,6 +390,35 @@ reviews.
 
 **A certificate that states no `review of`** either checks a work with no DOI
 (8 of them), or was created before the works batch ran.
+
+Once every certificate is there, record the items in the register, so the
+certificate pages can link them:
+
+```{r verify-record, eval=FALSE}
+verify_wikidata_export("../register", update_register = TRUE)
+```
+
+## Step 9: publish the pages
+
+```{r publish, eval=FALSE}
+publish_wikibase_pages("../register", log_file = "wikidata/wikibase-log.csv")  # what would change
+publish_wikibase_pages("../register", log_file = "wikidata/wikibase-log.csv", dry_run = FALSE)
+```
+
+Each page on the instance is otherwise written by the step it belongs to, and
+describes the export as it was then: the Wikidata export page from step 3 still
+lists every certificate as *to create*.
+This rewrites all of them - the Main Page, the data model, the example queries,
+the certificate index and the Wikidata export page - from the register and the
+instance as they are now, and leaves a page alone when nothing but its
+timestamp would change.
+With the edit log, the Wikidata export page lists the batches that ran, with
+their QuickStatements or EditGroups records.
+
+In the register, `make wikibase` is the dry run and `make wikibase APPLY=1`
+writes; both read the edit log from `../codecheck/wikidata/wikibase-log.csv`
+unless `WIKIBASE_LOG` names another.
+They read `docs/register.json`, so render first.
 
 ## The edit log
 

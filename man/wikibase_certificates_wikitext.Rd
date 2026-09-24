@@ -7,6 +7,7 @@
 wikibase_certificates_wikitext(
   written,
   certificates,
+  register_qids = character(0),
   generated_at = Sys.time()
 )
 }
@@ -14,6 +15,9 @@ wikibase_certificates_wikitext(
 \item{written}{the table [load_wikibase_register()] built}
 
 \item{certificates}{the certificate rows, for the fields the table shows}
+
+\item{register_qids}{the certificates' Wikidata items as `register.csv`
+records them, see [read_register_wikidata()]}
 
 \item{generated_at}{the timestamp to stamp the page with}
 }

@@ -249,47 +249,21 @@ wikidata_batch_conflict <- function(kind, creates, log_file = NULL) {
   submitted$time[nrow(submitted)]
 }
 
-#' Preview the export to Wikidata
+#' Resolve the register against Wikidata
 #'
-#' Resolves every checked work and certificate against Wikidata, works out what
-#' exists and what would be created, and writes the QuickStatements batches a
-#' person would paste in. Nothing is sent: Wikidata is written by hand, and this
-#' is what makes that hand-work reviewable beforehand.
+#' The part of [preview_wikidata_export()] that only reads: which checked works
+#' and certificates exist on Wikidata, and the QuickStatements commands that
+#' would create the rest. Shared with [publish_wikibase_pages()], which needs
+#' the same answer without writing any batch files.
 #'
-#' Two batches, in order. The checked works come first, because QuickStatements
-#' can only refer to an item it just created as `LAST`, so a certificate can
-#' only name a work that already has a QID. After the works batch has run,
-#' generate the preview again: the works then resolve, and the certificates get
-#' their `review of` statements.
-#'
-#' @param dir the register repository to read from
-#' @param out_dir where to write the `.qs` batches
-#' @param log_file where to append the edit log, or `NULL` for the option
-#' @param records already-read records, as from [read_register_records()]
-#' @param publish also write the preview onto the CODECHECK Wikibase, as
-#'   `Project:Wikidata export`; needs `WIKIBASE_USER`/`WIKIBASE_TOKEN`
-#' @param method how to resolve against Wikidata: `"search"` (the default) asks
-#'   the Action API, which indexes a new item within minutes and sees every
-#'   graph; `"sparql"` asks the query service, which is hours behind and only
-#'   sees the graph the entity kind is served from
-#' @param force write a batch of creates even when the log says a batch of the
-#'   same name was already submitted - see [wikidata_batch_conflict()]
-#' @return a `data.frame` with one row per entity, invisibly, saying whether it
-#'   exists on Wikidata and how many commands it contributes
-#' @examples
-#' \dontrun{
-#' preview_wikidata_export("../register")
-#' }
-#' @export
-preview_wikidata_export <- function(dir = "../register", out_dir = ".",
-                                    log_file = NULL, records = NULL,
-                                    publish = FALSE,
-                                    method = c("search", "sparql"),
-                                    force = FALSE) {
+#' @param records the output of [read_register_records()]
+#' @param method how to resolve against Wikidata, see [preview_wikidata_export()]
+#' @return a `data.frame` with one row per entity - `kind`, `key`, `wikidata`,
+#'   `action` and `commands` - with the batches attached as `"batches"` and the
+#'   resolved items as `"known"`
+#' @keywords internal
+wikidata_export_plan <- function(records, method = c("search", "sparql")) {
   method <- match.arg(method)
-  cli::cli_h2("What the export to Wikidata would look like")
-
-  if (is.null(records)) records <- read_register_records(dir)
   rows <- wikibase_export_rows(records)
   # On Wikidata a collision is unrecoverable: the item that loses is gone, and
   # nothing records that it was ever there.
@@ -351,6 +325,56 @@ preview_wikidata_export <- function(dir = "../register", out_dir = ".",
 
   out <- do.call(rbind, planned)
   rownames(out) <- NULL
+  attr(out, "batches") <- batches
+  attr(out, "known") <- known
+  out
+}
+
+#' Preview the export to Wikidata
+#'
+#' Resolves every checked work and certificate against Wikidata, works out what
+#' exists and what would be created, and writes the QuickStatements batches a
+#' person would paste in. Nothing is sent: Wikidata is written by hand, and this
+#' is what makes that hand-work reviewable beforehand.
+#'
+#' Two batches, in order. The checked works come first, because QuickStatements
+#' can only refer to an item it just created as `LAST`, so a certificate can
+#' only name a work that already has a QID. After the works batch has run,
+#' generate the preview again: the works then resolve, and the certificates get
+#' their `review of` statements.
+#'
+#' @param dir the register repository to read from
+#' @param out_dir where to write the `.qs` batches
+#' @param log_file where to append the edit log, or `NULL` for the option
+#' @param records already-read records, as from [read_register_records()]
+#' @param publish also write the preview onto the CODECHECK Wikibase, as
+#'   `Project:Wikidata export`; needs `WIKIBASE_USER`/`WIKIBASE_TOKEN`
+#' @param method how to resolve against Wikidata: `"search"` (the default) asks
+#'   the Action API, which indexes a new item within minutes and sees every
+#'   graph; `"sparql"` asks the query service, which is hours behind and only
+#'   sees the graph the entity kind is served from
+#' @param force write a batch of creates even when the log says a batch of the
+#'   same name was already submitted - see [wikidata_batch_conflict()]
+#' @return a `data.frame` with one row per entity, invisibly, saying whether it
+#'   exists on Wikidata and how many commands it contributes
+#' @examples
+#' \dontrun{
+#' preview_wikidata_export("../register")
+#' }
+#' @export
+preview_wikidata_export <- function(dir = "../register", out_dir = ".",
+                                    log_file = NULL, records = NULL,
+                                    publish = FALSE,
+                                    method = c("search", "sparql"),
+                                    force = FALSE) {
+  method <- match.arg(method)
+  cli::cli_h2("What the export to Wikidata would look like")
+
+  if (is.null(records)) records <- read_register_records(dir)
+  out <- wikidata_export_plan(records, method = method)
+  batches <- attr(out, "batches")
+  known <- attr(out, "known")
+  rows <- wikibase_export_rows(records)
 
   for (kind in names(batches)) {
     if (length(batches[[kind]]) == 0) {
@@ -409,40 +433,47 @@ preview_wikidata_export <- function(dir = "../register", out_dir = ".",
   }
 
   if (publish) {
-    session <- wikibase_session()
-    write_wikidata_preview_page(session, out, records$certificates, batches)
-    wikibase_log(target = "wikibase", action = "edit", kind = "page",
-                 id = WIKIBASE_INSTANCE$wikidata_page, label = "wikidata preview",
-                 status = "done", file = log_file)
-    cli::cli_alert_success("Preview published to {.url {paste0(WIKIBASE_INSTANCE$url, '/wiki/', WIKIBASE_INSTANCE$wikidata_page)}}")
+    write_wikibase_pages(wikibase_session(), list(wikidata_export = wikidata_preview_wikitext(
+      out, records$certificates, batches,
+      submitted = wikidata_submitted_batches(log_file),
+      register_qids = read_register_wikidata(dir)
+    )), summary = "generated by codecheck::preview_wikidata_export()", log_file = log_file)
   }
 
-  attr(out, "batches") <- batches
   invisible(out)
 }
 
-#' The wiki page showing what the Wikidata export would do
+#' The wiki page showing the state of the Wikidata export
 #'
-#' The Wikibase mirror is where this work can be looked at before any of it
-#' reaches Wikidata, so the preview belongs there too: which works already have
-#' items, which would be created, and the commands themselves, in the two
-#' batches they have to run in.
+#' The Wikibase mirror is where this work can be looked at by somebody who does
+#' not run R, so the export's state belongs there too: which certificates and
+#' checked works have items on Wikidata, which are still to be created, the
+#' commands for those, and the batches that have already run. The page says
+#' which of those stages the export is at, so that it stays true after the
+#' batches have been pasted rather than describing the export as it was before.
 #'
-#' @param preview the table [preview_wikidata_export()] built
-#' @param certificates the certificate rows, for titles and links
+#' @param preview the table [wikidata_export_plan()] built
+#' @param certificates the certificate rows, one table row each
 #' @param batches the QuickStatements batches, as attached to the preview
+#' @param submitted the batches recorded as run, see
+#'   [wikidata_submitted_batches()]
+#' @param register_qids the certificates' items as `register.csv` records them,
+#'   see [read_register_wikidata()]; empty to leave the column out
 #' @param generated_at the timestamp to stamp the page with
 #' @return the page's wikitext
 #' @keywords internal
 wikidata_preview_wikitext <- function(preview, certificates, batches,
+                                      submitted = NULL,
+                                      register_qids = character(0),
                                       generated_at = Sys.time()) {
   text <- function(x) if (is.null(x) || length(x) == 0 || is.na(x[1])) "" else as.character(x)[1]
   wikidata_link <- function(qid) paste0("[https://www.wikidata.org/wiki/", qid, " ", qid, "]")
+  # A pipe would end the table cell it is written in.
+  cell <- function(x) gsub("|", "&#124;", text(x), fixed = TRUE)
 
   papers <- preview[which(preview$kind == "paper"), ]
   certs <- preview[which(preview$kind == "certificate"), ]
-  by_paper <- stats::setNames(seq_len(nrow(certificates)),
-                              wikidata_transform(certificates$`Paper reference`, "doi"))
+  by_paper <- stats::setNames(seq_len(nrow(papers)), papers$key)
   # A certificate is keyed on the DOI of its report, which is what the model
   # resolves it by - see WIKIDATA_MODEL$certificate$resolve.
   by_cert <- stats::setNames(seq_len(nrow(certs)), certs$key)
@@ -454,33 +485,89 @@ wikidata_preview_wikitext <- function(preview, certificates, batches,
     if (rows$action[i] == "exists") wikidata_link(rows$wikidata[i]) else "'''to create'''"
   }
 
-  paper_rows <- lapply(seq_len(nrow(papers)), function(i) {
-    key <- papers$key[i]
-    source <- certificates[unname(by_paper[key]), ]
+  # Whether register.csv records the item Wikidata holds for the certificate -
+  # the register is what the certificate pages link from, so a missing or
+  # different QID there is a certificate page linking nothing, or the wrong item.
+  in_register <- function(id, cert) {
+    recorded <- unname(register_qids[id])
+    found <- if (length(cert) == 0 || is.na(cert) || certs$action[cert] != "exists") NA else certs$wikidata[cert]
+    if (is.na(found)) return(if (is.na(recorded)) "&mdash;" else recorded)
+    if (is.na(recorded)) return("'''missing'''")
+    if (identical(recorded, found)) "yes" else paste0("'''differs''': ", recorded)
+  }
+  with_register <- length(register_qids) > 0
+
+  rows <- lapply(seq_len(nrow(certificates)), function(i) {
+    source <- certificates[i, ]
+    work <- wikidata_transform(text(source$`Paper reference`), "doi")
     cert <- unname(by_cert[wikidata_transform(text(source$Report), "doi")])
     c(
-      paste0("[https://doi.org/", key, " ", key, "]"),
-      substr(text(source$Title), 1, 80),
-      text(source$Venue),
-      status(papers, i),
-      status(certs, cert)
+      cell(source$`Certificate ID`),
+      if (is.na(work)) "&mdash;" else paste0("[https://doi.org/", work, " ", work, "]"),
+      substr(cell(source$Title), 1, 80),
+      cell(source$Venue),
+      if (is.na(work)) "&mdash;" else status(papers, unname(by_paper[work])),
+      status(certs, cert),
+      if (with_register) in_register(text(source$`Certificate ID`), cert)
     )
   })
 
-  example <- utils::head(batches$certificate %||% character(0), 16)
+  on_wikidata <- sum(preview$action == "exists")
+  to_create <- sum(preview$action == "create")
+  no_work <- sum(is.na(wikidata_transform(certificates$`Paper reference`, "doi")))
+  stage <- if (on_wikidata == 0) {
+    "'''Nothing has been sent yet.''' The tables below are what the export would do."
+  } else if (to_create > 0) {
+    paste0("'''The export has partly run.''' ", on_wikidata, " items are on Wikidata, and ",
+           to_create, " are still to be created by the batches below.")
+  } else {
+    paste("'''The export has run.''' Every certificate, and every checked work with a DOI,",
+          "has an item on Wikidata.")
+  }
+
+  example <- utils::head(if (length(batches$certificate %||% character(0)) > 0) {
+    batches$certificate
+  } else {
+    batches$paper %||% character(0)
+  }, 16)
+
+  submitted <- submitted %||% data.frame()
+  batch_rows <- lapply(seq_len(nrow(submitted)), function(i) {
+    record <- text(submitted$id[i])
+    c(
+      sub("^([0-9-]+)T([0-9]{2}:[0-9]{2}).*$", "\\1 \\2", text(submitted$time[i])),
+      paste0("<code>", cell(submitted$batch[i]), "</code>"),
+      if (grepl("^https?://", record)) paste0("[", record, " record]") else "&mdash;",
+      cell(submitted$detail[i])
+    )
+  })
+
+  table <- function(header, rows) {
+    c(paste0("! ", paste(header, collapse = " !! ")),
+      unlist(lapply(rows, function(row) c("|-", paste0("| ", paste(row, collapse = " || "))))))
+  }
 
   c(
-    "What an export to Wikidata would do, generated by",
-    "<code>codecheck::preview_wikidata_export()</code> from the same model this",
-    "instance is built from ([https://github.com/codecheckers/register/issues/50 register#50]).",
-    "Nothing here has been sent: the batches are pasted into",
+    "The export of the CODECHECK certificates, and the works they check, to Wikidata,",
+    "generated by <code>codecheck::preview_wikidata_export()</code> from the same model",
+    "this instance is built from",
+    "([https://github.com/codecheckers/register/issues/50 register#50]). Nothing is",
+    "written to Wikidata from here: the batches are pasted into",
     "[https://quickstatements.toolforge.org/ QuickStatements] by a person, under their",
     "own account, which is what keeps this within bot policy without running a bot.",
     "",
-    "== What would happen ==",
+    stage,
+    if (no_work > 0) c("", paste0(
+      no_work, if (no_work == 1) " certificate checks a work" else " certificates check works",
+      " with no DOI, which cannot be resolved on Wikidata, so ",
+      if (no_work == 1) "its certificate states" else "their certificates state",
+      " no ''review of''."
+    )),
+    "",
+    "== Where the export stands ==",
     "",
     "{| class=\"wikitable\"",
-    "! Entity !! On Wikidata already !! Would be created !! Commands",
+    "! Entity !! On Wikidata !! Still to create !! Commands",
     "|-",
     paste0("| checked works || ", sum(papers$action == "exists"), " || ",
            sum(papers$action == "create"), " || ", length(batches$paper %||% character(0))),
@@ -493,53 +580,53 @@ wikidata_preview_wikitext <- function(preview, certificates, batches,
     "and venues a certificate refers to are resolved against items the communities",
     "that own them maintain, and are mirrored on this instance instead.",
     "",
-    "=== The order matters ===",
+    if (to_create > 0) c(
+      "=== The order matters ===",
+      "",
+      "QuickStatements can only refer to an item it has just created, as <code>LAST</code>,",
+      "so a certificate cannot name a work created in the same batch. The works batch",
+      "runs first; the preview is then generated again, and the certificates get their",
+      "''review of'' statements pointing at the new items.",
+      ""
+    ),
+    "== Certificates and the works they check ==",
     "",
-    "QuickStatements can only refer to an item it has just created, as <code>LAST</code>,",
-    "so a certificate cannot name a work created in the same batch. The works batch",
-    "runs first; the preview is then generated again, and the certificates get their",
-    "''review of'' statements pointing at the new items.",
-    "",
-    "== Checked works and their certificates ==",
-    "",
-    "One row per checked work: the item Wikidata holds for the work itself, and the",
-    "item for the CODECHECK certificate that reviews it.",
+    "One row per certificate: the item Wikidata holds for the work it checked, and the",
+    "item for the certificate itself.",
+    if (with_register) c(
+      "The last column says whether <code>register.csv</code> records that item, which is",
+      "what the certificate's page in the register links to."
+    ),
     "",
     "{| class=\"wikitable sortable\"",
-    "! DOI !! Title !! Venue !! Wikidata work !! Wikidata certificate",
-    unlist(lapply(paper_rows, function(row) c("|-", paste0("| ", paste(row, collapse = " || "))))),
+    table(c("Certificate", "Checked work", "Title", "Venue", "Wikidata work",
+            "Wikidata certificate", if (with_register) "In register.csv"), rows),
     "|}",
     "",
-    "== What the commands look like ==",
-    "",
-    "The first certificate of the batch, as pasted:",
-    "",
-    "<pre>",
-    gsub("\t", "    ", example),
-    "</pre>",
-    "",
+    if (nrow(submitted) > 0) c(
+      "== Batches run ==",
+      "",
+      "The batches recorded as run on Wikidata, oldest first, each with the",
+      "QuickStatements or EditGroups record of what it did.",
+      "",
+      "{| class=\"wikitable\"",
+      table(c("Submitted", "Batch", "Record", "Note"), batch_rows),
+      "|}",
+      ""
+    ),
+    if (length(example) > 0) c(
+      "== What the commands look like ==",
+      "",
+      "The first item of the next batch, as pasted:",
+      "",
+      "<pre>",
+      gsub("\t", "    ", example),
+      "</pre>",
+      ""
+    ),
     paste0("Generated ", format(generated_at, "%Y-%m-%d %H:%M:%S %Z"), "."),
     ""
   )
-}
-
-#' Write the Wikidata preview onto the instance
-#'
-#' @param session a session from [wikibase_session()]
-#' @param preview the table [preview_wikidata_export()] built
-#' @param certificates the certificate rows
-#' @param batches the QuickStatements batches
-#' @return the page title, invisibly
-#' @keywords internal
-write_wikidata_preview_page <- function(session, preview, certificates, batches) {
-  wikibase_post(session, list(
-    action = "edit",
-    title = WIKIBASE_INSTANCE$wikidata_page,
-    text = paste(wikidata_preview_wikitext(preview, certificates, batches), collapse = "\n"),
-    summary = "generated by codecheck::preview_wikidata_export()",
-    bot = 1
-  ), what = paste0("page '", WIKIBASE_INSTANCE$wikidata_page, "'"))
-  invisible(WIKIBASE_INSTANCE$wikidata_page)
 }
 
 #' Check what actually arrived on Wikidata

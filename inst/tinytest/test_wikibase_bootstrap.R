@@ -418,16 +418,23 @@ expect_true(grepl("MIT License", copyright, fixed = TRUE))
 # Three edits: the two pages, and the redirect from MediaWiki's own footer
 # target at the singular title.
 sent <- list()
-with_mocked_codecheck(list(wikibase_post = function(session, params, what) {
-  sent[[length(sent) + 1L]] <<- params
-  list(edit = list(result = "Success"))
-}), {
-  written <- codecheck:::write_wikibase_policy_pages(NULL)
+policy <- c("about", "copyrights", "copyright_redirect")
+with_mocked_codecheck(list(
+  wikibase_post = function(session, params, what) {
+    sent[[length(sent) + 1L]] <<- params
+    list(edit = list(result = "Success"))
+  },
+  wikibase_page_content = function(handle, titles) stats::setNames(rep(NA_character_, length(titles)), titles)
+), {
+  written <- codecheck:::write_wikibase_pages(
+    NULL, lapply(stats::setNames(policy, policy), codecheck:::wikibase_page_wikitext),
+    summary = "test"
+  )
 })
 expect_equal(length(sent), 3L)
 expect_equal(vapply(sent, function(p) p$title, character(1)),
              c("Project:About", "Project:Copyrights", "Project:Copyright"))
-expect_equal(written, c("Project:About", "Project:Copyrights", "Project:Copyright"))
+expect_equal(written$title, c("Project:About", "Project:Copyrights", "Project:Copyright"))
 expect_true(all(vapply(sent, function(p) p$action, character(1)) == "edit"))
 expect_true(all(vapply(sent, function(p) p$bot, numeric(1)) == 1))
 expect_equal(sent[[3]]$text, "#REDIRECT [[Project:Copyrights]]")

@@ -71,26 +71,62 @@ WIKIBASE_INSTANCE <- list(
   api = "https://codecheck.wikibase.cloud/w/api.php",
   rest = "https://codecheck.wikibase.cloud/w/rest.php/wikibase/v1",
   quickstatements = "https://codecheck.wikibase.cloud/tools/quickstatements/",
-  # The generated index of everything the bootstrap created, see
-  # write_wikibase_report()
-  report_page = "Project:Data model",
-  # The generated index of the loaded certificates, see
-  # write_wikibase_certificates_page()
-  certificates_page = "Project:Certificates",
-  # The generated SPARQL examples, see write_wikibase_examples_page()
-  queries_page = "Project:Example queries",
-  # The generated preview of the Wikidata batches, see
-  # write_wikidata_preview_page()
-  wikidata_page = "Project:Wikidata export",
-  # The pages the wikibase.cloud hosting policy requires, see
-  # write_wikibase_policy_pages()
-  about_page = "Project:About",
-  copyright_page = "Project:Copyrights",
-  # MediaWiki's own footer target is the singular, kept as a redirect
-  copyright_redirect = "Project:Copyright",
   # Special:BotPasswords credentials, see the register's .env.example
   user_env = "WIKIBASE_USER",
   token_env = "WIKIBASE_TOKEN"
+)
+
+#' The pages generated on the CODECHECK Wikibase
+#'
+#' Every page the package writes, in one place: its title, the function whose
+#' run writes it as a side effect, and - for a page a visitor should be pointed
+#' at - the line the Main Page lists it with. The Main Page's list is built from
+#' this, so a new page cannot be left off it, and [publish_wikibase_pages()]
+#' rewrites all of them; [wikibase_page_wikitext()] holds the generator for
+#' each.
+#'
+#' @keywords internal
+WIKIBASE_PAGES <- list(
+  main = list(
+    title = "Main Page",
+    generated_by = "publish_wikibase_pages()"
+  ),
+  about = list(
+    title = "Project:About",
+    generated_by = "bootstrap_wikibase()",
+    # The wikibase.cloud hosting policy asks for this page and the next
+    description = "what this instance is for, who maintains it, and the rules for the data it holds about people."
+  ),
+  copyrights = list(
+    title = "Project:Copyrights",
+    generated_by = "bootstrap_wikibase()",
+    description = "licensing of the data and of these pages."
+  ),
+  # MediaWiki's own footer target is the singular, kept as a redirect
+  copyright_redirect = list(
+    title = "Project:Copyright",
+    generated_by = "bootstrap_wikibase()"
+  ),
+  data_model = list(
+    title = "Project:Data model",
+    generated_by = "bootstrap_wikibase()",
+    description = "every property and class item on this instance, next to the Wikidata property or item it stands for."
+  ),
+  example_queries = list(
+    title = "Project:Example queries",
+    generated_by = "bootstrap_wikibase()",
+    description = "worked SPARQL for asking the record questions, mostly against Wikidata itself, with a short section written against this instance's own numbers."
+  ),
+  certificates = list(
+    title = "Project:Certificates",
+    generated_by = "load_wikibase_register()",
+    description = "the certificates loaded onto this instance, each linked to the register, to its DOI and to its item on Wikidata."
+  ),
+  wikidata_export = list(
+    title = "Project:Wikidata export",
+    generated_by = "preview_wikidata_export()",
+    description = "the export of the certificates and the works they check to Wikidata: which items exist there, which are still to be created, and the batches that created them."
+  )
 )
 
 #' The register.csv column holding a certificate's Wikidata item
