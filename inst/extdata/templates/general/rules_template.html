@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <link rel="shortcut icon" type="image/png" href="../../favicon.png">
+  <link rel="stylesheet" href="../../libs/academicons/css/academicons.min.css">
+  <link rel="stylesheet" href="../../libs/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../../assets/codecheck-register.css">
+  <title>Validation rules {{version}} - CODECHECK Register</title>
+</head>
+<body>
+{{{nav_header_html}}}
+  <div class="rules-container">
+    <h1 class="rules-title">CODECHECK validation rules, specification {{version}}</h1>
+    <p>
+      The {{count}} rules that CODECHECK tooling applies to a <code>codecheck.yml</code>,
+      its bundle, the certificate and the register entry, for
+      <a href="{{spec_url}}">version {{version}} of the configuration file specification</a>
+      (published {{spec_date}}; rules updated {{updated}}).
+      The rule file is the source of truth; see
+      <a href="https://github.com/codecheckers/register/blob/master/RULES.md">RULES.md</a>
+      for the identifier scheme.
+    </p>
+    {{#superseded}}
+    <p class="rules-note">This specification version is superseded by <a href="../{{newest}}/">{{newest}}</a>, but remains in use by existing certificates.</p>
+    {{/superseded}}
+    <p>
+      Severity follows the specification's RFC 2119 keywords:
+      <span class="rules-severity rules-severity-error">error</span> for MUST,
+      <span class="rules-severity rules-severity-warning">warning</span> for SHOULD,
+      <span class="rules-severity rules-severity-info">info</span> for MAY or advice.
+      Other versions:
+      {{#other_versions}}<a href="../{{version}}/">{{version}}</a> {{/other_versions}}
+    </p>
+    {{#sections}}
+    <h2 class="rules-area">{{{title}}}</h2>
+    <div class="rules-table-wrap">
+      <table class="rules-table">
+        <thead><tr><th>ID</th><th>Name</th><th>Severity</th><th>Reference</th><th>Description</th></tr></thead>
+        <tbody>
+        {{#rows}}
+          <tr id="{{id}}"{{#deprecated}} class="rules-deprecated"{{/deprecated}}>
+            <td><a href="#{{id}}">{{id}}</a></td>
+            <td><code>{{name}}</code>{{#deprecated}} <em>(deprecated)</em>{{/deprecated}}</td>
+            <td><span class="rules-severity rules-severity-{{severity}}">{{severity}}</span></td>
+            <td>{{reference}}</td>
+            <td>{{description}}</td>
+          </tr>
+        {{/rows}}
+        </tbody>
+      </table>
+    </div>
+    {{/sections}}
+  </div>
+
+  <div class="rules-container">
+{{{footer_html}}}
+  </div>
+</body>
+</html>

@@ -8,6 +8,7 @@
 .container,
 .navbar-container,
 .redirect-container,
+.rules-container,
 .redirect-footer-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -601,4 +602,65 @@ table thead th[data-sort].sorting-asc::after {
 table thead th[data-sort].sorting-desc::after {
     content: "\2193";
     opacity: 1;
+}
+
+/* ====================
+   Validation rules pages
+   ==================== */
+
+.rules-container {
+    margin: 2rem auto;
+}
+
+.rules-title,
+.rules-area {
+    color: #008033;
+}
+
+.rules-table-wrap {
+    overflow-x: auto;
+}
+
+.rules-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.rules-table th,
+.rules-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.rules-table td:nth-child(1),
+.rules-table td:nth-child(2),
+.rules-table td:nth-child(3) {
+    white-space: nowrap;
+}
+
+.rules-table tr:target {
+    background-color: #fff8d6;
+}
+
+.rules-deprecated td {
+    color: #777;
+}
+
+.rules-severity {
+    border-radius: 3px;
+    color: #fff;
+    font-size: 0.8rem;
+    padding: 0.1rem 0.4rem;
+}
+
+.rules-severity-error { background-color: #b00020; }
+.rules-severity-warning { background-color: #8a5a00; }
+.rules-severity-info { background-color: #555; }
+
+.rules-note {
+    border-left: 4px solid #008033;
+    padding-left: 0.75rem;
 }

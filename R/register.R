@@ -212,6 +212,7 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
       generate_sitemap(register_table, filter_by, output_dir = "docs")
       generate_robots_txt(output_dir = "docs")
       generate_404_page(output_dir = "docs")
+      generate_rules_pages(output_dir = "docs")
 
       register_table
     },

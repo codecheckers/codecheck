@@ -2,6 +2,7 @@
 
 ## New Features
 
+* New `generate_rules_pages()`, called by `register_render()`, writes a human-readable page per rules file to `docs/rules/<version>/`. The pages are reachable by direct URL only: not linked, not in the sitemap, `noindex`. The register's own `rules-*.yml` take precedence over the bundled copies.
 * New `publish_wikibase_pages()` rewrites every generated page on the CODECHECK Wikibase from the register and the instance as they are now, skipping pages that have not changed (`make wikibase` in the register, register#50).
 * The Wikibase Main Page is generated too, and lists every generated page, including `Project:Example queries` (register#50).
 * `Project:Certificates` links each certificate's Wikidata item, as recorded in `register.csv` (register#50).
