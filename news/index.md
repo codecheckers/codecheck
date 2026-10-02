@@ -5,6 +5,14 @@
 ### New Features
 
 - New
+  [`generate_rules_pages()`](http://codecheck.org.uk/codecheck/reference/generate_rules_pages.md),
+  called by
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md),
+  writes a human-readable page per rules file to
+  `docs/rules/<version>/`. The pages are reachable by direct URL only:
+  not linked, not in the sitemap, `noindex`. The register’s own
+  `rules-*.yml` take precedence over the bundled copies.
+- New
   [`publish_wikibase_pages()`](http://codecheck.org.uk/codecheck/reference/publish_wikibase_pages.md)
   rewrites every generated page on the CODECHECK Wikibase from the
   register and the instance as they are now, skipping pages that have
@@ -22,6 +30,12 @@
 - `Project:Wikidata export` says whether the export has run, instead of
   claiming nothing has been sent, and lists the certificates whose
   checked work has no DOI (register#50).
+- [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  recognises membership in the Zenodo codecheck community by the
+  community’s UUID or its slug under `parent$communities$entries`, as
+  the InvenioRDM API reports it. It reported every record as not a
+  member before
+  ([\#20](https://github.com/codecheckers/codecheck/issues/20)).
 
 ## codecheck 0.31.0
 

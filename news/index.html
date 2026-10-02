@@ -42,7 +42,8 @@
 <h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
 <div class="section level3">
 <h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
-<ul><li>New <code><a href="../reference/publish_wikibase_pages.html">publish_wikibase_pages()</a></code> rewrites every generated page on the CODECHECK Wikibase from the register and the instance as they are now, skipping pages that have not changed (<code>make wikibase</code> in the register, register#50).</li>
+<ul><li>New <code><a href="../reference/generate_rules_pages.html">generate_rules_pages()</a></code>, called by <code><a href="../reference/register_render.html">register_render()</a></code>, writes a human-readable page per rules file to <code>docs/rules/&lt;version&gt;/</code>. The pages are reachable by direct URL only: not linked, not in the sitemap, <code>noindex</code>. The register’s own <code>rules-*.yml</code> take precedence over the bundled copies.</li>
+<li>New <code><a href="../reference/publish_wikibase_pages.html">publish_wikibase_pages()</a></code> rewrites every generated page on the CODECHECK Wikibase from the register and the instance as they are now, skipping pages that have not changed (<code>make wikibase</code> in the register, register#50).</li>
 <li>The Wikibase Main Page is generated too, and lists every generated page, including <code>Project:Example queries</code> (register#50).</li>
 <li>
 <code>Project:Certificates</code> links each certificate’s Wikidata item, as recorded in <code>register.csv</code> (register#50).</li>
@@ -53,6 +54,8 @@
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li>
 <code>Project:Wikidata export</code> says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).</li>
+<li>
+<code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> recognises membership in the Zenodo codecheck community by the community’s UUID or its slug under <code>parent$communities$entries</code>, as the InvenioRDM API reports it. It reported every record as not a member before (<a href="https://github.com/codecheckers/codecheck/issues/20" class="external-link">#20</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">

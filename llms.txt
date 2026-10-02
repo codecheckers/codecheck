@@ -546,6 +546,9 @@ under the MIT license, see file `LICENSE`.
 - [`generate_robots_txt()`](http://codecheck.org.uk/codecheck/reference/generate_robots_txt.md)
   : Generate robots.txt for the register
 
+- [`generate_rules_pages()`](http://codecheck.org.uk/codecheck/reference/generate_rules_pages.md)
+  : Generate the human-readable pages of the validation rules
+
 - [`generate_sitemap()`](http://codecheck.org.uk/codecheck/reference/generate_sitemap.md)
   : Generate sitemap.xml for the register
 
