@@ -393,6 +393,27 @@ member <- list(parent = list(communities = list(ids = list("codecheck"))))
 res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = member)
 expect_equal(res$status[res$check == "community"], "pass")
 
+# the InvenioRDM API lists communities by UUID, the slug only under `entries`
+# (record 22935939, certificate 2026-025)
+uuid <- "505e49f2-de4f-4905-9666-36c7303e497d"
+member_rdm <- list(parent = list(communities = list(
+  ids = list(uuid), default = uuid,
+  entries = list(list(id = uuid, slug = "codecheck")))))
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = member_rdm)
+expect_equal(res$status[res$check == "community"], "pass")
+
+# UUID alone, without `entries` -> pass
+member_uuid <- list(parent = list(communities = list(ids = list(uuid))))
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = member_uuid)
+expect_equal(res$status[res$check == "community"], "pass")
+
+# another community's UUID and slug -> fail
+other_rdm <- list(parent = list(communities = list(
+  ids = list("00000000-0000-0000-0000-000000000000"),
+  entries = list(list(id = "00000000-0000-0000-0000-000000000000", slug = "some-other-community")))))
+res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = other_rdm)
+expect_equal(res$status[res$check == "community"], "fail")
+
 # not a member -> fail
 non_member <- list(parent = list(communities = list(ids = list("some-other-community"))))
 res <- zenodo_policy_check(compliant$metadata, files = unlist(compliant$files), record = non_member)

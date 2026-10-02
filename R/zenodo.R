@@ -887,6 +887,10 @@ split_person_name <- function(name) {
        family = tokens[length(tokens)])
 }
 
+# UUID of the Zenodo "codecheck" community, which is how the InvenioRDM API
+# lists it under a record's `parent$communities$ids`.
+zenodo_codecheck_community_id <- "505e49f2-de4f-4905-9666-36c7303e497d"
+
 
 #' Check Zenodo record metadata against the CODECHECK curation policy
 #'
@@ -1089,10 +1093,13 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
 
   # Community membership: the deposit must be part of the Zenodo "codecheck"
   # community, see #20. Only checked when the full record is supplied, since
-  # this information is not part of `metadata`.
+  # this information is not part of `metadata`. The InvenioRDM representation
+  # lists communities by UUID under `ids`; the slug is only in `entries`.
   if (!is.null(record)) {
-    community_ids <- unlist(record$parent$communities$ids)
-    in_community <- "codecheck" %in% community_ids
+    communities <- record$parent$communities
+    community_ids <- c(unlist(communities$ids),
+                       unlist(lapply(communities$entries, `[[`, "slug")))
+    in_community <- any(c("codecheck", zenodo_codecheck_community_id) %in% community_ids)
     add("community", if (in_community) "pass" else "fail",
         if (in_community) "member of the codecheck community"
         else "not a member of the Zenodo codecheck community (https://zenodo.org/communities/codecheck/)")

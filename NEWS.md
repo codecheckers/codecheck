@@ -11,6 +11,7 @@
 ## Bug Fixes
 
 * `Project:Wikidata export` says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).
+* `zenodo_policy_check()` recognises membership in the Zenodo codecheck community by the community's UUID or its slug under `parent$communities$entries`, as the InvenioRDM API reports it. It reported every record as not a member before (#20).
 
 # codecheck 0.31.0
 
