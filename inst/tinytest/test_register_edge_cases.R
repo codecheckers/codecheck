@@ -265,6 +265,23 @@ expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 4)
 unlink(test_dir, recursive = TRUE)
 
+# A row whose repository has no codecheck.yml must not shorten the Codechecker
+# column: the register keeps one (empty) entry per row. Only the last row lacks
+# a yml, as 2026-026 did, which used to leave the column one entry short.
+expect_warning(
+  no_yml <- with_mocked_codecheck(
+    list(get_codecheck_yml_or_null = function(repo, certificate = NULL, ...) {
+      if (identical(certificate, multi_platform_register$Certificate[nrow(multi_platform_register)])) return(NULL)
+      list(certificate = certificate,
+           codechecker = list(list(name = "Test Checker", ORCID = "0000-0000-0000-0001")))
+    }),
+    codecheck:::add_codechecker(data.frame(x = seq_len(nrow(multi_platform_register))),
+                                multi_platform_register)),
+  "codechecker not found in record")
+expect_equal(nrow(no_yml), nrow(multi_platform_register))
+expect_equal(length(no_yml$Codechecker), nrow(multi_platform_register))
+expect_equal(no_yml$Codechecker[[1]], "0000-0000-0000-0001")
+
 # Test 7: Register with NA Issue numbers ----
 na_issue_register <- data.frame(
   Certificate = c("2024-111", "2024-112"),

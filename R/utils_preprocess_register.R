@@ -360,7 +360,9 @@ add_codechecker <- function(register_table, register) {
       warning("codechecker not found in record ", toString(register[i, ]))
     }
 
-    codecheckers[[i]] <- codechecker_ids
+    # `[i] <- list(NULL)`, not `[[i]] <- NULL`, which would delete the element
+    # and leave the list shorter than the register
+    codecheckers[i] <- list(codechecker_ids)
   }
   register_table$`Codechecker` <- codecheckers
   return(register_table)
