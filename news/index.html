@@ -53,6 +53,8 @@
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li>
+<code><a href="../reference/register_render.html">register_render()</a></code> no longer stops with “replacement has N rows, data has N+1” when a register row’s repository has no <code>codecheck.yml</code>. <code><a href="../reference/add_codechecker.html">add_codechecker()</a></code> dropped the entry of such a row from the Codechecker column; it now keeps an empty one and still warns.</li>
+<li>
 <code>Project:Wikidata export</code> says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).</li>
 <li>
 <code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> recognises membership in the Zenodo codecheck community by the community’s UUID or its slug under <code>parent$communities$entries</code>, as the InvenioRDM API reports it. It reported every record as not a member before (<a href="https://github.com/codecheckers/codecheck/issues/20" class="external-link">#20</a>).</li>

@@ -27,6 +27,12 @@
 
 ### Bug Fixes
 
+- [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  no longer stops with “replacement has N rows, data has N+1” when a
+  register row’s repository has no `codecheck.yml`.
+  [`add_codechecker()`](http://codecheck.org.uk/codecheck/reference/add_codechecker.md)
+  dropped the entry of such a row from the Codechecker column; it now
+  keeps an empty one and still warns.
 - `Project:Wikidata export` says whether the export has run, instead of
   claiming nothing has been sent, and lists the certificates whose
   checked work has no DOI (register#50).
