@@ -77,7 +77,7 @@ result_list <- tryCatch({
   FALSE
 })
 
-expect_true(result_list, info = "Function should handle list of repositories (uses first)")
+expect_true(result_list, info = "Function should handle list of repositories")
 
 # Test 5: Output contains expected LaTeX elements with valid repository
 output_with_repo <- capture.output(
@@ -132,3 +132,41 @@ expect_true(grepl("already escaped \\& with $x_1$", rows[3], fixed = TRUE),
 expect_true(grepl("& missing \\\\", rows[1], fixed = TRUE))
 expect_true(grepl("& 123 \\\\", rows[2], fixed = TRUE))
 expect_true(grepl("& 3000000000 \\\\", rows[3], fixed = TRUE))
+
+# Test 9: links use the default branch (HEAD), not master (codecheck#97)
+expect_true(grepl("https://github.com/test/repo/blob/HEAD/figure1.png", output_text, fixed = TRUE))
+expect_false(grepl("blob/master", output_text, fixed = TRUE))
+
+# Test 10: several repositories as yaml::read_yaml() returns them, a character
+# vector; the first code forge is linked, even when it is not listed first
+metadata_multi <- yaml::read_yaml(file.path("yaml", "repository_multiple", "codecheck.yml"))
+metadata_multi$repository <- rev(metadata_multi$repository)
+out_multi <- paste(capture.output(
+  latex_summary_of_manifest(metadata_multi, manifest_df, root)), collapse = "\n")
+expect_true(grepl("\\href{https://github.com/codecheckers/analysis-code/blob/HEAD/figure1.png}",
+                  out_multi, fixed = TRUE))
+expect_false(grepl("zenodo", out_multi, fixed = TRUE))
+
+# Test 11: DOIs and unknown hosts are not linked
+for (repo in c("https://doi.org/10.5281/zenodo.1234567", "https://codeberg.org/test/repo")) {
+  out <- paste(capture.output(
+    latex_summary_of_manifest(list(repository = repo), manifest_df, root)), collapse = "\n")
+  expect_false(grepl("\\href", out), info = repo)
+  expect_true(grepl("\\path{figure1.png}", out, fixed = TRUE), info = repo)
+}
+
+# Test 12: GitLab file URLs, also for nested groups and with .git suffix
+out_gitlab <- paste(capture.output(
+  latex_summary_of_manifest(list(repository = "https://gitlab.com/group/sub/project.git/"),
+                            manifest_df, root)), collapse = "\n")
+expect_true(grepl("https://gitlab.com/group/sub/project/-/blob/HEAD/figure1.png", out_gitlab, fixed = TRUE))
+
+# Test 13: repository_url overrides the metadata or turns links off
+out_override <- paste(capture.output(
+  latex_summary_of_manifest(metadata_null_repo, manifest_df, root,
+                            repository_url = "https://github.com/other/repo")), collapse = "\n")
+expect_true(grepl("https://github.com/other/repo/blob/HEAD/table1.csv", out_override, fixed = TRUE))
+out_off <- paste(capture.output(
+  latex_summary_of_manifest(metadata_valid_repo, manifest_df, root,
+                            repository_url = FALSE)), collapse = "\n")
+expect_false(grepl("\\href", out_off))

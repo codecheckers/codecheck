@@ -143,5 +143,10 @@ expect_true("mandatory" %in% names(result$missing))
 expect_true("recommended" %in% names(result$missing))
 expect_true("optional" %in% names(result$missing))
 
+# Several repositories are not reported as missing (codecheck#97)
+file.copy(file.path("yaml", "repository_multiple", "codecheck.yml"), test_yml, overwrite = TRUE)
+result <- complete_codecheck_yml(test_yml)
+expect_false("repository" %in% result$missing$optional)
+
 # Clean up
 unlink(test_yml)

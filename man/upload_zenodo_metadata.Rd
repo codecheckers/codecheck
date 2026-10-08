@@ -20,7 +20,8 @@ upload_zenodo_metadata(
 codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.}
 
 \item{resource_types}{named list to override default resource types for related identifiers.
-Supported names: "paper" (default: "publication-article"), "repository" (default: auto-detected).
+Supported names: "paper" (default: "publication-article"), "repository" (default: auto-detected
+per repository; one type for all repositories, or one per repository).
 Example: \code{list(paper = "publication-preprint")}}
 }
 \value{
@@ -40,7 +41,7 @@ Requirements:
 - Description must include the certificate summary
 - Publisher must be "CODECHECK Community on Zenodo"
 - Resource type must be "publication-report"
-- Related identifiers for paper (reviews) and repository (isSupplementedBy)
+- Related identifiers for paper (reviews) and each repository (isSupplementedBy)
 - Alternate identifiers for certificate ID (URL and Other schemas)
 }
 \author{

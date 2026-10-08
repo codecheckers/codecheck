@@ -11,6 +11,9 @@
 
 ## Bug Fixes
 
+* The certificate summary tables no longer fail when `codecheck.yml` lists several `repository` URLs, and list all of them (closes codecheckers/codecheck#97).
+* `upload_zenodo_metadata()` adds every repository as a related identifier and to the description, not only the first (codecheckers/codecheck#97).
+* `latex_summary_of_manifest()` links output files on the default branch instead of `master`, only for GitHub and GitLab, and takes a `repository_url` to choose or turn off the link (codecheckers/codecheck#97).
 * The certificate summary table in the Rmd and Quarto templates labels the rows "Author"/"Authors" and "Codechecker"/"Codecheckers" by the number of people, instead of "Author(s)" and "Codechecker(s)".
 * `register_render()` no longer stops with "replacement has N rows, data has N+1" when a register row's repository has no `codecheck.yml`. `add_codechecker()` dropped the entry of such a row from the Codechecker column; it now keeps an empty one and still warns.
 * `Project:Wikidata export` says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).

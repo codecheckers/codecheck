@@ -85,6 +85,7 @@ latex_summary_of_metadata <- function(metadata) {
     if (length(people) > 1) paste0(singular, "s") else singular
   }
 
+  repositories = .repository_urls(metadata$repository)
   summary_entries = list(
     "Title of checked publication" = safe_value(metadata$paper$title),
     "Author" =          safe_value(.names(metadata$paper$authors)),
@@ -92,10 +93,11 @@ latex_summary_of_metadata <- function(metadata) {
     "Codechecker" =     safe_value(.names(metadata$codechecker)),
     "Date of check" =   safe_value(metadata$check_time),
     "Summary" =         safe_value(metadata$summary),
-    "Repository" =      safe_value(as_latex_url(metadata$repository)))
+    "Repository" =      paste(as_latex_url(repositories), collapse = " \\newline "))
   items = names(summary_entries)
   items[items == "Author"] = people_label("Author", metadata$paper$authors)
   items[items == "Codechecker"] = people_label("Codechecker", metadata$codechecker)
+  if (length(repositories) > 1) items[items == "Repository"] = "Repositories"
 
   # Create data frame - all entries now guaranteed to have a value
   summary_df = data.frame(Item=items,
@@ -118,42 +120,42 @@ latex_summary_of_metadata <- function(metadata) {
 ##' @param manifest_df - The manifest data frame
 ##' @param root - root directory of the project
 ##' @param align - alignment flags for the table.
+##' @param repository_url - the repository to link the output files to. By
+##'   default, the first GitHub or GitLab repository in the metadata, linked on
+##'   its default branch; other repositories and DOIs are not linked. A string
+##'   links to that repository, `FALSE` turns the links off.
 ##' @return The latex table, suitable for including in the Rmd
 ##' @author Stephen Eglen
 ##' @importFrom xtable xtable
 ##' @export
 latex_summary_of_manifest <- function(metadata, manifest_df,
                                       root,
-                                      align=c('l', 'p{6cm}', 'p{6cm}', 'p{2cm}')
+                                      align=c('l', 'p{6cm}', 'p{6cm}', 'p{2cm}'),
+                                      repository_url = NULL
                                       ) {
   m = manifest_df[, c("output", "comment", "size")]
   m$comment = .escape_latex_table_text(m$comment)
   m$size = ifelse(is.na(m$size), "missing",
                   formatC(m$size, format = "f", digits = 0))
 
-  # Safely get repository URL
-  # Handle NULL, empty, or list (multiple repositories)
-  repo_url <- NULL
-  if (!is.null(metadata$repository) && length(metadata$repository) > 0) {
-    if (is.list(metadata$repository)) {
-      # If multiple repositories, use the first one
-      repo_url <- metadata$repository[[1]]
-    } else if (is.character(metadata$repository) && nchar(metadata$repository) > 0) {
-      repo_url <- metadata$repository
+  # Link the outputs only to a repository with a known file URL scheme,
+  # several repositories may be given (codecheck#97)
+  paths = ifelse(startsWith(manifest_df$dest, root),
+                 substring(manifest_df$dest, nchar(root) + 1),
+                 manifest_df$dest)
+  urls = rep(NA_character_, nrow(m))
+  if (is.null(repository_url)) {
+    for (repo in .repository_urls(metadata$repository)) {
+      urls = .repository_file_url(repo, paths)
+      if (!all(is.na(urls))) break
     }
+  } else if (!isFALSE(repository_url)) {
+    urls = .repository_file_url(repository_url, paths)
   }
 
-  # Generate URLs only if we have a valid repository
-  if (!is.null(repo_url) && nchar(repo_url) > 0) {
-    urls = sub(root, sprintf('%s/blob/master', repo_url), manifest_df$dest)
-    m1 = sprintf('\\href{%s}{\\path{%s}}',
-                 urls,
-                 m[,1])
-    m[,1] = m1
-  } else {
-    # No repository URL available - just use file paths without hyperlinks
-    m[,1] = sprintf('\\path{%s}', m[,1])
-  }
+  m[,1] = ifelse(is.na(urls),
+                 sprintf('\\path{%s}', m[,1]),
+                 sprintf('\\href{%s}{\\path{%s}}', urls, m[,1]))
 
   names(m) = c("Output", "Comment", "Size (b)")
   xt = xtable(m,

@@ -392,3 +392,55 @@ related_calls11 <- find_all_calls(result11, "addRelatedIdentifier")
 repo_call11 <- Filter(function(c) c$relation_type == "issupplementedby", related_calls11)
 expect_equal(repo_call11[[1]]$resource_type, "dataset",
             info = "Zenodo DOI should be detected as 'dataset'")
+
+# Test 15: several repositories, as yaml::read_yaml() returns them (codecheck#97) ----
+test_metadata_multi <- test_metadata
+test_metadata_multi$repository <- yaml::read_yaml(
+  file.path("yaml", "repository_multiple", "codecheck.yml"))$repository
+
+mock_record12 <- create_mock_record()
+result12 <- suppressMessages(
+  codecheck::upload_zenodo_metadata(mock_zenodo, mock_record12, test_metadata_multi)
+)
+repo_calls12 <- Filter(function(c) c$relation_type == "issupplementedby",
+                       find_all_calls(result12, "addRelatedIdentifier"))
+expect_equal(vapply(repo_calls12, `[[`, "", "identifier"), test_metadata_multi$repository,
+             info = "One related identifier per repository")
+expect_equal(vapply(repo_calls12, `[[`, "", "resource_type"), c("software", "dataset"),
+             info = "Resource type is detected per repository")
+desc12 <- find_call(result12, "setDescription")$value
+expect_true(grepl("https://github.com/codecheckers/analysis-code", desc12, fixed = TRUE))
+expect_true(grepl("https://doi.org/10.5281/zenodo.1234567", desc12, fixed = TRUE))
+
+# A list of repositories gives the same result
+test_metadata_multi$repository <- as.list(test_metadata_multi$repository)
+result12b <- suppressMessages(
+  codecheck::upload_zenodo_metadata(mock_zenodo, create_mock_record(), test_metadata_multi)
+)
+expect_equal(length(Filter(function(c) c$relation_type == "issupplementedby",
+                           find_all_calls(result12b, "addRelatedIdentifier"))), 2)
+
+# Test 16: resource type overrides for several repositories ----
+result13 <- suppressMessages(
+  codecheck::upload_zenodo_metadata(mock_zenodo, create_mock_record(), test_metadata_multi,
+                                    resource_types = list(repository = c("software", "software")))
+)
+repo_calls13 <- Filter(function(c) c$relation_type == "issupplementedby",
+                       find_all_calls(result13, "addRelatedIdentifier"))
+expect_equal(vapply(repo_calls13, `[[`, "", "resource_type"), c("software", "software"))
+
+result14 <- suppressMessages(
+  codecheck::upload_zenodo_metadata(mock_zenodo, create_mock_record(), test_metadata_multi,
+                                    resource_types = list(repository = "dataset"))
+)
+repo_calls14 <- Filter(function(c) c$relation_type == "issupplementedby",
+                       find_all_calls(result14, "addRelatedIdentifier"))
+expect_equal(vapply(repo_calls14, `[[`, "", "resource_type"), c("dataset", "dataset"),
+             info = "A single override applies to all repositories")
+
+expect_error(
+  suppressMessages(codecheck::upload_zenodo_metadata(
+    mock_zenodo, create_mock_record(), test_metadata_multi,
+    resource_types = list(repository = c("software", "dataset", "dataset")))),
+  pattern = "one per repository"
+)

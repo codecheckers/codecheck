@@ -110,9 +110,9 @@ complete_codecheck_yml <- function(yml_file = "codecheck.yml",
   # Helper function to check if a field is missing or empty
   is_missing_or_placeholder <- function(value) {
     is.null(value) ||
+      length(value) == 0 ||
       identical(value, "") ||
-      (is.list(value) && length(value) == 0) ||
-      (is.character(value) && grepl("FIXME|TODO|template|example", value, ignore.case = TRUE))
+      (is.character(value) && any(grepl("FIXME|TODO|template|example", value, ignore.case = TRUE)))
   }
 
   # Analyze missing fields

@@ -1,0 +1,20 @@
+---
+version: https://codecheck.org.uk/spec/config/1.0/
+paper:
+  title: A paper with code and data in different repositories
+  authors:
+    - name: Jane Doe
+  reference: https://doi.org/10.1234/paper.5678
+manifest:
+  - file: figure1.png
+    comment: Main figure
+codechecker:
+  - name: John Smith
+    ORCID: 0000-0001-2345-6789
+summary: Code and data are archived separately.
+repository:
+  - https://github.com/codecheckers/analysis-code
+  - https://doi.org/10.5281/zenodo.1234567
+check_time: "2024-01-15 10:00:00"
+certificate: 2024-001
+report: https://doi.org/10.5281/zenodo.7654321

@@ -378,7 +378,7 @@ get_zenodo_record <- function(zenodo, metadata = codecheck_metadata(getwd())) {
 #' - Description must include the certificate summary
 #' - Publisher must be "CODECHECK Community on Zenodo"
 #' - Resource type must be "publication-report"
-#' - Related identifiers for paper (reviews) and repository (isSupplementedBy)
+#' - Related identifiers for paper (reviews) and each repository (isSupplementedBy)
 #' - Alternate identifiers for certificate ID (URL and Other schemas)
 #'
 #' @title Upload metadata to Zenodo
@@ -387,7 +387,8 @@ get_zenodo_record <- function(zenodo, metadata = codecheck_metadata(getwd())) {
 #' @param metadata codecheck metadata (list). Defaults to loading from
 #'   codecheck.yml in the current working directory using \code{codecheck_metadata(getwd())}.
 #' @param resource_types named list to override default resource types for related identifiers.
-#'   Supported names: "paper" (default: "publication-article"), "repository" (default: auto-detected).
+#'   Supported names: "paper" (default: "publication-article"), "repository" (default: auto-detected
+#'   per repository; one type for all repositories, or one per repository).
 #'   Example: \code{list(paper = "publication-preprint")}
 #' @return rec -- the updated record.
 #' @author Stephen Eglen
@@ -413,9 +414,7 @@ upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(
     url_lower <- tolower(url)
 
     # Check for code repository platforms
-    code_platforms <- c("github.com", "gitlab.com", "codeberg.org", "bitbucket.org",
-                       "git.sr.ht", "gitea.com", "gitee.com")
-    for (platform in code_platforms) {
+    for (platform in .code_forge_hosts) {
       if (grepl(platform, url_lower, fixed = TRUE)) {
         return(list(type = "software", confidence = "high"))
       }
@@ -492,19 +491,21 @@ upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(
   description_parts <- c(description_parts,
                         paste0("<p><strong>Paper:</strong> ", metadata$paper$title, "</p>"))
 
-  # Add repository link
-  repo_url <- NULL
-  if (!is.null(metadata$repository) && length(metadata$repository) > 0) {
-    if (is.list(metadata$repository)) {
-      repo_url <- metadata$repository[[1]]
-    } else if (is.character(metadata$repository) && nchar(metadata$repository) > 0) {
-      repo_url <- gsub("[<>]", "", metadata$repository)
-    }
+  # Add repository links, the spec allows several repositories (codecheck#97)
+  repo_urls <- .repository_urls(metadata$repository)
+  if (length(repo_urls) > 0) {
+    repo_links <- paste0('<a href="', repo_urls, '">', repo_urls, '</a>')
+    description_parts <- c(description_parts,
+                          paste0('<p><strong>Repository:</strong> ',
+                                 paste(repo_links, collapse = ", "), '</p>'))
   }
 
-  if (!is.null(repo_url) && nchar(repo_url) > 0) {
-    description_parts <- c(description_parts,
-                          paste0('<p><strong>Repository:</strong> <a href="', repo_url, '">', repo_url, '</a></p>'))
+  # A repository resource type override applies to all repositories, or gives
+  # one type per repository
+  if (!is.null(resource_types$repository) &&
+      !length(resource_types$repository) %in% c(1, length(repo_urls))) {
+    stop("resource_types$repository must have one entry, or one per repository (",
+         length(repo_urls), "), but has ", length(resource_types$repository))
   }
 
   description_text <- paste(description_parts, collapse = "\n")
@@ -565,11 +566,12 @@ upload_zenodo_metadata <- function(zenodo, myrec, metadata = codecheck_metadata(
             "paper$reference in codecheck.yml.")
   }
 
-  # Add related identifier for code repository (POLICY REQUIREMENT)
-  if (!is.null(repo_url) && nchar(repo_url) > 0) {
+  # Add related identifier for each code or data repository (POLICY REQUIREMENT)
+  for (i in seq_along(repo_urls)) {
+    repo_url <- repo_urls[[i]]
     # Determine resource type: use override if provided, otherwise auto-detect
     if (!is.null(resource_types$repository)) {
-      repo_resource_type <- resource_types$repository
+      repo_resource_type <- rep_len(resource_types$repository, length(repo_urls))[[i]]
       repo_confidence <- "user-specified"
     } else {
       detection <- detect_repo_type(repo_url)
