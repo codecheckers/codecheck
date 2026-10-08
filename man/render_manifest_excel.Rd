@@ -4,12 +4,14 @@
 \alias{render_manifest_excel}
 \title{Render Excel file for certificate output}
 \usage{
-render_manifest_excel(path, comment)
+render_manifest_excel(path, comment, name = basename(path))
 }
 \arguments{
 \item{path}{- Path to the Excel file}
 
 \item{comment}{- Comment describing the file}
+
+\item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

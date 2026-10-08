@@ -931,3 +931,21 @@ if (!is.null(result$output_file)) {
 }
 
 unlink(env$root, recursive = TRUE)
+
+# The heading and error box show the manifest's name, not the renamed copy (codecheck#98)
+missing_copy <- file.path(tempdir(), "Figure_1.png")
+named_out <- capture.output(codecheck:::render_manifest_image(missing_copy, "A figure",
+                                                              name = "Figure 1.png"))
+expect_true(any(grepl("^##  Figure 1.png", named_out)))
+expect_true(any(grepl("`Figure 1.png`", named_out, fixed = TRUE)))
+default_out <- capture.output(codecheck:::render_manifest_image(missing_copy, "A figure"))
+expect_true(any(grepl("^##  Figure_1.png", default_out)))
+
+df_out <- capture.output(codecheck::render_manifest_files(data.frame(
+  output = "figs/Figure 1.png", comment = "A figure", dest = missing_copy,
+  stringsAsFactors = FALSE)))
+expect_true(any(grepl("^##  Figure 1.png", df_out)))
+# A manifest data frame without an output column shows the copy's name
+no_output <- capture.output(codecheck::render_manifest_files(data.frame(
+  comment = "A figure", dest = missing_copy, stringsAsFactors = FALSE)))
+expect_true(any(grepl("^##  Figure_1.png", no_output)))

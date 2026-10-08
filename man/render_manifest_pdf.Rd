@@ -4,12 +4,14 @@
 \alias{render_manifest_pdf}
 \title{Render PDF file for certificate output}
 \usage{
-render_manifest_pdf(path, comment)
+render_manifest_pdf(path, comment, name = basename(path))
 }
 \arguments{
 \item{path}{- Path to the PDF file}
 
 \item{comment}{- Comment/caption for the PDF}
+
+\item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

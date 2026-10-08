@@ -4,7 +4,7 @@
 \alias{render_manifest_json}
 \title{Render JSON file for certificate output}
 \usage{
-render_manifest_json(path, comment, max_lines = 50)
+render_manifest_json(path, comment, max_lines = 50, name = basename(path))
 }
 \arguments{
 \item{path}{- Path to the JSON file}
@@ -12,6 +12,8 @@ render_manifest_json(path, comment, max_lines = 50)
 \item{comment}{- Comment describing the file}
 
 \item{max_lines}{- Maximum number of lines to display (default: 50)}
+
+\item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

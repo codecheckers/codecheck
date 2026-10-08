@@ -36,6 +36,11 @@ the destination directory and then the manifest is returned as a dataframe.
 If KEEP_FULL_PATH is TRUE, we keep the full path for the output files.
 This is useful when there are two output files with the same name in
 different folders, e.g. expt1/out.pdf and expt2/out.pdf
+
+Whitespace in the names of the copies is replaced by underscores, e.g.
+\code{Figure 1.png} is copied to \code{Figure_1.png}, because LaTeX cannot
+reliably include files with spaces in their names. The \code{output} column
+keeps the name from the manifest, \code{dest} holds the path of the copy.
 }
 \author{
 Stephen Eglen

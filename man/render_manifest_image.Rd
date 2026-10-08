@@ -4,12 +4,14 @@
 \alias{render_manifest_image}
 \title{Render single-page image for certificate output}
 \usage{
-render_manifest_image(path, comment)
+render_manifest_image(path, comment, name = basename(path))
 }
 \arguments{
 \item{path}{- Path to the image file}
 
 \item{comment}{- Comment/caption for the image}
+
+\item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

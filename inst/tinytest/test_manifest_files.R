@@ -188,5 +188,37 @@ expect_true("First output" %in% result$comment)
 expect_true("Second output" %in% result$comment)
 expect_true("Data result" %in% result$comment)
 
+# Test 13: file names with spaces are copied to names with underscores (codecheck#98) ----
+spaces_metadata <- function(files) {
+  list(manifest = lapply(files, function(f) list(file = f, comment = f)))
+}
+env <- setup_test_env()
+dir.create(file.path(env$root, "my figs"))
+for (f in c("Figure 1.jpeg", "my figs/Figure ESM 4.2.jpeg")) {
+  writeLines("image", file.path(env$root, f))
+}
+metadata <- spaces_metadata(c("Figure 1.jpeg", "my figs/Figure ESM 4.2.jpeg"))
+expect_silent(result <- codecheck::copy_manifest_files(env$root, metadata, env$dest_dir))
+expect_equal(result$output, c("Figure 1.jpeg", "my figs/Figure ESM 4.2.jpeg"))
+expect_equal(basename(result$dest), c("Figure_1.jpeg", "Figure_ESM_4.2.jpeg"))
+expect_true(all(file.exists(result$dest)))
+expect_false(any(is.na(result$size)))
+expect_equal(codecheck::list_manifest_files(env$root, metadata, env$dest_dir)$dest,
+             result$dest)
+
+# Test 14: with keep_full_path, folder names lose their spaces too ----
+result <- codecheck::copy_manifest_files(env$root, metadata, env$dest_dir,
+                                         keep_full_path = TRUE)
+expect_equal(result$dest[2], file.path(env$dest_dir, "my_figs/Figure_ESM_4.2.jpeg"))
+expect_true(file.exists(result$dest[2]))
+
+# Test 15: names that are the same after replacing spaces give a warning ----
+writeLines("other", file.path(env$root, "Figure_1.jpeg"))
+expect_warning(
+  codecheck::copy_manifest_files(env$root,
+                                 spaces_metadata(c("Figure 1.jpeg", "Figure_1.jpeg")),
+                                 env$dest_dir, overwrite = TRUE),
+  pattern = "Figure 1.jpeg -> .*/Figure_1.jpeg")
+
 # Clean up
 unlink(file.path(tempdir(), "test_manifest"), recursive = TRUE)

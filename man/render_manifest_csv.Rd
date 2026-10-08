@@ -4,12 +4,14 @@
 \alias{render_manifest_csv}
 \title{Render CSV file for certificate output}
 \usage{
-render_manifest_csv(path, comment)
+render_manifest_csv(path, comment, name = basename(path))
 }
 \arguments{
 \item{path}{- Path to the CSV file}
 
 \item{comment}{- Comment describing the file}
+
+\item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

@@ -170,3 +170,27 @@ out_off <- paste(capture.output(
   latex_summary_of_manifest(metadata_valid_repo, manifest_df, root,
                             repository_url = FALSE)), collapse = "\n")
 expect_false(grepl("\\href", out_off))
+
+# Test: file names with spaces keep them in the table, links use the copy (codecheck#98)
+manifest_spaces <- data.frame(
+  output = "Figure 1.jpeg",
+  comment = "Figure with a space",
+  size = 1,
+  dest = "/tmp/codecheck/outputs/Figure_1.jpeg",
+  stringsAsFactors = FALSE
+)
+spaces_text <- paste(capture.output(
+  latex_summary_of_manifest(list(repository = "https://github.com/test/repo"),
+                            manifest_spaces, "/tmp")
+), collapse = "\n")
+expect_true(grepl("\\path{Figure 1.jpeg}", spaces_text, fixed = TRUE))
+expect_true(grepl("\\href{https://github.com/test/repo/blob/HEAD/codecheck/outputs/Figure_1.jpeg}",
+                  spaces_text, fixed = TRUE))
+
+# Test: the certificate preamble keeps spaces in \path (codecheck#98)
+preamble <- readLines(system.file("extdata", "templates", "codecheck",
+                                  "codecheck-preamble.sty", package = "codecheck"))
+expect_true(any(grepl("\\PassOptionsToPackage{obeyspaces,spaces}{url}", preamble, fixed = TRUE)))
+expect_true(which(grepl("PassOptionsToPackage", preamble)) <
+            which(grepl("usepackage\\{hyperref\\}", preamble)))
+

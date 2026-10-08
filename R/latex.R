@@ -220,16 +220,17 @@ render_error_box <- function(filename, error_msg) {
 ##'
 ##' @param path - Path to the image file
 ##' @param comment - Comment/caption for the image
+##' @param name - File name shown in the heading and messages (default: the base name of \code{path})
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom magick image_read image_write
 ##' @keywords internal
-render_manifest_image <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_image <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -249,7 +250,7 @@ render_manifest_image <- function(path, comment) {
       cat(paste0("![", comment, "](", png_path, ")\n"))
     }, error = function(e) {
       format_name <- toupper(ext)
-      render_error_box(basename(path),
+      render_error_box(name,
                       paste("Failed to convert", format_name, "image:", e$message))
     })
   } else {
@@ -262,7 +263,7 @@ render_manifest_image <- function(path, comment) {
       # If validation succeeds, include the image
       cat(paste0("![", comment, "](", path, ")\n"))
     }, error = function(e) {
-      render_error_box(basename(path),
+      render_error_box(name,
                       paste("Failed to read image file (possibly corrupted):", e$message))
     })
   }
@@ -274,22 +275,23 @@ render_manifest_image <- function(path, comment) {
 ##'
 ##' @param path - Path to the EPS file
 ##' @param comment - Comment/caption for the image
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_eps <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_eps <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
   tryCatch({
     cat(paste0("![", comment, "](", path, ")\n"))
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to include EPS image:", e$message))
   })
 }
@@ -300,16 +302,17 @@ render_manifest_eps <- function(path, comment) {
 ##'
 ##' @param path - Path to the SVG file
 ##' @param comment - Comment/caption for the image
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom rsvg rsvg_pdf
 ##' @keywords internal
-render_manifest_svg <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_svg <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -321,7 +324,7 @@ render_manifest_svg <- function(path, comment) {
     cat("\\textit{Note: SVG image automatically converted to PDF for display.}\n\n")
     cat(paste0("![", comment, "](", pdf_path, ")\n"))
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to convert SVG image:", e$message))
   })
 }
@@ -332,16 +335,17 @@ render_manifest_svg <- function(path, comment) {
 ##'
 ##' @param path - Path to the PDF file
 ##' @param comment - Comment/caption for the PDF
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom pdftools pdf_info
 ##' @keywords internal
-render_manifest_pdf <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_pdf <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -353,13 +357,13 @@ render_manifest_pdf <- function(path, comment) {
     if (!is.na(num_pages) && num_pages > 1) {
       # Multi-page PDF - include all pages
       cat(paste0("\\includepdf[pages={-}]{", path, "}\n\n"))
-      cat("End of ", basename(path), " (", num_pages, " pages).\n\n")
+      cat("End of ", name, " (", num_pages, " pages).\n\n")
     } else {
       # Single-page PDF - include as image
       cat(paste0("![", comment, "](", path, ")\n"))
     }
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to process PDF file:", e$message))
   })
 }
@@ -370,15 +374,16 @@ render_manifest_pdf <- function(path, comment) {
 ##'
 ##' @param path - Path to the text file
 ##' @param comment - Comment describing the file
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_text <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_text <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -387,7 +392,7 @@ render_manifest_text <- function(path, comment) {
     cat(readLines(path, warn = FALSE), sep = "\n")
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to read text file:", e$message))
   })
 }
@@ -398,15 +403,16 @@ render_manifest_text <- function(path, comment) {
 ##'
 ##' @param path - Path to the CSV file
 ##' @param comment - Comment describing the file
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_csv <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_csv <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -417,7 +423,7 @@ render_manifest_csv <- function(path, comment) {
     print(skimr::skim(data))
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to read CSV file:", e$message))
   })
 }
@@ -428,16 +434,17 @@ render_manifest_csv <- function(path, comment) {
 ##'
 ##' @param path - Path to the TSV file
 ##' @param comment - Comment describing the file
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom utils read.delim
 ##' @keywords internal
-render_manifest_tsv <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_tsv <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -448,7 +455,7 @@ render_manifest_tsv <- function(path, comment) {
     print(skimr::skim(data))
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to read TSV file:", e$message))
   })
 }
@@ -459,16 +466,17 @@ render_manifest_tsv <- function(path, comment) {
 ##'
 ##' @param path - Path to the Excel file
 ##' @param comment - Comment describing the file
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom readxl read_excel
 ##' @keywords internal
-render_manifest_excel <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_excel <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -479,7 +487,7 @@ render_manifest_excel <- function(path, comment) {
     print(data)
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to read Excel file:", e$message))
   })
 }
@@ -514,15 +522,16 @@ manifest_pandoc <- function() {
 ##'
 ##' @param path - Path to the Word or RTF file
 ##' @param comment - Comment describing the file
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_office <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_office <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -536,13 +545,13 @@ render_manifest_office <- function(path, comment) {
         "export it as .docx, RTF or PDF to include it.*\n\n")
     return(invisible(NULL))
   } else {
-    render_error_box(basename(path), "Unrecognised Word/RTF file content")
+    render_error_box(name, "Unrecognised Word/RTF file content")
     return(invisible(NULL))
   }
 
   pandoc <- manifest_pandoc()
   if (is.null(pandoc)) {
-    render_error_box(basename(path), "Word/RTF conversion requires pandoc (not found)")
+    render_error_box(name, "Word/RTF conversion requires pandoc (not found)")
     return(invisible(NULL))
   }
 
@@ -555,10 +564,10 @@ render_manifest_office <- function(path, comment) {
       stdout = TRUE, stderr = FALSE))
     status <- attr(md, "status")
     if (!is.null(status) && status != 0) {
-      render_error_box(basename(path), paste("pandoc conversion failed with status", status))
+      render_error_box(name, paste("pandoc conversion failed with status", status))
     } else {
       if (from == "rtf") {
-        message(basename(path), ": pandoc's RTF reader can drop characters (e.g. the opening ",
+        message(name, ": pandoc's RTF reader can drop characters (e.g. the opening ",
                 "'[' of confidence intervals), compare the certificate with the original file")
       }
       cat("Content of", if (from == "rtf") "RTF" else "Word", "document (converted with pandoc):", "\n\n")
@@ -574,7 +583,7 @@ render_manifest_office <- function(path, comment) {
       cat(md, "\n\n")
     }
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to convert Word/RTF file:", e$message))
   })
 }
@@ -586,17 +595,18 @@ render_manifest_office <- function(path, comment) {
 ##' @param path - Path to the JSON file
 ##' @param comment - Comment describing the file
 ##' @param max_lines - Maximum number of lines to display (default: 50)
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom jsonlite prettify fromJSON
 ##' @importFrom utils head
 ##' @keywords internal
-render_manifest_json <- function(path, comment, max_lines = 50) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_json <- function(path, comment, max_lines = 50, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
@@ -621,7 +631,7 @@ render_manifest_json <- function(path, comment, max_lines = 50) {
 
     cat("\n\n``` \n\n", "\\normalsize \n\n")
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to read JSON file:", e$message))
   })
 }
@@ -632,20 +642,21 @@ render_manifest_json <- function(path, comment, max_lines = 50) {
 ##'
 ##' @param path - Path to the HTML file
 ##' @param comment - Comment describing the file
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_html <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_html <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
   if (Sys.which("wkhtmltopdf") == "") {
-    render_error_box(basename(path),
+    render_error_box(name,
                     "HTML conversion requires wkhtmltopdf (not installed)")
     return(invisible(NULL))
   }
@@ -657,12 +668,12 @@ render_manifest_html <- function(path, comment) {
                      stdout = FALSE, stderr = FALSE)
     if (result == 0 && file.exists(out_file)) {
       cat(paste0("\\includepdf[pages={-}]{", out_file, "}"))
-      cat("\n\n End of ", basename(path), " on previous page.", "\n\n")
+      cat("\n\n End of ", name, " on previous page.", "\n\n")
     } else {
-      render_error_box(basename(path), "HTML to PDF conversion failed")
+      render_error_box(name, "HTML to PDF conversion failed")
     }
   }, error = function(e) {
-    render_error_box(basename(path),
+    render_error_box(name,
                     paste("Failed to convert HTML file:", e$message))
   })
 }
@@ -673,21 +684,22 @@ render_manifest_html <- function(path, comment) {
 ##'
 ##' @param path - Path to the file
 ##' @param comment - Comment describing the file
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_unsupported <- function(path, comment) {
-  cat("## ", basename(path), "\n\n")
+render_manifest_unsupported <- function(path, comment, name = basename(path)) {
+  cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
   # Check if file exists
   if (!file.exists(path)) {
-    render_error_box(basename(path), "File not found")
+    render_error_box(name, "File not found")
     return(invisible(NULL))
   }
 
   # Show file exists but format is not supported
   ext <- tools::file_ext(path)
-  render_error_box(basename(path),
+  render_error_box(name,
                   paste0("Unsupported file format", if(nchar(ext) > 0) paste0(" (.", ext, ")") else ""))
 }
 
@@ -723,31 +735,33 @@ render_manifest_files <- function(manifest_df, json_max_lines = 50) {
   for (i in seq_len(nrow(manifest_df))) {
     path <- manifest_df[i, "dest"]
     comment <- manifest_df[i, "comment"]
+    # The copy in outputs/ may have been renamed, show the manifest's name
+    name <- basename(if ("output" %in% names(manifest_df)) manifest_df[i, "output"] else path)
 
     if (stringr::str_ends(path, "(png|jpg|jpeg|gif|tif|tiff)")) {
-      render_manifest_image(path, comment)
+      render_manifest_image(path, comment, name = name)
     } else if (stringr::str_ends(path, "svg")) {
-      render_manifest_svg(path, comment)
+      render_manifest_svg(path, comment, name = name)
     } else if (stringr::str_ends(path, "eps")) {
-      render_manifest_eps(path, comment)
+      render_manifest_eps(path, comment, name = name)
     } else if (stringr::str_ends(path, "pdf")) {
-      render_manifest_pdf(path, comment)
+      render_manifest_pdf(path, comment, name = name)
     } else if (stringr::str_ends(path, "(Rout|txt)")) {
-      render_manifest_text(path, comment)
+      render_manifest_text(path, comment, name = name)
     } else if (stringr::str_ends(path, "csv")) {
-      render_manifest_csv(path, comment)
+      render_manifest_csv(path, comment, name = name)
     } else if (stringr::str_ends(path, "tsv")) {
-      render_manifest_tsv(path, comment)
+      render_manifest_tsv(path, comment, name = name)
     } else if (stringr::str_ends(path, "json")) {
-      render_manifest_json(path, comment, json_max_lines)
+      render_manifest_json(path, comment, json_max_lines, name = name)
     } else if (stringr::str_ends(path, "(xls|xlsx)")) {
-      render_manifest_excel(path, comment)
+      render_manifest_excel(path, comment, name = name)
     } else if (stringr::str_ends(path, "(docx|doc|rtf)")) {
-      render_manifest_office(path, comment)
+      render_manifest_office(path, comment, name = name)
     } else if (stringr::str_ends(path, "(htm|html)")) {
-      render_manifest_html(path, comment)
+      render_manifest_html(path, comment, name = name)
     } else {
-      render_manifest_unsupported(path, comment)
+      render_manifest_unsupported(path, comment, name = name)
     }
 
     cat("\\clearpage \n\n")

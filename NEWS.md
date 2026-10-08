@@ -19,6 +19,8 @@
 * `register_render()` no longer stops with "replacement has N rows, data has N+1" when a register row's repository has no `codecheck.yml`. `add_codechecker()` dropped the entry of such a row from the Codechecker column; it now keeps an empty one and still warns.
 * `Project:Wikidata export` says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).
 * `zenodo_policy_check()` recognises membership in the Zenodo codecheck community by the community's UUID or its slug under `parent$communities$entries`, as the InvenioRDM API reports it. It reported every record as not a member before (#20).
+* The certificate's manifest table keeps spaces in file names, e.g. `Figure 1.png` instead of `Figure1.png` (closes codecheckers/codecheck#98).
+* `copy_manifest_files()` replaces whitespace with underscores in the names of the copies in `codecheck/outputs/`, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).
 
 # codecheck 0.31.0
 

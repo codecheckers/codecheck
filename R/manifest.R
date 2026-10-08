@@ -7,6 +7,11 @@
 ##' This is useful when there are two output files with the same name in
 ##' different folders, e.g. expt1/out.pdf and expt2/out.pdf
 ##'
+##' Whitespace in the names of the copies is replaced by underscores, e.g.
+##' \code{Figure 1.png} is copied to \code{Figure_1.png}, because LaTeX cannot
+##' reliably include files with spaces in their names. The \code{output} column
+##' keeps the name from the manifest, \code{dest} holds the path of the copy.
+##'
 ##' @title Copy files from manifest into the codecheck folder and summarise.
 ##' @param root - Path to the root folder of the project.
 ##' @param metadata - the codecheck metadata list.
@@ -34,8 +39,13 @@ copy_manifest_files <- function(root, metadata, dest_dir,
             "\nThese files will be marked as missing in the certificate.")
   }
 
-  dest_files = file.path(dest_dir,
-                         if ( keep_full_path) outputs else basename(outputs))
+  dest_files = .manifest_dest_files(if (keep_full_path) outputs else basename(outputs),
+                                   dest_dir)
+  clash = dest_files %in% dest_files[duplicated(dest_files)]
+  if (any(clash)) {
+    warning("Manifest files are copied to the same file in ", dest_dir, ":\n",
+            paste(outputs[clash], "->", dest_files[clash], collapse = "\n"))
+  }
 
   ## See if we need to make extra directories in the codecheck/outputs
   if (keep_full_path) {
@@ -79,11 +89,21 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 list_manifest_files <- function(root, metadata, check_dir) {
   manifest = metadata$manifest
   outputs = sapply(manifest, function(x) x$file)
-  dest_files = file.path(check_dir, basename(outputs))
+  dest_files = .manifest_dest_files(basename(outputs), check_dir)
   manifest_df = data.frame(output=outputs,
                            comment=sapply(manifest, function(x) x$comment),
                            dest=dest_files,
                            size=file.size(dest_files),
                            stringsAsFactors = FALSE)
   manifest_df
+}
+
+##' Paths of the copies of manifest files in the outputs folder
+##'
+##' Whitespace becomes an underscore, so that the copies can be included in
+##' the LaTeX certificate (codecheck#98).
+##' @keywords internal
+##' @noRd
+.manifest_dest_files <- function(outputs, dest_dir) {
+  file.path(dest_dir, gsub("[[:space:]]+", "_", outputs))
 }

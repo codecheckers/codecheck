@@ -4,12 +4,14 @@
 \alias{render_manifest_eps}
 \title{Render EPS image for certificate output}
 \usage{
-render_manifest_eps(path, comment)
+render_manifest_eps(path, comment, name = basename(path))
 }
 \arguments{
 \item{path}{- Path to the EPS file}
 
 \item{comment}{- Comment/caption for the image}
+
+\item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

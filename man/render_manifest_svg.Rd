@@ -4,12 +4,14 @@
 \alias{render_manifest_svg}
 \title{Render SVG image for certificate output}
 \usage{
-render_manifest_svg(path, comment)
+render_manifest_svg(path, comment, name = basename(path))
 }
 \arguments{
 \item{path}{- Path to the SVG file}
 
 \item{comment}{- Comment/caption for the image}
+
+\item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)
