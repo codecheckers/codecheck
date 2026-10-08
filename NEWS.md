@@ -11,6 +11,7 @@
 
 ## Bug Fixes
 
+* The certificate summary table in the Rmd and Quarto templates labels the rows "Author"/"Authors" and "Codechecker"/"Codecheckers" by the number of people, instead of "Author(s)" and "Codechecker(s)".
 * `register_render()` no longer stops with "replacement has N rows, data has N+1" when a register row's repository has no `codecheck.yml`. `add_codechecker()` dropped the entry of such a row from the Codechecker column; it now keeps an empty one and still warns.
 * `Project:Wikidata export` says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).
 * `zenodo_policy_check()` recognises membership in the Zenodo codecheck community by the community's UUID or its slug under `parent$communities$entries`, as the InvenioRDM API reports it. It reported every record as not a member before (#20).

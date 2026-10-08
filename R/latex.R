@@ -80,17 +80,25 @@ latex_summary_of_metadata <- function(metadata) {
     return(x)
   }
 
+  # Singular or plural row label, depending on the number of people
+  people_label <- function(singular, people) {
+    if (length(people) > 1) paste0(singular, "s") else singular
+  }
+
   summary_entries = list(
     "Title of checked publication" = safe_value(metadata$paper$title),
-    "Author(s)" =       safe_value(.names(metadata$paper$authors)),
+    "Author" =          safe_value(.names(metadata$paper$authors)),
     "Reference" =       safe_value(as_latex_url(metadata$paper$reference)),
-    "Codechecker(s)" =  safe_value(.names(metadata$codechecker)),
+    "Codechecker" =     safe_value(.names(metadata$codechecker)),
     "Date of check" =   safe_value(metadata$check_time),
     "Summary" =         safe_value(metadata$summary),
     "Repository" =      safe_value(as_latex_url(metadata$repository)))
+  items = names(summary_entries)
+  items[items == "Author"] = people_label("Author", metadata$paper$authors)
+  items[items == "Codechecker"] = people_label("Codechecker", metadata$codechecker)
 
   # Create data frame - all entries now guaranteed to have a value
-  summary_df = data.frame(Item=names(summary_entries),
+  summary_df = data.frame(Item=items,
                           Value=unlist(summary_entries, use.names=FALSE),
                           stringsAsFactors=FALSE)
 
