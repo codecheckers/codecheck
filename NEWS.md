@@ -8,6 +8,9 @@
 * `Project:Certificates` links each certificate's Wikidata item, as recorded in `register.csv` (register#50).
 * `render_manifest_files()` includes Word (`.docx`) and RTF files in the certificate, also RTF saved as `.doc`, converted with pandoc (closes codecheckers/codecheck#99).
 * `Project:Wikidata export` lists the QuickStatements batches the edit log records as run, and whether `register.csv` holds each certificate's item (register#50).
+* New `extract_pdf_figures()` extracts the figures from the PDF of the checked article.
+* New `compare_figures()` puts each published figure and the reproduced one together in a labelled image.
+* New `render_figure_comparisons()` includes these comparisons in the certificate, and the Rmd and Quarto templates have an optional chunk for it.
 * The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate's summary is the `summary` in `codecheck.yml`, shown in the summary table.
 
 ## Bug Fixes

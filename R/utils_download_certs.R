@@ -505,10 +505,7 @@ convert_cert_pdf_to_png <- function(cert_id){
   cert_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   cert_pdf_path <- file.path(cert_dir, "cert.pdf")
 
-  poppler_log <- character(0)
-  log_con <- textConnection("poppler_log", open = "w", local = TRUE)
-  sink(log_con, type = "message")
-  outcome <- tryCatch({
+  outcome <- capture_poppler_log({
     # Get the number of pages in the PDF
     num_pages <- pdftools::pdf_info(cert_pdf_path)$pages
 
@@ -520,21 +517,34 @@ convert_cert_pdf_to_png <- function(cert_id){
     # want a progress indicator report the page count themselves instead.
     pdftools::pdf_convert(cert_pdf_path, format = "png", filenames = image_filenames,
                           dpi = CONFIG$CERT_DPI, verbose = FALSE)
-
-    list(success = TRUE, pages = num_pages, error = NULL)
-  }, error = function(e) {
-    list(success = FALSE, pages = NA_integer_, error = conditionMessage(e))
+    num_pages
   })
-  sink(type = "message")
-  close(log_con)
-
-  classified <- classify_poppler_log(poppler_log)
 
   list(
-    success = outcome$success,
-    pages = outcome$pages,
+    success = is.null(outcome$error),
+    pages = if (is.null(outcome$error)) outcome$value else NA_integer_,
     error = outcome$error,
-    fatal = classified$fatal,
-    cosmetic_count = classified$cosmetic_count
+    fatal = outcome$fatal,
+    cosmetic_count = outcome$cosmetic_count
   )
+}
+
+#' Evaluates an expression that uses poppler (via pdftools) and captures poppler's
+#' diagnostics from R's message connection instead of printing them, see
+#' [classify_poppler_log()]. Errors are caught and returned, not raised.
+#'
+#' @param expr The expression to evaluate.
+#' @return A list with `value` (the value of `expr`, `NULL` on error), `error` (the
+#'   caught error message, or `NULL`), and `fatal` and `cosmetic_count` as returned by
+#'   [classify_poppler_log()].
+#' @keywords internal
+capture_poppler_log <- function(expr) {
+  poppler_log <- character(0)
+  log_con <- textConnection("poppler_log", open = "w", local = TRUE)
+  sink(log_con, type = "message")
+  result <- tryCatch(list(value = expr, error = NULL),
+                     error = function(e) list(value = NULL, error = conditionMessage(e)))
+  sink(type = "message")
+  close(log_con)
+  c(result, classify_poppler_log(poppler_log))
 }

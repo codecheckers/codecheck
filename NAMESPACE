@@ -16,12 +16,14 @@ export(codecheck_rules)
 export(codecheck_rules_provenance)
 export(codecheck_spec_version)
 export(codecheck_spec_versions)
+export(compare_figures)
 export(complete_codecheck_yml)
 export(copy_manifest_files)
 export(copy_package_javascript)
 export(create_codecheck_files)
 export(curate_register_zenodo_records)
 export(curate_zenodo_record)
+export(extract_pdf_figures)
 export(generate_404_page)
 export(generate_breadcrumb)
 export(generate_cert_citation_meta)
@@ -87,6 +89,7 @@ export(register_render)
 export(register_render_cert)
 export(register_ror_coverage)
 export(register_update_stats)
+export(render_figure_comparisons)
 export(render_manifest_files)
 export(render_statistics_page)
 export(report_researchequals_policy_findings)
@@ -174,7 +177,16 @@ importFrom(jsonlite,
 )
 importFrom(knitr,kable)
 importFrom(magick,
+  image_annotate,
+  image_append,
+  image_background,
+  image_blank,
+  image_info,
   image_read,
+  image_read_pdf,
+  image_read_svg,
+  image_scale,
+  image_trim,
   image_write
 )
 importFrom(osfr,
@@ -185,7 +197,8 @@ importFrom(osfr,
 importFrom(parsedate,parse_date)
 importFrom(pdftools,
   pdf_convert,
-  pdf_info
+  pdf_info,
+  pdf_pagesize
 )
 importFrom(readxl,read_excel)
 importFrom(rmarkdown,render)
