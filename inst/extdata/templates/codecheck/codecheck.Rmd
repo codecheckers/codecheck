@@ -126,11 +126,6 @@ latex_summary_of_metadata(metadata)
 latex_summary_of_manifest(metadata, manifest_df, root)
 ```
 
-# Summary
-
-This code was (not) straightforward to codecheck.
-[... ADD MORE INTERESTING FINDINGS HERE..]
-
 \clearpage
 
 # CODECHECKER notes
