@@ -6,6 +6,7 @@
 * New `publish_wikibase_pages()` rewrites every generated page on the CODECHECK Wikibase from the register and the instance as they are now, skipping pages that have not changed (`make wikibase` in the register, register#50).
 * The Wikibase Main Page is generated too, and lists every generated page, including `Project:Example queries` (register#50).
 * `Project:Certificates` links each certificate's Wikidata item, as recorded in `register.csv` (register#50).
+* `render_manifest_files()` includes Word (`.docx`) and RTF files in the certificate, also RTF saved as `.doc`, converted with pandoc (closes codecheckers/codecheck#99).
 * `Project:Wikidata export` lists the QuickStatements batches the edit log records as run, and whether `register.csv` holds each certificate's item (register#50).
 
 ## Bug Fixes

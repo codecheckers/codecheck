@@ -535,6 +535,83 @@ if (!is.null(result$output_file)) {
 
 unlink(env$root, recursive = TRUE)
 
+# Test 8a: Word/RTF conversion output, without LaTeX ----
+# The DOCX fixture has block quotes in its table cells, like the indented cell
+# paragraphs of flextable/officer tables; unquote.lua must unwrap them.
+fixtures_dir <- system.file("tinytest", "fixtures", "manifest_formats", package = "codecheck")
+if (fixtures_dir == "") fixtures_dir <- file.path(getwd(), "fixtures", "manifest_formats")
+
+docx_out <- capture.output(codecheck:::render_manifest_office(
+  file.path(fixtures_dir, "test_table.docx"), "Word table"))
+expect_true(any(grepl("Content of Word document", docx_out)), info = "DOCX label shown")
+expect_true(any(grepl("^\\| Age +\\| 42\\.5 \\(3\\.1\\)", docx_out)),
+            info = "DOCX table converted to a grid table with unquoted cells")
+expect_false(any(grepl("<table|\\| >", docx_out)),
+             info = "DOCX cells are neither HTML nor block quotes")
+
+expect_message(rtf_out <- capture.output(codecheck:::render_manifest_office(
+  file.path(fixtures_dir, "test_table_rtf.doc"), "RTF table")),
+  pattern = "RTF reader", info = "RTF conversion notes possible character loss in the log")
+expect_true(any(grepl("Content of RTF document", rtf_out)),
+            info = "RTF in a .doc file is detected by content")
+expect_true(any(grepl("Income +38\\.2 \\(12\\.7\\)", rtf_out)), info = "RTF table converted")
+
+legacy_out <- capture.output(codecheck:::render_manifest_office(
+  file.path(fixtures_dir, "legacy_binary.doc"), "Old Word file"))
+expect_true(any(grepl("legacy binary Word", legacy_out)), info = "Binary .doc gets a note")
+expect_false(any(grepl("ERROR", legacy_out)), info = "Binary .doc gets no error box")
+
+# A whole Word document: text and images are kept, the extracted PNG is
+# included, and the EMF image (which pdflatex cannot include) becomes a note
+doc_dir <- tempfile("office_")
+dir.create(doc_dir)
+file.copy(file.path(fixtures_dir, "test_document.docx"), doc_dir)
+doc_path <- file.path(doc_dir, "test_document.docx")
+doc_out <- capture.output(codecheck:::render_manifest_office(doc_path, "Word report"))
+expect_true(any(grepl("converged after \\*\\*12 iterations\\*\\*", doc_out)), info = "Word text kept")
+png_ref <- regmatches(doc_out, regexpr("test_document\\.docx_media/[^)]+\\.png", doc_out))
+expect_equal(length(png_ref), 1, info = "PNG image referenced from the extracted media")
+expect_true(all(file.exists(file.path(doc_dir, png_ref))), info = "PNG image extracted next to the Word file")
+expect_false(any(grepl("\\.emf\\)", doc_out)), info = "EMF image not referenced")
+expect_true(any(grepl("image omitted: .emf", doc_out, fixed = TRUE)), info = "EMF image replaced by a note")
+unlink(doc_dir, recursive = TRUE)
+
+# Test 8b: DOCX, RTF, RTF-as-DOC and binary DOC render in a certificate ----
+env <- setup_cert_env(formats_to_test = c("test_table.docx", "test_table.rtf",
+                                          "test_table_rtf.doc", "legacy_binary.doc",
+                                          "test_document.docx"))
+create_test_yml(env$root, 'manifest:
+  - file: test_table.docx
+    comment: Table in Word format
+  - file: test_table.rtf
+    comment: Table in RTF format
+  - file: test_table_rtf.doc
+    comment: Table in RTF format with doc extension
+  - file: legacy_binary.doc
+    comment: Table in binary Word format
+  - file: test_document.docx
+    comment: Report in Word format with images')
+
+result <- suppressMessages(render_certificate(env$root))
+expect_true(result$success, info = paste("Word/RTF rendering failed:", result$error))
+
+if (!is.null(result$output_file)) {
+  pdf_text <- extract_pdf_text(result$output_file)
+  for (f in c("test_table\\.docx", "test_table\\.rtf", "test_table_rtf\\.doc", "legacy_binary\\.doc")) {
+    expect_true(grepl(f, pdf_text), info = paste("PDF should reference", f))
+  }
+  expect_true(grepl("Comment: Table in Word format", pdf_text), info = "DOCX comment shown")
+  expect_equal(lengths(regmatches(pdf_text, gregexpr("38\\.2 \\(12\\.7\\)", pdf_text))), 3,
+               info = "Table content of DOCX, RTF and RTF-as-DOC visible")
+  expect_true(grepl("legacy binary Word", pdf_text), info = "Binary .doc note shown")
+  expect_true(grepl("converged after 12 iterations", pdf_text), info = "Word document text visible")
+  expect_true(grepl("image omitted: .emf", pdf_text, fixed = TRUE), info = "EMF image note visible")
+  expect_false(grepl("Unsupported file format|Cannot include", pdf_text),
+               info = "No error boxes for Word/RTF files")
+}
+
+unlink(env$root, recursive = TRUE)
+
 # Test 9: HTML file renders (requires wkhtmltopdf) ----
 if (Sys.which("wkhtmltopdf") != "") {
   env <- setup_cert_env(formats_to_test = "report.html")
@@ -581,9 +658,13 @@ create_test_yml(env$root, 'manifest:
   - file: test_register.json
     comment: JSON data file
   - file: test_spreadsheet.xlsx
-    comment: Detailed results')
+    comment: Detailed results
+  - file: test_table.docx
+    comment: Results table (Word)
+  - file: test_table_rtf.doc
+    comment: Results table (RTF saved as .doc)')
 
-result <- render_certificate(env$root)
+result <- suppressMessages(render_certificate(env$root))
 expect_true(result$success, info = paste("Multiple formats rendering failed:", result$error))
 if (!is.null(result$output_file)) {
   expect_true(file.exists(result$output_file), info = "PDF with multiple formats should be created")
@@ -612,6 +693,7 @@ if (!is.null(result$output_file) && file.exists(result$output_file)) {
   cat("  - CSV, TSV (tabular data with skimr statistics)\n")
   cat("  - JSON (pretty-printed with configurable line limit)\n")
   cat("  - XLSX (Excel spreadsheet)\n")
+  cat("  - DOCX, RTF (Word/RTF documents converted with pandoc)\n")
   cat("  - HTML (converted to PDF via wkhtmltopdf)\n")
   cat("================================================================================\n")
   cat("\n")

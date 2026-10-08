@@ -474,6 +474,101 @@ render_manifest_excel <- function(path, comment) {
   })
 }
 
+##' Find pandoc for converting manifest files
+##'
+##' Internal helper returning the command and leading arguments to run pandoc:
+##' the pandoc rmarkdown finds (which includes the one Quarto bundles), else
+##' `quarto pandoc`.
+##'
+##' @return A list with `cmd` and `args`, or NULL if no pandoc is available
+##' @keywords internal
+manifest_pandoc <- function() {
+  if (rmarkdown::pandoc_available()) {
+    return(list(cmd = rmarkdown::pandoc_exec(), args = character(0)))
+  }
+  quarto <- Sys.which("quarto")
+  if (nzchar(quarto)) {
+    return(list(cmd = unname(quarto), args = "pandoc"))
+  }
+  NULL
+}
+
+##' Render Word or RTF file for certificate output
+##'
+##' Internal helper function to render DOCX and RTF files, converted to Markdown
+##' with pandoc. The format is detected by content, not by extension, because
+##' some packages (e.g. apaTables) write RTF to `.doc` files. Binary Word 97
+##' `.doc` files are not supported by pandoc and get a note instead. Images in
+##' Word files are extracted next to the file; images LaTeX cannot include (e.g.
+##' EMF, WMF) are replaced by a note.
+##'
+##' @param path - Path to the Word or RTF file
+##' @param comment - Comment describing the file
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+render_manifest_office <- function(path, comment) {
+  cat("## ", basename(path), "\n\n")
+  cat("**Comment:** ", comment, "\n\n")
+
+  # Check if file exists
+  if (!file.exists(path)) {
+    render_error_box(basename(path), "File not found")
+    return(invisible(NULL))
+  }
+
+  magic <- readBin(path, "raw", n = 8)
+  if (length(magic) >= 5 && identical(rawToChar(magic[1:5]), "{\\rtf")) {
+    from <- "rtf"
+  } else if (length(magic) >= 4 && identical(magic[1:4], as.raw(c(0x50, 0x4b, 0x03, 0x04)))) {
+    from <- "docx"
+  } else if (identical(magic, as.raw(c(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1)))) {
+    cat("*Note: legacy binary Word (.doc) files cannot be converted;",
+        "export it as .docx, RTF or PDF to include it.*\n\n")
+    return(invisible(NULL))
+  } else {
+    render_error_box(basename(path), "Unrecognised Word/RTF file content")
+    return(invisible(NULL))
+  }
+
+  pandoc <- manifest_pandoc()
+  if (is.null(pandoc)) {
+    render_error_box(basename(path), "Word/RTF conversion requires pandoc (not found)")
+    return(invisible(NULL))
+  }
+
+  tryCatch({
+    md <- suppressWarnings(system2(pandoc$cmd,
+      c(pandoc$args, shQuote(path), "-f", from, "-t", "markdown-raw_html",
+        "-L", shQuote(system.file("extdata", "unquote.lua", package = "codecheck")),
+        "--columns=200", "--shift-heading-level-by=2",
+        "--extract-media", shQuote(paste0(path, "_media"))),
+      stdout = TRUE, stderr = FALSE))
+    status <- attr(md, "status")
+    if (!is.null(status) && status != 0) {
+      render_error_box(basename(path), paste("pandoc conversion failed with status", status))
+    } else {
+      if (from == "rtf") {
+        message(basename(path), ": pandoc's RTF reader can drop characters (e.g. the opening ",
+                "'[' of confidence intervals), compare the certificate with the original file")
+      }
+      cat("Content of", if (from == "rtf") "RTF" else "Word", "document (converted with pandoc):", "\n\n")
+      # images pdflatex cannot include would fail the whole certificate
+      md <- stringr::str_replace_all(paste(md, collapse = "\n"),
+        "!\\[[^\\]]*\\]\\(<?([^)>\\s]+)>?[^)]*\\)(\\{[^}]*\\})?",
+        function(img) {
+          src <- stringr::str_match(img, "\\(<?([^)>\\s]+)")[, 2]
+          ext <- tolower(tools::file_ext(src))
+          ifelse(ext %in% c("png", "jpg", "jpeg", "pdf"), img,
+                 paste0("*(image omitted: .", ext, " is not supported in the certificate)*"))
+        })
+      cat(md, "\n\n")
+    }
+  }, error = function(e) {
+    render_error_box(basename(path),
+                    paste("Failed to convert Word/RTF file:", e$message))
+  })
+}
+
 ##' Render JSON file for certificate output
 ##'
 ##' Internal helper function to render JSON files with pretty-printing.
@@ -591,7 +686,9 @@ render_manifest_unsupported <- function(path, comment) {
 ##' Renders each file in the manifest appropriately based on its file type.
 ##' Supported formats include images (PNG, JPG, JPEG, GIF, PDF, TIF, TIFF, EPS, SVG),
 ##' text files (TXT, Rout), tabular data (CSV, TSV) with skimr statistics, Excel files
-##' (XLS, XLSX), JSON files (pretty-printed), and HTML files (converted to PDF via wkhtmltopdf).
+##' (XLS, XLSX), Word and RTF documents (DOCX, RTF, and RTF saved as DOC; converted to
+##' Markdown with pandoc), JSON files (pretty-printed), and HTML files (converted to PDF
+##' via wkhtmltopdf). Binary Word 97 DOC files are not supported and get a note.
 ##'
 ##' For PDF files that contain multiple pages, all pages are included using
 ##' \\includepdf[pages=\{-\}]. Page count is determined using the pdftools package.
@@ -635,6 +732,8 @@ render_manifest_files <- function(manifest_df, json_max_lines = 50) {
       render_manifest_json(path, comment, json_max_lines)
     } else if (stringr::str_ends(path, "(xls|xlsx)")) {
       render_manifest_excel(path, comment)
+    } else if (stringr::str_ends(path, "(docx|doc|rtf)")) {
+      render_manifest_office(path, comment)
     } else if (stringr::str_ends(path, "(htm|html)")) {
       render_manifest_html(path, comment)
     } else {
