@@ -48,16 +48,28 @@
 <li>
 <code>Project:Certificates</code> links each certificate’s Wikidata item, as recorded in <code>register.csv</code> (register#50).</li>
 <li>
+<code><a href="../reference/render_manifest_files.html">render_manifest_files()</a></code> includes Word (<code>.docx</code>) and RTF files in the certificate, also RTF saved as <code>.doc</code>, converted with pandoc (closes codecheckers/codecheck#99).</li>
+<li>
 <code>Project:Wikidata export</code> lists the QuickStatements batches the edit log records as run, and whether <code>register.csv</code> holds each certificate’s item (register#50).</li>
+<li>The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate’s summary is the <code>summary</code> in <code>codecheck.yml</code>, shown in the summary table.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>
+<ul><li>The certificate summary tables no longer fail when <code>codecheck.yml</code> lists several <code>repository</code> URLs, and list all of them (closes codecheckers/codecheck#97).</li>
+<li>
+<code><a href="../reference/upload_zenodo_metadata.html">upload_zenodo_metadata()</a></code> adds every repository as a related identifier and to the description, not only the first (codecheckers/codecheck#97).</li>
+<li>
+<code><a href="../reference/latex_summary_of_manifest.html">latex_summary_of_manifest()</a></code> links output files on the default branch instead of <code>master</code>, only for GitHub and GitLab, and takes a <code>repository_url</code> to choose or turn off the link (codecheckers/codecheck#97).</li>
+<li>The certificate summary table in the Rmd and Quarto templates labels the rows “Author”/“Authors” and “Codechecker”/“Codecheckers” by the number of people, instead of “Author(s)” and “Codechecker(s)”.</li>
+<li>
 <code><a href="../reference/register_render.html">register_render()</a></code> no longer stops with “replacement has N rows, data has N+1” when a register row’s repository has no <code>codecheck.yml</code>. <code><a href="../reference/add_codechecker.html">add_codechecker()</a></code> dropped the entry of such a row from the Codechecker column; it now keeps an empty one and still warns.</li>
 <li>
 <code>Project:Wikidata export</code> says whether the export has run, instead of claiming nothing has been sent, and lists the certificates whose checked work has no DOI (register#50).</li>
 <li>
 <code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> recognises membership in the Zenodo codecheck community by the community’s UUID or its slug under <code>parent$communities$entries</code>, as the InvenioRDM API reports it. It reported every record as not a member before (<a href="https://github.com/codecheckers/codecheck/issues/20" class="external-link">#20</a>).</li>
+<li>The certificate’s manifest table keeps spaces in file names, e.g. <code>Figure 1.png</code> instead of <code>Figure1.png</code> (closes codecheckers/codecheck#98).</li>
+<li>
+<code><a href="../reference/copy_manifest_files.html">copy_manifest_files()</a></code> replaces whitespace with underscores in the names of the copies in <code>codecheck/outputs/</code>, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).</li>
 </ul></div>
 </div>
     <div class="section level2">

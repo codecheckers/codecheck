@@ -49,7 +49,8 @@
 <span>  <span class="va">metadata</span>,</span>
 <span>  <span class="va">manifest_df</span>,</span>
 <span>  <span class="va">root</span>,</span>
-<span>  align <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l"</span>, <span class="st">"p{6cm}"</span>, <span class="st">"p{6cm}"</span>, <span class="st">"p{2cm}"</span><span class="op">)</span></span>
+<span>  align <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l"</span>, <span class="st">"p{6cm}"</span>, <span class="st">"p{6cm}"</span>, <span class="st">"p{2cm}"</span><span class="op">)</span>,</span>
+<span>  repository_url <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -71,6 +72,13 @@
 
 <dt id="arg-align">align<a class="anchor" aria-label="anchor" href="#arg-align"></a></dt>
 <dd><p>- alignment flags for the table.</p></dd>
+
+
+<dt id="arg-repository-url">repository_url<a class="anchor" aria-label="anchor" href="#arg-repository-url"></a></dt>
+<dd><p>- the repository to link the output files to. By
+default, the first GitHub or GitLab repository in the metadata, linked on
+its default branch; other repositories and DOIs are not linked. A string
+links to that repository, `FALSE` turns the links off.</p></dd>
 
 </dl></div>
     <div class="section level2">

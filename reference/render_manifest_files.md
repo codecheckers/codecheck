@@ -28,8 +28,10 @@ NULL (outputs directly via cat() for knitr/rmarkdown)
 Renders each file in the manifest appropriately based on its file type.
 Supported formats include images (PNG, JPG, JPEG, GIF, PDF, TIF, TIFF,
 EPS, SVG), text files (TXT, Rout), tabular data (CSV, TSV) with skimr
-statistics, Excel files (XLS, XLSX), JSON files (pretty-printed), and
-HTML files (converted to PDF via wkhtmltopdf).
+statistics, Excel files (XLS, XLSX), Word and RTF documents (DOCX, RTF,
+and RTF saved as DOC; converted to Markdown with pandoc), JSON files
+(pretty-printed), and HTML files (converted to PDF via wkhtmltopdf).
+Binary Word 97 DOC files are not supported and get a note.
 
 For PDF files that contain multiple pages, all pages are included using
 \includepdf\[pages={-}\]. Page count is determined using the pdftools

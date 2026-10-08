@@ -21,12 +21,32 @@
   page, including `Project:Example queries` (register#50).
 - `Project:Certificates` links each certificate’s Wikidata item, as
   recorded in `register.csv` (register#50).
+- [`render_manifest_files()`](http://codecheck.org.uk/codecheck/reference/render_manifest_files.md)
+  includes Word (`.docx`) and RTF files in the certificate, also RTF
+  saved as `.doc`, converted with pandoc (closes
+  codecheckers/codecheck#99).
 - `Project:Wikidata export` lists the QuickStatements batches the edit
   log records as run, and whether `register.csv` holds each
   certificate’s item (register#50).
+- The Rmd and Quarto templates no longer have a Summary section with
+  placeholder text: the certificate’s summary is the `summary` in
+  `codecheck.yml`, shown in the summary table.
 
 ### Bug Fixes
 
+- The certificate summary tables no longer fail when `codecheck.yml`
+  lists several `repository` URLs, and list all of them (closes
+  codecheckers/codecheck#97).
+- [`upload_zenodo_metadata()`](http://codecheck.org.uk/codecheck/reference/upload_zenodo_metadata.md)
+  adds every repository as a related identifier and to the description,
+  not only the first (codecheckers/codecheck#97).
+- [`latex_summary_of_manifest()`](http://codecheck.org.uk/codecheck/reference/latex_summary_of_manifest.md)
+  links output files on the default branch instead of `master`, only for
+  GitHub and GitLab, and takes a `repository_url` to choose or turn off
+  the link (codecheckers/codecheck#97).
+- The certificate summary table in the Rmd and Quarto templates labels
+  the rows “Author”/“Authors” and “Codechecker”/“Codecheckers” by the
+  number of people, instead of “Author(s)” and “Codechecker(s)”.
 - [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
   no longer stops with “replacement has N rows, data has N+1” when a
   register row’s repository has no `codecheck.yml`.
@@ -42,6 +62,14 @@
   the InvenioRDM API reports it. It reported every record as not a
   member before
   ([\#20](https://github.com/codecheckers/codecheck/issues/20)).
+- The certificate’s manifest table keeps spaces in file names,
+  e.g. `Figure 1.png` instead of `Figure1.png` (closes
+  codecheckers/codecheck#98).
+- [`copy_manifest_files()`](http://codecheck.org.uk/codecheck/reference/copy_manifest_files.md)
+  replaces whitespace with underscores in the names of the copies in
+  `codecheck/outputs/`, so they can be included in the certificate,
+  whose headings still show the original names, and warns when two files
+  would get the same copy (codecheckers/codecheck#98).
 
 ## codecheck 0.31.0
 

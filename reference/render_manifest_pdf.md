@@ -5,7 +5,7 @@ Internal helper function to render PDF files (handles multi-page PDFs).
 ## Usage
 
 ``` r
-render_manifest_pdf(path, comment)
+render_manifest_pdf(path, comment, name = basename(path))
 ```
 
 ## Arguments
@@ -17,6 +17,11 @@ render_manifest_pdf(path, comment)
 - comment:
 
   \- Comment/caption for the PDF
+
+- name:
+
+  \- File name shown in the heading and messages (default: the base name
+  of `path`)
 
 ## Value
 

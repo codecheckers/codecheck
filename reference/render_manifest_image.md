@@ -7,7 +7,7 @@ LaTeX doesn't natively support them.
 ## Usage
 
 ``` r
-render_manifest_image(path, comment)
+render_manifest_image(path, comment, name = basename(path))
 ```
 
 ## Arguments
@@ -19,6 +19,11 @@ render_manifest_image(path, comment)
 - comment:
 
   \- Comment/caption for the image
+
+- name:
+
+  \- File name shown in the heading and messages (default: the base name
+  of `path`)
 
 ## Value
 

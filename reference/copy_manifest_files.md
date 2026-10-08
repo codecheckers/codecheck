@@ -50,6 +50,11 @@ dataframe. If KEEP_FULL_PATH is TRUE, we keep the full path for the
 output files. This is useful when there are two output files with the
 same name in different folders, e.g. expt1/out.pdf and expt2/out.pdf
 
+Whitespace in the names of the copies is replaced by underscores, e.g.
+`Figure 1.png` is copied to `Figure_1.png`, because LaTeX cannot
+reliably include files with spaces in their names. The `output` column
+keeps the name from the manifest, `dest` holds the path of the copy.
+
 ## Author
 
 Stephen Eglen

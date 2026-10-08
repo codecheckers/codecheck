@@ -5,7 +5,7 @@ Internal helper function to render CSV files with skimr statistics.
 ## Usage
 
 ``` r
-render_manifest_csv(path, comment)
+render_manifest_csv(path, comment, name = basename(path))
 ```
 
 ## Arguments
@@ -17,6 +17,11 @@ render_manifest_csv(path, comment)
 - comment:
 
   \- Comment describing the file
+
+- name:
+
+  \- File name shown in the heading and messages (default: the base name
+  of `path`)
 
 ## Value
 

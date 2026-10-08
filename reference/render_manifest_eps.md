@@ -5,7 +5,7 @@ Internal helper function to render EPS files (LaTeX handles conversion).
 ## Usage
 
 ``` r
-render_manifest_eps(path, comment)
+render_manifest_eps(path, comment, name = basename(path))
 ```
 
 ## Arguments
@@ -17,6 +17,11 @@ render_manifest_eps(path, comment)
 - comment:
 
   \- Comment/caption for the image
+
+- name:
+
+  \- File name shown in the heading and messages (default: the base name
+  of `path`)
 
 ## Value
 

@@ -90,6 +90,10 @@ the destination directory and then the manifest is returned as a dataframe.
 If KEEP_FULL_PATH is TRUE, we keep the full path for the output files.
 This is useful when there are two output files with the same name in
 different folders, e.g. expt1/out.pdf and expt2/out.pdf</p>
+<p>Whitespace in the names of the copies is replaced by underscores, e.g.
+<code>Figure 1.png</code> is copied to <code>Figure_1.png</code>, because LaTeX cannot
+reliably include files with spaces in their names. The <code>output</code> column
+keeps the name from the manifest, <code>dest</code> holds the path of the copy.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

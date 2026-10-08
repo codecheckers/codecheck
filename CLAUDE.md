@@ -13,6 +13,29 @@ computational research. Two main subsystems:
     [CODECHECK Register](https://codecheck.org.uk/register/) website
     from `register.csv`
 
+## Finishing a feature
+
+Once a feature or fix is implemented and its focused tests pass, before
+staging:
+
+1.  Run `/simplify` on the changes and apply its cleanups, then re-run
+    the focused tests.
+
+2.  Run `/code-review` at a level matching the size of the change,
+    counting added + removed lines in `git diff --numstat` (excluding
+    generated `man/` files and test fixtures):
+
+    | Changed lines | Level    |
+    |---------------|----------|
+    | \< 50         | `low`    |
+    | 50-199        | `medium` |
+    | 200-499       | `high`   |
+    | 500-999       | `xhigh`  |
+    | 1000+         | `max`    |
+
+    Fix confirmed findings (re-running the affected tests), and report
+    any that are left unfixed with the reason.
+
 ## Committing
 
 **Never commit. Stage changes with `git add` and propose a commit

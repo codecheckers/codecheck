@@ -314,6 +314,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/load_wikidata_ids.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/lookup_register_venue.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/lookup_venue_row.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/manifest_pandoc.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/markdown_link_to_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_codechecker_list.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_doi.html</loc></url>
@@ -374,6 +375,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_image.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_json.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_office.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_pdf.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_svg.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_text.html</loc></url>

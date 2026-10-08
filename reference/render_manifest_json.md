@@ -5,7 +5,7 @@ Internal helper function to render JSON files with pretty-printing.
 ## Usage
 
 ``` r
-render_manifest_json(path, comment, max_lines = 50)
+render_manifest_json(path, comment, max_lines = 50, name = basename(path))
 ```
 
 ## Arguments
@@ -21,6 +21,11 @@ render_manifest_json(path, comment, max_lines = 50)
 - max_lines:
 
   \- Maximum number of lines to display (default: 50)
+
+- name:
+
+  \- File name shown in the heading and messages (default: the base name
+  of `path`)
 
 ## Value
 

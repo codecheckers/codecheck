@@ -50,6 +50,27 @@
 </li>
 </ol></div>
 <div class="section level2">
+<h2 id="finishing-a-feature">Finishing a feature<a class="anchor" aria-label="anchor" href="#finishing-a-feature"></a></h2>
+<p>Once a feature or fix is implemented and its focused tests pass, before staging:</p>
+<ol style="list-style-type: decimal"><li><p>Run <code>/simplify</code> on the changes and apply its cleanups, then re-run the focused tests.</p></li>
+<li>
+<p>Run <code>/code-review</code> at a level matching the size of the change, counting added + removed lines in <code>git diff --numstat</code> (excluding generated <code>man/</code> files and test fixtures):</p>
+<table class="table"><thead><tr><th>Changed lines</th>
+<th>Level</th>
+</tr></thead><tbody><tr><td>&lt; 50</td>
+<td><code>low</code></td>
+</tr><tr><td>50-199</td>
+<td><code>medium</code></td>
+</tr><tr><td>200-499</td>
+<td><code>high</code></td>
+</tr><tr><td>500-999</td>
+<td><code>xhigh</code></td>
+</tr><tr><td>1000+</td>
+<td><code>max</code></td>
+</tr></tbody></table><p>Fix confirmed findings (re-running the affected tests), and report any that are left unfixed with the reason.</p>
+</li>
+</ol></div>
+<div class="section level2">
 <h2 id="committing">Committing<a class="anchor" aria-label="anchor" href="#committing"></a></h2>
 <p><strong>Never commit. Stage changes with <code>git add</code> and propose a commit message; the user commits.</strong> This holds even in auto-accept mode and even when the change is trivial or the message was agreed beforehand. The same applies to pushing and to anything that publishes.</p>
 </div>
