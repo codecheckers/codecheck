@@ -750,14 +750,58 @@ check_paper_title_match <- function(context) {
   if (!has_value(local) || !has_value(remote)) {
     return(rule_skip("no title to compare"))
   }
-  normalise <- function(title) {
-    gsub("[[:punct:]]", "", gsub("\\s+", " ", tolower(trimws(title))))
+  here <- normalize_title_for_comparison(local)
+  there <- normalize_title_for_comparison(remote[1])
+  if (identical(here, there)) {
+    return(rule_pass())
   }
-  if (identical(normalise(local), normalise(remote[1]))) {
-    rule_pass()
-  } else {
-    rule_fail(paste0("'", local, "' is '", remote[1], "' on OpenAlex"))
+  mismatch <- paste0("'", local, "' is '", remote[1], "' on OpenAlex")
+  # OpenAlex holds only the main title, Crossref the subtitle separately
+  # (codecheckers/codecheck#96). Crossref is asked only when something follows
+  # the main title here.
+  if (!startsWith(here, paste0(there, " "))) {
+    return(rule_fail(mismatch))
   }
+  subtitles <- lookup_crossref_subtitle(paper$doi)
+  if (is.null(subtitles)) {
+    return(rule_skip(paste0("the title extends OpenAlex's '", remote[1],
+                            "', and Crossref could not be reached to check the subtitle")))
+  }
+  full_titles <- vapply(paste(remote[1], subtitles), normalize_title_for_comparison,
+                        character(1), USE.NAMES = FALSE)
+  if (here %in% full_titles) {
+    return(rule_pass("title matches OpenAlex's with Crossref's subtitle"))
+  }
+  if (length(subtitles) > 0) {
+    mismatch <- paste0(mismatch, ", with subtitle '",
+                       paste(subtitles, collapse = "' or '"), "' on Crossref")
+  }
+  rule_fail(mismatch)
+}
+
+#' The subtitle(s) Crossref holds for a DOI
+#'
+#' @return A character vector, empty when Crossref has no subtitle or no record
+#'   (as for DataCite DOIs), or `NULL` when Crossref could not be reached.
+#' @keywords internal
+#' @noRd
+lookup_crossref_subtitle <- function(doi) {
+  url <- paste0("https://api.crossref.org/works/",
+                utils::URLencode(doi, reserved = TRUE))
+  response <- tryCatch(codecheck_GET(url), error = function(e) NULL)
+  if (is.null(response)) {
+    return(NULL)
+  }
+  status <- httr::status_code(response)
+  if (status != 200) {
+    return(if (status == 404) character(0) else NULL)
+  }
+  tryCatch({
+    message <- jsonlite::fromJSON(
+      httr::content(response, as = "text", encoding = "UTF-8"),
+      simplifyVector = FALSE)$message
+    if (!is.list(message)) NULL else as.character(unlist(message$subtitle))
+  }, error = function(e) NULL)
 }
 
 #' @keywords internal

@@ -164,7 +164,7 @@ check_repository_topic <- function(entry, spec) {
 
 #' Normalize a paper title for near-duplicate comparison
 #'
-#' Case, punctuation and whitespace only - deliberately loose, since the
+#' Case, markup, punctuation and whitespace only - deliberately loose, since the
 #' point is to catch the same paper recorded twice with slightly different
 #' formatting (e.g. a certificate's own "Title" typed by hand rather than
 #' pasted), not to be a general string-similarity metric.
@@ -176,9 +176,14 @@ normalize_title_for_comparison <- function(title) {
   if (is.null(title) || is.na(title) || !nzchar(trimws(title))) {
     return(NA_character_)
   }
-  title <- tolower(trimws(title))
+  # Markup such as <i> goes, and a non-breaking space becomes a space before
+  # punctuation is removed, which would otherwise delete it. Punctuation goes
+  # before whitespace is collapsed, so a separator such as " - " between title
+  # and subtitle reduces to one space.
+  title <- gsub("<[^>]+>", "", tolower(title))
+  title <- gsub("\u00a0", " ", title)
   title <- gsub("[[:punct:]]", "", title)
-  gsub("\\s+", " ", title)
+  trimws(gsub("\\s+", " ", title))
 }
 
 #' Check for certificates that likely check the same paper without a shared work key

@@ -6,9 +6,9 @@ source("mocks.R")
 # An OpenAlex API and DOI handle service answering from fixtures instead of the
 # network: `works` maps a DOI to the list of works OpenAlex holds for it, and
 # `handles` lists the DOIs registered anywhere, whether OpenAlex knows them or
-# not.
+# not. `crossref` maps a DOI to the `message` Crossref holds for it.
 mock_openalex_GET <- function(works = list(), handles = names(works),
-                              urls = list()) {
+                              urls = list(), crossref = list()) {
   function(url, ...) {
     json_response <- function(body) {
       response <- mock_response(url, 200L)
@@ -22,6 +22,11 @@ mock_openalex_GET <- function(works = list(), handles = names(works),
       results <- if (doi %in% names(works)) works[[doi]] else list()
       return(json_response(list(meta = list(count = length(results)),
                                 results = results)))
+    }
+    if (grepl("api.crossref.org/works/", url, fixed = TRUE)) {
+      doi <- utils::URLdecode(sub("^.*/works/", "", url))
+      if (!doi %in% names(crossref)) return(mock_response(url, 404L))
+      return(json_response(list(message = crossref[[doi]])))
     }
     if (grepl("doi.org/api/handles/", url, fixed = TRUE)) {
       doi <- sub("^.*/handles/", "", url)
@@ -256,6 +261,73 @@ expect_warning(
 expect_true(result$valid)
 expect_equal(result$crossref_metadata$title,
              "The principal components of natural images")
+
+# Test 18: A title with the subtitle Crossref holds separately passes, whatever
+# the separator (codecheckers/codecheck#96)
+subtitle_doi <- "10.1026/1616-3443/a000876"
+main_title <- "Uptake, Barriers, and Facilitators of Open Science in Clinical Psychology"
+subtitle <- "Findings From an Exploratory Survey in German-Speaking Countries"
+subtitle_work <- openalex_work(main_title, list(list(name = "Peter J. B. Hancock")))
+subtitle_api <- mock_openalex_GET(
+  list("10.1026/1616-3443/a000876" = list(subtitle_work)),
+  crossref = list("10.1026/1616-3443/a000876" = list(subtitle = list(subtitle))))
+subtitle_yml <- function(title) {
+  paper_yml(paste0("https://doi.org/", subtitle_doi), title = paste0("'", title, "'"),
+            authors = "\n    - name: Peter J. B. Hancock")
+}
+
+for (separator in c(": ", " - ", ". ")) {
+  subtitle_yml(paste0(main_title, separator, subtitle))
+  result <- with_api(subtitle_api, validate_quietly(test_yml))
+  expect_equal(outcome_of(result, "CC-MET-005"), "ok", info = separator)
+  expect_true(grepl("Crossref's subtitle",
+                    result$results$detail[result$results$id == "CC-MET-005"]),
+              info = separator)
+}
+
+# Markup in Crossref's subtitle and a non-breaking space here do not matter
+markup_api <- mock_openalex_GET(
+  list("10.1026/1616-3443/a000876" = list(subtitle_work)),
+  crossref = list("10.1026/1616-3443/a000876" = list(
+    subtitle = list("Findings From an <i>Exploratory</i> Survey in German-Speaking Countries"))))
+subtitle_yml(paste0(sub("Open Science", "Open\u00a0Science", main_title), ": ", subtitle))
+result <- with_api(markup_api, validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-005"), "ok")
+
+# Test 19: A different subtitle is a mismatch, and names Crossref's
+subtitle_yml(paste0(main_title, ": Something Else Entirely"))
+expect_warning(result <- with_api(subtitle_api, validate_quietly(test_yml)),
+               pattern = "CC-MET-005")
+expect_true(any(grepl(paste0("subtitle '", subtitle, "' on Crossref"), result$issues,
+                      fixed = TRUE)))
+
+# Test 20: A DOI Crossref does not hold, as DataCite DOIs, is a mismatch
+no_crossref_api <- mock_openalex_GET(
+  list("10.1026/1616-3443/a000876" = list(subtitle_work)))
+subtitle_yml(paste0(main_title, ": ", subtitle))
+expect_warning(result <- with_api(no_crossref_api, validate_quietly(test_yml)),
+               pattern = "CC-MET-005")
+expect_equal(outcome_of(result, "CC-MET-005"), "warning")
+
+# Test 21: Crossref out of reach skips the comparison
+down_api <- function(url, ...) {
+  if (grepl("api.crossref.org", url, fixed = TRUE)) return(mock_response(url, 500L))
+  subtitle_api(url, ...)
+}
+result <- with_api(down_api, validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-005"), "skipped")
+expect_true(grepl("Crossref could not be reached",
+                  result$results$detail[result$results$id == "CC-MET-005"]))
+
+# Test 22: A title that does not begin with OpenAlex's asks no Crossref
+asked <- character(0)
+recording_api <- function(url, ...) {
+  asked <<- c(asked, url)
+  openalex_api(url, ...)
+}
+paper_yml("https://doi.org/10.1088/0954-898X_3_1_008", title = "Principal components")
+suppressWarnings(with_api(recording_api, validate_quietly(test_yml)))
+expect_false(any(grepl("api.crossref.org", asked, fixed = TRUE)))
 
 # Clean up
 unlink(test_yml)
