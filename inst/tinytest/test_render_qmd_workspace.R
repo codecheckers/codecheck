@@ -30,4 +30,8 @@ local({
 
   expect_true(file.exists(file.path(cert_dir, "codecheck.pdf")),
               info = paste(result, collapse = "\n"))
+
+  # the summary comes from the `summary` field of codecheck.yml
+  pdf_text <- paste(pdftools::pdf_text(file.path(cert_dir, "codecheck.pdf")), collapse = "\n")
+  expect_true(grepl("Short summary of the CODECHECK certificate", pdf_text, fixed = TRUE))
 })

@@ -18,6 +18,7 @@ codechecker:
   - name: Cameron Checker
     ORCID: 0000-0000-0000-0000
 
+# Shown in the certificate's summary table and in the Zenodo description
 summary: >
   FIXME: Short summary of the CODECHECK certificate
 repository: https://github.com/FIXME/FIXME
