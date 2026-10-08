@@ -20,3 +20,10 @@
 "2026-09-24T12:49:55+0200","wikibase","edit","page","Project:About","about","done",NA,NA
 "2026-09-24T12:49:56+0200","wikibase","edit","page","Project:Certificates","certificates","done",NA,NA
 "2026-09-24T12:49:57+0200","wikibase","edit","page","Project:Wikidata export","wikidata_export","done",NA,NA
+"2026-10-08T00:59:49+0200","wikibase","edit","page","Project:Wikidata export","wikidata_export","done",NA,NA
+"2026-10-08T01:45:23+0200","wikidata","quickstatements","batch","wikidata/wikidata-works.qs","wikidata-works","prepared","wikidata-works","56 commands"
+"2026-10-08T01:45:23+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","56 commands"
+"2026-10-08T02:06:42+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2/289783/","wikidata-works","submitted","wikidata-works",NA
+"2026-10-08T02:07:33+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","60 commands"
+"2026-10-08T02:09:09+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1791418031151/","wikidata-certificates","submitted","wikidata-certificates",NA
+"2026-10-08T02:18:31+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1791418412639","fix-review-of-2026-022-to-026","submitted","fix-review-of-2026-022-to-026",NA
