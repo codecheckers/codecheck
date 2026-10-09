@@ -9,7 +9,7 @@ spec_version: "2.0"
 # page itself. Tools use it to date a configuration that names no version; see
 # "Choosing the specification version" in RULES.md.
 spec_date: 2026-09-11
-updated: 2026-09-19
+updated: 2026-10-09
 
 rules:
 
@@ -27,14 +27,14 @@ rules:
     severity: error
     status: active
     reference: "spec/config/2.0#explicit-document-and-directive"
-    description: "The file starts with the explicit document marker ---"
+    description: "The YAML document starts with the explicit document marker ---, optionally preceded by directives such as %YAML 1.2, comments or blank lines"
   - id: CC-CFG-003
     name: file-name-and-location
     area: config
     severity: error
     status: active
     reference: "spec/config/2.0#storage-location"
-    description: "The file is named codecheck.yml and sits at the root of the bundle"
+    description: "The file is named codecheck.yml"
   - id: CC-CFG-004
     name: manifest-present
     area: config
@@ -55,7 +55,7 @@ rules:
     severity: error
     status: active
     reference: "spec/config/2.0#manifest-list"
-    description: "Manifest file paths are relative to the codecheck.yml"
+    description: "Manifest file paths are relative to the codecheck.yml and stay inside the bundle: no absolute path, ~, drive letter or .. step"
   - id: CC-CFG-007
     name: manifest-item-comment
     area: config
@@ -97,7 +97,7 @@ rules:
     severity: info
     status: active
     reference: "spec/config/2.0#codecheck-metadata"
-    description: "The report identifier is in a resolvable form such as a DOI URL (ideally, advisory only)"
+    description: "The report identifier is an http(s) URL, such as a DOI URL, and resolves (ideally, advisory only)"
   - id: CC-CFG-013
     name: report-doi-not-placeholder
     area: config
@@ -153,7 +153,7 @@ rules:
     severity: error
     status: active
     reference: "spec/config/2.0#author-and-submission-metadata"
-    description: "Every paper author entry has an ORCID, given as the plain identifier without URL prefix"
+    description: "Every paper author entry has an ORCID"
   - id: CC-CFG-021
     name: paper-reference
     area: config
@@ -174,7 +174,7 @@ rules:
     severity: error
     status: active
     reference: "R:complete_codecheck_yml"
-    description: "No field still holds a FIXME/TODO/XXXXX placeholder value"
+    description: "No field still holds a placeholder value: FIXME, TODO, XXXX, the ORCID 0000-0000-0000-0000, or a placeholder report DOI"
   - id: CC-CFG-024
     name: summary-present
     area: config
@@ -194,7 +194,7 @@ rules:
     area: config
     severity: error
     status: active
-    reference: "R:validate_certificate_github_issue"
+    reference: "R:validate_register_rules"
     description: "The certificate identifier matches the YYYY-NNN pattern"
   - id: CC-CFG-027
     name: reference-is-url
@@ -202,7 +202,7 @@ rules:
     severity: warning
     status: active
     reference: "spec/config/2.0#author-and-submission-metadata"
-    description: "paper.reference is a resolvable URL rather than free text; tools do not extract URLs from surrounding text"
+    description: "paper.reference is a single http(s) URL rather than free text; tools do not extract URLs from surrounding text"
   - id: CC-CFG-028
     name: reference-prefers-doi
     area: config
@@ -230,7 +230,7 @@ rules:
     severity: info
     status: active
     reference: "spec/config/2.0#author-and-submission-metadata"
-    description: "paper.reference is a direct PDF link, but a web archive snapshot, which is acceptable where no DOI or landing page exists"
+    description: "A paper.reference that is a direct PDF link is a web archive snapshot, which is acceptable where no DOI or landing page exists"
 
   # --- metadata ---
   - id: CC-MET-001
@@ -318,7 +318,7 @@ rules:
     severity: warning
     status: active
     reference: "guide/bundle"
-    description: "The certificate report file is present in the bundle"
+    description: "A PDF, the certificate, is present in the bundle's codecheck/ or .codecheck/ directory"
   - id: CC-BUN-004
     name: repository-reachable
     area: bundle
@@ -332,7 +332,7 @@ rules:
     severity: warning
     status: active
     reference: "practice"
-    description: "The repository under check states a licence"
+    description: "The bundle root holds a LICENSE, LICENCE or COPYING file"
 
   # --- report ---
   - id: CC-REP-001
@@ -353,9 +353,9 @@ rules:
     name: zenodo-files-present
     area: report
     severity: warning
-    status: active
+    status: deprecated
     reference: "practice"
-    description: "The Zenodo record carries the expected files"
+    description: "Split into CC-REP-007 (certificate PDF present), CC-REP-008 (PDF named codecheck.pdf), CC-REP-009 (certificate source present) and CC-REP-010 (one certificate source only)"
   - id: CC-REP-004
     name: zenodo-certificate-id-match
     area: report
@@ -377,6 +377,34 @@ rules:
     status: active
     reference: "practice"
     description: "The codechecker ORCIDs in the Zenodo record match those in the codecheck.yml"
+  - id: CC-REP-007
+    name: zenodo-certificate-pdf-present
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Zenodo record carries the certificate as a PDF file"
+  - id: CC-REP-008
+    name: zenodo-certificate-pdf-name
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The certificate PDF in the Zenodo record is named codecheck.pdf"
+  - id: CC-REP-009
+    name: zenodo-certificate-source-present
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Zenodo record carries the certificate source, not only the PDF: a file with the extension .Rmd, .qmd, .ipynb, .docx, .odt, .md or .tex"
+  - id: CC-REP-010
+    name: zenodo-certificate-source-unambiguous
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Zenodo record carries at most one executable certificate source, not several of codecheck.Rmd, codecheck.qmd and codecheck.ipynb"
 
   # --- register ---
   - id: CC-REG-001
@@ -392,14 +420,14 @@ rules:
     severity: error
     status: active
     reference: "practice"
-    description: "The certificate identifier follows YYYY-NNN and continues the year's sequence"
+    description: "Every certificate identifier follows YYYY-NNN, is not in a future year, and is at most 9 past the year's previous identifier"
   - id: CC-REG-003
     name: repository-spec-format
     area: register
     severity: error
     status: active
     reference: "practice"
-    description: "The Repository column uses a known prefix: github:: gitlab:: osf:: zenodo::"
+    description: "The Repository column uses a known prefix: github:: gitlab:: osf:: zenodo:: zenodo-sandbox::"
   - id: CC-REG-004
     name: type-known
     area: register
@@ -419,12 +447,12 @@ rules:
     area: register
     severity: warning
     status: active
-    reference: "R:validate_certificate_github_issue"
+    reference: "R:validate_register_rules"
     description: "The Issue number resolves to an issue in codecheckers/register"
   - id: CC-REG-007
     name: issue-references-certificate
     area: register
     severity: warning
     status: active
-    reference: "R:validate_certificate_github_issue"
+    reference: "R:validate_register_rules"
     description: "The referenced issue's title carries the certificate identifier"

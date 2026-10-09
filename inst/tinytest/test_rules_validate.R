@@ -300,4 +300,44 @@ tryCatch(validate_codecheck_yml(complete), error = function(e) NULL)
 expect_true(!any(grepl("orcid|openalex|handles", requests)),
             info = "validate_codecheck_yml() does not look up ORCID or OpenAlex")
 
+# --- what the file looks like as text ---
+
+# The rules on the text of a file, run on `complete` written below a header.
+text_outcomes <- function(header, rules, other = NULL) {
+  config <- complete
+  config$paper[["reference-other"]] <- other
+  file <- tempfile(fileext = ".yml")
+  writeLines(c(header, yaml::as.yaml(config)), file)
+  results <- validate_codecheck_yml_rules(file, rules = rules,
+                                          stop_on_error = FALSE, quiet = TRUE)
+  stats::setNames(results$outcome, results$id)
+}
+marker <- function(header) text_outcomes(header, "CC-CFG-002")[["CC-CFG-002"]]
+
+# CC-CFG-002: the specification asks for a YAML directive before the marker,
+# and comments and blank lines may come before it too
+expect_equal(marker("---"), "ok")
+expect_equal(marker(c("%YAML 1.2", "---")), "ok")
+expect_equal(marker(c("%YAML 1.1", "%TAG ! tag:codecheck.org.uk,2026:", "---")), "ok")
+expect_equal(marker(c("# a CODECHECK", "", "%YAML 1.2", "--- # start")), "ok")
+expect_equal(marker(character(0)), "error")
+expect_equal(marker(c("certificate: 2026-001", "---")), "error")
+# the template that create_codecheck_files() copies
+expect_equal(validate_codecheck_yml_rules(
+  system.file("extdata", "templates", "codecheck.yml", package = "codecheck"),
+  rules = "CC-CFG-002", stop_on_error = FALSE, quiet = TRUE)$outcome, "ok")
+
+# CC-CFG-029: the YAML parser reads a sequence of URLs as a character vector,
+# which is still a sequence, also with a single entry; a bare URL is not
+other_rules <- c("CC-CFG-029", "CC-CFG-030")
+expect_equal(text_outcomes("---", other_rules,
+                           list("https://doi.org/10.1/a", "https://doi.org/10.1/b")),
+             c("CC-CFG-029" = "ok", "CC-CFG-030" = "ok"))
+expect_equal(text_outcomes("---", other_rules, list("https://doi.org/10.1/a")),
+             c("CC-CFG-029" = "ok", "CC-CFG-030" = "ok"))
+expect_equal(text_outcomes("---", other_rules, list("not a URL")),
+             c("CC-CFG-029" = "ok", "CC-CFG-030" = "warning"))
+expect_equal(text_outcomes("---", other_rules, "https://doi.org/10.1/a")[["CC-CFG-029"]],
+             "error")
+
 assignInNamespace("codecheck_GET", online_GET, ns = "codecheck")

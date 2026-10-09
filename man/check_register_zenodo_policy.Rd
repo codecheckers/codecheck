@@ -6,7 +6,8 @@
 \usage{
 check_register_zenodo_policy(
   register_table,
-  get_metadata = get_zenodo_record_metadata
+  get_metadata = get_zenodo_record_metadata,
+  get_configuration = get_codecheck_yml
 )
 }
 \arguments{
@@ -15,6 +16,11 @@ and `Report`}
 
 \item{get_metadata}{function of one argument (the record ID) returning the
 record metadata like [get_zenodo_record_metadata()]; injectable for testing}
+
+\item{get_configuration}{function of one argument (the `Repository` column)
+returning the parsed codecheck.yml like [get_codecheck_yml()], used when
+the table has a `Repository` column to compare the record with it;
+injectable for testing}
 }
 \value{
 a data.frame with one row per checked certificate and the columns

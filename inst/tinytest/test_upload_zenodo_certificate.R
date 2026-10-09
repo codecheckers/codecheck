@@ -310,6 +310,16 @@ expect_true("version1.Rmd" %in% zen18$files_deleted, info = "Should delete versi
 expect_true("version2.qmd" %in% zen18$files_deleted, info = "Should delete version2.qmd")
 expect_equal(length(zen18$files_uploaded), 2, info = "Should upload certificate and new source")
 
+# A notebook source is replaced too, but not a notebook of the checked workflow
+zen18b <- create_mock_zenodo()
+zen18b$mock_files <- list(
+  list(id = "file1", filename = "codecheck.ipynb", filesize = 1024),
+  list(id = "file2", filename = "analysis.ipynb", filesize = 2048)
+)
+result <- codecheck::set_zenodo_certificate(zen18b, "123456", cert_file, warn = FALSE)
+expect_equal(zen18b$files_deleted, "codecheck.ipynb",
+             info = "Should delete the notebook source only")
+
 unlink(rmd_file4)
 
 # Test 19: Existing source with different case (.rmd vs .Rmd)

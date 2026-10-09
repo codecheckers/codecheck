@@ -45,9 +45,12 @@ result_ambiguous <- zenodo_policy_check(
   compliant$metadata,
   files = c("codecheck.pdf", "codecheck.Rmd", "codecheck.qmd")
 )
-expect_equal(result_ambiguous$status[result_ambiguous$check == "machine-readable certificate"], "fail")
-expect_true(grepl("codecheck\\.Rmd", result_ambiguous$detail[result_ambiguous$check == "machine-readable certificate"]))
-expect_true(grepl("codecheck\\.qmd", result_ambiguous$detail[result_ambiguous$check == "machine-readable certificate"]))
+# (CC-REP-010), a warning like all the certificate file rules
+expect_equal(result_ambiguous$status[result_ambiguous$check == "certificate source unambiguous"], "warn")
+expect_true(grepl("codecheck.Rmd; codecheck.qmd",
+                  result_ambiguous$detail[result_ambiguous$check == "certificate source unambiguous"],
+                  fixed = TRUE))
+expect_equal(result_ambiguous$status[result_ambiguous$check == "certificate source"], "pass")
 
 # --------------------------------------------------- policy check: non-compliant
 
@@ -70,7 +73,7 @@ expect_true(grepl("Stephen J. Eglen", result$detail[result$check == "creators"])
 expect_equal(result$status[result$check == "publisher"], "pass")
 expect_equal(result$status[result$check == "resource type"], "pass")
 expect_equal(result$status[result$check == "license"], "pass")
-expect_equal(result$status[result$check == "machine-readable certificate"], "pass")
+expect_equal(result$status[result$check == "certificate source"], "pass")
 
 # ------------------------------------------------------- upload_zenodo_metadata
 
@@ -375,12 +378,112 @@ expect_true(grepl("certificate ID", res$detail[res$check == "title"]))
 # a PDF present but not named codecheck.pdf warns rather than fails, see #20
 other_name <- broken
 res <- zenodo_policy_check(other_name$metadata, files = c("certificate.pdf", "codecheck.Rmd"))
-expect_equal(res$status[res$check == "certificate PDF"], "warn")
-expect_true(grepl("codecheck.pdf", res$detail[res$check == "certificate PDF"], fixed = TRUE))
+# (CC-REP-008)
+expect_equal(res$status[res$check == "certificate PDF"], "pass")
+expect_equal(res$status[res$check == "certificate PDF name"], "warn")
+expect_true(grepl("codecheck.pdf", res$detail[res$check == "certificate PDF name"], fixed = TRUE))
 
-# no PDF at all is still a failure
+# no PDF at all warns (CC-REP-007), and then there is no name to check
 res <- zenodo_policy_check(other_name$metadata, files = c("codecheck.Rmd"))
-expect_equal(res$status[res$check == "certificate PDF"], "fail")
+expect_equal(res$status[res$check == "certificate PDF"], "warn")
+expect_equal(sum(res$check == "certificate PDF name"), 0L)
+
+# ---------------------------------------------------------- certificate source
+
+# the status of the two source rules for a deposit with these files
+source_status <- function(files) {
+  res <- zenodo_policy_check(compliant$metadata, files = files)
+  c(present = res$status[res$check == "certificate source"],
+    unambiguous = res$status[res$check == "certificate source unambiguous"])
+}
+
+# only the PDF: the source is missing (CC-REP-009)
+expect_equal(source_status("codecheck.pdf"), c(present = "warn", unambiguous = "pass"))
+
+# a Jupyter notebook is a certificate source
+expect_equal(source_status(c("codecheck.pdf", "codecheck.ipynb")),
+             c(present = "pass", unambiguous = "pass"))
+
+# so a notebook next to an R Markdown source is ambiguous (CC-REP-010)
+expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "codecheck.ipynb")),
+             c(present = "pass", unambiguous = "warn"))
+
+# a non-executable source next to an executable one is not ambiguous
+expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "README.md")),
+             c(present = "pass", unambiguous = "pass"))
+
+# nor is a notebook of the checked workflow next to the certificate source
+expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "analysis.ipynb")),
+             c(present = "pass", unambiguous = "pass"))
+
+# ------------------------------------------------- against the codecheck.yml
+
+# the compliant fixture is certificate 2026-019 by Jan Haacker
+yml_2026_019 <- list(
+  certificate = "2026-019",
+  codechecker = list(list(name = "Jan Haacker", ORCID = "https://orcid.org/0000-0002-5464-2442")))
+against <- function(configuration) {
+  res <- zenodo_policy_check(compliant$metadata, configuration = configuration)
+  stats::setNames(res$status, res$check)[c("certificate ID", "codechecker names",
+                                            "codechecker ORCIDs")]
+}
+
+# without a codecheck.yml there is nothing to compare (CC-REP-004 to 006)
+expect_true(all(is.na(against(NULL))))
+expect_equal(unname(against(yml_2026_019)), c("pass", "pass", "pass"))
+
+# another certificate's ID (CC-REP-004)
+other_cert <- yml_2026_019
+other_cert$certificate <- "2026-020"
+expect_equal(against(other_cert)[["certificate ID"]], "warn")
+# a group's record names the range
+group <- compliant
+group$metadata$title <- "CODECHECK Certificates 2026-019 - 2026-021"
+other_cert$certificate <- "2026-020"
+expect_equal(zenodo_policy_check(group$metadata, configuration = other_cert)$status[
+  zenodo_policy_check(group$metadata, configuration = other_cert)$check == "certificate ID"], "pass")
+
+# a codechecker missing from the creators, by name and ORCID (CC-REP-005, 006)
+two <- yml_2026_019
+two$codechecker <- c(two$codechecker,
+                     list(list(name = "Josiah Carberry", ORCID = "0000-0002-1825-0097")))
+res <- zenodo_policy_check(compliant$metadata, configuration = two)
+expect_equal(res$status[res$check == "codechecker names"], "warn")
+expect_true(grepl("not a creator: Josiah Carberry", res$detail[res$check == "codechecker names"]))
+expect_equal(res$status[res$check == "codechecker ORCIDs"], "warn")
+expect_true(grepl("0000-0002-1825-0097", res$detail[res$check == "codechecker ORCIDs"]))
+
+# a creator who is not a codechecker
+someone_else <- yml_2026_019
+someone_else$codechecker <- list(list(name = "Josiah Carberry"))
+res <- zenodo_policy_check(compliant$metadata, configuration = someone_else)
+expect_true(grepl("not a codechecker in the codecheck.yml: Haacker, Jan",
+                  res$detail[res$check == "codechecker names"], fixed = TRUE))
+# no codechecker ORCID, nothing to compare
+expect_equal(sum(res$check == "codechecker ORCIDs"), 0L)
+
+# the register-wide check compares with each entry's codecheck.yml when it has
+# a Repository column
+with_repository <- data.frame(
+  Certificate = "2026-019", Repository = "github::codecheckers/example",
+  Report = "https://doi.org/10.5281/zenodo.21238767", stringsAsFactors = FALSE)
+yml_cache_root <- tempfile("codecheck_zenodo_policy_cache_yml")
+dir.create(yml_cache_root)
+yml_old_root <- R.cache::getCacheRootPath()
+R.cache::setCacheRootPath(yml_cache_root)
+asked <- character(0)
+res <- check_register_zenodo_policy(
+  with_repository, get_metadata = function(record_id) compliant,
+  get_configuration = function(repository) { asked <<- repository; other_cert })
+expect_equal(asked, "github::codecheckers/example")
+expect_true(grepl("certificate ID", res$findings))
+# an unreachable codecheck.yml leaves the record checked, not compared
+res <- check_register_zenodo_policy(
+  with_repository, get_metadata = function(record_id) compliant,
+  get_configuration = function(repository) stop("offline"))
+expect_equal(res$status, "compliant")
+expect_false(grepl("certificate ID", res$findings))
+R.cache::setCacheRootPath(yml_old_root)
 
 # ------------------------------------------------------- community membership
 

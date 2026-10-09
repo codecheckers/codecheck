@@ -14,6 +14,13 @@
 * The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate's summary is the `summary` in `codecheck.yml`, shown in the summary table.
 * The Rmd and Quarto templates call the package's functions as `codecheck::fn()`, so it is clear which functions come from the package.
 * The Quarto template sets code and its output in 7pt, so that about 120 characters fit on a line.
+* `zenodo_policy_check()` reports the deposit's files as rules `CC-REP-007` to `CC-REP-010`, which replace `CC-REP-003` (closes codecheckers/codecheck#95).
+* `zenodo_policy_check()` accepts a Jupyter notebook (`.ipynb`) as certificate source (codecheckers/codecheck#95).
+* `upload_zenodo_certificate()` replaces an existing `codecheck.ipynb` source like an `.Rmd` or `.qmd` one, but no other notebook on the record (codecheckers/codecheck#95).
+* `zenodo_policy_check()` compares the record's certificate ID, codechecker names and ORCIDs with a given `configuration` (rules `CC-REP-004` to `CC-REP-006`) (codecheckers/codecheck#100).
+* `check_zenodo_record()` and `check_register_zenodo_policy()` compare each record with its certificate's `codecheck.yml` (codecheckers/codecheck#100).
+* `validate_register_rules()` checks that each `Issue` number is an issue of codecheckers/register (`CC-REG-006`) whose title names the certificate (`CC-REG-007`) (codecheckers/codecheck#100).
+* The `codecheck.yml` template declares the YAML version with `%YAML 1.1`, as the specification recommends (codecheckers/codecheck#100).
 
 ## Bug Fixes
 
@@ -27,6 +34,12 @@
 * The certificate's manifest table keeps spaces in file names, e.g. `Figure 1.png` instead of `Figure1.png` (closes codecheckers/codecheck#98).
 * `copy_manifest_files()` replaces whitespace with underscores in the names of the copies in `codecheck/outputs/`, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).
 * Rule `CC-MET-005` `paper-title-match` accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).
+* `zenodo_policy_check()` reports a deposit without a PDF, or with more than one of `codecheck.Rmd`, `codecheck.qmd` and `codecheck.ipynb`, as a warning instead of a failure, matching the rules' severity (codecheckers/codecheck#95).
+* Rule `CC-CFG-002` `explicit-document` accepts directives such as `%YAML 1.2`, comments and blank lines before the document marker `---` (closes codecheckers/codecheck#100).
+* Rule `CC-CFG-029` `reference-other-is-list` accepts a `reference-other` sequence of plain URLs, which it rejected as not a sequence (codecheckers/codecheck#100).
+* Rules `CC-CFG-030` and `CC-MET-009` check a `reference-other` sequence of plain URLs instead of skipping it (codecheckers/codecheck#100).
+* `validate_certificate_github_issue()` finds the certificate's issue beyond the newest 100 issues, and in an issue title naming a range of certificates (codecheckers/codecheck#100).
+* The bundled rule descriptions say what the checks do, for example that `CC-CFG-006` also rejects `..` in manifest paths (codecheckers/codecheck#100).
 * The register's near-duplicate check compares paper titles regardless of markup such as `<i>`, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).
 * Figures in a Quarto certificate are included by a path relative to the certificate, instead of an absolute path that Quarto rewrote into a broken `./home/...` (codecheckers/codecheck#93).
 * The certificate's "Citing this document" wraps the Zenodo DOI URL to the next line instead of running past the margin.

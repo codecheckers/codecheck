@@ -125,12 +125,15 @@ check_explicit_document <- function(context) {
   if (is.null(context$lines)) {
     return(rule_skip("no file on disk to inspect"))
   }
-  non_empty <- trimws(context$lines)
-  non_empty <- non_empty[nzchar(non_empty)]
-  if (length(non_empty) > 0 && identical(non_empty[1], "---")) {
+  # Directives such as %YAML 1.2, which the specification recommends, comments
+  # and blank lines may come before the marker
+  lines <- trimws(context$lines)
+  content <- lines[nzchar(lines) & !grepl("^[#%]", lines)]
+  if (length(content) > 0 && grepl("^---(\\s|$)", content[1])) {
     rule_pass()
   } else {
-    rule_fail("the file does not start with the document marker '---'")
+    rule_fail(paste("the document does not start with the marker '---'",
+                    "(only directives, comments and blank lines may precede it)"))
   }
 }
 
@@ -496,15 +499,39 @@ check_reference_pdf_is_archived <- function(context) {
   }
 }
 
+#' The paper's reference-other entries, and whether they form a sequence
+#'
+#' The YAML parser turns a sequence of plain URLs into a character vector, the
+#' same as a single scalar, so a one-entry sequence and a bare URL would look
+#' alike. A file on disk is told apart by `context$yml_seq`, see
+#' `rules_context()`; a configuration in memory has no such distinction left,
+#' so an unnamed vector counts as a sequence there.
+#'
+#' @return `NULL` without reference-other, otherwise a list of `is_sequence`
+#'   and the `entries` as a character vector.
+#' @keywords internal
+#' @noRd
+reference_other <- function(context) {
+  other <- context$yml$paper[["reference-other"]]
+  if (is.null(other)) {
+    return(NULL)
+  }
+  from_file <- !is.null(context$yml_seq)
+  if (from_file) other <- context$yml_seq$paper[["reference-other"]]
+  is_sequence <- is.null(names(other)) &&
+    (is.list(other) || (!from_file && is.atomic(other)))
+  list(is_sequence = is_sequence, entries = as.character(unlist(other)))
+}
+
 #' @keywords internal
 #' @noRd
 check_reference_other_is_list <- function(context) {
-  other <- context$yml$paper[["reference-other"]]
+  other <- reference_other(context)
   if (is.null(other)) {
     return(rule_skip("no reference-other"))
   }
-  if (is.list(other) && is.null(names(other))) {
-    rule_pass(paste(length(other), "further reference(s)"))
+  if (other$is_sequence) {
+    rule_pass(paste(length(other$entries), "further reference(s)"))
   } else {
     rule_fail("reference-other is not a sequence")
   }
@@ -513,11 +540,11 @@ check_reference_other_is_list <- function(context) {
 #' @keywords internal
 #' @noRd
 check_reference_other_item_form <- function(context) {
-  other <- context$yml$paper[["reference-other"]]
-  if (is.null(other) || !is.list(other) || !is.null(names(other))) {
+  other <- reference_other(context)
+  if (is.null(other) || !other$is_sequence) {
     return(rule_skip("no reference-other sequence"))
   }
-  entries <- unlist(other)
+  entries <- other$entries
   not_url <- entries[!grepl("^https?://[^[:space:]]+$", trimws(entries))]
   if (length(not_url) == 0) {
     rule_pass()
@@ -639,11 +666,11 @@ check_licence_present <- function(context) {
 #' @keywords internal
 #' @noRd
 check_reference_other_resolves <- function(context) {
-  other <- context$yml$paper[["reference-other"]]
-  if (is.null(other) || !is.list(other) || !is.null(names(other))) {
+  other <- reference_other(context)
+  if (is.null(other) || !other$is_sequence) {
     return(rule_skip("no reference-other sequence"))
   }
-  entries <- unlist(other)
+  entries <- other$entries
   entries <- entries[grepl("^https?://", entries)]
   if (length(entries) == 0) {
     return(rule_skip("no reference-other entry to resolve"))
@@ -1214,6 +1241,130 @@ check_venue_known <- function(context) {
   }
 }
 
+#' The register rows with an issue number, as a data frame of `certificate` and
+#' `issue`
+#' @keywords internal
+#' @noRd
+register_issue_rows <- function(register) {
+  if (!"Issue" %in% names(register)) {
+    return(data.frame(certificate = character(0), issue = integer(0)))
+  }
+  issue <- suppressWarnings(as.integer(register$Issue))
+  data.frame(certificate = register$Certificate[!is.na(issue)],
+             issue = issue[!is.na(issue)], stringsAsFactors = FALSE)
+}
+
+#' The register rows with an issue number and the register's issues
+#'
+#' @return A list of the `rows`, see `register_issue_rows()`, and the `issues`,
+#'   see `context_register_issues()`; or of `skip`, the result for a rule
+#'   that has nothing to look up or cannot.
+#' @keywords internal
+#' @noRd
+register_issue_lookup <- function(context) {
+  rows <- register_issue_rows(context$register)
+  if (nrow(rows) == 0) {
+    return(list(skip = rule_skip("no Issue numbers in the register")))
+  }
+  issues <- context_register_issues(context)
+  if (is.null(issues)) {
+    return(list(skip = rule_skip("could not list the register's issues on GitHub")))
+  }
+  list(rows = rows, issues = issues)
+}
+
+#' The issues of the register repository, fetched once per context
+#'
+#' @return A data frame of issue `number` and `title`, or `NULL` when GitHub
+#'   cannot be reached.
+#' @keywords internal
+#' @noRd
+context_register_issues <- function(context) {
+  # exists() rather than is.null(): an unreachable GitHub is cached as NULL,
+  # so the second rule does not ask again
+  if (!exists("register_issues", envir = context$lookups, inherits = FALSE)) {
+    assign("register_issues",
+           tryCatch(context$get_issues(), error = function(e) NULL),
+           envir = context$lookups)
+  }
+  get("register_issues", envir = context$lookups, inherits = FALSE)
+}
+
+#' All issues of the register repository, without its pull requests
+#'
+#' @param repo GitHub repository as "owner/name"
+#' @return A data frame of issue `number` and `title`.
+#' @keywords internal
+#' @noRd
+register_github_issues <- function(repo = "codecheckers/register") {
+  issues <- gh::gh("GET /repos/{repo}/issues", repo = repo, state = "all",
+                   per_page = 100, .limit = Inf)
+  # the endpoint lists pull requests too, but an Issue number must be an issue
+  issues <- Filter(function(i) is.null(i$pull_request), issues)
+  data.frame(number = vapply(issues, function(i) as.integer(i$number), integer(1)),
+             title = vapply(issues, function(i) as.character(i$title), character(1)),
+             stringsAsFactors = FALSE)
+}
+
+#' The certificate identifiers an issue title names
+#'
+#' The issue of a group of checks, such as a conference's, names the range,
+#' as in "2025-008 - 2025-017" or "2026-004/2026-017"; every identifier in it
+#' counts as named.
+#'
+#' @keywords internal
+#' @noRd
+title_certificate_ids <- function(title) {
+  ids <- regmatches(title, gregexpr("(?<![0-9])[0-9]{4}-[0-9]{3}(?![0-9])", title,
+                                    perl = TRUE))[[1]]
+  ranges <- regmatches(title, gregexpr(
+    "([0-9]{4})-([0-9]{3})\\s*(-|\u2013|/|to)\\s*\\1-([0-9]{3})", title, perl = TRUE))[[1]]
+  for (range in ranges) {
+    bounds <- regmatches(range, gregexpr("[0-9]{4}-[0-9]{3}", range))[[1]]
+    numbers <- as.integer(substr(bounds, 6, 8))
+    ids <- c(ids, sprintf("%s-%03d", substr(bounds[1], 1, 4), numbers[1]:numbers[2]))
+  }
+  unique(ids)
+}
+
+#' @keywords internal
+#' @noRd
+check_issue_exists <- function(context) {
+  lookup <- register_issue_lookup(context)
+  if (!is.null(lookup$skip)) return(lookup$skip)
+  rows <- lookup$rows
+  missing <- rows[!rows$issue %in% lookup$issues$number, ]
+  if (nrow(missing) == 0) {
+    rule_pass(paste(nrow(rows), "issue(s)"))
+  } else {
+    rule_fail(paste("no such issue:",
+                    paste0(missing$certificate, " (#", missing$issue, ")", collapse = ", ")))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_issue_references_certificate <- function(context) {
+  lookup <- register_issue_lookup(context)
+  if (!is.null(lookup$skip)) return(lookup$skip)
+  issues <- lookup$issues
+  rows <- lookup$rows[lookup$rows$issue %in% issues$number, ]
+  if (nrow(rows) == 0) {
+    return(rule_skip("none of the issues exists, see CC-REG-006"))
+  }
+  titles <- issues$title[match(rows$issue, issues$number)]
+  unreferenced <- !mapply(function(certificate, title) {
+    certificate %in% title_certificate_ids(title)
+  }, rows$certificate, titles)
+  if (!any(unreferenced)) {
+    rule_pass(paste(nrow(rows), "issue title(s)"))
+  } else {
+    rule_fail(paste("issue title without the certificate identifier:",
+                    paste0(rows$certificate[unreferenced], " (#", rows$issue[unreferenced],
+                           " '", titles[unreferenced], "')", collapse = ", ")))
+  }
+}
+
 #' The check function for each register-wide rule
 #'
 #' Kept apart from `rule_checks()`, so that validating a single `codecheck.yml`
@@ -1226,7 +1377,9 @@ register_rule_checks <- function() {
   c(
     "CC-REG-002" = "check_certificate_id_sequence",
     "CC-REG-004" = "check_type_known",
-    "CC-REG-005" = "check_venue_known"
+    "CC-REG-005" = "check_venue_known",
+    "CC-REG-006" = "check_issue_exists",
+    "CC-REG-007" = "check_issue_references_certificate"
   )
 }
 

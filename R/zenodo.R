@@ -757,8 +757,15 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
       existing_files <- draft$files
 
       if (!is.null(existing_files) && length(existing_files) > 0) {
-        # Filter for .Rmd and .qmd files
-        source_files <- existing_files[grepl("\\.(Rmd|qmd)$", sapply(existing_files, function(f) f$filename), ignore.case = TRUE)]
+        # Filter for certificate sources: any .Rmd or .qmd, but a notebook only
+        # when named like the certificate or codecheck.ipynb, see CC-REP-010 in
+        # zenodo_policy_check(); other notebooks are the checked workflow
+        existing_names <- sapply(existing_files, function(f) f$filename)
+        is_notebook_source <- grepl("\\.ipynb$", existing_names, ignore.case = TRUE) &
+          tolower(tools::file_path_sans_ext(existing_names)) %in%
+            tolower(c("codecheck", basename(cert_base)))
+        source_files <- existing_files[
+          grepl("\\.(Rmd|qmd)$", existing_names, ignore.case = TRUE) | is_notebook_source]
 
         if (length(source_files) > 0) {
           # Source file(s) already exist
@@ -906,17 +913,21 @@ zenodo_codecheck_community_id <- "505e49f2-de4f-4905-9666-36c7303e497d"
 #' @title Check Zenodo record metadata against the CODECHECK curation policy
 #' @param record_metadata list of record metadata
 #' @param files character vector of file names in the deposit, optional; needed
-#'   for the checks on the certificate PDF and the machine-readable source.
+#'   for the checks on the certificate PDF, its name, and the certificate source.
 #' @param record the full record as returned by the InvenioRDM API (i.e. the
 #'   `record` element of [get_zenodo_record_metadata()]'s return value),
 #'   optional; needed for the community membership check, see #20. Community
 #'   membership lives outside `metadata` (under `parent$communities`), so this
 #'   check is only added when `record` is supplied.
+#' @param configuration the parsed `codecheck.yml` of the certificate,
+#'   optional; needed to check that the record's certificate ID, codechecker
+#'   names and ORCIDs match it, see [get_codecheck_yml()].
 #' @return a data.frame with columns `check`, `status` (one of "pass", "warn",
 #'   "fail") and `detail`, one row per policy requirement.
 #' @author Daniel Nuest
 #' @export
-zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
+zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL,
+                                configuration = NULL) {
   results <- list()
   add <- function(check, status, detail) {
     results[[length(results) + 1]] <<- data.frame(
@@ -930,7 +941,6 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
   title <- if (is.character(m$title)) m$title else ""
   has_cert_text <- grepl("CODECHECK Certificate", title, fixed = TRUE)
   has_cert_text_lower <- grepl("CODECHECK certificate", title, fixed = TRUE)
-  # rule: CC-REP-004 zenodo-certificate-id-match
   has_cert_id <- grepl("[0-9]{4}-[0-9]{3}", title)
   if (has_cert_text && has_cert_id) {
     add("title", "pass", title)
@@ -1003,7 +1013,6 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
   # and record metadata alone cannot tell the two apart. It is reported as
   # "info" rather than "fail", so it never blocks compliance and is surfaced
   # to a human to judge, instead of being asserted as an error.
-  # rule: CC-REP-005 zenodo-codechecker-names-match, CC-REP-006 zenodo-codechecker-orcids-match
   creator_types <- unlist(lapply(m$creators, function(c) c$person_or_org$type))
   if (length(creator_types) == 0) {
     add("creators", "fail", "no creators")
@@ -1017,6 +1026,62 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
     add("creators", "info",
         paste0("recorded as organisation: ", paste(orgs, collapse = "; "),
                " - correct for a genuine group, otherwise should be a person"))
+  }
+
+  # The record against the codecheck.yml it certifies, when that is given
+  if (!is.null(configuration)) {
+    # rule: CC-REP-004 zenodo-certificate-id-match
+    certificate <- configuration$certificate
+    if (has_value(certificate)) {
+      title_ids <- title_certificate_ids(title)
+      ok <- certificate %in% title_ids
+      add("certificate ID", if (ok) "pass" else "warn",
+          if (ok) certificate
+          else paste0("the title names ",
+                      if (length(title_ids) > 0) paste(title_ids, collapse = ", ") else "no certificate",
+                      ", the codecheck.yml ", certificate))
+    }
+
+    persons <- Filter(function(c) identical(c$person_or_org$type, "personal"), m$creators)
+    creator_names <- vapply(persons, function(c) {
+      p <- c$person_or_org
+      if (has_value(p$name)) p$name else paste(c(p$given_name, p$family_name), collapse = " ")
+    }, character(1))
+    # a nameless creator matches no one, rather than everyone
+    creator_names <- creator_names[nzchar(creator_names)]
+    creator_orcids <- unlist(lapply(persons, function(c) {
+      ids <- c$person_or_org$identifiers
+      unlist(lapply(ids, function(i) if (identical(tolower(i$scheme), "orcid")) i$identifier))
+    }))
+    codecheckers <- Filter(function(cc) has_value(cc$name), as_items(configuration$codechecker))
+
+    # rule: CC-REP-005 zenodo-codechecker-names-match
+    if (length(codecheckers) > 0) {
+      cc_names <- vapply(codecheckers, function(cc) cc$name, character(1))
+      in_record <- function(name, names) any(vapply(names, names_match, logical(1), a = name))
+      missing <- cc_names[!vapply(cc_names, in_record, logical(1), names = creator_names)]
+      extra <- creator_names[!vapply(creator_names, in_record, logical(1), names = cc_names)]
+      problems <- c(
+        if (length(missing) > 0) paste0("not a creator: ", paste(missing, collapse = "; ")),
+        if (length(extra) > 0) paste0("not a codechecker in the codecheck.yml: ",
+                                      paste(extra, collapse = "; ")))
+      add("codechecker names", if (length(problems) == 0) "pass" else "warn",
+          if (length(problems) == 0) paste(cc_names, collapse = "; ")
+          else paste(problems, collapse = " - "))
+    }
+
+    # rule: CC-REP-006 zenodo-codechecker-orcids-match
+    as_orcids <- function(x) {
+      orcids <- vapply(as.character(x), normalize_orcid, character(1), USE.NAMES = FALSE)
+      orcids[!is.na(orcids)]
+    }
+    cc_orcids <- as_orcids(unlist(lapply(codecheckers, `[[`, "ORCID")))
+    if (length(cc_orcids) > 0) {
+      missing <- setdiff(cc_orcids, as_orcids(creator_orcids))
+      add("codechecker ORCIDs", if (length(missing) == 0) "pass" else "warn",
+          if (length(missing) == 0) paste(cc_orcids, collapse = "; ")
+          else paste0("not on any creator: ", paste(missing, collapse = "; ")))
+    }
   }
 
   # Related identifier: reviews -> paper
@@ -1065,32 +1130,42 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
 
   # Files
   if (!is.null(files)) {
-    # rule: CC-REP-003 zenodo-files-present
-    pdfs <- files[grepl("\\.pdf$", files, ignore.case = TRUE)]
-    # the file must be present, and should specifically be named codecheck.pdf
-    # (see #20); a differently-named PDF is a warning, not a failure
+    ext <- tolower(tools::file_ext(files))
+    executable_ext <- c("rmd", "qmd", "ipynb")
+
+    # rule: CC-REP-007 zenodo-certificate-pdf-present
+    pdfs <- files[ext == "pdf"]
     if (length(pdfs) == 0) {
-      add("certificate PDF", "fail", "no PDF in the deposit")
-    } else if (any(tolower(pdfs) == "codecheck.pdf")) {
-      add("certificate PDF", "pass", paste(pdfs, collapse = "; "))
+      add("certificate PDF", "warn", "no PDF in the deposit")
     } else {
-      add("certificate PDF", "warn",
-          paste0(paste(pdfs, collapse = "; "),
-                 " - policy expects the certificate PDF to be named codecheck.pdf"))
+      pdf_list <- paste(pdfs, collapse = "; ")
+      add("certificate PDF", "pass", pdf_list)
+      # rule: CC-REP-008 zenodo-certificate-pdf-name
+      named <- any(tolower(pdfs) == "codecheck.pdf")
+      add("certificate PDF name", if (named) "pass" else "warn",
+          if (named) pdf_list
+          else paste0(pdf_list, " - policy expects the certificate PDF to be named codecheck.pdf"))
     }
-    sources <- files[grepl("\\.(Rmd|qmd|docx|odt|md|tex)$", files, ignore.case = TRUE)]
-    has_rmd <- any(grepl("\\.Rmd$", sources, ignore.case = TRUE))
-    has_qmd <- any(grepl("\\.qmd$", sources, ignore.case = TRUE))
-    add("machine-readable certificate",
-        if (has_rmd && has_qmd) "fail"
-        else if (length(sources) > 0) "pass"
-        else "warn",
-        if (has_rmd && has_qmd)
-          paste0(paste(sources, collapse = "; "),
-                 " - both codecheck.Rmd and codecheck.qmd present, remove one ",
-                 "so the certificate source is unambiguous")
-        else if (length(sources) > 0) paste(sources, collapse = "; ")
+
+    # rule: CC-REP-009 zenodo-certificate-source-present
+    sources <- files[ext %in% c(executable_ext, "docx", "odt", "md", "tex")]
+    add("certificate source", if (length(sources) > 0) "pass" else "warn",
+        if (length(sources) > 0) paste(sources, collapse = "; ")
         else "deposit should include the certificate source, e.g. codecheck.Rmd")
+
+    # rule: CC-REP-010 zenodo-certificate-source-unambiguous
+    # only codecheck.* counts: other notebooks or R Markdown files in the
+    # deposit are the checked workflow, not the certificate
+    executable <- files[ext %in% executable_ext &
+                          tolower(tools::file_path_sans_ext(basename(files))) == "codecheck"]
+    executable_list <- paste(executable, collapse = "; ")
+    ambiguous <- length(executable) > 1
+    add("certificate source unambiguous", if (ambiguous) "warn" else "pass",
+        if (ambiguous)
+          paste0(executable_list, " - remove all but one of codecheck.Rmd, codecheck.qmd ",
+                 "and codecheck.ipynb so the certificate source is unambiguous")
+        else if (length(executable) > 0) executable_list
+        else "no codecheck.Rmd, codecheck.qmd or codecheck.ipynb")
   }
 
   # Community membership: the deposit must be part of the Zenodo "codecheck"
@@ -1158,25 +1233,39 @@ resolve_zenodo_record_id <- function(x, register_dir = getwd()) {
     stop("Cannot interpret '", x, "' as a certificate ID, Zenodo record ID or Zenodo DOI")
   }
 
-  register_file <- file.path(register_dir, "register.csv")
-  if (!file.exists(register_file)) {
-    stop("Need register.csv in '", register_dir, "' to resolve certificate ", x)
-  }
-  register <- utils::read.csv(register_file, as.is = TRUE, comment.char = "#")
-  row <- register[register$Certificate == x, ]
-  if (nrow(row) == 0) {
-    stop("Certificate ", x, " is not in ", register_file)
-  }
-
-  config <- get_codecheck_yml(row$Repository[1])
-  if (is.null(config) || is.null(config$report)) {
-    stop("No 'report' field in the codecheck.yml of ", row$Repository[1])
+  config <- register_codecheck_yml(x, register_dir)
+  if (is.null(config$report)) {
+    stop("No 'report' field in the codecheck.yml of certificate ", x)
   }
   id <- get_zenodo_id(config$report)
   if (is.na(id)) {
-    stop("The report field of ", row$Repository[1], " is not a Zenodo DOI: ", config$report)
+    stop("The report field of certificate ", x, " is not a Zenodo DOI: ", config$report)
   }
   id
+}
+
+#' The codecheck.yml of a certificate in the register
+#'
+#' @param certificate certificate ID
+#' @param register_dir directory holding `register.csv`
+#' @return the parsed codecheck.yml, see [get_codecheck_yml()]
+#' @keywords internal
+#' @noRd
+register_codecheck_yml <- function(certificate, register_dir) {
+  register_file <- file.path(register_dir, "register.csv")
+  if (!file.exists(register_file)) {
+    stop("Need register.csv in '", register_dir, "' to resolve certificate ", certificate)
+  }
+  register <- utils::read.csv(register_file, as.is = TRUE, comment.char = "#")
+  row <- register[register$Certificate == certificate, ]
+  if (nrow(row) == 0) {
+    stop("Certificate ", certificate, " is not in ", register_file)
+  }
+  config <- get_codecheck_yml(row$Repository[1])
+  if (is.null(config)) {
+    stop("No codecheck.yml in ", row$Repository[1])
+  }
+  config
 }
 
 
@@ -1197,9 +1286,14 @@ resolve_zenodo_record_id <- function(x, register_dir = getwd()) {
 check_zenodo_record <- function(record, register_dir = getwd()) {
   id <- resolve_zenodo_record_id(record, register_dir = register_dir)
   rec <- get_zenodo_record_metadata(id)
+  # only a certificate ID leads to the codecheck.yml to compare the record with
+  configuration <- if (grepl("^[0-9]{4}-[0-9]{3}$", record)) {
+    register_codecheck_yml(record, register_dir)
+  }
 
   cli::cli_h1(paste0("Zenodo record ", id, " vs. CODECHECK curation policy"))
-  result <- zenodo_policy_check(rec$metadata, files = rec$files, record = rec$record)
+  result <- zenodo_policy_check(rec$metadata, files = rec$files, record = rec$record,
+                                configuration = configuration)
 
   for (i in seq_len(nrow(result))) {
     line <- paste0(result$check[i], ": ", result$detail[i])
@@ -1372,9 +1466,7 @@ curate_zenodo_record <- function(record,
   if (is.null(metadata)) {
     register_file <- file.path(register_dir, "register.csv")
     if (grepl("^[0-9]{4}-[0-9]{3}$", as.character(record)) && file.exists(register_file)) {
-      register <- utils::read.csv(register_file, as.is = TRUE, comment.char = "#")
-      row <- register[register$Certificate == as.character(record), ]
-      metadata <- get_codecheck_yml(row$Repository[1])
+      metadata <- register_codecheck_yml(as.character(record), register_dir)
     } else {
       stop("Provide `metadata` (the codecheck.yml contents) when `record` is not a certificate ID")
     }
@@ -1687,6 +1779,10 @@ clear_zenodo_policy_cache <- function(record_id) {
 #'   and `Report`
 #' @param get_metadata function of one argument (the record ID) returning the
 #'   record metadata like [get_zenodo_record_metadata()]; injectable for testing
+#' @param get_configuration function of one argument (the `Repository` column)
+#'   returning the parsed codecheck.yml like [get_codecheck_yml()], used when
+#'   the table has a `Repository` column to compare the record with it;
+#'   injectable for testing
 #' @return a data.frame with one row per checked certificate and the columns
 #'   `certificate`, `record_id`, `status` ("compliant", "non-compliant" or
 #'   "unknown"), `n_fail`, `n_warn`, `n_info` and `findings`. An "info" finding
@@ -1695,7 +1791,8 @@ clear_zenodo_policy_cache <- function(record_id) {
 #' @author Daniel Nuest
 #' @export
 check_register_zenodo_policy <- function(register_table,
-                                         get_metadata = get_zenodo_record_metadata) {
+                                         get_metadata = get_zenodo_record_metadata,
+                                         get_configuration = get_codecheck_yml) {
   if (is.null(register_table) || nrow(register_table) == 0 ||
       !all(c("Certificate", "Report") %in% names(register_table))) {
     return(empty_zenodo_policy_result())
@@ -1727,7 +1824,14 @@ check_register_zenodo_policy <- function(register_table,
       if (is.null(record)) {
         NULL
       } else {
-        zenodo_policy_check(record$metadata, files = unlist(record$files), record = record$record)
+        # without its codecheck.yml the record is still checked, only not
+        # compared with it
+        configuration <- if ("Repository" %in% names(register_table)) {
+          tryCatch(get_configuration(register_table$Repository[i]),
+                   error = function(e) NULL)
+        }
+        zenodo_policy_check(record$metadata, files = unlist(record$files), record = record$record,
+                            configuration = configuration)
       }
     }, error = function(e) NULL)
 

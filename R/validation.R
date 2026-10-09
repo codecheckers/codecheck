@@ -1048,22 +1048,20 @@ validate_certificate_github_issue <- function(yml_file = "codecheck.yml",
     stop("repo must be in format 'owner/repo'", call. = FALSE)
   }
 
-  # Certificate pattern in issue titles: YYYY-NNN
-  cert_pattern <- paste0("\\b", gsub("-", "-", certificate), "\\b")
-
   # Search for issues with the certificate ID (search all states)
   tryCatch({
-    # Search in all issues (open + closed)
+    # Search in all issues (open + closed), on every page: the register has
+    # more than one page of issues
     all_issues <- gh::gh("GET /repos/:owner/:repo/issues",
                          owner = repo_parts[1],
                          repo = repo_parts[2],
                          state = "all",
-                         per_page = 100)
+                         per_page = 100, .limit = Inf)
 
-    # Find matching issue
+    # Find matching issue; a group's issue names a range of identifiers
     matching_issue <- NULL
     for (issue in all_issues) {
-      if (grepl(cert_pattern, issue$title)) {
+      if (certificate %in% title_certificate_ids(issue$title)) {
         matching_issue <- issue
         break
       }
@@ -1097,7 +1095,6 @@ validate_certificate_github_issue <- function(yml_file = "codecheck.yml",
         "If you are still working on it, consider reopening the issue."
       )
       warnings <- c(warnings, warning_msg)
-      # rule: CC-REG-006 issue-exists
       warning(warning_msg, call. = FALSE)
 
       if (strict) {
@@ -1112,7 +1109,6 @@ validate_certificate_github_issue <- function(yml_file = "codecheck.yml",
         "is UNASSIGNED. Please assign a codechecker to this issue."
       )
       warnings <- c(warnings, warning_msg)
-      # rule: CC-REG-007 issue-references-certificate
       warning(warning_msg, call. = FALSE)
 
       if (strict) {
