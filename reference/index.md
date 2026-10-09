@@ -209,6 +209,9 @@
 - [`codecheck_spec_version()`](http://codecheck.org.uk/codecheck/reference/codecheck_spec_version.md)
   : The specification version a \`codecheck.yml\` is validated against
 
+- [`compare_figures()`](http://codecheck.org.uk/codecheck/reference/compare_figures.md)
+  : Create side-by-side comparisons of published and reproduced figures
+
 - [`complete_codecheck_yml()`](http://codecheck.org.uk/codecheck/reference/complete_codecheck_yml.md)
   : Analyze and complete codecheck.yml with missing fields
 
@@ -310,6 +313,9 @@
   : Downloads a ZIP file from the given URL, searches for
   "codecheck.pdf" within its contents, renames it to "cert.pdf," and
   saves it in the specified directory.
+
+- [`extract_pdf_figures()`](http://codecheck.org.uk/codecheck/reference/extract_pdf_figures.md)
+  : Extract figures from the PDF of a published article
 
 - [`filter_and_drop_register_columns()`](http://codecheck.org.uk/codecheck/reference/filter_and_drop_register_columns.md)
   : Filter and Drop Columns from Register Table
@@ -669,6 +675,9 @@
   register table. It checks for the existence of the certificate PDF,
   downloads it if necessary, and converts it to JPEG format for
   embedding.
+
+- [`render_figure_comparisons()`](http://codecheck.org.uk/codecheck/reference/render_figure_comparisons.md)
+  : Include figure comparisons in the certificate
 
 - [`render_html()`](http://codecheck.org.uk/codecheck/reference/render_html.md)
   : Renders html for a single table

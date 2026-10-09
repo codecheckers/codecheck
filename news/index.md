@@ -28,6 +28,17 @@
 - `Project:Wikidata export` lists the QuickStatements batches the edit
   log records as run, and whether `register.csv` holds each
   certificate’s item (register#50).
+- New
+  [`extract_pdf_figures()`](http://codecheck.org.uk/codecheck/reference/extract_pdf_figures.md)
+  extracts the figures from the PDF of the checked article.
+- New
+  [`compare_figures()`](http://codecheck.org.uk/codecheck/reference/compare_figures.md)
+  puts each published figure and the reproduced one together in a
+  labelled image.
+- New
+  [`render_figure_comparisons()`](http://codecheck.org.uk/codecheck/reference/render_figure_comparisons.md)
+  includes these comparisons in the certificate, and the Rmd and Quarto
+  templates have an optional chunk for it.
 - The Rmd and Quarto templates no longer have a Summary section with
   placeholder text: the certificate’s summary is the `summary` in
   `codecheck.yml`, shown in the summary table.
@@ -70,6 +81,12 @@
   `codecheck/outputs/`, so they can be included in the certificate,
   whose headings still show the original names, and warns when two files
   would get the same copy (codecheckers/codecheck#98).
+- Rule `CC-MET-005` `paper-title-match` accepts a paper title that
+  includes the subtitle Crossref registers separately from the main
+  title OpenAlex holds (closes codecheckers/codecheck#96).
+- The register’s near-duplicate check compares paper titles regardless
+  of markup such as `<i>`, non-breaking spaces and the spacing around
+  separators (codecheckers/codecheck#96).
 
 ## codecheck 0.31.0
 

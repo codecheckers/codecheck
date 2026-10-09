@@ -84,6 +84,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/cached_lookup.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/cached_lookup_result.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/calculate_breadcrumb_base_path.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/capture_poppler_log.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/cert_link_cache.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_certificate_id.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/check_constant_value.html</loc></url>
@@ -124,6 +125,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/collection_definition.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/collection_name.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/commons_file_url.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/compare_figures.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/complete_codecheck_yml.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/compute_annual_stats.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/convert_cert_pdf_to_png.html</loc></url>
@@ -172,6 +174,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/external_library_specs.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_cert_pdf_from_zip.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_citation_meta_date.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/extract_pdf_figures.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/extract_schema_org_date_published.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/fediverse_handle.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/fediverse_link_text.html</loc></url>
@@ -294,6 +297,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/haswbstatement_search.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/header_template_data.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/html_escape.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/include_validated_image.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/index.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_full_register_run.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_nonempty_string.html</loc></url>
@@ -367,6 +371,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_cert_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_cert_htmls.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_error_box.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/render_figure_comparisons.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_csv.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_manifest_eps.html</loc></url>

@@ -51,6 +51,9 @@
 <code><a href="../reference/render_manifest_files.html">render_manifest_files()</a></code> includes Word (<code>.docx</code>) and RTF files in the certificate, also RTF saved as <code>.doc</code>, converted with pandoc (closes codecheckers/codecheck#99).</li>
 <li>
 <code>Project:Wikidata export</code> lists the QuickStatements batches the edit log records as run, and whether <code>register.csv</code> holds each certificate’s item (register#50).</li>
+<li>New <code><a href="../reference/extract_pdf_figures.html">extract_pdf_figures()</a></code> extracts the figures from the PDF of the checked article.</li>
+<li>New <code><a href="../reference/compare_figures.html">compare_figures()</a></code> puts each published figure and the reproduced one together in a labelled image.</li>
+<li>New <code><a href="../reference/render_figure_comparisons.html">render_figure_comparisons()</a></code> includes these comparisons in the certificate, and the Rmd and Quarto templates have an optional chunk for it.</li>
 <li>The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate’s summary is the <code>summary</code> in <code>codecheck.yml</code>, shown in the summary table.</li>
 </ul></div>
 <div class="section level3">
@@ -70,6 +73,8 @@
 <li>The certificate’s manifest table keeps spaces in file names, e.g. <code>Figure 1.png</code> instead of <code>Figure1.png</code> (closes codecheckers/codecheck#98).</li>
 <li>
 <code><a href="../reference/copy_manifest_files.html">copy_manifest_files()</a></code> replaces whitespace with underscores in the names of the copies in <code>codecheck/outputs/</code>, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).</li>
+<li>Rule <code>CC-MET-005</code> <code>paper-title-match</code> accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).</li>
+<li>The register’s near-duplicate check compares paper titles regardless of markup such as <code>&lt;i&gt;</code>, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).</li>
 </ul></div>
 </div>
     <div class="section level2">
