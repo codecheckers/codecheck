@@ -44,6 +44,9 @@
 * Figures in a Quarto certificate are included by a path relative to the certificate, instead of an absolute path that Quarto rewrote into a broken `./home/...` (codecheckers/codecheck#93).
 * The certificate's "Citing this document" wraps the Zenodo DOI URL to the next line instead of running past the margin.
 * The certificate's manifest table continues on the next page with its header repeated, instead of being cut off (closes codecheckers/codecheck#93).
+* The certificate's summary table escapes `&`, `%`, `#` and `_` in the paper title and `summary`, leaving math and LaTeX commands alone, instead of failing to compile or losing text.
+* Manifest comments in the certificate escape `_` too, e.g. in file names such as `run_all.R`, but not in math or LaTeX commands.
+* `http(s)` URLs in the certificate's summary are links that break across lines, instead of running past the margin.
 
 # codecheck 0.31.0
 

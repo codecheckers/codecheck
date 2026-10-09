@@ -208,3 +208,10 @@ expect_true(any(grepl("\\usepackage{longtable}", preamble, fixed = TRUE)))
 invisible(knitr::knit_meta(clean = TRUE))
 invisible(capture.output(latex_summary_of_manifest(metadata_valid_repo, manifest_df, root)))
 expect_true("longtable" %in% vapply(knitr::knit_meta(clean = TRUE), `[[`, "", "name"))
+
+# Test: underscores in comments are escaped outside math
+manifest_underscore <- data.frame(output = "fig.png", comment = "made by plot_all.R, see $x_1$",
+                                  size = 1, dest = "/tmp/fig.png", stringsAsFactors = FALSE)
+underscore_text <- paste(capture.output(
+  latex_summary_of_manifest(metadata_null_repo, manifest_underscore, root)), collapse = "\n")
+expect_true(grepl("made by plot\\_all.R, see $x_1$", underscore_text, fixed = TRUE))

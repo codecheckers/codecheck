@@ -27,14 +27,32 @@ as_latex_url  <- function(x) {
   str_replace_all(x, .url_regexp, wrapit)
 }
 
+## Text that deliberate LaTeX in free text owns and that is never escaped:
+## math ($x_1$, $$x_1$$, \(x_1\), \[x_1\]) and the first argument of a command,
+## e.g. the key in \cite{smith_2020} or the URL in \href{} and \url{}.
+.latex_protected = paste0(
+  "(?<!\\\\)\\$\\$.*?(?<!\\\\)\\$\\$|(?<!\\\\)\\$[^$]*(?<!\\\\)\\$|",
+  "\\\\\\(.*?\\\\\\)|\\\\\\[.*?\\\\\\]|\\\\[A-Za-z]+\\*?\\{[^{}]*\\}")
+
 ## Escape the characters that break a LaTeX table cell: & starts a new cell,
-## % comments out the rest of the row, # is a macro parameter. Other specials
-## are left alone so that deliberate math ($x_1$) and commands still work.
-## Already escaped characters (\&) are not escaped twice.
+## % comments out the rest of the row, # is a macro parameter, _ outside math
+## is an error (e.g. a file name such as run_all.R). Other specials are left
+## alone, and so is protected LaTeX. Already escaped characters (\&) are not
+## escaped twice.
 .escape_latex_table_text <- function(x) {
-  gsub("(?<!\\\\)([&%#])", "\\\\\\1", x, perl = TRUE)
+  gsub(paste0("(?:", .latex_protected, ")(*SKIP)(*FAIL)|(?<!\\\\)([&%#_])"),
+       "\\\\\\1", x, perl = TRUE)
 }
 
+## Free text for a LaTeX table cell, with its bare http(s) URLs in \url{} so
+## that they can break across lines. The \url{} is protected, so the URL is
+## not escaped: \url{} would print \# literally.
+.latex_table_text_with_urls <- function(x) {
+  x <- gsub(paste0("(?:", .latex_protected, ")(*SKIP)(*FAIL)|",
+                   "(https?://[^\\s<>{}]*[^\\s<>{}.,;:!?)'\"])"),
+            "\\\\url{\\1}", paste(x, collapse = " "), perl = TRUE)
+  .escape_latex_table_text(x)
+}
 
 .name_with_orcid <- function(person, add.orcid=TRUE) {
   name <- person$name
@@ -87,12 +105,12 @@ latex_summary_of_metadata <- function(metadata) {
 
   repositories = .repository_urls(metadata$repository)
   summary_entries = list(
-    "Title of checked publication" = safe_value(metadata$paper$title),
+    "Title of checked publication" = safe_value(.escape_latex_table_text(metadata$paper$title)),
     "Author" =          safe_value(.names(metadata$paper$authors)),
     "Reference" =       safe_value(as_latex_url(metadata$paper$reference)),
     "Codechecker" =     safe_value(.names(metadata$codechecker)),
     "Date of check" =   safe_value(metadata$check_time),
-    "Summary" =         safe_value(metadata$summary),
+    "Summary" =         safe_value(.latex_table_text_with_urls(metadata$summary)),
     "Repository" =      paste(as_latex_url(repositories), collapse = " \\newline "))
   items = names(summary_entries)
   items[items == "Author"] = people_label("Author", metadata$paper$authors)
