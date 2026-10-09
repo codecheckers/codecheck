@@ -12,6 +12,7 @@
 * New `compare_figures()` puts each published figure and the reproduced one together in a labelled image.
 * New `render_figure_comparisons()` includes these comparisons in the certificate, and the Rmd and Quarto templates have an optional chunk for it.
 * The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate's summary is the `summary` in `codecheck.yml`, shown in the summary table.
+* The Rmd and Quarto templates call the package's functions as `codecheck::fn()`, so it is clear which functions come from the package.
 
 ## Bug Fixes
 
