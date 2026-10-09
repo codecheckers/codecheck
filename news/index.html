@@ -57,6 +57,19 @@
 <li>The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate’s summary is the <code>summary</code> in <code>codecheck.yml</code>, shown in the summary table.</li>
 <li>The Rmd and Quarto templates call the package’s functions as <code>codecheck::fn()</code>, so it is clear which functions come from the package.</li>
 <li>The Quarto template sets code and its output in 7pt, so that about 120 characters fit on a line.</li>
+<li>
+<code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> reports the deposit’s files as rules <code>CC-REP-007</code> to <code>CC-REP-010</code>, which replace <code>CC-REP-003</code> (closes codecheckers/codecheck#95).</li>
+<li>
+<code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> accepts a Jupyter notebook (<code>.ipynb</code>) as certificate source (codecheckers/codecheck#95).</li>
+<li>
+<code><a href="../reference/upload_zenodo_certificate.html">upload_zenodo_certificate()</a></code> replaces an existing <code>codecheck.ipynb</code> source like an <code>.Rmd</code> or <code>.qmd</code> one, but no other notebook on the record (codecheckers/codecheck#95).</li>
+<li>
+<code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> compares the record’s certificate ID, codechecker names and ORCIDs with a given <code>configuration</code> (rules <code>CC-REP-004</code> to <code>CC-REP-006</code>) (codecheckers/codecheck#100).</li>
+<li>
+<code><a href="../reference/check_zenodo_record.html">check_zenodo_record()</a></code> and <code><a href="../reference/check_register_zenodo_policy.html">check_register_zenodo_policy()</a></code> compare each record with its certificate’s <code>codecheck.yml</code> (codecheckers/codecheck#100).</li>
+<li>
+<code><a href="../reference/validate_register_rules.html">validate_register_rules()</a></code> checks that each <code>Issue</code> number is an issue of codecheckers/register (<code>CC-REG-006</code>) whose title names the certificate (<code>CC-REG-007</code>) (codecheckers/codecheck#100).</li>
+<li>The <code>codecheck.yml</code> template declares the YAML version with <code>%YAML 1.1</code>, as the specification recommends (codecheckers/codecheck#100).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
@@ -76,10 +89,22 @@
 <li>
 <code><a href="../reference/copy_manifest_files.html">copy_manifest_files()</a></code> replaces whitespace with underscores in the names of the copies in <code>codecheck/outputs/</code>, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).</li>
 <li>Rule <code>CC-MET-005</code> <code>paper-title-match</code> accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).</li>
+<li>
+<code><a href="../reference/zenodo_policy_check.html">zenodo_policy_check()</a></code> reports a deposit without a PDF, or with more than one of <code>codecheck.Rmd</code>, <code>codecheck.qmd</code> and <code>codecheck.ipynb</code>, as a warning instead of a failure, matching the rules’ severity (codecheckers/codecheck#95).</li>
+<li>Rule <code>CC-CFG-002</code> <code>explicit-document</code> accepts directives such as <code>%YAML 1.2</code>, comments and blank lines before the document marker <code>---</code> (closes codecheckers/codecheck#100).</li>
+<li>Rule <code>CC-CFG-029</code> <code>reference-other-is-list</code> accepts a <code>reference-other</code> sequence of plain URLs, which it rejected as not a sequence (codecheckers/codecheck#100).</li>
+<li>Rules <code>CC-CFG-030</code> and <code>CC-MET-009</code> check a <code>reference-other</code> sequence of plain URLs instead of skipping it (codecheckers/codecheck#100).</li>
+<li>
+<code><a href="../reference/validate_certificate_github_issue.html">validate_certificate_github_issue()</a></code> finds the certificate’s issue beyond the newest 100 issues, and in an issue title naming a range of certificates (codecheckers/codecheck#100).</li>
+<li>The bundled rule descriptions say what the checks do, for example that <code>CC-CFG-006</code> also rejects <code>..</code> in manifest paths (codecheckers/codecheck#100).</li>
 <li>The register’s near-duplicate check compares paper titles regardless of markup such as <code>&lt;i&gt;</code>, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).</li>
 <li>Figures in a Quarto certificate are included by a path relative to the certificate, instead of an absolute path that Quarto rewrote into a broken <code>./home/...</code> (codecheckers/codecheck#93).</li>
 <li>The certificate’s “Citing this document” wraps the Zenodo DOI URL to the next line instead of running past the margin.</li>
 <li>The certificate’s manifest table continues on the next page with its header repeated, instead of being cut off (closes codecheckers/codecheck#93).</li>
+<li>The certificate’s summary table escapes <code>&amp;</code>, <code>%</code>, <code>#</code> and <code>_</code> in the paper title and <code>summary</code>, leaving math and LaTeX commands alone, instead of failing to compile or losing text.</li>
+<li>Manifest comments in the certificate escape <code>_</code> too, e.g. in file names such as <code>run_all.R</code>, but not in math or LaTeX commands.</li>
+<li>
+<code>http(s)</code> URLs in the certificate’s summary are links that break across lines, instead of running past the margin.</li>
 </ul></div>
 </div>
     <div class="section level2">

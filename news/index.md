@@ -47,6 +47,31 @@
   package.
 - The Quarto template sets code and its output in 7pt, so that about 120
   characters fit on a line.
+- [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  reports the deposit’s files as rules `CC-REP-007` to `CC-REP-010`,
+  which replace `CC-REP-003` (closes codecheckers/codecheck#95).
+- [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  accepts a Jupyter notebook (`.ipynb`) as certificate source
+  (codecheckers/codecheck#95).
+- [`upload_zenodo_certificate()`](http://codecheck.org.uk/codecheck/reference/upload_zenodo_certificate.md)
+  replaces an existing `codecheck.ipynb` source like an `.Rmd` or `.qmd`
+  one, but no other notebook on the record (codecheckers/codecheck#95).
+- [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  compares the record’s certificate ID, codechecker names and ORCIDs
+  with a given `configuration` (rules `CC-REP-004` to `CC-REP-006`)
+  (codecheckers/codecheck#100).
+- [`check_zenodo_record()`](http://codecheck.org.uk/codecheck/reference/check_zenodo_record.md)
+  and
+  [`check_register_zenodo_policy()`](http://codecheck.org.uk/codecheck/reference/check_register_zenodo_policy.md)
+  compare each record with its certificate’s `codecheck.yml`
+  (codecheckers/codecheck#100).
+- [`validate_register_rules()`](http://codecheck.org.uk/codecheck/reference/validate_register_rules.md)
+  checks that each `Issue` number is an issue of codecheckers/register
+  (`CC-REG-006`) whose title names the certificate (`CC-REG-007`)
+  (codecheckers/codecheck#100).
+- The `codecheck.yml` template declares the YAML version with
+  `%YAML 1.1`, as the specification recommends
+  (codecheckers/codecheck#100).
 
 ### Bug Fixes
 
@@ -89,6 +114,26 @@
 - Rule `CC-MET-005` `paper-title-match` accepts a paper title that
   includes the subtitle Crossref registers separately from the main
   title OpenAlex holds (closes codecheckers/codecheck#96).
+- [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
+  reports a deposit without a PDF, or with more than one of
+  `codecheck.Rmd`, `codecheck.qmd` and `codecheck.ipynb`, as a warning
+  instead of a failure, matching the rules’ severity
+  (codecheckers/codecheck#95).
+- Rule `CC-CFG-002` `explicit-document` accepts directives such as
+  `%YAML 1.2`, comments and blank lines before the document marker `---`
+  (closes codecheckers/codecheck#100).
+- Rule `CC-CFG-029` `reference-other-is-list` accepts a
+  `reference-other` sequence of plain URLs, which it rejected as not a
+  sequence (codecheckers/codecheck#100).
+- Rules `CC-CFG-030` and `CC-MET-009` check a `reference-other` sequence
+  of plain URLs instead of skipping it (codecheckers/codecheck#100).
+- [`validate_certificate_github_issue()`](http://codecheck.org.uk/codecheck/reference/validate_certificate_github_issue.md)
+  finds the certificate’s issue beyond the newest 100 issues, and in an
+  issue title naming a range of certificates
+  (codecheckers/codecheck#100).
+- The bundled rule descriptions say what the checks do, for example that
+  `CC-CFG-006` also rejects `..` in manifest paths
+  (codecheckers/codecheck#100).
 - The register’s near-duplicate check compares paper titles regardless
   of markup such as `<i>`, non-breaking spaces and the spacing around
   separators (codecheckers/codecheck#96).
@@ -100,6 +145,13 @@
 - The certificate’s manifest table continues on the next page with its
   header repeated, instead of being cut off (closes
   codecheckers/codecheck#93).
+- The certificate’s summary table escapes `&`, `%`, `#` and `_` in the
+  paper title and `summary`, leaving math and LaTeX commands alone,
+  instead of failing to compile or losing text.
+- Manifest comments in the certificate escape `_` too, e.g. in file
+  names such as `run_all.R`, but not in math or LaTeX commands.
+- `http(s)` URLs in the certificate’s summary are links that break
+  across lines, instead of running past the margin.
 
 ## codecheck 0.31.0
 

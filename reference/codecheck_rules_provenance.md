@@ -31,15 +31,15 @@ register checkout.
 ``` r
 codecheck_rules_provenance()
 #>            file spec_version rules                                   commit
-#> 1 rules-2.0.yml          2.0    58 101d109e3e872fd721569736a456c7a1e46f9009
-#> 2 rules-1.0.yml          1.0    55 101d109e3e872fd721569736a456c7a1e46f9009
+#> 1 rules-2.0.yml          2.0    62 c3af3e46ba4c9b02f6c0b27692ee9e843546ef9a
+#> 2 rules-1.0.yml          1.0    59 c3af3e46ba4c9b02f6c0b27692ee9e843546ef9a
 #>                commit_date                retrieved
-#> 1 2026-09-19T19:11:34+0000 2026-09-21T11:16:52+0200
-#> 2 2026-09-19T19:11:34+0000 2026-09-21T11:16:52+0200
+#> 1 2026-10-09T10:26:00+0000 2026-10-09T12:26:01+0200
+#> 2 2026-10-09T10:26:00+0000 2026-10-09T12:26:01+0200
 #>                                                            source
 #> 1 https://raw.githubusercontent.com/codecheckers/register/master/
 #> 2 https://raw.githubusercontent.com/codecheckers/register/master/
 #>                       via                              md5
-#> 1 local register checkout fea4abd9612153c63de3b675c98c72eb
-#> 2 local register checkout d777433e8ecf1589b4e28f1f7551f8f8
+#> 1 local register checkout 48e8295f6e20a309bac6fbd2c9f38501
+#> 2 local register checkout 66b7c7bc2fc8488f69a4435f858166dc
 ```

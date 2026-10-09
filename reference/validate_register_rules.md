@@ -3,10 +3,12 @@
 Runs the rules about the register as a whole, rather than about one
 \`codecheck.yml\`: that certificate identifiers continue their year's
 sequence (\`CC-REG-002\`), that every \`Type\` is one of the four venue
-types (\`CC-REG-004\`), and that every \`Venue\` is listed in
-\`venues.csv\` (\`CC-REG-005\`). Severities come from the rule file, as
-for \[validate_codecheck_yml_rules()\]. \[register_check()\] runs this
-first.
+types (\`CC-REG-004\`), that every \`Venue\` is listed in \`venues.csv\`
+(\`CC-REG-005\`), and that every \`Issue\` number is an issue of
+codecheckers/register (\`CC-REG-006\`) whose title carries the
+certificate identifier (\`CC-REG-007\`). Severities come from the rule
+file, as for \[validate_codecheck_yml_rules()\]. \[register_check()\]
+runs this first.
 
 ## Usage
 
@@ -17,7 +19,8 @@ validate_register_rules(
   spec_version = codecheck_spec_versions()[1],
   strict = FALSE,
   stop_on_error = TRUE,
-  quiet = FALSE
+  quiet = FALSE,
+  get_issues = register_github_issues
 )
 ```
 
@@ -50,6 +53,13 @@ validate_register_rules(
 - quiet:
 
   Do not print the per-rule report.
+
+- get_issues:
+
+  Function of no arguments returning the register repository's issues as
+  a data frame of \`number\` and \`title\`, called once, and only when
+  the register has an \`Issue\` number; when it fails, \`CC-REG-006\`
+  and \`CC-REG-007\` are skipped. Injectable for testing.
 
 ## Value
 

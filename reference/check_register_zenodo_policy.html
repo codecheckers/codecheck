@@ -47,7 +47,8 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_register_zenodo_policy</span><span class="op">(</span></span>
 <span>  <span class="va">register_table</span>,</span>
-<span>  get_metadata <span class="op">=</span> <span class="va">get_zenodo_record_metadata</span></span>
+<span>  get_metadata <span class="op">=</span> <span class="va">get_zenodo_record_metadata</span>,</span>
+<span>  get_configuration <span class="op">=</span> <span class="va">get_codecheck_yml</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -63,6 +64,13 @@ and `Report`</p></dd>
 <dt id="arg-get-metadata">get_metadata<a class="anchor" aria-label="anchor" href="#arg-get-metadata"></a></dt>
 <dd><p>function of one argument (the record ID) returning the
 record metadata like [get_zenodo_record_metadata()]; injectable for testing</p></dd>
+
+
+<dt id="arg-get-configuration">get_configuration<a class="anchor" aria-label="anchor" href="#arg-get-configuration"></a></dt>
+<dd><p>function of one argument (the `Repository` column)
+returning the parsed codecheck.yml like [get_codecheck_yml()], used when
+the table has a `Repository` column to compare the record with it;
+injectable for testing</p></dd>
 
 </dl></div>
     <div class="section level2">
