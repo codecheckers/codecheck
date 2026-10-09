@@ -45,7 +45,11 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">render_manifest_files</span><span class="op">(</span><span class="va">manifest_df</span>, json_max_lines <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">render_manifest_files</span><span class="op">(</span></span>
+<span>  <span class="va">manifest_df</span>,</span>
+<span>  json_max_lines <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  base_dir <span class="op">=</span> <span class="fu">quarto_document_dir</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,6 +62,13 @@
 
 <dt id="arg-json-max-lines">json_max_lines<a class="anchor" aria-label="anchor" href="#arg-json-max-lines"></a></dt>
 <dd><p>- Maximum number of lines to display for JSON files (default: 50)</p></dd>
+
+
+<dt id="arg-base-dir">base_dir<a class="anchor" aria-label="anchor" href="#arg-base-dir"></a></dt>
+<dd><p>- Directory to link the images relative to, or `NULL` to
+link them by their paths in `manifest_df`. Defaults to the document's
+directory when Quarto renders it, and `NULL` otherwise. Files are read by
+their paths in `manifest_df` either way.</p></dd>
 
 </dl></div>
     <div class="section level2">

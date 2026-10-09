@@ -7,7 +7,7 @@ LaTeX doesn't natively support them.
 ## Usage
 
 ``` r
-render_manifest_image(path, comment, name = basename(path))
+render_manifest_image(path, comment, name = basename(path), base_dir = NULL)
 ```
 
 ## Arguments
@@ -24,6 +24,11 @@ render_manifest_image(path, comment, name = basename(path))
 
   \- File name shown in the heading and messages (default: the base name
   of `path`)
+
+- base_dir:
+
+  \- Directory the image is linked relative to, or `NULL` to link it by
+  `path`; files are read by `path` either way
 
 ## Value
 

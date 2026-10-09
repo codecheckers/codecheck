@@ -5,7 +5,11 @@ Render manifest files for certificate output
 ## Usage
 
 ``` r
-render_manifest_files(manifest_df, json_max_lines = 50)
+render_manifest_files(
+  manifest_df,
+  json_max_lines = 50,
+  base_dir = quarto_document_dir()
+)
 ```
 
 ## Arguments
@@ -18,6 +22,13 @@ render_manifest_files(manifest_df, json_max_lines = 50)
 - json_max_lines:
 
   \- Maximum number of lines to display for JSON files (default: 50)
+
+- base_dir:
+
+  \- Directory to link the images relative to, or \`NULL\` to link them
+  by their paths in \`manifest_df\`. Defaults to the document's
+  directory when Quarto renders it, and \`NULL\` otherwise. Files are
+  read by their paths in \`manifest_df\` either way.
 
 ## Value
 

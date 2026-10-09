@@ -42,6 +42,11 @@
 - The Rmd and Quarto templates no longer have a Summary section with
   placeholder text: the certificate’s summary is the `summary` in
   `codecheck.yml`, shown in the summary table.
+- The Rmd and Quarto templates call the package’s functions as
+  `codecheck::fn()`, so it is clear which functions come from the
+  package.
+- The Quarto template sets code and its output in 7pt, so that about 120
+  characters fit on a line.
 
 ### Bug Fixes
 
@@ -87,6 +92,14 @@
 - The register’s near-duplicate check compares paper titles regardless
   of markup such as `<i>`, non-breaking spaces and the spacing around
   separators (codecheckers/codecheck#96).
+- Figures in a Quarto certificate are included by a path relative to the
+  certificate, instead of an absolute path that Quarto rewrote into a
+  broken `./home/...` (codecheckers/codecheck#93).
+- The certificate’s “Citing this document” wraps the Zenodo DOI URL to
+  the next line instead of running past the margin.
+- The certificate’s manifest table continues on the next page with its
+  header repeated, instead of being cut off (closes
+  codecheckers/codecheck#93).
 
 ## codecheck 0.31.0
 

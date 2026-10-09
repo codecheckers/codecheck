@@ -55,6 +55,8 @@
 <li>New <code><a href="../reference/compare_figures.html">compare_figures()</a></code> puts each published figure and the reproduced one together in a labelled image.</li>
 <li>New <code><a href="../reference/render_figure_comparisons.html">render_figure_comparisons()</a></code> includes these comparisons in the certificate, and the Rmd and Quarto templates have an optional chunk for it.</li>
 <li>The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate’s summary is the <code>summary</code> in <code>codecheck.yml</code>, shown in the summary table.</li>
+<li>The Rmd and Quarto templates call the package’s functions as <code>codecheck::fn()</code>, so it is clear which functions come from the package.</li>
+<li>The Quarto template sets code and its output in 7pt, so that about 120 characters fit on a line.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
@@ -75,6 +77,9 @@
 <code><a href="../reference/copy_manifest_files.html">copy_manifest_files()</a></code> replaces whitespace with underscores in the names of the copies in <code>codecheck/outputs/</code>, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).</li>
 <li>Rule <code>CC-MET-005</code> <code>paper-title-match</code> accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).</li>
 <li>The register’s near-duplicate check compares paper titles regardless of markup such as <code>&lt;i&gt;</code>, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).</li>
+<li>Figures in a Quarto certificate are included by a path relative to the certificate, instead of an absolute path that Quarto rewrote into a broken <code>./home/...</code> (codecheckers/codecheck#93).</li>
+<li>The certificate’s “Citing this document” wraps the Zenodo DOI URL to the next line instead of running past the margin.</li>
+<li>The certificate’s manifest table continues on the next page with its header repeated, instead of being cut off (closes codecheckers/codecheck#93).</li>
 </ul></div>
 </div>
     <div class="section level2">

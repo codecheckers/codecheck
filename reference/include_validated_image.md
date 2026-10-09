@@ -9,7 +9,13 @@ spaces.
 ## Usage
 
 ``` r
-include_validated_image(path, caption, name = basename(path), attributes = "")
+include_validated_image(
+  path,
+  caption,
+  name = basename(path),
+  attributes = "",
+  base_dir = NULL
+)
 ```
 
 ## Arguments
@@ -29,6 +35,11 @@ include_validated_image(path, caption, name = basename(path), attributes = "")
 - attributes:
 
   \- Pandoc attributes of the image, e.g. `"{width=85%}"`
+
+- base_dir:
+
+  \- Directory the image is linked relative to, or `NULL` to link it by
+  `path`; files are read by `path` either way
 
 ## Value
 
