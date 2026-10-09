@@ -29,6 +29,7 @@
 * Rule `CC-MET-005` `paper-title-match` accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).
 * The register's near-duplicate check compares paper titles regardless of markup such as `<i>`, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).
 * Figures in a Quarto certificate are included by a path relative to the certificate, instead of an absolute path that Quarto rewrote into a broken `./home/...` (codecheckers/codecheck#93).
+* The certificate's "Citing this document" wraps the Zenodo DOI URL to the next line instead of running past the margin.
 
 # codecheck 0.31.0
 

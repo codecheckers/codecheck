@@ -193,7 +193,7 @@ cite_certificate <- function(metadata) {
   year = substring(metadata$check_time,1,4)
   names = .names(metadata$codechecker, add.orcid=FALSE)
   citation = sprintf("%s (%s). CODECHECK Certificate %s.  Zenodo. %s",
-                     names, year, metadata$certificate, metadata$report)
+                     names, year, metadata$certificate, as_latex_url(metadata$report))
   cat(citation)
 }
 

@@ -50,3 +50,9 @@ expect_true(grepl("Repository & \\url{https://github.com/codecheckers/x}", out, 
 metadata$repository <- NULL
 out <- capture.output(latex_summary_of_metadata(metadata))
 expect_true(any(grepl("^\\s*Repository &\\s*\\\\\\\\", out)))
+
+# cite_certificate() puts the report DOI in \url{}, so LaTeX can break it
+citation <- capture.output(cite_certificate(list(
+  codechecker = one, check_time = "2026-01-01", certificate = "2026-001",
+  report = "https://doi.org/10.5281/zenodo.17123456")))
+expect_true(grepl("\\url{https://doi.org/10.5281/zenodo.17123456}", citation, fixed = TRUE))
