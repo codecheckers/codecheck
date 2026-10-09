@@ -30,6 +30,7 @@
 * The register's near-duplicate check compares paper titles regardless of markup such as `<i>`, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).
 * Figures in a Quarto certificate are included by a path relative to the certificate, instead of an absolute path that Quarto rewrote into a broken `./home/...` (codecheckers/codecheck#93).
 * The certificate's "Citing this document" wraps the Zenodo DOI URL to the next line instead of running past the margin.
+* The certificate's manifest table continues on the next page with its header repeated, instead of being cut off (closes codecheckers/codecheck#93).
 
 # codecheck 0.31.0
 

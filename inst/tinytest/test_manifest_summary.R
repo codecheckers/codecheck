@@ -194,3 +194,17 @@ expect_true(any(grepl("\\PassOptionsToPackage{obeyspaces,spaces}{url}", preamble
 expect_true(which(grepl("PassOptionsToPackage", preamble)) <
             which(grepl("usepackage\\{hyperref\\}", preamble)))
 
+
+# Test: the table is a longtable that repeats its header on every page, and the
+# preamble loads longtable (codecheck#93)
+long_text <- paste(capture.output(
+  latex_summary_of_manifest(metadata_valid_repo, manifest_df, root)), collapse = "\n")
+expect_true(grepl("\\begin{longtable}", long_text, fixed = TRUE))
+expect_true(grepl("Size (b) \\\\ \n  \\hline\n\\endhead", long_text, fixed = TRUE))
+expect_false(grepl("\\begin{table}", long_text, fixed = TRUE))
+expect_true(grepl("\\caption{Summary of output files generated}", long_text, fixed = TRUE))
+expect_true(any(grepl("\\usepackage{longtable}", preamble, fixed = TRUE)))
+# Declared to knitr too, for workspaces with an older preamble
+invisible(knitr::knit_meta(clean = TRUE))
+invisible(capture.output(latex_summary_of_manifest(metadata_valid_repo, manifest_df, root)))
+expect_true("longtable" %in% vapply(knitr::knit_meta(clean = TRUE), `[[`, "", "name"))

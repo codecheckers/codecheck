@@ -162,9 +162,16 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
               digits=0,
               caption="Summary of output files generated",
               align=align)
+  # A longtable continues on the next page instead of being cut off, and
+  # repeats the header row there (codecheck#93). Declared to knitr as well,
+  # for workspaces whose codecheck-preamble.sty does not load it.
+  knitr::knit_meta_add(list(rmarkdown::latex_dependency("longtable")))
   print(xt, include.rownames=FALSE,
         sanitize.text.function = function(x){x},
-        comment=FALSE)
+        comment=FALSE,
+        tabular.environment = "longtable", floating = FALSE,
+        hline.after = -1,
+        add.to.row = list(pos = list(0), command = "\\hline\n\\endhead\n"))
 }
 
 ##' Print the latex code to include the CODECHECK logo
