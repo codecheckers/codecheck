@@ -2,7 +2,13 @@
 format:
   pdf:
     toc: false
-    include-in-header: codecheck-preamble.sty
+    include-in-header:
+      - codecheck-preamble.sty
+      - text: |
+          %% Code and its output at 7pt, to fit about 120 characters on a line
+          \newcommand{\codesize}{\fontsize{7pt}{8.5pt}\selectfont}
+          \RecustomVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},fontsize=\codesize}
+          \makeatletter\renewcommand{\verbatim@font}{\ttfamily\codesize}\makeatother
     pdf-engine: xelatex
 engine: knitr
 ---
