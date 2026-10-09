@@ -166,6 +166,20 @@ I suggest to the authors to consider the following suggestions for their next pu
 render_manifest_files(manifest_df)
 ```
 
+```{r figure_comparisons, eval=FALSE, include=FALSE, results="asis"}
+## Optional: show published and reproduced figures together. Create the comparison
+## images once from the R console in this directory; check that the license of the
+## article allows reusing its figures, and pair the figures explicitly, because the
+## order of images in a PDF may differ from the page layout:
+##   figures <- extract_pdf_figures("article.pdf", "published", pages = 5:9)
+##   compare_figures(figures$file[c(1, 2)], c("outputs/fig1.png", "outputs/fig2.png"),
+##     labels = c("Published (Author et al., YYYY, CC BY 4.0)", "Reproduced (CODECHECK)"))
+## Then set eval=TRUE and include=TRUE, and add a heading such as
+## "# Comparison of figures" above this chunk.
+render_figure_comparisons(c("comparison/comparison-1.jpg", "comparison/comparison-2.jpg"),
+  captions = paste("Figure", 1:2, "of the article: published (top) and reproduced (bottom)."))
+```
+
 \clearpage
 
 ## Acknowledgements

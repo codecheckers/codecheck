@@ -255,18 +255,36 @@ render_manifest_image <- function(path, comment, name = basename(path)) {
     })
   } else {
     # PNG, JPG, JPEG - validate image before including
-    tryCatch({
-      # Validate that the file is actually a valid image using magick
-      # This prevents LaTeX compilation errors from corrupted image files
-      img <- magick::image_read(path)
-
-      # If validation succeeds, include the image
-      cat(paste0("![", comment, "](", path, ")\n"))
-    }, error = function(e) {
-      render_error_box(name,
-                      paste("Failed to read image file (possibly corrupted):", e$message))
-    })
+    include_validated_image(path, comment, name)
   }
+}
+
+##' Include an image in the certificate after validating it
+##'
+##' Internal helper: checks that the image file exists and can be read with
+##' magick before writing the Markdown to include it, so that a missing or
+##' corrupted image file shows an error box instead of breaking the LaTeX
+##' compilation. The path is put in angle brackets, so that it may contain
+##' spaces.
+##'
+##' @param path - Path to the image file
+##' @param caption - Caption of the image
+##' @param name - File name shown in the error box
+##' @param attributes - Pandoc attributes of the image, e.g. \code{"{width=85\%}"}
+##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
+##' @keywords internal
+include_validated_image <- function(path, caption, name = basename(path), attributes = "") {
+  if (!file.exists(path)) {
+    render_error_box(name, "File not found")
+    return(invisible(NULL))
+  }
+  tryCatch({
+    magick::image_read(path)
+    cat(paste0("![", caption, "](<", path, ">)", attributes, "\n"))
+  }, error = function(e) {
+    render_error_box(name,
+                     paste("Failed to read image file (possibly corrupted):", e$message))
+  })
 }
 
 ##' Render EPS image for certificate output
