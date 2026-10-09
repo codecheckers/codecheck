@@ -949,3 +949,44 @@ expect_true(any(grepl("^##  Figure 1.png", df_out)))
 no_output <- capture.output(codecheck::render_manifest_files(data.frame(
   comment = "A figure", dest = missing_copy, stringsAsFactors = FALSE)))
 expect_true(any(grepl("^##  Figure_1.png", no_output)))
+
+# Test: files are included relative to the certificate's directory ----
+# Quarto rewrites an absolute path such as /home/... into ./home/..., which
+# LaTeX cannot find (codecheckers/codecheck#93).
+cert_dir <- tempfile("cert_doc_")
+dir.create(file.path(cert_dir, "outputs"), recursive = TRUE)
+figure <- file.path(cert_dir, "outputs", "fig.png")
+png(figure); plot(1:3); invisible(dev.off())
+
+expect_equal(codecheck:::relative_to(figure, cert_dir), "outputs/fig.png")
+expect_equal(codecheck:::relative_to(figure, paste0(cert_dir, "/")), "outputs/fig.png")
+expect_equal(codecheck:::relative_to(figure, NULL), figure)
+expect_equal(codecheck:::relative_to("/elsewhere/fig.png", cert_dir), "/elsewhere/fig.png",
+             info = "a path outside the directory stays as it is")
+# A sibling whose name starts with the directory's is not under it
+expect_equal(codecheck:::relative_to(paste0(cert_dir, "x/fig.png"), cert_dir),
+             paste0(cert_dir, "x/fig.png"))
+
+# Files are read by their absolute path, whatever the working directory, and
+# only the link is relative
+relative_out <- capture.output(codecheck::render_manifest_files(
+  data.frame(comment = "A figure", dest = figure, stringsAsFactors = FALSE),
+  base_dir = cert_dir))
+expect_true(any(grepl("](<outputs/fig.png>)", relative_out, fixed = TRUE)),
+            info = "the figure is linked by its relative path")
+expect_false(any(grepl(cert_dir, relative_out, fixed = TRUE)),
+             info = "no absolute path in the output")
+
+# The default base_dir is the document's directory under Quarto only
+expect_null(codecheck:::quarto_document_dir())
+doc <- file.path(cert_dir, "probe.Rmd")
+writeLines(c("```{r, echo = FALSE, results = 'asis'}",
+             "cat(codecheck:::quarto_document_dir() %||% 'none', '\\n')",
+             "knitr::opts_knit$set(quarto.version = '1.8.27')",
+             "cat(codecheck:::quarto_document_dir(), '\\n')",
+             "```"), doc)
+knitted <- readLines(knitr::knit(doc, output = file.path(cert_dir, "probe.md"), quiet = TRUE))
+expect_true(any(grepl("^none", knitted)), info = "plain knitr: no base directory")
+expect_true(any(grepl(normalizePath(cert_dir), knitted, fixed = TRUE)),
+            info = "Quarto: the document's directory")
+unlink(cert_dir, recursive = TRUE)

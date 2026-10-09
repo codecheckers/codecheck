@@ -4,7 +4,13 @@
 \alias{include_validated_image}
 \title{Include an image in the certificate after validating it}
 \usage{
-include_validated_image(path, caption, name = basename(path), attributes = "")
+include_validated_image(
+  path,
+  caption,
+  name = basename(path),
+  attributes = "",
+  base_dir = NULL
+)
 }
 \arguments{
 \item{path}{- Path to the image file}
@@ -14,6 +20,9 @@ include_validated_image(path, caption, name = basename(path), attributes = "")
 \item{name}{- File name shown in the error box}
 
 \item{attributes}{- Pandoc attributes of the image, e.g. \code{"{width=85\%}"}}
+
+\item{base_dir}{- Directory the image is linked relative to, or \code{NULL} to
+link it by \code{path}; files are read by \code{path} either way}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

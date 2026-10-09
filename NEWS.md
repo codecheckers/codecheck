@@ -26,6 +26,7 @@
 * `copy_manifest_files()` replaces whitespace with underscores in the names of the copies in `codecheck/outputs/`, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).
 * Rule `CC-MET-005` `paper-title-match` accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).
 * The register's near-duplicate check compares paper titles regardless of markup such as `<i>`, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).
+* Figures in a Quarto certificate are included by a path relative to the certificate, instead of an absolute path that Quarto rewrote into a broken `./home/...` (codecheckers/codecheck#93).
 
 # codecheck 0.31.0
 

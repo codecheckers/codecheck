@@ -221,10 +221,12 @@ render_error_box <- function(filename, error_msg) {
 ##' @param path - Path to the image file
 ##' @param comment - Comment/caption for the image
 ##' @param name - File name shown in the heading and messages (default: the base name of \code{path})
+##' @param base_dir - Directory the image is linked relative to, or \code{NULL} to
+##'   link it by \code{path}; files are read by \code{path} either way
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom magick image_read image_write
 ##' @keywords internal
-render_manifest_image <- function(path, comment, name = basename(path)) {
+render_manifest_image <- function(path, comment, name = basename(path), base_dir = NULL) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -247,7 +249,7 @@ render_manifest_image <- function(path, comment, name = basename(path)) {
 
       format_display <- if (ext == "gif") "GIF" else "TIF/TIFF"
       cat("\\textit{Note: ", format_display, " image automatically converted to PNG for display.}\n\n", sep = "")
-      cat(paste0("![", comment, "](", png_path, ")\n"))
+      cat(paste0("![", comment, "](", relative_to(png_path, base_dir), ")\n"))
     }, error = function(e) {
       format_name <- toupper(ext)
       render_error_box(name,
@@ -255,7 +257,7 @@ render_manifest_image <- function(path, comment, name = basename(path)) {
     })
   } else {
     # PNG, JPG, JPEG - validate image before including
-    include_validated_image(path, comment, name)
+    include_validated_image(path, comment, name, base_dir = base_dir)
   }
 }
 
@@ -271,16 +273,18 @@ render_manifest_image <- function(path, comment, name = basename(path)) {
 ##' @param caption - Caption of the image
 ##' @param name - File name shown in the error box
 ##' @param attributes - Pandoc attributes of the image, e.g. \code{"{width=85\%}"}
+##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-include_validated_image <- function(path, caption, name = basename(path), attributes = "") {
+include_validated_image <- function(path, caption, name = basename(path), attributes = "",
+                                    base_dir = NULL) {
   if (!file.exists(path)) {
     render_error_box(name, "File not found")
     return(invisible(NULL))
   }
   tryCatch({
     magick::image_read(path)
-    cat(paste0("![", caption, "](<", path, ">)", attributes, "\n"))
+    cat(paste0("![", caption, "](<", relative_to(path, base_dir), ">)", attributes, "\n"))
   }, error = function(e) {
     render_error_box(name,
                      paste("Failed to read image file (possibly corrupted):", e$message))
@@ -296,7 +300,7 @@ include_validated_image <- function(path, caption, name = basename(path), attrib
 ##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_eps <- function(path, comment, name = basename(path)) {
+render_manifest_eps <- function(path, comment, name = basename(path), base_dir = NULL) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -307,7 +311,7 @@ render_manifest_eps <- function(path, comment, name = basename(path)) {
   }
 
   tryCatch({
-    cat(paste0("![", comment, "](", path, ")\n"))
+    cat(paste0("![", comment, "](", relative_to(path, base_dir), ")\n"))
   }, error = function(e) {
     render_error_box(name,
                     paste("Failed to include EPS image:", e$message))
@@ -324,7 +328,7 @@ render_manifest_eps <- function(path, comment, name = basename(path)) {
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom rsvg rsvg_pdf
 ##' @keywords internal
-render_manifest_svg <- function(path, comment, name = basename(path)) {
+render_manifest_svg <- function(path, comment, name = basename(path), base_dir = NULL) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -340,7 +344,7 @@ render_manifest_svg <- function(path, comment, name = basename(path)) {
   tryCatch({
     rsvg::rsvg_pdf(path, pdf_path)
     cat("\\textit{Note: SVG image automatically converted to PDF for display.}\n\n")
-    cat(paste0("![", comment, "](", pdf_path, ")\n"))
+    cat(paste0("![", comment, "](", relative_to(pdf_path, base_dir), ")\n"))
   }, error = function(e) {
     render_error_box(name,
                     paste("Failed to convert SVG image:", e$message))
@@ -357,7 +361,7 @@ render_manifest_svg <- function(path, comment, name = basename(path)) {
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom pdftools pdf_info
 ##' @keywords internal
-render_manifest_pdf <- function(path, comment, name = basename(path)) {
+render_manifest_pdf <- function(path, comment, name = basename(path), base_dir = NULL) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -378,7 +382,7 @@ render_manifest_pdf <- function(path, comment, name = basename(path)) {
       cat("End of ", name, " (", num_pages, " pages).\n\n")
     } else {
       # Single-page PDF - include as image
-      cat(paste0("![", comment, "](", path, ")\n"))
+      cat(paste0("![", comment, "](", relative_to(path, base_dir), ")\n"))
     }
   }, error = function(e) {
     render_error_box(name,
@@ -543,7 +547,7 @@ manifest_pandoc <- function() {
 ##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_office <- function(path, comment, name = basename(path)) {
+render_manifest_office <- function(path, comment, name = basename(path), base_dir = NULL) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -573,12 +577,13 @@ render_manifest_office <- function(path, comment, name = basename(path)) {
     return(invisible(NULL))
   }
 
+  media_dir <- paste0(path, "_media")
   tryCatch({
     md <- suppressWarnings(system2(pandoc$cmd,
       c(pandoc$args, shQuote(path), "-f", from, "-t", "markdown-raw_html",
         "-L", shQuote(system.file("extdata", "unquote.lua", package = "codecheck")),
         "--columns=200", "--shift-heading-level-by=2",
-        "--extract-media", shQuote(paste0(path, "_media"))),
+        "--extract-media", shQuote(media_dir)),
       stdout = TRUE, stderr = FALSE))
     status <- attr(md, "status")
     if (!is.null(status) && status != 0) {
@@ -598,6 +603,8 @@ render_manifest_office <- function(path, comment, name = basename(path)) {
           ifelse(ext %in% c("png", "jpg", "jpeg", "pdf"), img,
                  paste0("*(image omitted: .", ext, " is not supported in the certificate)*"))
         })
+      # pandoc links the extracted images by the media directory as given
+      md <- gsub(media_dir, relative_to(media_dir, base_dir), md, fixed = TRUE)
       cat(md, "\n\n")
     }
   }, error = function(e) {
@@ -745,11 +752,16 @@ render_manifest_unsupported <- function(path, comment, name = basename(path)) {
 ##' @title Render manifest files for certificate output
 ##' @param manifest_df - data frame with manifest file information (from copy_manifest_files)
 ##' @param json_max_lines - Maximum number of lines to display for JSON files (default: 50)
+##' @param base_dir - Directory to link the images relative to, or `NULL` to
+##'   link them by their paths in `manifest_df`. Defaults to the document's
+##'   directory when Quarto renders it, and `NULL` otherwise. Files are read by
+##'   their paths in `manifest_df` either way.
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @author Daniel Nuest
 ##' @importFrom stringr str_ends
 ##' @export
-render_manifest_files <- function(manifest_df, json_max_lines = 50) {
+render_manifest_files <- function(manifest_df, json_max_lines = 50,
+                                  base_dir = quarto_document_dir()) {
   for (i in seq_len(nrow(manifest_df))) {
     path <- manifest_df[i, "dest"]
     comment <- manifest_df[i, "comment"]
@@ -757,13 +769,13 @@ render_manifest_files <- function(manifest_df, json_max_lines = 50) {
     name <- basename(if ("output" %in% names(manifest_df)) manifest_df[i, "output"] else path)
 
     if (stringr::str_ends(path, "(png|jpg|jpeg|gif|tif|tiff)")) {
-      render_manifest_image(path, comment, name = name)
+      render_manifest_image(path, comment, name = name, base_dir = base_dir)
     } else if (stringr::str_ends(path, "svg")) {
-      render_manifest_svg(path, comment, name = name)
+      render_manifest_svg(path, comment, name = name, base_dir = base_dir)
     } else if (stringr::str_ends(path, "eps")) {
-      render_manifest_eps(path, comment, name = name)
+      render_manifest_eps(path, comment, name = name, base_dir = base_dir)
     } else if (stringr::str_ends(path, "pdf")) {
-      render_manifest_pdf(path, comment, name = name)
+      render_manifest_pdf(path, comment, name = name, base_dir = base_dir)
     } else if (stringr::str_ends(path, "(Rout|txt)")) {
       render_manifest_text(path, comment, name = name)
     } else if (stringr::str_ends(path, "csv")) {
@@ -775,7 +787,7 @@ render_manifest_files <- function(manifest_df, json_max_lines = 50) {
     } else if (stringr::str_ends(path, "(xls|xlsx)")) {
       render_manifest_excel(path, comment, name = name)
     } else if (stringr::str_ends(path, "(docx|doc|rtf)")) {
-      render_manifest_office(path, comment, name = name)
+      render_manifest_office(path, comment, name = name, base_dir = base_dir)
     } else if (stringr::str_ends(path, "(htm|html)")) {
       render_manifest_html(path, comment, name = name)
     } else {
@@ -784,4 +796,43 @@ render_manifest_files <- function(manifest_df, json_max_lines = 50) {
 
     cat("\\clearpage \n\n")
   }
+}
+
+##' The directory of the document Quarto is rendering, or `NULL` otherwise
+##'
+##' Quarto rewrites an absolute path such as `/home/...` into `./home/...`,
+##' which LaTeX cannot find (codecheckers/codecheck#93). rmarkdown keeps
+##' absolute paths: it runs LaTeX in the output directory, which may not be the
+##' document's. Quarto runs LaTeX in the document's directory, wherever R runs.
+##'
+##' @keywords internal
+##' @noRd
+quarto_document_dir <- function() {
+  if (is.null(knitr::opts_knit$get("quarto.version")) &&
+      !nzchar(Sys.getenv("QUARTO_DOCUMENT_PATH"))) {
+    return(NULL)
+  }
+  input <- knitr::current_input(dir = TRUE)
+  if (is.null(input)) NULL else dirname(input)
+}
+
+##' A path relative to a directory it lies under, otherwise unchanged
+##'
+##' Both are compared as absolute paths, so a symbolic link or `..` in either
+##' does not matter.
+##'
+##' @param path A file path
+##' @param base A directory, or `NULL` to keep `path` as it is
+##' @keywords internal
+##' @noRd
+relative_to <- function(path, base) {
+  if (is.null(base)) {
+    return(path)
+  }
+  # The directory only, so that a symbolic link to the file itself stays as it
+  # is, and a file not there (yet) resolves like its directory
+  absolute <- file.path(normalizePath(dirname(path), winslash = "/", mustWork = FALSE),
+                        basename(path))
+  prefix <- paste0(sub("/+$", "", normalizePath(base, winslash = "/", mustWork = FALSE)), "/")
+  if (startsWith(absolute, prefix)) substring(absolute, nchar(prefix) + 1) else path
 }
