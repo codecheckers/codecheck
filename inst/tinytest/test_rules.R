@@ -59,7 +59,10 @@ checks <- c(codecheck:::rule_checks(), codecheck:::register_rule_checks())
 implementations <- codecheck:::rule_implementations()
 not_implemented <- codecheck:::rules_not_implemented()
 covered <- c(names(checks), names(implementations))
-all_ids <- unique(c(rules_2_0$id, rules_1_0$id))
+# Deprecated rules are not checked, see run_rules(), so they
+# count as neither implemented nor missing.
+active <- function(rules) rules$id[rules$status == "active"]
+all_ids <- unique(c(active(rules_2_0), active(rules_1_0)))
 
 expect_true(length(intersect(covered, not_implemented)) == 0,
             info = "no rule is both implemented and listed as not implemented")

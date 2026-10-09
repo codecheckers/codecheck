@@ -9,7 +9,7 @@ spec_version: "2.0"
 # page itself. Tools use it to date a configuration that names no version; see
 # "Choosing the specification version" in RULES.md.
 spec_date: 2026-09-11
-updated: 2026-09-19
+updated: 2026-10-02
 
 rules:
 
@@ -353,9 +353,9 @@ rules:
     name: zenodo-files-present
     area: report
     severity: warning
-    status: active
+    status: deprecated
     reference: "practice"
-    description: "The Zenodo record carries the expected files"
+    description: "Split into CC-REP-007 (certificate PDF present), CC-REP-008 (PDF named codecheck.pdf), CC-REP-009 (certificate source present) and CC-REP-010 (one certificate source only)"
   - id: CC-REP-004
     name: zenodo-certificate-id-match
     area: report
@@ -377,6 +377,34 @@ rules:
     status: active
     reference: "practice"
     description: "The codechecker ORCIDs in the Zenodo record match those in the codecheck.yml"
+  - id: CC-REP-007
+    name: zenodo-certificate-pdf-present
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Zenodo record carries the certificate as a PDF file"
+  - id: CC-REP-008
+    name: zenodo-certificate-pdf-name
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The certificate PDF in the Zenodo record is named codecheck.pdf"
+  - id: CC-REP-009
+    name: zenodo-certificate-source-present
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Zenodo record carries the certificate source, a machine-readable file such as codecheck.Rmd, .qmd, .ipynb, .docx, .odt, .md or .tex, not only the PDF"
+  - id: CC-REP-010
+    name: zenodo-certificate-source-unambiguous
+    area: report
+    severity: warning
+    status: active
+    reference: "practice"
+    description: "The Zenodo record carries at most one executable certificate source, not several of codecheck.Rmd, codecheck.qmd and codecheck.ipynb"
 
   # --- register ---
   - id: CC-REG-001

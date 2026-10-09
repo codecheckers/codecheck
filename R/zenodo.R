@@ -757,8 +757,8 @@ upload_zenodo_certificate <- function(zenodo, record, certificate,
       existing_files <- draft$files
 
       if (!is.null(existing_files) && length(existing_files) > 0) {
-        # Filter for .Rmd and .qmd files
-        source_files <- existing_files[grepl("\\.(Rmd|qmd)$", sapply(existing_files, function(f) f$filename), ignore.case = TRUE)]
+        # Filter for certificate sources, see CC-REP-010 in zenodo_policy_check()
+        source_files <- existing_files[grepl("\\.(Rmd|qmd|ipynb)$", sapply(existing_files, function(f) f$filename), ignore.case = TRUE)]
 
         if (length(source_files) > 0) {
           # Source file(s) already exist
@@ -906,7 +906,7 @@ zenodo_codecheck_community_id <- "505e49f2-de4f-4905-9666-36c7303e497d"
 #' @title Check Zenodo record metadata against the CODECHECK curation policy
 #' @param record_metadata list of record metadata
 #' @param files character vector of file names in the deposit, optional; needed
-#'   for the checks on the certificate PDF and the machine-readable source.
+#'   for the checks on the certificate PDF, its name, and the certificate source.
 #' @param record the full record as returned by the InvenioRDM API (i.e. the
 #'   `record` element of [get_zenodo_record_metadata()]'s return value),
 #'   optional; needed for the community membership check, see #20. Community
@@ -1065,32 +1065,42 @@ zenodo_policy_check <- function(record_metadata, files = NULL, record = NULL) {
 
   # Files
   if (!is.null(files)) {
-    # rule: CC-REP-003 zenodo-files-present
-    pdfs <- files[grepl("\\.pdf$", files, ignore.case = TRUE)]
-    # the file must be present, and should specifically be named codecheck.pdf
-    # (see #20); a differently-named PDF is a warning, not a failure
+    ext <- tolower(tools::file_ext(files))
+    executable_ext <- c("rmd", "qmd", "ipynb")
+
+    # rule: CC-REP-007 zenodo-certificate-pdf-present
+    pdfs <- files[ext == "pdf"]
     if (length(pdfs) == 0) {
-      add("certificate PDF", "fail", "no PDF in the deposit")
-    } else if (any(tolower(pdfs) == "codecheck.pdf")) {
-      add("certificate PDF", "pass", paste(pdfs, collapse = "; "))
+      add("certificate PDF", "warn", "no PDF in the deposit")
     } else {
-      add("certificate PDF", "warn",
-          paste0(paste(pdfs, collapse = "; "),
-                 " - policy expects the certificate PDF to be named codecheck.pdf"))
+      pdf_list <- paste(pdfs, collapse = "; ")
+      add("certificate PDF", "pass", pdf_list)
+      # rule: CC-REP-008 zenodo-certificate-pdf-name
+      named <- any(tolower(pdfs) == "codecheck.pdf")
+      add("certificate PDF name", if (named) "pass" else "warn",
+          if (named) pdf_list
+          else paste0(pdf_list, " - policy expects the certificate PDF to be named codecheck.pdf"))
     }
-    sources <- files[grepl("\\.(Rmd|qmd|docx|odt|md|tex)$", files, ignore.case = TRUE)]
-    has_rmd <- any(grepl("\\.Rmd$", sources, ignore.case = TRUE))
-    has_qmd <- any(grepl("\\.qmd$", sources, ignore.case = TRUE))
-    add("machine-readable certificate",
-        if (has_rmd && has_qmd) "fail"
-        else if (length(sources) > 0) "pass"
-        else "warn",
-        if (has_rmd && has_qmd)
-          paste0(paste(sources, collapse = "; "),
-                 " - both codecheck.Rmd and codecheck.qmd present, remove one ",
-                 "so the certificate source is unambiguous")
-        else if (length(sources) > 0) paste(sources, collapse = "; ")
+
+    # rule: CC-REP-009 zenodo-certificate-source-present
+    sources <- files[ext %in% c(executable_ext, "docx", "odt", "md", "tex")]
+    add("certificate source", if (length(sources) > 0) "pass" else "warn",
+        if (length(sources) > 0) paste(sources, collapse = "; ")
         else "deposit should include the certificate source, e.g. codecheck.Rmd")
+
+    # rule: CC-REP-010 zenodo-certificate-source-unambiguous
+    # only codecheck.* counts: other notebooks or R Markdown files in the
+    # deposit are the checked workflow, not the certificate
+    executable <- files[ext %in% executable_ext &
+                          tolower(tools::file_path_sans_ext(basename(files))) == "codecheck"]
+    executable_list <- paste(executable, collapse = "; ")
+    ambiguous <- length(executable) > 1
+    add("certificate source unambiguous", if (ambiguous) "warn" else "pass",
+        if (ambiguous)
+          paste0(executable_list, " - remove all but one of codecheck.Rmd, codecheck.qmd ",
+                 "and codecheck.ipynb so the certificate source is unambiguous")
+        else if (length(executable) > 0) executable_list
+        else "no codecheck.Rmd, codecheck.qmd or codecheck.ipynb")
   }
 
   # Community membership: the deposit must be part of the Zenodo "codecheck"

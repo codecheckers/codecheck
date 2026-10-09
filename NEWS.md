@@ -12,6 +12,8 @@
 * New `compare_figures()` puts each published figure and the reproduced one together in a labelled image.
 * New `render_figure_comparisons()` includes these comparisons in the certificate, and the Rmd and Quarto templates have an optional chunk for it.
 * The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate's summary is the `summary` in `codecheck.yml`, shown in the summary table.
+* `zenodo_policy_check()` reports the deposit's files as rules `CC-REP-007` to `CC-REP-010`, which replace `CC-REP-003` (closes codecheckers/codecheck#95).
+* `zenodo_policy_check()` accepts a Jupyter notebook (`.ipynb`) as certificate source, and `upload_zenodo_certificate()` treats an existing one as a source to replace (codecheckers/codecheck#95).
 
 ## Bug Fixes
 
@@ -25,6 +27,7 @@
 * The certificate's manifest table keeps spaces in file names, e.g. `Figure 1.png` instead of `Figure1.png` (closes codecheckers/codecheck#98).
 * `copy_manifest_files()` replaces whitespace with underscores in the names of the copies in `codecheck/outputs/`, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).
 * Rule `CC-MET-005` `paper-title-match` accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).
+* `zenodo_policy_check()` reports a deposit without a PDF, or with more than one of `codecheck.Rmd`, `codecheck.qmd` and `codecheck.ipynb`, as a warning instead of a failure, matching the rules' severity (codecheckers/codecheck#95).
 * The register's near-duplicate check compares paper titles regardless of markup such as `<i>`, non-breaking spaces and the spacing around separators (codecheckers/codecheck#96).
 
 # codecheck 0.31.0

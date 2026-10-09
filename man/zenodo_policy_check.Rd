@@ -10,7 +10,7 @@ zenodo_policy_check(record_metadata, files = NULL, record = NULL)
 \item{record_metadata}{list of record metadata}
 
 \item{files}{character vector of file names in the deposit, optional; needed
-for the checks on the certificate PDF and the machine-readable source.}
+for the checks on the certificate PDF, its name, and the certificate source.}
 
 \item{record}{the full record as returned by the InvenioRDM API (i.e. the
 `record` element of [get_zenodo_record_metadata()]'s return value),

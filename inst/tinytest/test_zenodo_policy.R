@@ -45,9 +45,12 @@ result_ambiguous <- zenodo_policy_check(
   compliant$metadata,
   files = c("codecheck.pdf", "codecheck.Rmd", "codecheck.qmd")
 )
-expect_equal(result_ambiguous$status[result_ambiguous$check == "machine-readable certificate"], "fail")
-expect_true(grepl("codecheck\\.Rmd", result_ambiguous$detail[result_ambiguous$check == "machine-readable certificate"]))
-expect_true(grepl("codecheck\\.qmd", result_ambiguous$detail[result_ambiguous$check == "machine-readable certificate"]))
+# (CC-REP-010), a warning like all the certificate file rules
+expect_equal(result_ambiguous$status[result_ambiguous$check == "certificate source unambiguous"], "warn")
+expect_true(grepl("codecheck.Rmd; codecheck.qmd",
+                  result_ambiguous$detail[result_ambiguous$check == "certificate source unambiguous"],
+                  fixed = TRUE))
+expect_equal(result_ambiguous$status[result_ambiguous$check == "certificate source"], "pass")
 
 # --------------------------------------------------- policy check: non-compliant
 
@@ -70,7 +73,7 @@ expect_true(grepl("Stephen J. Eglen", result$detail[result$check == "creators"])
 expect_equal(result$status[result$check == "publisher"], "pass")
 expect_equal(result$status[result$check == "resource type"], "pass")
 expect_equal(result$status[result$check == "license"], "pass")
-expect_equal(result$status[result$check == "machine-readable certificate"], "pass")
+expect_equal(result$status[result$check == "certificate source"], "pass")
 
 # ------------------------------------------------------- upload_zenodo_metadata
 
@@ -375,12 +378,43 @@ expect_true(grepl("certificate ID", res$detail[res$check == "title"]))
 # a PDF present but not named codecheck.pdf warns rather than fails, see #20
 other_name <- broken
 res <- zenodo_policy_check(other_name$metadata, files = c("certificate.pdf", "codecheck.Rmd"))
-expect_equal(res$status[res$check == "certificate PDF"], "warn")
-expect_true(grepl("codecheck.pdf", res$detail[res$check == "certificate PDF"], fixed = TRUE))
+# (CC-REP-008)
+expect_equal(res$status[res$check == "certificate PDF"], "pass")
+expect_equal(res$status[res$check == "certificate PDF name"], "warn")
+expect_true(grepl("codecheck.pdf", res$detail[res$check == "certificate PDF name"], fixed = TRUE))
 
-# no PDF at all is still a failure
+# no PDF at all warns (CC-REP-007), and then there is no name to check
 res <- zenodo_policy_check(other_name$metadata, files = c("codecheck.Rmd"))
-expect_equal(res$status[res$check == "certificate PDF"], "fail")
+expect_equal(res$status[res$check == "certificate PDF"], "warn")
+expect_equal(sum(res$check == "certificate PDF name"), 0L)
+
+# ---------------------------------------------------------- certificate source
+
+# the status of the two source rules for a deposit with these files
+source_status <- function(files) {
+  res <- zenodo_policy_check(compliant$metadata, files = files)
+  c(present = res$status[res$check == "certificate source"],
+    unambiguous = res$status[res$check == "certificate source unambiguous"])
+}
+
+# only the PDF: the source is missing (CC-REP-009)
+expect_equal(source_status("codecheck.pdf"), c(present = "warn", unambiguous = "pass"))
+
+# a Jupyter notebook is a certificate source
+expect_equal(source_status(c("codecheck.pdf", "codecheck.ipynb")),
+             c(present = "pass", unambiguous = "pass"))
+
+# so a notebook next to an R Markdown source is ambiguous (CC-REP-010)
+expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "codecheck.ipynb")),
+             c(present = "pass", unambiguous = "warn"))
+
+# a non-executable source next to an executable one is not ambiguous
+expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "README.md")),
+             c(present = "pass", unambiguous = "pass"))
+
+# nor is a notebook of the checked workflow next to the certificate source
+expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "analysis.ipynb")),
+             c(present = "pass", unambiguous = "pass"))
 
 # ------------------------------------------------------- community membership
 
