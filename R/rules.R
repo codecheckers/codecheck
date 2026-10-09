@@ -146,9 +146,7 @@ rule_implementations <- function() {
     "CC-REP-009" = "zenodo_policy_check",
     "CC-REP-010" = "zenodo_policy_check",
     "CC-REG-001" = "register_check",
-    "CC-REG-003" = "parse_repository_spec",
-    "CC-REG-006" = "validate_certificate_github_issue",
-    "CC-REG-007" = "validate_certificate_github_issue"
+    "CC-REG-003" = "parse_repository_spec"
   )
 }
 

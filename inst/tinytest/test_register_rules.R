@@ -16,8 +16,15 @@ write.csv(data.frame(name = c("codecheck", "GigaScience"),
                      label = c("a", "b")),
           venues_csv, row.names = FALSE)
 
+# The register repository's issues, instead of asking GitHub
+fake_issues <- function() {
+  data.frame(number = c(1L, 2L, 3L),
+             title = c("2026-001 A check", "2026-002 B check", "a pull request"),
+             stringsAsFactors = FALSE)
+}
+
 run <- function(register, ...) {
-  validate_register_rules(register, venues_file = venues_csv,
+  validate_register_rules(register, venues_file = venues_csv, get_issues = fake_issues,
                           stop_on_error = FALSE, quiet = TRUE, ...)
 }
 outcome_of <- function(results, id) results$outcome[results$id == id]
@@ -27,8 +34,11 @@ detail_of <- function(results, id) results$detail[results$id == id]
 
 good <- register_of(c("2025-001", "2025-002", "2026-001"))
 results <- run(good)
-expect_equal(sort(results$id), c("CC-REG-002", "CC-REG-004", "CC-REG-005"))
-expect_true(all(results$outcome == "ok"))
+expect_equal(sort(results$id), c("CC-REG-002", "CC-REG-004", "CC-REG-005",
+                                  "CC-REG-006", "CC-REG-007"))
+expect_true(all(results$outcome[results$id %in% c("CC-REG-002", "CC-REG-004", "CC-REG-005")] == "ok"))
+# without Issue numbers there is nothing to look up
+expect_true(all(results$outcome[results$id %in% c("CC-REG-006", "CC-REG-007")] == "skipped"))
 
 # --- CC-REG-002 certificate-id-sequence ---
 
@@ -69,6 +79,49 @@ no_venues <- validate_register_rules(good, venues_file = "does-not-exist.csv",
                                      stop_on_error = FALSE, quiet = TRUE)
 expect_equal(outcome_of(no_venues, "CC-REG-005"), "skipped")
 
+# --- CC-REG-006 issue-exists and CC-REG-007 issue-references-certificate ---
+
+with_issues <- function(ids, issues) {
+  register <- register_of(ids)
+  register$Issue <- issues
+  run(register)
+}
+ok_issues <- with_issues(c("2026-001", "2026-002"), c(1, 2))
+expect_equal(outcome_of(ok_issues, "CC-REG-006"), "ok")
+expect_equal(outcome_of(ok_issues, "CC-REG-007"), "ok")
+
+# a row without an issue is fine, one with an issue that does not exist is not
+missing_issue <- with_issues(c("2026-001", "2026-002"), c(NA, 99))
+expect_equal(outcome_of(missing_issue, "CC-REG-006"), "warning")
+expect_true(grepl("2026-002 (#99)", detail_of(missing_issue, "CC-REG-006"), fixed = TRUE))
+expect_equal(outcome_of(missing_issue, "CC-REG-007"), "skipped")
+
+# an issue whose title does not name the certificate
+wrong_title <- with_issues(c("2026-001", "2026-002"), c(1, 3))
+expect_equal(outcome_of(wrong_title, "CC-REG-006"), "ok")
+expect_equal(outcome_of(wrong_title, "CC-REG-007"), "warning")
+expect_true(grepl("2026-002 (#3 'a pull request')", detail_of(wrong_title, "CC-REG-007"),
+                  fixed = TRUE))
+
+# a group's issue names a range of identifiers
+title_ids <- codecheck:::title_certificate_ids
+expect_true("2025-012" %in% title_ids("AGILE Reproducibility Reviews 2025 (2025-008 - 2025-017)"))
+expect_true("2026-010" %in% title_ids("AGILEGIS 2026 | 2026-004/2026-017"))
+expect_false("2026-018" %in% title_ids("AGILEGIS 2026 | 2026-004/2026-017"))
+expect_equal(title_ids("Baetzel | 2026-020"), "2026-020")
+expect_equal(title_ids("Update licensing information"), character(0))
+expect_equal(title_ids("2026-0012"), character(0))
+
+# GitHub unreachable: both skip, and the issues are asked for only once
+calls <- 0
+unreachable <- validate_register_rules(
+  transform(register_of("2026-001"), Issue = 1), venues_file = venues_csv,
+  get_issues = function() { calls <<- calls + 1; stop("offline") },
+  stop_on_error = FALSE, quiet = TRUE)
+expect_equal(outcome_of(unreachable, "CC-REG-006"), "skipped")
+expect_equal(outcome_of(unreachable, "CC-REG-007"), "skipped")
+expect_equal(calls, 1)
+
 # --- stopping, strict and reading from a file ---
 
 expect_error(validate_register_rules(register_of("2026-042"), venues_file = venues_csv,
@@ -85,15 +138,16 @@ register_csv <- tempfile(fileext = ".csv")
 writeLines(c("Certificate,Repository,Type,Venue,Issue",
              "2026-001,github::codecheckers/a,community,codecheck,1",
              "#2026-002,github::codecheckers/b,community,codecheck,2",
-             "2026-003,github::codecheckers/c,community,codecheck,3"),
+             "2026-003,github::codecheckers/c,community,codecheck,NA"),
            register_csv)
-from_file <- validate_register_rules(register_csv, venues_file = venues_csv,
+from_file <- validate_register_rules(register_csv, venues_file = venues_csv, get_issues = fake_issues,
                                      stop_on_error = FALSE, quiet = TRUE)
 expect_true(all(from_file$outcome == "ok"),
             info = "a commented-out row is not part of the register")
 
 # The report names the file and every rule.
-report <- capture.output(validate_register_rules(register_csv, venues_file = venues_csv),
+report <- capture.output(validate_register_rules(register_csv, venues_file = venues_csv,
+                                                 get_issues = fake_issues),
                          type = "message")
 expect_true(any(grepl(register_csv, report, fixed = TRUE)))
 expect_true(any(grepl("CC-REG-004 type-known", report, fixed = TRUE)))
@@ -104,7 +158,9 @@ real_register <- file.path("..", "..", "..", "register", "register.csv")
 if (file.exists(real_register)) {
   real <- validate_register_rules(real_register,
                                   venues_file = file.path(dirname(real_register), "venues.csv"),
+                                  get_issues = function() stop("not asking GitHub in tests"),
                                   stop_on_error = FALSE, quiet = TRUE)
+  real <- real[!real$id %in% c("CC-REG-006", "CC-REG-007"), ]
   expect_true(all(real$outcome == "ok"),
               info = paste("the published register passes:", paste(real$detail, collapse = "; ")))
 }

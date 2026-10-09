@@ -671,6 +671,9 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
       report_entries[[length(report_entries) + 1]] <- data.frame(
         Certificate = as.character(entry$Certificate),
         Report = as.character(codecheck_yaml$report),
+        # check_register_zenodo_policy() compares the record with the
+        # codecheck.yml, from the cache by now
+        Repository = as.character(entry$Repository),
         # the ResearchEquals policy check needs the venue: the Reproducible
         # AGILE collection is only required for AGILEGIS certificates
         Venue = if (!is.null(entry$Venue)) as.character(entry$Venue) else NA_character_,

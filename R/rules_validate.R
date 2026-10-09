@@ -220,13 +220,19 @@ run_rules <- function(context, spec_version, rules = NULL, strict = FALSE,
 ##' Runs the rules about the register as a whole, rather than about one
 ##' `codecheck.yml`: that certificate identifiers continue their year's sequence
 ##' (`CC-REG-002`), that every `Type` is one of the four venue types
-##' (`CC-REG-004`), and that every `Venue` is listed in `venues.csv`
-##' (`CC-REG-005`). Severities come from the rule file, as for
+##' (`CC-REG-004`), that every `Venue` is listed in `venues.csv`
+##' (`CC-REG-005`), and that every `Issue` number is an issue of
+##' codecheckers/register (`CC-REG-006`) whose title carries the certificate
+##' identifier (`CC-REG-007`). Severities come from the rule file, as for
 ##' [validate_codecheck_yml_rules()]. [register_check()] runs this first.
 ##'
 ##' @param register The register as a data frame, or a path to `register.csv`.
 ##' @param venues_file Path to `venues.csv`. When it does not exist, `CC-REG-005`
 ##'   is skipped.
+##' @param get_issues Function of no arguments returning the register
+##'   repository's issues as a data frame of `number` and `title`, called once,
+##'   and only when the register has an `Issue` number; when it fails,
+##'   `CC-REG-006` and `CC-REG-007` are skipped. Injectable for testing.
 ##' @param spec_version Specification version whose rule file gives the
 ##'   severities, defaulting to the newest.
 ##' @inheritParams validate_codecheck_yml_rules
@@ -243,9 +249,10 @@ validate_register_rules <- function(register = "register.csv",
                                     spec_version = codecheck_spec_versions()[1],
                                     strict = FALSE,
                                     stop_on_error = TRUE,
-                                    quiet = FALSE) {
+                                    quiet = FALSE,
+                                    get_issues = register_github_issues) {
   spec_version <- match.arg(spec_version, codecheck_spec_versions())
-  context <- register_rules_context(register, venues_file)
+  context <- register_rules_context(register, venues_file, get_issues)
   checks <- register_rule_checks()
 
   results <- run_rules(context, spec_version, names(checks), strict,
@@ -267,7 +274,8 @@ validate_register_rules <- function(register = "register.csv",
 #'
 #' @keywords internal
 #' @noRd
-register_rules_context <- function(register, venues_file = "venues.csv") {
+register_rules_context <- function(register, venues_file = "venues.csv",
+                                   get_issues = register_github_issues) {
   label <- "the register"
   if (is.character(register) && length(register) == 1) {
     if (!file.exists(register)) {
@@ -279,7 +287,8 @@ register_rules_context <- function(register, venues_file = "venues.csv") {
   venues <- if (!is.null(venues_file) && file.exists(venues_file)) {
     utils::read.csv(venues_file, as.is = TRUE)$name
   }
-  list(register = register, venues = venues, today = Sys.Date(), label = label)
+  list(register = register, venues = venues, today = Sys.Date(), label = label,
+       get_issues = get_issues, lookups = new.env(parent = emptyenv()))
 }
 
 #' What to say when rules failed
@@ -332,7 +341,14 @@ rules_context <- function(configuration) {
       parse_error <<- conditionMessage(e)
       list()
     })
-    return(list(yml = yml, path = configuration, lines = lines,
+    # The parser turns a sequence of scalars into a vector, the same as a
+    # single scalar; for the rules that ask whether a node is a sequence, the
+    # file parsed again with sequences kept as lists.
+    yml_seq <- if (is.null(parse_error)) {
+      tryCatch(yaml::read_yaml(configuration, handlers = list(seq = as.list)),
+               error = function(e) NULL)
+    }
+    return(list(yml = yml, yml_seq = yml_seq, path = configuration, lines = lines,
                 raw_lines = raw_lines, parse_error = parse_error,
                 bundle_dir = dirname(configuration), label = configuration,
                 lookups = new.env(parent = emptyenv())))

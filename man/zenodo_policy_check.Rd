@@ -4,7 +4,12 @@
 \alias{zenodo_policy_check}
 \title{Check Zenodo record metadata against the CODECHECK curation policy}
 \usage{
-zenodo_policy_check(record_metadata, files = NULL, record = NULL)
+zenodo_policy_check(
+  record_metadata,
+  files = NULL,
+  record = NULL,
+  configuration = NULL
+)
 }
 \arguments{
 \item{record_metadata}{list of record metadata}
@@ -17,6 +22,10 @@ for the checks on the certificate PDF, its name, and the certificate source.}
 optional; needed for the community membership check, see #20. Community
 membership lives outside `metadata` (under `parent$communities`), so this
 check is only added when `record` is supplied.}
+
+\item{configuration}{the parsed `codecheck.yml` of the certificate,
+optional; needed to check that the record's certificate ID, codechecker
+names and ORCIDs match it, see [get_codecheck_yml()].}
 }
 \value{
 a data.frame with columns `check`, `status` (one of "pass", "warn",

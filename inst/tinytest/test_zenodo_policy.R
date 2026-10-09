@@ -416,6 +416,75 @@ expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "README.md")),
 expect_equal(source_status(c("codecheck.pdf", "codecheck.Rmd", "analysis.ipynb")),
              c(present = "pass", unambiguous = "pass"))
 
+# ------------------------------------------------- against the codecheck.yml
+
+# the compliant fixture is certificate 2026-019 by Jan Haacker
+yml_2026_019 <- list(
+  certificate = "2026-019",
+  codechecker = list(list(name = "Jan Haacker", ORCID = "https://orcid.org/0000-0002-5464-2442")))
+against <- function(configuration) {
+  res <- zenodo_policy_check(compliant$metadata, configuration = configuration)
+  stats::setNames(res$status, res$check)[c("certificate ID", "codechecker names",
+                                            "codechecker ORCIDs")]
+}
+
+# without a codecheck.yml there is nothing to compare (CC-REP-004 to 006)
+expect_true(all(is.na(against(NULL))))
+expect_equal(unname(against(yml_2026_019)), c("pass", "pass", "pass"))
+
+# another certificate's ID (CC-REP-004)
+other_cert <- yml_2026_019
+other_cert$certificate <- "2026-020"
+expect_equal(against(other_cert)[["certificate ID"]], "warn")
+# a group's record names the range
+group <- compliant
+group$metadata$title <- "CODECHECK Certificates 2026-019 - 2026-021"
+other_cert$certificate <- "2026-020"
+expect_equal(zenodo_policy_check(group$metadata, configuration = other_cert)$status[
+  zenodo_policy_check(group$metadata, configuration = other_cert)$check == "certificate ID"], "pass")
+
+# a codechecker missing from the creators, by name and ORCID (CC-REP-005, 006)
+two <- yml_2026_019
+two$codechecker <- c(two$codechecker,
+                     list(list(name = "Josiah Carberry", ORCID = "0000-0002-1825-0097")))
+res <- zenodo_policy_check(compliant$metadata, configuration = two)
+expect_equal(res$status[res$check == "codechecker names"], "warn")
+expect_true(grepl("not a creator: Josiah Carberry", res$detail[res$check == "codechecker names"]))
+expect_equal(res$status[res$check == "codechecker ORCIDs"], "warn")
+expect_true(grepl("0000-0002-1825-0097", res$detail[res$check == "codechecker ORCIDs"]))
+
+# a creator who is not a codechecker
+someone_else <- yml_2026_019
+someone_else$codechecker <- list(list(name = "Josiah Carberry"))
+res <- zenodo_policy_check(compliant$metadata, configuration = someone_else)
+expect_true(grepl("not a codechecker in the codecheck.yml: Haacker, Jan",
+                  res$detail[res$check == "codechecker names"], fixed = TRUE))
+# no codechecker ORCID, nothing to compare
+expect_equal(sum(res$check == "codechecker ORCIDs"), 0L)
+
+# the register-wide check compares with each entry's codecheck.yml when it has
+# a Repository column
+with_repository <- data.frame(
+  Certificate = "2026-019", Repository = "github::codecheckers/example",
+  Report = "https://doi.org/10.5281/zenodo.21238767", stringsAsFactors = FALSE)
+yml_cache_root <- tempfile("codecheck_zenodo_policy_cache_yml")
+dir.create(yml_cache_root)
+yml_old_root <- R.cache::getCacheRootPath()
+R.cache::setCacheRootPath(yml_cache_root)
+asked <- character(0)
+res <- check_register_zenodo_policy(
+  with_repository, get_metadata = function(record_id) compliant,
+  get_configuration = function(repository) { asked <<- repository; other_cert })
+expect_equal(asked, "github::codecheckers/example")
+expect_true(grepl("certificate ID", res$findings))
+# an unreachable codecheck.yml leaves the record checked, not compared
+res <- check_register_zenodo_policy(
+  with_repository, get_metadata = function(record_id) compliant,
+  get_configuration = function(repository) stop("offline"))
+expect_equal(res$status, "compliant")
+expect_false(grepl("certificate ID", res$findings))
+R.cache::setCacheRootPath(yml_old_root)
+
 # ------------------------------------------------------- community membership
 
 # no `record` argument -> the check is not run at all, see #20
