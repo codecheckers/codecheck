@@ -234,6 +234,9 @@ label_image <- function(label, width) {
 ##'   source file.
 ##' @param captions Captions of the figures; default is the file name.
 ##' @param width Width of the figures in the certificate.
+##' @param base_dir Directory to link the images relative to, or \code{NULL}
+##'   to link them by \code{files}. Defaults to the document's directory when
+##'   Quarto renders it, and \code{NULL} otherwise.
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @export
 ##' @examples
@@ -241,10 +244,12 @@ label_image <- function(label, width) {
 ##' render_figure_comparisons(comparisons$file,
 ##'   captions = paste("Figure", 1:2, "of the article: published (top) and reproduced (bottom)."))
 ##' }
-render_figure_comparisons <- function(files, captions = basename(files), width = "85%") {
+render_figure_comparisons <- function(files, captions = basename(files), width = "85%",
+                                      base_dir = quarto_document_dir()) {
   if (length(captions) != length(files)) stop("captions must have the same length as files")
   for (i in seq_along(files)) {
-    include_validated_image(files[i], captions[i], attributes = sprintf("{width=%s}", width))
+    include_validated_image(files[i], captions[i], attributes = sprintf("{width=%s}", width),
+                            base_dir = base_dir)
     cat("\n")
   }
   invisible(NULL)

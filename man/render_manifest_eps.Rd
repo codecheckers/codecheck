@@ -4,7 +4,12 @@
 \alias{render_manifest_eps}
 \title{Render EPS image for certificate output}
 \usage{
-render_manifest_eps(path, comment, name = basename(path), base_dir = NULL)
+render_manifest_eps(
+  path,
+  comment,
+  name = basename(path),
+  base_dir = quarto_document_dir()
+)
 }
 \arguments{
 \item{path}{- Path to the EPS file}
@@ -14,7 +19,8 @@ render_manifest_eps(path, comment, name = basename(path), base_dir = NULL)
 \item{name}{- File name shown in the heading and messages (default: the base name of \code{path})}
 
 \item{base_dir}{- Directory the image is linked relative to, or \code{NULL} to
-link it by \code{path}; files are read by \code{path} either way}
+link it by \code{path}; files are read by \code{path} either way. Defaults
+to the document's directory when Quarto renders it, and \code{NULL} otherwise.}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

@@ -215,3 +215,18 @@ manifest_underscore <- data.frame(output = "fig.png", comment = "made by plot_al
 underscore_text <- paste(capture.output(
   latex_summary_of_manifest(metadata_null_repo, manifest_underscore, root)), collapse = "\n")
 expect_true(grepl("made by plot\\_all.R, see $x_1$", underscore_text, fixed = TRUE))
+
+# Test: link paths are relative to the root, with or without a trailing slash,
+# and a sibling directory sharing the root's prefix is not taken as under it
+manifest_root <- data.frame(
+  output = c("a.png", "b.png"), comment = c("A", "B"), size = c(1, 2),
+  dest = c("/tmp/ws/codecheck/outputs/a.png", "/tmp/ws2/b.png"),
+  stringsAsFactors = FALSE
+)
+for (r in c("/tmp/ws", "/tmp/ws/")) {
+  out_root <- paste(capture.output(
+    latex_summary_of_manifest(list(repository = "https://github.com/test/repo"),
+                              manifest_root, r)), collapse = "\n")
+  expect_true(grepl("repo/blob/HEAD/codecheck/outputs/a.png}", out_root, fixed = TRUE), info = r)
+  expect_false(grepl("repo/blob/HEAD/2/b.png", out_root, fixed = TRUE), info = r)
+}

@@ -19,7 +19,8 @@ codechecker:
   - name: Cameron Checker
     ORCID: 0000-0000-0000-0000
 
-# Shown in the certificate's summary table and in the Zenodo description
+# Shown in the certificate's summary table and in the Zenodo description.
+# LaTeX math between $ signs is kept, so write \$ for a dollar sign.
 summary: >
   FIXME: Short summary of the CODECHECK certificate
 repository: https://github.com/FIXME/FIXME

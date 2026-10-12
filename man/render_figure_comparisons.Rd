@@ -4,7 +4,12 @@
 \alias{render_figure_comparisons}
 \title{Include figure comparisons in the certificate}
 \usage{
-render_figure_comparisons(files, captions = basename(files), width = "85\%")
+render_figure_comparisons(
+  files,
+  captions = basename(files),
+  width = "85\%",
+  base_dir = quarto_document_dir()
+)
 }
 \arguments{
 \item{files}{Paths to the comparison images, relative to the certificate
@@ -13,6 +18,10 @@ source file.}
 \item{captions}{Captions of the figures; default is the file name.}
 
 \item{width}{Width of the figures in the certificate.}
+
+\item{base_dir}{Directory to link the images relative to, or \code{NULL}
+to link them by \code{files}. Defaults to the document's directory when
+Quarto renders it, and \code{NULL} otherwise.}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

@@ -91,3 +91,13 @@ expect_true(grepl("$$x_1$$, \\(y_2\\) and \\cite{smith_2020}, see \\href{https:/
 # Only http(s) URLs are links, without trailing punctuation
 out <- with_summary("Result:reproduced, www.example.org/data and (https://x.org/a_b).")
 expect_true(grepl("Result:reproduced, www.example.org/data and (\\url{https://x.org/a_b}).", out, fixed = TRUE))
+
+# Names of authors and codecheckers are escaped, in the table and the citation
+group <- list(list(name = "Smith & Jones Lab_2", ORCID = "0000-0002-1825-0097"))
+out <- paste(capture.output(latex_summary_of_metadata(
+  list(paper = list(title = "A paper", authors = group), codechecker = group))), collapse = "\n")
+expect_true(grepl("Smith \\& Jones Lab\\_2 \\orcidicon{0000-0002-1825-0097}", out, fixed = TRUE))
+citation <- capture.output(cite_certificate(list(
+  codechecker = group, check_time = "2026-01-01", certificate = "2026-001",
+  report = "https://doi.org/10.5281/zenodo.17123456")))
+expect_true(grepl("^Smith \\\\& Jones Lab\\\\_2 \\(2026\\)", citation))

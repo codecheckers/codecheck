@@ -9,7 +9,7 @@ include_validated_image(
   caption,
   name = basename(path),
   attributes = "",
-  base_dir = NULL
+  base_dir = quarto_document_dir()
 )
 }
 \arguments{
@@ -22,7 +22,8 @@ include_validated_image(
 \item{attributes}{- Pandoc attributes of the image, e.g. \code{"{width=85\%}"}}
 
 \item{base_dir}{- Directory the image is linked relative to, or \code{NULL} to
-link it by \code{path}; files are read by \code{path} either way}
+link it by \code{path}; files are read by \code{path} either way. Defaults
+to the document's directory when Quarto renders it, and \code{NULL} otherwise.}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

@@ -966,6 +966,15 @@ expect_equal(codecheck:::relative_to("/elsewhere/fig.png", cert_dir), "/elsewher
 # A sibling whose name starts with the directory's is not under it
 expect_equal(codecheck:::relative_to(paste0(cert_dir, "x/fig.png"), cert_dir),
              paste0(cert_dir, "x/fig.png"))
+expect_equal(codecheck:::relative_to(c(figure, "/elsewhere/fig.png"), cert_dir),
+             c("outputs/fig.png", "/elsewhere/fig.png"))
+# A symbolic link to the outputs directory elsewhere stays under the directory
+linked_dir <- tempfile("cert_linked_")
+dir.create(file.path(linked_dir, "real"), recursive = TRUE)
+if (file.symlink(file.path(linked_dir, "real"), file.path(linked_dir, "outputs"))) {
+  expect_equal(codecheck:::relative_to(file.path(linked_dir, "outputs", "fig.png"), linked_dir),
+               "outputs/fig.png")
+}
 
 # Files are read by their absolute path, whatever the working directory, and
 # only the link is relative

@@ -55,7 +55,7 @@ as_latex_url  <- function(x) {
 }
 
 .name_with_orcid <- function(person, add.orcid=TRUE) {
-  name <- person$name
+  name <- .escape_latex_table_text(person$name)
   orcid <- person$ORCID
   if (is.null(orcid) || !(add.orcid)) {
     name
@@ -158,9 +158,7 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
 
   # Link the outputs only to a repository with a known file URL scheme,
   # several repositories may be given (codecheck#97)
-  paths = ifelse(startsWith(manifest_df$dest, root),
-                 substring(manifest_df$dest, nchar(root) + 1),
-                 manifest_df$dest)
+  paths = relative_to(manifest_df$dest, root)
   urls = rep(NA_character_, nrow(m))
   if (is.null(repository_url)) {
     for (repo in .repository_urls(metadata$repository)) {
@@ -247,11 +245,12 @@ render_error_box <- function(filename, error_msg) {
 ##' @param comment - Comment/caption for the image
 ##' @param name - File name shown in the heading and messages (default: the base name of \code{path})
 ##' @param base_dir - Directory the image is linked relative to, or \code{NULL} to
-##'   link it by \code{path}; files are read by \code{path} either way
+##'   link it by \code{path}; files are read by \code{path} either way. Defaults
+##'   to the document's directory when Quarto renders it, and \code{NULL} otherwise.
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom magick image_read image_write
 ##' @keywords internal
-render_manifest_image <- function(path, comment, name = basename(path), base_dir = NULL) {
+render_manifest_image <- function(path, comment, name = basename(path), base_dir = quarto_document_dir()) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -302,7 +301,7 @@ render_manifest_image <- function(path, comment, name = basename(path), base_dir
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
 include_validated_image <- function(path, caption, name = basename(path), attributes = "",
-                                    base_dir = NULL) {
+                                    base_dir = quarto_document_dir()) {
   if (!file.exists(path)) {
     render_error_box(name, "File not found")
     return(invisible(NULL))
@@ -325,7 +324,7 @@ include_validated_image <- function(path, caption, name = basename(path), attrib
 ##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_eps <- function(path, comment, name = basename(path), base_dir = NULL) {
+render_manifest_eps <- function(path, comment, name = basename(path), base_dir = quarto_document_dir()) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -353,7 +352,7 @@ render_manifest_eps <- function(path, comment, name = basename(path), base_dir =
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom rsvg rsvg_pdf
 ##' @keywords internal
-render_manifest_svg <- function(path, comment, name = basename(path), base_dir = NULL) {
+render_manifest_svg <- function(path, comment, name = basename(path), base_dir = quarto_document_dir()) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -386,7 +385,7 @@ render_manifest_svg <- function(path, comment, name = basename(path), base_dir =
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @importFrom pdftools pdf_info
 ##' @keywords internal
-render_manifest_pdf <- function(path, comment, name = basename(path), base_dir = NULL) {
+render_manifest_pdf <- function(path, comment, name = basename(path), base_dir = quarto_document_dir()) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -572,7 +571,7 @@ manifest_pandoc <- function() {
 ##' @inheritParams render_manifest_image
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @keywords internal
-render_manifest_office <- function(path, comment, name = basename(path), base_dir = NULL) {
+render_manifest_office <- function(path, comment, name = basename(path), base_dir = quarto_document_dir()) {
   cat("## ", name, "\n\n")
   cat("**Comment:** ", comment, "\n\n")
 
@@ -843,10 +842,11 @@ quarto_document_dir <- function() {
 
 ##' A path relative to a directory it lies under, otherwise unchanged
 ##'
-##' Both are compared as absolute paths, so a symbolic link or `..` in either
-##' does not matter.
+##' A path is under the directory as written, or once both are resolved to
+##' absolute paths, so `..` or a symbolic link in either does not matter, e.g.
+##' a symbolic link to the outputs directory or macOS's `/tmp`.
 ##'
-##' @param path A file path
+##' @param path File paths
 ##' @param base A directory, or `NULL` to keep `path` as it is
 ##' @keywords internal
 ##' @noRd
@@ -854,10 +854,17 @@ relative_to <- function(path, base) {
   if (is.null(base)) {
     return(path)
   }
+  strip <- function(x, dir) {
+    prefix <- paste0(sub("/+$", "", dir), "/")
+    ifelse(startsWith(x, prefix), substring(x, nchar(prefix) + 1), NA_character_)
+  }
   # The directory only, so that a symbolic link to the file itself stays as it
   # is, and a file not there (yet) resolves like its directory
   absolute <- file.path(normalizePath(dirname(path), winslash = "/", mustWork = FALSE),
                         basename(path))
-  prefix <- paste0(sub("/+$", "", normalizePath(base, winslash = "/", mustWork = FALSE)), "/")
-  if (startsWith(absolute, prefix)) substring(absolute, nchar(prefix) + 1) else path
+  relative <- strip(path, base)
+  relative <- ifelse(is.na(relative),
+                     strip(absolute, normalizePath(base, winslash = "/", mustWork = FALSE)),
+                     relative)
+  ifelse(is.na(relative), path, relative)
 }

@@ -100,6 +100,10 @@ expect_false(any(grepl("![corrupt.jpg]", md_corrupt, fixed = TRUE)))
 
 expect_error(render_figure_comparisons(cmp$file, captions = "only one"), "same length")
 
+# with a base_dir, as under Quarto, the images are linked relative to it
+md_rel <- capture.output(render_figure_comparisons(cmp$file[1], base_dir = tmp))
+expect_true(any(grepl("](<comparison/comparison-1.jpg>)", md_rel, fixed = TRUE)))
+
 # extract_pdf_figures() ---------------------------------------------------------
 # a PDF with a large image on page 1, a small one ("logo") on page 2, and none on page 3
 pdf_file <- file.path(tmp, "article.pdf")
