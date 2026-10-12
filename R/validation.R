@@ -922,24 +922,8 @@ validate_certificate_for_rendering <- function(yml_file = "codecheck.yml",
 
     # Display warning in PDF output if requested
     if (display_warning) {
-      cat("\\begin{center}\n")
-      cat("\\fcolorbox{red}{yellow}{\\parbox{0.9\\textwidth}{\\centering\n")
-      cat("\\textbf{\\Large \\textcolor{red}{\u26a0} WARNING \\textcolor{red}{\u26a0}}\\\\\n")
-      cat("\\vspace{0.2cm}\n")
-
-      # Display each warning part
-      for (i in seq_along(warning_parts)) {
-        cat(warning_parts[i], "\\\\\n", sep = "")
-        if (i < length(warning_parts)) {
-          cat("\\vspace{0.1cm}\n")
-        }
-      }
-
-      cat("\\vspace{0.1cm}\n")
-      cat("This certificate is not yet finalized.\\\\")
-      cat("Please set valid identifiers before publishing.\n")
-      cat("}}\n")
-      cat("\\end{center}\n\n")
+      latex_warning_box(c(warning_parts, paste0("This certificate is not yet finalized.\\\\",
+                                                "Please set valid identifiers before publishing.")))
     }
 
     # Print warning message to console

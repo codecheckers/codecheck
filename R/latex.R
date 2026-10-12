@@ -151,6 +151,11 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
                                       align=c('l', 'p{6cm}', 'p{6cm}', 'p{2cm}'),
                                       repository_url = NULL
                                       ) {
+  if (NROW(manifest_df) == 0) {
+    latex_warning_box(paste("\\textbf{No output files are listed in the manifest of",
+                            "\\texttt{codecheck.yml}.}"))
+    return(invisible(NULL))
+  }
   m = manifest_df[, c("output", "comment", "size")]
   m$comment = .escape_latex_table_text(m$comment)
   m$size = ifelse(is.na(m$size), "missing",
@@ -188,6 +193,20 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
         tabular.environment = "longtable", floating = FALSE,
         hline.after = -1,
         add.to.row = list(pos = list(0), command = "\\hline\n\\endhead\n"))
+}
+
+##' A red-framed yellow box headed WARNING, with one line per element of
+##' `lines`, for what must be fixed before a certificate is published
+##' @keywords internal
+##' @noRd
+latex_warning_box <- function(lines) {
+  cat("\\begin{center}\n")
+  cat("\\fcolorbox{red}{yellow}{\\parbox{0.9\\textwidth}{\\centering\n")
+  cat("\\textbf{\\Large \\textcolor{red}{\u26a0} WARNING \\textcolor{red}{\u26a0}}\\\\\n")
+  cat("\\vspace{0.2cm}\n")
+  cat(paste(lines, collapse = "\\\\\n\\vspace{0.1cm}\n"), "\n", sep = "")
+  cat("}}\n")
+  cat("\\end{center}\n\n")
 }
 
 ##' Print the latex code to include the CODECHECK logo
@@ -786,6 +805,10 @@ render_manifest_unsupported <- function(path, comment, name = basename(path)) {
 ##' @export
 render_manifest_files <- function(manifest_df, json_max_lines = 50,
                                   base_dir = quarto_document_dir()) {
+  if (NROW(manifest_df) == 0) {
+    cat("The manifest lists no files.\n\n")
+    return(invisible(NULL))
+  }
   for (i in seq_len(nrow(manifest_df))) {
     path <- manifest_df[i, "dest"]
     comment <- manifest_df[i, "comment"]

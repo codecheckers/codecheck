@@ -220,5 +220,46 @@ expect_warning(
                                  env$dest_dir, overwrite = TRUE),
   pattern = "Figure 1.jpeg -> .*/Figure_1.jpeg")
 
+# Test: an empty manifest, or none, renders with a warning box -----------------
+# The certificate is drafted before the manifest is filled in.
+for (manifest in list(list(), NULL)) {
+  empty_df <- NULL
+  expect_warning(empty_df <- copy_manifest_files(tempdir(), list(manifest = manifest), tempdir()),
+                 pattern = "codecheck.yml lists no manifest files")
+  expect_equal(nrow(empty_df), 0L)
+  expect_equal(names(empty_df), c("output", "comment", "dest", "size"))
+  expect_warning(list_manifest_files(tempdir(), list(manifest = manifest), tempdir()),
+                 pattern = "lists no manifest files")
+}
+summary_text <- paste(capture.output(latex_summary_of_manifest(
+  list(repository = "https://github.com/test/repo"), empty_df, tempdir())), collapse = "\n")
+expect_true(grepl("\\fcolorbox{red}{yellow}", summary_text, fixed = TRUE))
+expect_true(grepl("No output files are listed in the manifest", summary_text, fixed = TRUE))
+expect_false(grepl("longtable", summary_text, fixed = TRUE))
+expect_false(grepl("\n\n}}", summary_text, fixed = TRUE), info = "no blank line in the box")
+expect_false(grepl("\\\\\n}}", summary_text, fixed = TRUE), info = "no line break at the end of the box")
+expect_equal(capture.output(render_manifest_files(empty_df, base_dir = NULL))[1],
+             "The manifest lists no files.")
+
+# Test: a manifest item without the optional comment gets an empty one
+no_comment_dir <- tempfile("no_comment_")
+dir.create(file.path(no_comment_dir, "outputs"), recursive = TRUE)
+writeLines("x", file.path(no_comment_dir, "a.txt"))
+writeLines("y", file.path(no_comment_dir, "b.txt"))
+no_comment_df <- copy_manifest_files(no_comment_dir,
+  list(manifest = list(list(file = "a.txt", comment = "A"), list(file = "b.txt"))),
+  file.path(no_comment_dir, "outputs"))
+expect_equal(no_comment_df$comment, c("A", ""))
+unlink(no_comment_dir, recursive = TRUE)
+
+# Test: a manifest written as a single mapping is one item, and an item
+# without exactly one file is named
+single_df <- suppressWarnings(list_manifest_files(tempdir(),
+  list(manifest = list(file = "a.txt", comment = "A")), tempdir()))
+expect_equal(single_df$output, "a.txt")
+expect_error(list_manifest_files(tempdir(), list(manifest = list(
+  list(file = "a.txt"), list(comment = "no file"))), tempdir()),
+  pattern = "manifest item\\(s\\) 2 .* exactly one 'file'")
+
 # Clean up
 unlink(file.path(tempdir(), "test_manifest"), recursive = TRUE)

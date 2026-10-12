@@ -47,6 +47,8 @@
 * The certificate's summary table escapes `&`, `%`, `#` and `_` in the paper title and `summary`, leaving math and LaTeX commands alone, instead of failing to compile or losing text.
 * Manifest comments in the certificate escape `_` too, e.g. in file names such as `run_all.R`, but not in math or LaTeX commands.
 * `http(s)` URLs in the certificate's summary are links that break across lines, instead of running past the margin.
+* A certificate whose `codecheck.yml` lists no manifest files renders with a warning box instead of failing with "a character vector argument expected".
+* `copy_manifest_files()` and `list_manifest_files()` accept manifest items without the optional `comment`, instead of failing with "arguments imply differing number of rows".
 * The certificate's summary table and "Citing this document" escape `&`, `%`, `#` and `_` in the names of authors and codecheckers, instead of failing to compile.
 * `render_figure_comparisons()` links the images relative to a Quarto certificate, like `render_manifest_files()`, so that absolute paths in the certificate's directory work too (codecheckers/codecheck#93).
 

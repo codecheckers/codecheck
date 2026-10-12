@@ -24,8 +24,8 @@
 copy_manifest_files <- function(root, metadata, dest_dir,
                                 keep_full_path = FALSE,
                                 overwrite = FALSE) {
-  manifest = metadata$manifest
-  outputs = sapply(manifest, function(x) x$file)
+  entries = .manifest_entries(metadata$manifest)
+  outputs = entries$file
   src_files = file.path(root, outputs)
   missing = !file.exists(src_files)
 
@@ -70,7 +70,7 @@ copy_manifest_files <- function(root, metadata, dest_dir,
   file_sizes[existing_files] = file.size(dest_files[existing_files])
 
   manifest_df = data.frame(output=outputs,
-                           comment=sapply(manifest, function(x) x$comment),
+                           comment=entries$comment,
                            dest=dest_files,
                            size=file_sizes,
                            stringsAsFactors = FALSE)
@@ -87,15 +87,38 @@ copy_manifest_files <- function(root, metadata, dest_dir,
 ##' @author Daniel Nuest
 ##' @export
 list_manifest_files <- function(root, metadata, check_dir) {
-  manifest = metadata$manifest
-  outputs = sapply(manifest, function(x) x$file)
+  entries = .manifest_entries(metadata$manifest)
+  outputs = entries$file
   dest_files = .manifest_dest_files(basename(outputs), check_dir)
   manifest_df = data.frame(output=outputs,
-                           comment=sapply(manifest, function(x) x$comment),
+                           comment=entries$comment,
                            dest=dest_files,
                            size=file.size(dest_files),
                            stringsAsFactors = FALSE)
   manifest_df
+}
+
+##' The files and comments of the manifest, as character vectors
+##'
+##' An empty manifest gives empty vectors and a warning, so that a certificate
+##' can be drafted before the manifest is filled in.
+##' @keywords internal
+##' @noRd
+.manifest_entries <- function(manifest) {
+  manifest <- as_items(manifest)
+  if (length(manifest) == 0) {
+    warning("codecheck.yml lists no manifest files: add the outputs you reproduced ",
+            "under 'manifest:', see https://codecheck.org.uk/spec/config/latest/",
+            call. = FALSE)
+  }
+  files <- lapply(manifest, function(x) x$file)
+  no_file <- !vapply(files, function(f) is.character(f) && length(f) == 1, logical(1))
+  if (any(no_file)) {
+    stop("manifest item(s) ", toString(which(no_file)), " in codecheck.yml ",
+         "must have exactly one 'file'", call. = FALSE)
+  }
+  list(file = as.character(unlist(files, use.names = FALSE)),
+       comment = vapply(manifest, function(x) paste(x$comment, collapse = " "), character(1)))
 }
 
 ##' Paths of the copies of manifest files in the outputs folder
