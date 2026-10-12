@@ -13,7 +13,7 @@
 * New `render_figure_comparisons()` includes these comparisons in the certificate, and the Rmd and Quarto templates have an optional chunk for it.
 * The Rmd and Quarto templates no longer have a Summary section with placeholder text: the certificate's summary is the `summary` in `codecheck.yml`, shown in the summary table.
 * The Rmd and Quarto templates call the package's functions as `codecheck::fn()`, so it is clear which functions come from the package.
-* The Quarto template sets code and its output in 7pt, so that about 120 characters fit on a line.
+* The Quarto template sets code and its output in 7pt and R's output width to 120, so that about 120 characters fit on a line.
 * `zenodo_policy_check()` reports the deposit's files as rules `CC-REP-007` to `CC-REP-010`, which replace `CC-REP-003` (closes codecheckers/codecheck#95).
 * `zenodo_policy_check()` accepts a Jupyter notebook (`.ipynb`) as certificate source (codecheckers/codecheck#95).
 * `upload_zenodo_certificate()` replaces an existing `codecheck.ipynb` source like an `.Rmd` or `.qmd` one, but no other notebook on the record (codecheckers/codecheck#95).

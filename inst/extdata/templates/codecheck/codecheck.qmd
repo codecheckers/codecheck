@@ -21,7 +21,7 @@ require("yaml")
 require("xtable")
 require("tibble")
 require("readr")
-options(width = 60)
+options(width = 120)  # matches the 7pt code font set in the header
 opts_chunk$set(cache = FALSE)
 
 root <- find_root("codecheck.yml")
