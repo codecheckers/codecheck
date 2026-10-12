@@ -24,6 +24,8 @@
 
 ## Bug Fixes
 
+* `register_render(parallel = TRUE)` no longer fails random certificates, by requiring rmarkdown 2.32 or later (codecheckers/codecheck#88).
+* A failed page render no longer leaves temporary files or a `libs/` folder behind in the page's directory (codecheckers/codecheck#88).
 * The certificate summary tables no longer fail when `codecheck.yml` lists several `repository` URLs, and list all of them (closes codecheckers/codecheck#97).
 * `upload_zenodo_metadata()` adds every repository as a related identifier and to the description, not only the first (codecheckers/codecheck#97).
 * `latex_summary_of_manifest()` links output files on the default branch instead of `master`, only for GitHub and GitLab, and takes a `repository_url` to choose or turn off the link (codecheckers/codecheck#97).
