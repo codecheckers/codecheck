@@ -6,9 +6,14 @@ source("mocks.R")
 # An OpenAlex API and DOI handle service answering from fixtures instead of the
 # network: `works` maps a DOI to the list of works OpenAlex holds for it, and
 # `handles` lists the DOIs registered anywhere, whether OpenAlex knows them or
-# not. `crossref` maps a DOI to the `message` Crossref holds for it.
+# not. `crossref` maps a DOI to the `message` Crossref holds for it, and
+# `datacite` to the `titles` DataCite holds for it; each is the DOI's
+# registration agency, unless `agencies` maps it to another one.
 mock_openalex_GET <- function(works = list(), handles = names(works),
-                              urls = list(), crossref = list()) {
+                              urls = list(), crossref = list(), datacite = list(),
+                              agencies = list()) {
+  agencies <- c(agencies, setNames(as.list(rep("Crossref", length(crossref))), names(crossref)),
+                setNames(as.list(rep("DataCite", length(datacite))), names(datacite)))
   function(url, ...) {
     json_response <- function(body) {
       response <- mock_response(url, 200L)
@@ -27,6 +32,18 @@ mock_openalex_GET <- function(works = list(), handles = names(works),
       doi <- utils::URLdecode(sub("^.*/works/", "", url))
       if (!doi %in% names(crossref)) return(mock_response(url, 404L))
       return(json_response(list(message = crossref[[doi]])))
+    }
+    if (grepl("doi.org/doiRA/", url, fixed = TRUE)) {
+      doi <- sub("^.*/doiRA/", "", url)
+      if (!doi %in% names(agencies)) {
+        return(json_response(list(list(DOI = doi, status = "DOI does not exist"))))
+      }
+      return(json_response(list(list(DOI = doi, RA = agencies[[doi]]))))
+    }
+    if (grepl("api.datacite.org/dois/", url, fixed = TRUE)) {
+      doi <- utils::URLdecode(sub("^.*/dois/", "", url))
+      if (!doi %in% names(datacite)) return(mock_response(url, 404L))
+      return(json_response(list(data = list(attributes = list(titles = datacite[[doi]])))))
     }
     if (grepl("doi.org/api/handles/", url, fixed = TRUE)) {
       doi <- sub("^.*/handles/", "", url)
@@ -301,13 +318,14 @@ expect_warning(result <- with_api(subtitle_api, validate_quietly(test_yml)),
 expect_true(any(grepl(paste0("subtitle '", subtitle, "' on Crossref"), result$issues,
                       fixed = TRUE)))
 
-# Test 20: A DOI Crossref does not hold, as DataCite DOIs, is a mismatch
-no_crossref_api <- mock_openalex_GET(
+# Test 20: A DOI without a known registration agency skips the comparison
+no_agency_api <- mock_openalex_GET(
   list("10.1026/1616-3443/a000876" = list(subtitle_work)))
 subtitle_yml(paste0(main_title, ": ", subtitle))
-expect_warning(result <- with_api(no_crossref_api, validate_quietly(test_yml)),
-               pattern = "CC-MET-005")
-expect_equal(outcome_of(result, "CC-MET-005"), "warning")
+result <- with_api(no_agency_api, validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-005"), "skipped")
+expect_true(grepl("registration agency could not be determined",
+                  result$results$detail[result$results$id == "CC-MET-005"]))
 
 # Test 21: Crossref out of reach skips the comparison
 down_api <- function(url, ...) {
@@ -316,10 +334,10 @@ down_api <- function(url, ...) {
 }
 result <- with_api(down_api, validate_quietly(test_yml))
 expect_equal(outcome_of(result, "CC-MET-005"), "skipped")
-expect_true(grepl("Crossref could not be reached",
+expect_true(grepl("the subtitle could not be read from Crossref",
                   result$results$detail[result$results$id == "CC-MET-005"]))
 
-# Test 22: A title that does not begin with OpenAlex's asks no Crossref
+# Test 22: A title that does not begin with OpenAlex's asks no registry
 asked <- character(0)
 recording_api <- function(url, ...) {
   asked <<- c(asked, url)
@@ -327,7 +345,61 @@ recording_api <- function(url, ...) {
 }
 paper_yml("https://doi.org/10.1088/0954-898X_3_1_008", title = "Principal components")
 suppressWarnings(with_api(recording_api, validate_quietly(test_yml)))
-expect_false(any(grepl("api.crossref.org", asked, fixed = TRUE)))
+expect_false(any(grepl("api.crossref.org|api.datacite.org|doiRA", asked)))
+
+# Test 23: A DataCite DOI, e.g. on Zenodo, passes with DataCite's subtitle
+datacite_doi <- "10.5281/zenodo.1234567"
+datacite_titles <- list(list(title = "Three Axioms"),
+                        list(title = "Why Progress Happens by Accident", titleType = "Subtitle"))
+datacite_api <- mock_openalex_GET(
+  list("10.5281/zenodo.1234567" = list(openalex_work("Three Axioms",
+                                                     list(list(name = "Peter J. B. Hancock"))))),
+  datacite = list("10.5281/zenodo.1234567" = datacite_titles))
+datacite_yml <- function(title) {
+  paper_yml(paste0("https://doi.org/", datacite_doi), title = paste0("'", title, "'"),
+            authors = "\n    - name: Peter J. B. Hancock")
+}
+datacite_yml("Three Axioms: Why Progress Happens by Accident")
+result <- with_api(datacite_api, validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-005"), "ok")
+expect_true(grepl("DataCite's subtitle",
+                  result$results$detail[result$results$id == "CC-MET-005"]))
+# ... and a different subtitle names DataCite's
+datacite_yml("Three Axioms: Something Else")
+expect_warning(result <- with_api(datacite_api, validate_quietly(test_yml)),
+               pattern = "CC-MET-005")
+expect_true(any(grepl("subtitle 'Why Progress Happens by Accident' on DataCite",
+                      result$issues, fixed = TRUE)))
+
+# Test 24: DataCite out of reach skips the comparison
+datacite_down_api <- function(url, ...) {
+  if (grepl("api.datacite.org", url, fixed = TRUE)) return(mock_response(url, 503L))
+  datacite_api(url, ...)
+}
+datacite_yml("Three Axioms: Why Progress Happens by Accident")
+result <- with_api(datacite_down_api, validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-005"), "skipped")
+expect_true(grepl("the subtitle could not be read from DataCite",
+                  result$results$detail[result$results$id == "CC-MET-005"]))
+
+# Test 25: A DataCite record without a subtitle is a mismatch
+no_subtitle_api <- mock_openalex_GET(
+  list("10.5281/zenodo.1234567" = list(openalex_work("Three Axioms",
+                                                     list(list(name = "Peter J. B. Hancock"))))),
+  datacite = list("10.5281/zenodo.1234567" = list(list(title = "Three Axioms"))))
+expect_warning(result <- with_api(no_subtitle_api, validate_quietly(test_yml)),
+               pattern = "CC-MET-005")
+expect_false(any(grepl("with subtitle", result$issues, fixed = TRUE)))
+
+# Test 26: Subtitles of other agencies' DOIs, e.g. JaLC, are not checked
+jalc_api <- mock_openalex_GET(
+  list("10.5281/zenodo.1234567" = list(openalex_work("Three Axioms",
+                                                     list(list(name = "Peter J. B. Hancock"))))),
+  agencies = list("10.5281/zenodo.1234567" = "JaLC"))
+result <- with_api(jalc_api, validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-005"), "skipped")
+expect_true(grepl("subtitles of JaLC DOIs are not checked",
+                  result$results$detail[result$results$id == "CC-MET-005"]))
 
 # Clean up
 unlink(test_yml)

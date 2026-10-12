@@ -783,52 +783,96 @@ check_paper_title_match <- function(context) {
     return(rule_pass())
   }
   mismatch <- paste0("'", local, "' is '", remote[1], "' on OpenAlex")
-  # OpenAlex holds only the main title, Crossref the subtitle separately
-  # (codecheckers/codecheck#96). Crossref is asked only when something follows
-  # the main title here.
+  # OpenAlex holds only the main title, Crossref and DataCite the subtitle
+  # separately (codecheckers/codecheck#96). They are asked only when something
+  # follows the main title here.
   if (!startsWith(here, paste0(there, " "))) {
     return(rule_fail(mismatch))
   }
-  subtitles <- lookup_crossref_subtitle(paper$doi)
-  if (is.null(subtitles)) {
-    return(rule_skip(paste0("the title extends OpenAlex's '", remote[1],
-                            "', and Crossref could not be reached to check the subtitle")))
+  registered <- lookup_registered_subtitle(paper$doi)
+  if (!is.null(registered$skip)) {
+    return(rule_skip(paste0("the title extends OpenAlex's '", remote[1], "', and ",
+                            registered$skip)))
   }
+  registry <- registered$registry
+  subtitles <- registered$subtitles
   full_titles <- vapply(paste(remote[1], subtitles), normalize_title_for_comparison,
                         character(1), USE.NAMES = FALSE)
   if (here %in% full_titles) {
-    return(rule_pass("title matches OpenAlex's with Crossref's subtitle"))
+    return(rule_pass(paste0("title matches OpenAlex's with ", registry, "'s subtitle")))
   }
   if (length(subtitles) > 0) {
     mismatch <- paste0(mismatch, ", with subtitle '",
-                       paste(subtitles, collapse = "' or '"), "' on Crossref")
+                       paste(subtitles, collapse = "' or '"), "' on ", registry)
   }
   rule_fail(mismatch)
 }
 
-#' The subtitle(s) Crossref holds for a DOI
+#' The subtitle(s) registered for a DOI
 #'
-#' @return A character vector, empty when Crossref has no subtitle or no record
-#'   (as for DataCite DOIs), or `NULL` when Crossref could not be reached.
+#' Asks the DOI's registration agency, Crossref or DataCite (e.g. for Zenodo
+#' and OSF DOIs).
+#'
+#' @return A list of the `registry` and its `subtitles`, a character vector that
+#'   is empty when there is no subtitle, or of `skip`, why the subtitle could
+#'   not be checked.
 #' @keywords internal
 #' @noRd
-lookup_crossref_subtitle <- function(doi) {
-  url <- paste0("https://api.crossref.org/works/",
-                utils::URLencode(doi, reserved = TRUE))
-  response <- tryCatch(codecheck_GET(url), error = function(e) NULL)
-  if (is.null(response)) {
+lookup_registered_subtitle <- function(doi) {
+  agency <- lookup_registration_agency(doi)
+  if (is.null(agency)) {
+    return(list(skip = "the DOI's registration agency could not be determined"))
+  }
+  encoded <- utils::URLencode(doi, reserved = TRUE)
+  subtitles <- switch(agency,
+    Crossref = registry_subtitles(
+      paste0("https://api.crossref.org/works/", encoded),
+      function(body) if (is.list(body$message)) as.character(unlist(body$message$subtitle))),
+    DataCite = registry_subtitles(
+      paste0("https://api.datacite.org/dois/", encoded),
+      function(body) {
+        if (!is.list(body$data$attributes)) return(NULL)
+        as.character(unlist(lapply(body$data$attributes$titles, function(t) {
+          if (identical(t$titleType, "Subtitle")) t$title
+        })))
+      }),
+    return(list(skip = paste0("subtitles of ", agency, " DOIs are not checked"))))
+  if (is.null(subtitles)) {
+    return(list(skip = paste0("the subtitle could not be read from ", agency)))
+  }
+  list(registry = agency, subtitles = subtitles)
+}
+
+#' The registration agency of a DOI, e.g. "Crossref", or `NULL` if unknown
+#' @keywords internal
+#' @noRd
+lookup_registration_agency <- function(doi) {
+  response <- tryCatch(codecheck_GET(paste0("https://doi.org/doiRA/", doi)),
+                       error = function(e) NULL)
+  if (is.null(response) || httr::status_code(response) != 200) {
     return(NULL)
   }
-  status <- httr::status_code(response)
-  if (status != 200) {
-    return(if (status == 404) character(0) else NULL)
-  }
   tryCatch({
-    message <- jsonlite::fromJSON(
-      httr::content(response, as = "text", encoding = "UTF-8"),
-      simplifyVector = FALSE)$message
-    if (!is.list(message)) NULL else as.character(unlist(message$subtitle))
+    agency <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
+                                 simplifyVector = FALSE)[[1]]$RA
+    if (is.character(agency) && length(agency) == 1) agency else NULL
   }, error = function(e) NULL)
+}
+
+#' The subtitles a registry's JSON record holds, picked by `extract`
+#'
+#' @return A character vector, or `NULL` when the registry could not be reached,
+#'   has no record or answered something unexpected.
+#' @keywords internal
+#' @noRd
+registry_subtitles <- function(url, extract) {
+  response <- tryCatch(codecheck_GET(url), error = function(e) NULL)
+  if (is.null(response) || httr::status_code(response) != 200) {
+    return(NULL)
+  }
+  tryCatch(extract(jsonlite::fromJSON(
+    httr::content(response, as = "text", encoding = "UTF-8"), simplifyVector = FALSE)),
+    error = function(e) NULL)
 }
 
 #' @keywords internal

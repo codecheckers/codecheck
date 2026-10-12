@@ -33,7 +33,7 @@
 * `zenodo_policy_check()` recognises membership in the Zenodo codecheck community by the community's UUID or its slug under `parent$communities$entries`, as the InvenioRDM API reports it. It reported every record as not a member before (#20).
 * The certificate's manifest table keeps spaces in file names, e.g. `Figure 1.png` instead of `Figure1.png` (closes codecheckers/codecheck#98).
 * `copy_manifest_files()` replaces whitespace with underscores in the names of the copies in `codecheck/outputs/`, so they can be included in the certificate, whose headings still show the original names, and warns when two files would get the same copy (codecheckers/codecheck#98).
-* Rule `CC-MET-005` `paper-title-match` accepts a paper title that includes the subtitle Crossref registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).
+* Rule `CC-MET-005` `paper-title-match` accepts a paper title that includes the subtitle Crossref or DataCite registers separately from the main title OpenAlex holds (closes codecheckers/codecheck#96).
 * `zenodo_policy_check()` reports a deposit without a PDF, or with more than one of `codecheck.Rmd`, `codecheck.qmd` and `codecheck.ipynb`, as a warning instead of a failure, matching the rules' severity (codecheckers/codecheck#95).
 * Rule `CC-CFG-002` `explicit-document` accepts directives such as `%YAML 1.2`, comments and blank lines before the document marker `---` (closes codecheckers/codecheck#100).
 * Rule `CC-CFG-029` `reference-other-is-list` accepts a `reference-other` sequence of plain URLs, which it rejected as not a sequence (codecheckers/codecheck#100).
