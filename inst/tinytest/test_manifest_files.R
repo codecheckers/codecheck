@@ -231,9 +231,16 @@ for (manifest in list(list(), NULL)) {
   expect_warning(list_manifest_files(tempdir(), list(manifest = manifest), tempdir()),
                  pattern = "lists no manifest files")
 }
+invisible(knitr::knit_meta(clean = TRUE))
 summary_text <- paste(capture.output(latex_summary_of_manifest(
   list(repository = "https://github.com/test/repo"), empty_df, tempdir())), collapse = "\n")
 expect_true(grepl("\\fcolorbox{red}{yellow}", summary_text, fixed = TRUE))
+expect_true(grepl("\\textbf{\\Large \\textcolor{red}{\\faExclamationTriangle} WARNING",
+                  summary_text, fixed = TRUE))
+expect_false(grepl("\u26a0", summary_text, fixed = TRUE),
+             info = "the certificate fonts have no U+26A0 glyph, it renders as a blank")
+# Declared to knitr too, for workspaces with an older preamble
+expect_true("fontawesome5" %in% vapply(knitr::knit_meta(clean = TRUE), `[[`, "", "name"))
 expect_true(grepl("No output files are listed in the manifest", summary_text, fixed = TRUE))
 expect_false(grepl("longtable", summary_text, fixed = TRUE))
 expect_false(grepl("\n\n}}", summary_text, fixed = TRUE), info = "no blank line in the box")

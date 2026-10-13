@@ -207,9 +207,11 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
 ##' @keywords internal
 ##' @noRd
 latex_warning_box <- function(lines) {
+  knitr::knit_meta_add(list(rmarkdown::latex_dependency("fontawesome5")))
+  sign <- "\\textcolor{red}{\\faExclamationTriangle}"
   cat("\\begin{center}\n")
   cat("\\fcolorbox{red}{yellow}{\\parbox{0.9\\textwidth}{\\centering\n")
-  cat("\\textbf{\\Large \\textcolor{red}{\u26a0} WARNING \\textcolor{red}{\u26a0}}\\\\\n")
+  cat("\\textbf{\\Large ", sign, " WARNING ", sign, "}\\\\\n", sep = "")
   cat("\\vspace{0.2cm}\n")
   cat(paste(lines, collapse = "\\\\\n\\vspace{0.1cm}\n"), "\n", sep = "")
   cat("}}\n")

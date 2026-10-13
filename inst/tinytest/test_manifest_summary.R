@@ -204,6 +204,8 @@ expect_true(grepl("Size (b) \\\\ \n  \\hline\n\\endhead", long_text, fixed = TRU
 expect_false(grepl("\\begin{table}", long_text, fixed = TRUE))
 expect_true(grepl("\\caption{Summary of output files generated}", long_text, fixed = TRUE))
 expect_true(any(grepl("\\usepackage{longtable}", preamble, fixed = TRUE)))
+# The certificate fonts have no warning sign, the warning box takes it from here
+expect_true(any(grepl("\\usepackage{fontawesome5}", preamble, fixed = TRUE)))
 # Declared to knitr too, for workspaces with an older preamble
 invisible(knitr::knit_meta(clean = TRUE))
 invisible(capture.output(latex_summary_of_manifest(metadata_valid_repo, manifest_df, root)))

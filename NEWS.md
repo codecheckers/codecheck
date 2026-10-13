@@ -26,6 +26,7 @@
 
 ## Bug Fixes
 
+* The certificate's warning box shows a warning sign instead of a blank on each side of "WARNING".
 * `register_render(parallel = TRUE)` no longer fails random certificates, by requiring rmarkdown 2.32 or later (codecheckers/codecheck#88).
 * A failed page render no longer leaves temporary files or a `libs/` folder behind in the page's directory (codecheckers/codecheck#88).
 * The certificate summary tables no longer fail when `codecheck.yml` lists several `repository` URLs, and list all of them (closes codecheckers/codecheck#97).
