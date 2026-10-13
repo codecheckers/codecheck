@@ -14,7 +14,7 @@ include_validated_image(
   caption,
   name = basename(path),
   attributes = "",
-  base_dir = NULL
+  base_dir = quarto_document_dir()
 )
 ```
 
@@ -39,7 +39,8 @@ include_validated_image(
 - base_dir:
 
   \- Directory the image is linked relative to, or `NULL` to link it by
-  `path`; files are read by `path` either way
+  `path`; files are read by `path` either way. Defaults to the
+  document's directory when Quarto renders it, and `NULL` otherwise.
 
 ## Value
 

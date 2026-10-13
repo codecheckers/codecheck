@@ -299,6 +299,10 @@
 - [`detect_report_platform()`](http://codecheck.org.uk/codecheck/reference/detect_report_platform.md)
   : Detect the publication platform from a report URL
 
+- [`docs_depth()`](http://codecheck.org.uk/codecheck/reference/docs_depth.md)
+  : The number of directory levels a directory is below the "docs"
+  folder
+
 - [`download_cert_pdf()`](http://codecheck.org.uk/codecheck/reference/download_cert_pdf.md)
   : Downloads a certificate PDF from a report link and saves it locally.
   If the download link is a ZIP file, it extracts the PDF from the
@@ -665,6 +669,10 @@
 
 - [`register_update_stats()`](http://codecheck.org.uk/codecheck/reference/register_update_stats.md)
   : Regenerate all statistics files from existing register.json files
+
+- [`remove_render_temp_files()`](http://codecheck.org.uk/codecheck/reference/remove_render_temp_files.md)
+  : Removes the temporary files a page render writes into its output
+  directory
 
 - [`render_cert_html()`](http://codecheck.org.uk/codecheck/reference/render_cert_html.md)
   : Renders an HTML certificate file from a Markdown template for a

@@ -8,7 +8,8 @@ Render manifest files for certificate output
 render_manifest_files(
   manifest_df,
   json_max_lines = 50,
-  base_dir = quarto_document_dir()
+  base_dir = quarto_document_dir(),
+  metadata = NULL
 )
 ```
 
@@ -29,6 +30,11 @@ render_manifest_files(
   by their paths in \`manifest_df\`. Defaults to the document's
   directory when Quarto renders it, and \`NULL\` otherwise. Files are
   read by their paths in \`manifest_df\` either way.
+
+- metadata:
+
+  \- the CODECHECK metadata list, for the comment of a manifest that
+  declares a check without output files
 
 ## Value
 

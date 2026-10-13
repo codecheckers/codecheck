@@ -5,7 +5,12 @@ Internal helper function to render SVG files (converts to PDF first).
 ## Usage
 
 ``` r
-render_manifest_svg(path, comment, name = basename(path), base_dir = NULL)
+render_manifest_svg(
+  path,
+  comment,
+  name = basename(path),
+  base_dir = quarto_document_dir()
+)
 ```
 
 ## Arguments
@@ -26,7 +31,8 @@ render_manifest_svg(path, comment, name = basename(path), base_dir = NULL)
 - base_dir:
 
   \- Directory the image is linked relative to, or `NULL` to link it by
-  `path`; files are read by `path` either way
+  `path`; files are read by `path` either way. Defaults to the
+  document's directory when Quarto renders it, and `NULL` otherwise.
 
 ## Value
 

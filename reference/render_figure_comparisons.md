@@ -8,7 +8,12 @@ with `results = "asis"`.
 ## Usage
 
 ``` r
-render_figure_comparisons(files, captions = basename(files), width = "85%")
+render_figure_comparisons(
+  files,
+  captions = basename(files),
+  width = "85%",
+  base_dir = quarto_document_dir()
+)
 ```
 
 ## Arguments
@@ -25,6 +30,12 @@ render_figure_comparisons(files, captions = basename(files), width = "85%")
 - width:
 
   Width of the figures in the certificate.
+
+- base_dir:
+
+  Directory to link the images relative to, or `NULL` to link them by
+  `files`. Defaults to the document's directory when Quarto renders it,
+  and `NULL` otherwise.
 
 ## Value
 

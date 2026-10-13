@@ -45,8 +45,8 @@
 - The Rmd and Quarto templates call the package’s functions as
   `codecheck::fn()`, so it is clear which functions come from the
   package.
-- The Quarto template sets code and its output in 7pt, so that about 120
-  characters fit on a line.
+- The Quarto template sets code and its output in 7pt and R’s output
+  width to 120, so that about 120 characters fit on a line.
 - [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
   reports the deposit’s files as rules `CC-REP-007` to `CC-REP-010`,
   which replace `CC-REP-003` (closes codecheckers/codecheck#95).
@@ -72,9 +72,19 @@
 - The `codecheck.yml` template declares the YAML version with
   `%YAML 1.1`, as the specification recommends
   (codecheckers/codecheck#100).
+- A manifest of a single item with only a `comment` declares a check
+  without output files, and the certificate shows the comment instead of
+  a warning box.
+- Rule `CC-CFG-005` `manifest-item-file` accepts a single manifest item
+  with only a `comment`, for a check without output files.
 
 ### Bug Fixes
 
+- `register_render(parallel = TRUE)` no longer fails random
+  certificates, by requiring rmarkdown 2.32 or later
+  (codecheckers/codecheck#88).
+- A failed page render no longer leaves temporary files or a `libs/`
+  folder behind in the page’s directory (codecheckers/codecheck#88).
 - The certificate summary tables no longer fail when `codecheck.yml`
   lists several `repository` URLs, and list all of them (closes
   codecheckers/codecheck#97).
@@ -112,8 +122,8 @@
   whose headings still show the original names, and warns when two files
   would get the same copy (codecheckers/codecheck#98).
 - Rule `CC-MET-005` `paper-title-match` accepts a paper title that
-  includes the subtitle Crossref registers separately from the main
-  title OpenAlex holds (closes codecheckers/codecheck#96).
+  includes the subtitle Crossref or DataCite registers separately from
+  the main title OpenAlex holds (closes codecheckers/codecheck#96).
 - [`zenodo_policy_check()`](http://codecheck.org.uk/codecheck/reference/zenodo_policy_check.md)
   reports a deposit without a PDF, or with more than one of
   `codecheck.Rmd`, `codecheck.qmd` and `codecheck.ipynb`, as a warning
@@ -152,6 +162,22 @@
   names such as `run_all.R`, but not in math or LaTeX commands.
 - `http(s)` URLs in the certificate’s summary are links that break
   across lines, instead of running past the margin.
+- A certificate whose `codecheck.yml` lists no manifest files renders
+  with a warning box instead of failing with “a character vector
+  argument expected”.
+- [`copy_manifest_files()`](http://codecheck.org.uk/codecheck/reference/copy_manifest_files.md)
+  and
+  [`list_manifest_files()`](http://codecheck.org.uk/codecheck/reference/list_manifest_files.md)
+  accept manifest items without the optional `comment`, instead of
+  failing with “arguments imply differing number of rows”.
+- The certificate’s summary table and “Citing this document” escape `&`,
+  `%`, `#` and `_` in the names of authors and codecheckers, instead of
+  failing to compile.
+- [`render_figure_comparisons()`](http://codecheck.org.uk/codecheck/reference/render_figure_comparisons.md)
+  links the images relative to a Quarto certificate, like
+  [`render_manifest_files()`](http://codecheck.org.uk/codecheck/reference/render_manifest_files.md),
+  so that absolute paths in the certificate’s directory work too
+  (codecheckers/codecheck#93).
 
 ## codecheck 0.31.0
 

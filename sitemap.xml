@@ -161,6 +161,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/curate_zenodo_record.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/default_cert_title.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/detect_report_platform.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/docs_depth.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/donut_slice_path.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/download_cert_pdf.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/download_library_file.html</loc></url>
@@ -367,6 +368,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_render_cert.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_ror_coverage.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/register_update_stats.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/remove_render_temp_files.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/rename_paper_title_column_for_display.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_cert_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_cert_htmls.html</loc></url>

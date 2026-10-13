@@ -48,7 +48,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">render_manifest_files</span><span class="op">(</span></span>
 <span>  <span class="va">manifest_df</span>,</span>
 <span>  json_max_lines <span class="op">=</span> <span class="fl">50</span>,</span>
-<span>  base_dir <span class="op">=</span> <span class="fu">quarto_document_dir</span><span class="op">(</span><span class="op">)</span></span>
+<span>  base_dir <span class="op">=</span> <span class="fu">quarto_document_dir</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  metadata <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -69,6 +70,11 @@
 link them by their paths in `manifest_df`. Defaults to the document's
 directory when Quarto renders it, and `NULL` otherwise. Files are read by
 their paths in `manifest_df` either way.</p></dd>
+
+
+<dt id="arg-metadata">metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
+<dd><p>- the CODECHECK metadata list, for the comment of a manifest
+that declares a check without output files</p></dd>
 
 </dl></div>
     <div class="section level2">
