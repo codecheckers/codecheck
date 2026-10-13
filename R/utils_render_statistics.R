@@ -28,6 +28,7 @@ render_statistics_page <- function(docs_dir = "docs") {
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
+  on.exit(remove_render_temp_files(output_dir), add = TRUE)
 
   table_details <- list(is_reg_table = FALSE)
   base_path <- ".."
@@ -70,13 +71,6 @@ render_statistics_page <- function(docs_dir = "docs") {
   temp_md_path <- file.path(output_dir, "temp.md")
   writeLines(md_content, temp_md_path)
 
-  temp_files <- file.path(output_dir, c("temp.md", "index_header.html", "index_prefix.html", "index_postfix.html", "html_document.yml"))
-  on.exit({
-    for (f in temp_files) {
-      if (file.exists(f)) file.remove(f)
-    }
-  }, add = TRUE)
-
   yaml_path <- normalizePath(file.path(getwd(), output_dir, "html_document.yml"))
 
   # See register.R's register_render() (codecheckers/codecheck#89): without
@@ -99,7 +93,6 @@ render_statistics_page <- function(docs_dir = "docs") {
 
   html_file_path <- file.path(output_dir, "index.html")
   edit_html_lib_paths(html_file_path)
-  unlink(file.path(output_dir, "libs"), recursive = TRUE)
 
   cli::cli_alert_success("Rendered statistics dashboard to {.path {html_file_path}}")
   invisible(html_file_path)

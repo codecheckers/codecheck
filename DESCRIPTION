@@ -34,7 +34,7 @@ Imports:
     yaml,
     xtable,
     stringr,
-    rmarkdown,
+    rmarkdown (>= 2.32),
     knitr,
     jsonlite,
     assertthat,

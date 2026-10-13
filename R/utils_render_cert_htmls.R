@@ -261,32 +261,6 @@ render_cert_htmls <- function(register_table, force_download = FALSE, parallel =
     theoretical_speedup <- nrow(register_table) * avg_time / elapsed_total
     efficiency <- theoretical_speedup / ncores
     cli::cli_alert_info("Speedup: {sprintf('%.2fx', theoretical_speedup)} | Efficiency: {sprintf('%.1f%%', efficiency * 100)}")
-
-    # Clean up stray libs/ folders left behind by parallel rendering.
-    # In parallel mode, forked processes share /tmp, causing occasional pandoc
-    # temp file conflicts. When rmarkdown::render() fails mid-render, the libs/
-    # folder it created isn't cleaned up because the error skips unlink().
-    certs_base <- CONFIG$CERTS_DIR[["cert"]]
-    cert_dirs <- list.dirs(certs_base, recursive = FALSE)
-    stray_libs <- file.path(cert_dirs, "libs")
-    stray_libs <- stray_libs[dir.exists(stray_libs)]
-    if (length(stray_libs) > 0) {
-      for (lib_dir in stray_libs) {
-        unlink(lib_dir, recursive = TRUE)
-      }
-      cli::cli_alert_warning("Cleaned up {length(stray_libs)} stray libs/ folder{?s} from parallel rendering")
-    }
-
-    # Clean up stray temporary HTML files left behind by failed renders
-    stray_temp_names <- c("index_header.html", "index_prefix.html", "index_postfix.html", "html_document.yml", "temp.md")
-    stray_temps <- unlist(lapply(cert_dirs, function(d) {
-      files <- file.path(d, stray_temp_names)
-      files[file.exists(files)]
-    }))
-    if (length(stray_temps) > 0) {
-      file.remove(stray_temps)
-      cli::cli_alert_warning("Cleaned up {length(stray_temps)} stray temporary file{?s} from parallel rendering")
-    }
   }
 
   invisible(list(n = nrow(register_table), failures = failures))
@@ -333,23 +307,19 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
   cert_title <- resolve_cert_title(cert_id, config_yml$report,
                                    prune_unavailable = prune_unavailable)
 
-  create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue, openalex_id, abstract_data)
-
   output_dir <- file.path(CONFIG$CERTS_DIR[["cert"]], cert_id)
   temp_md_path <- file.path(output_dir, "temp.md")
+
+  # Schedule cleanup of temporary files so they are removed even if creating
+  # them or render() fails
+  on.exit(remove_render_temp_files(output_dir), add = TRUE)
+
+  create_cert_md(cert_id, repo_link, download_cert_status, cert_type, cert_venue, openalex_id, abstract_data)
 
   # Creating html document yml with breadcrumbs and schema.org metadata
   create_cert_page_section_files(output_dir, cert_id, cert_type, cert_venue, repo_link, openalex_id,
                                  abstract_data, cert_title)
   generate_html_document_yml(output_dir)
-
-  # Schedule cleanup of temporary files so they are removed even if render() fails
-  temp_files <- file.path(output_dir, c("temp.md", "index_header.html", "index_prefix.html", "index_postfix.html", "html_document.yml"))
-  on.exit({
-    for (f in temp_files) {
-      if (file.exists(f)) file.remove(f)
-    }
-  }, add = TRUE)
 
   yaml_path <- normalizePath(file.path(getwd(), file.path(output_dir, "html_document.yml")))
 
@@ -364,13 +334,10 @@ render_cert_html <- function(cert_id, repo_link, download_cert_status, cert_type
   )
 
   # Adjusting the path to the libs folder in the html itself
-  # so that the path to the libs folder refers to the libs folder "docs/libs".
-  # This is done to remove duplicates of "libs" folders.
+  # so that the path to the libs folder refers to the libs folder "docs/libs",
+  # and the page's own libs/ folder, removed on exit, is not needed.
   html_file_path <- file.path(output_dir, "index.html")
   edit_html_lib_paths(html_file_path)
-
-  # Deleting the libs folder after changing the html lib path
-  unlink(file.path(output_dir, "libs"), recursive = TRUE)
 
   # Generate JSON file with certificate metadata
   generate_cert_json(cert_id, repo_link, cert_type, cert_venue, openalex_id, abstract_data, cert_title)
