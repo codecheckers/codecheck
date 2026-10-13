@@ -80,6 +80,8 @@
 
 ### Bug Fixes
 
+- The certificate’s warning box shows a warning sign instead of a blank
+  on each side of “WARNING”.
 - `register_render(parallel = TRUE)` no longer fails random
   certificates, by requiring rmarkdown 2.32 or later
   (codecheckers/codecheck#88).

@@ -75,7 +75,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>
+<ul><li>The certificate’s warning box shows a warning sign instead of a blank on each side of “WARNING”.</li>
+<li>
 <code>register_render(parallel = TRUE)</code> no longer fails random certificates, by requiring rmarkdown 2.32 or later (codecheckers/codecheck#88).</li>
 <li>A failed page render no longer leaves temporary files or a <code>libs/</code> folder behind in the page’s directory (codecheckers/codecheck#88).</li>
 <li>The certificate summary tables no longer fail when <code>codecheck.yml</code> lists several <code>repository</code> URLs, and list all of them (closes codecheckers/codecheck#97).</li>
