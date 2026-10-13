@@ -21,6 +21,8 @@
 * `check_zenodo_record()` and `check_register_zenodo_policy()` compare each record with its certificate's `codecheck.yml` (codecheckers/codecheck#100).
 * `validate_register_rules()` checks that each `Issue` number is an issue of codecheckers/register (`CC-REG-006`) whose title names the certificate (`CC-REG-007`) (codecheckers/codecheck#100).
 * The `codecheck.yml` template declares the YAML version with `%YAML 1.1`, as the specification recommends (codecheckers/codecheck#100).
+* A manifest of a single item with only a `comment` declares a check without output files, and the certificate shows the comment instead of a warning box.
+* Rule `CC-CFG-005` `manifest-item-file` accepts a single manifest item with only a `comment`, for a check without output files.
 
 ## Bug Fixes
 

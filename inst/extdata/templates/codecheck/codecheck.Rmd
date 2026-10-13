@@ -156,7 +156,7 @@ I suggest to the authors to consider the following suggestions for their next pu
 # Manifest files
 
 ```{r manifest_files, echo=FALSE, results="asis", width=100}
-codecheck::render_manifest_files(manifest_df)
+codecheck::render_manifest_files(manifest_df, metadata = metadata)
 ```
 
 ```{r figure_comparisons, eval=FALSE, include=FALSE, results="asis"}

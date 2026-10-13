@@ -7,7 +7,8 @@
 render_manifest_files(
   manifest_df,
   json_max_lines = 50,
-  base_dir = quarto_document_dir()
+  base_dir = quarto_document_dir(),
+  metadata = NULL
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ render_manifest_files(
 link them by their paths in `manifest_df`. Defaults to the document's
 directory when Quarto renders it, and `NULL` otherwise. Files are read by
 their paths in `manifest_df` either way.}
+
+\item{metadata}{- the CODECHECK metadata list, for the comment of a manifest
+that declares a check without output files}
 }
 \value{
 NULL (outputs directly via cat() for knitr/rmarkdown)

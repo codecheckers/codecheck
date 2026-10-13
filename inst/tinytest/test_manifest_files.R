@@ -241,6 +241,31 @@ expect_false(grepl("\\\\\n}}", summary_text, fixed = TRUE), info = "no line brea
 expect_equal(capture.output(render_manifest_files(empty_df, base_dir = NULL))[1],
              "The manifest lists no files.")
 
+# Test: a single item with only a comment declares a check without output
+# files: no warning and no box, the comment is shown instead
+no_files_md <- list(manifest = list(list(comment = "Results are printed, 95% & more_1.")),
+                    repository = "https://github.com/test/repo")
+expect_silent(no_files_df <- copy_manifest_files(tempdir(), no_files_md, tempdir()))
+expect_equal(nrow(no_files_df), 0L)
+expect_silent(list_manifest_files(tempdir(), no_files_md, tempdir()))
+no_files_text <- paste(capture.output(latex_summary_of_manifest(no_files_md, no_files_df,
+                                                                tempdir())), collapse = "\n")
+expect_false(grepl("WARNING", no_files_text, fixed = TRUE))
+expect_true(grepl("\\textbf{No output files:} Results are printed, 95\\% \\& more\\_1.",
+                  no_files_text, fixed = TRUE))
+no_files_md_out <- capture.output(render_manifest_files(no_files_df, base_dir = NULL,
+                                                         metadata = no_files_md))
+expect_equal(no_files_md_out[1:3], c("```{=latex}", "Results are printed, 95\\% \\& more\\_1.", "```"))
+# a blank file: is an entry not filled in yet, and a bare string no item
+expect_error(list_manifest_files(tempdir(), list(manifest = list(
+  list(file = "", comment = "Figure 2"))), tempdir()), pattern = "exactly one 'file'")
+expect_error(list_manifest_files(tempdir(), list(manifest = "see stdout"), tempdir()),
+             pattern = "exactly one 'file'")
+# a comment-only item among files is still an error
+expect_error(list_manifest_files(tempdir(), list(manifest = list(
+  list(file = "a.txt"), list(comment = "only a comment"))), tempdir()),
+  pattern = "exactly one 'file'")
+
 # Test: a manifest item without the optional comment gets an empty one
 no_comment_dir <- tempfile("no_comment_")
 dir.create(file.path(no_comment_dir, "outputs"), recursive = TRUE)

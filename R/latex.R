@@ -152,8 +152,15 @@ latex_summary_of_manifest <- function(metadata, manifest_df,
                                       repository_url = NULL
                                       ) {
   if (NROW(manifest_df) == 0) {
-    latex_warning_box(paste("\\textbf{No output files are listed in the manifest of",
-                            "\\texttt{codecheck.yml}.}"))
+    # A check without output files says why in the manifest's only comment
+    no_files <- .manifest_no_files_comment(metadata$manifest)
+    if (is.null(no_files)) {
+      latex_warning_box(paste("\\textbf{No output files are listed in the manifest of",
+                              "\\texttt{codecheck.yml}.}"))
+    } else {
+      cat("\\begin{center}\n\\textbf{No output files:}", .latex_table_text_with_urls(no_files),
+          "\n\\end{center}\n\n")
+    }
     return(invisible(NULL))
   }
   m = manifest_df[, c("output", "comment", "size")]
@@ -799,14 +806,22 @@ render_manifest_unsupported <- function(path, comment, name = basename(path)) {
 ##'   link them by their paths in `manifest_df`. Defaults to the document's
 ##'   directory when Quarto renders it, and `NULL` otherwise. Files are read by
 ##'   their paths in `manifest_df` either way.
+##' @param metadata - the CODECHECK metadata list, for the comment of a manifest
+##'   that declares a check without output files
 ##' @return NULL (outputs directly via cat() for knitr/rmarkdown)
 ##' @author Daniel Nuest
 ##' @importFrom stringr str_ends
 ##' @export
 render_manifest_files <- function(manifest_df, json_max_lines = 50,
-                                  base_dir = quarto_document_dir()) {
+                                  base_dir = quarto_document_dir(), metadata = NULL) {
   if (NROW(manifest_df) == 0) {
-    cat("The manifest lists no files.\n\n")
+    no_files <- .manifest_no_files_comment(metadata$manifest)
+    if (is.null(no_files)) {
+      cat("The manifest lists no files.\n\n")
+    } else {
+      # As LaTeX, so that e.g. a leading # is not read as a Markdown heading
+      cat("```{=latex}\n", .latex_table_text_with_urls(no_files), "\n```\n\n", sep = "")
+    }
     return(invisible(NULL))
   }
   for (i in seq_len(nrow(manifest_df))) {

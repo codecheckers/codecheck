@@ -294,9 +294,12 @@ with_mocked_zenodo({
 })
 
 # Test 29: Manifest item without file field ----
+# A single comment-only item declares a check without output files, so the
+# item without a file is the second one here
 no_file_manifest_metadata <- list(
   certificate = "2024-001",
   manifest = list(
+    list(file = "test.txt", comment = "test"),
     list(comment = "No file field")
   ),
   paper = list(

@@ -105,20 +105,41 @@ list_manifest_files <- function(root, metadata, check_dir) {
 ##' @keywords internal
 ##' @noRd
 .manifest_entries <- function(manifest) {
+  if (!is.null(.manifest_no_files_comment(manifest))) {
+    return(list(file = character(0), comment = character(0)))
+  }
   manifest <- as_items(manifest)
   if (length(manifest) == 0) {
     warning("codecheck.yml lists no manifest files: add the outputs you reproduced ",
             "under 'manifest:', see https://codecheck.org.uk/spec/config/latest/",
             call. = FALSE)
   }
-  files <- lapply(manifest, function(x) x$file)
-  no_file <- !vapply(files, function(f) is.character(f) && length(f) == 1, logical(1))
+  files <- lapply(manifest, function(x) if (is.list(x)) x$file)
+  no_file <- !vapply(files, function(f) is.character(f) && length(f) == 1 && has_value(f),
+                     logical(1))
   if (any(no_file)) {
     stop("manifest item(s) ", toString(which(no_file)), " in codecheck.yml ",
          "must have exactly one 'file'", call. = FALSE)
   }
   list(file = as.character(unlist(files, use.names = FALSE)),
        comment = vapply(manifest, function(x) paste(x$comment, collapse = " "), character(1)))
+}
+
+##' The comment of a manifest that declares a check without output files
+##'
+##' A check of a workflow that writes no files declares so with a manifest of
+##' a single item with a comment and no \code{file} node, e.g.
+##' \code{manifest: [comment: "The analysis prints its results."]}.
+##' @return The comment, or \code{NULL} for any other manifest.
+##' @keywords internal
+##' @noRd
+.manifest_no_files_comment <- function(manifest) {
+  manifest <- as_items(manifest)
+  # An empty file: is an entry not filled in yet, not a declaration
+  if (length(manifest) == 1 && is.list(manifest[[1]]) &&
+      !"file" %in% names(manifest[[1]]) && has_value(manifest[[1]]$comment)) {
+    paste(manifest[[1]]$comment, collapse = " ")
+  }
 }
 
 ##' Paths of the copies of manifest files in the outputs folder

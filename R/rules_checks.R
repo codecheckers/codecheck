@@ -171,6 +171,9 @@ check_manifest_item_file <- function(context) {
   if (length(manifest) == 0) {
     return(rule_skip("no manifest to inspect"))
   }
+  if (!is.null(.manifest_no_files_comment(manifest))) {
+    return(rule_pass("the manifest declares a check without output files"))
+  }
   without_file <- which(!vapply(manifest, function(item) has_value(item$file),
                                 logical(1)))
   if (length(without_file) == 0) {

@@ -340,4 +340,20 @@ expect_equal(text_outcomes("---", other_rules, list("not a URL")),
 expect_equal(text_outcomes("---", other_rules, "https://doi.org/10.1/a")[["CC-CFG-029"]],
              "error")
 
+# A single manifest item with only a comment declares a check without output
+# files, and passes CC-CFG-005; a comment-only item among files does not.
+no_files <- complete
+no_files$manifest <- list(list(comment = "The analysis prints its results."))
+no_files_results <- validate_codecheck_yml_rules(no_files, rules = "CC-CFG-005",
+                                                 stop_on_error = FALSE, quiet = TRUE)
+expect_equal(no_files_results$outcome, "ok")
+expect_true(grepl("without output files", no_files_results$detail))
+no_files$manifest <- list(list(file = "", comment = "Figure 2"))
+expect_equal(validate_codecheck_yml_rules(no_files, rules = "CC-CFG-005", stop_on_error = FALSE,
+                                          quiet = TRUE)$outcome, "error",
+             info = "a blank file is not filled in yet")
+no_files$manifest <- list(list(file = "figure1.png"), list(comment = "Prints its results."))
+expect_equal(validate_codecheck_yml_rules(no_files, rules = "CC-CFG-005", stop_on_error = FALSE,
+                                          quiet = TRUE)$outcome, "error")
+
 assignInNamespace("codecheck_GET", online_GET, ns = "codecheck")
