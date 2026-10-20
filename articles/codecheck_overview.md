@@ -130,12 +130,14 @@ Once you have uploaded the certificate and checked the metadata, you can
 then submit the record to the CODECHECK community on Zenodo to retrieve
 feedback from a CODECHECK editor before publishing the certiciate.
 
-### Publish on OSF or ResearchEquals
+### Publish on ResearchEquals
 
 CODECHECK supports multiple repositories to publish certificates. If you
-are unfamiliar with Zenodo or prefer to user another platform, you can
-also publish your certificate on [OSF](https://osf.io/) or
-[ResearchEquals](https://researchequals.com/). Simply put the respective
+are unfamiliar with Zenodo or prefer to use another platform, you can
+also publish your certificate on
+[ResearchEquals](https://researchequals.com/). OSF is no longer an
+option: it maintains the existing records, including earlier CODECHECK
+certificates, but no new ones can be created. Simply put the respective
 DOI in the `report` field of the `codecheck.yml` file and use another
 way of communication to get feedback from the CODECHECK editor before
 publishing.

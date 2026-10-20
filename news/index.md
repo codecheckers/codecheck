@@ -75,6 +75,9 @@
 - A manifest of a single item with only a `comment` declares a check
   without output files, and the certificate shows the comment instead of
   a warning box.
+- The README and the getting started vignette no longer offer OSF for
+  publishing a certificate, because OSF accepts no new records;
+  certificates already on OSF remain valid.
 - Rule `CC-CFG-005` `manifest-item-file` accepts a single manifest item
   with only a `comment`, for a check without output files.
 

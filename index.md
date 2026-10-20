@@ -60,10 +60,10 @@ For first-time codecheckers using this R package:
     `manifest` section of `codecheck.yml`
 5.  **Complete the certificate** - Fill in the report template and
     render it
-6.  **Create a record on Zenodo** (or OSF, or ResearchEquals) and submit
-    the draft for feedback to your CODECHECK editor/contact person,
-    e.g., via a sharing link or the CODECHECK Zenodo community; push the
-    `codecheck.yml` to the repository
+6.  **Create a record on Zenodo** (or ResearchEquals; OSF accepts no new
+    records) and submit the draft for feedback to your CODECHECK
+    editor/contact person, e.g., via a sharing link or the CODECHECK
+    Zenodo community; push the `codecheck.yml` to the repository
 
 ## Key Concepts
 
