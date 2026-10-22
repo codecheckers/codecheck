@@ -2,6 +2,7 @@
 
 ## New Features
 
+* New `preview_wikidata_updates()` writes a second QuickStatements batch, `wikidata-updates.qs`, with every statement of the model that items already on Wikidata do not carry, and a report `wikidata-updates.csv` that also lists the statements whose value differs from the item's, which are not written. Each item is marked as created by the CODECHECK export (a batch in the edit log), by another QuickStatements batch, or otherwise (register#50).
 * New `generate_rules_pages()`, called by `register_render()`, writes a human-readable page per rules file to `docs/rules/<version>/`. The pages are reachable by direct URL only: not linked, not in the sitemap, `noindex`. The register's own `rules-*.yml` take precedence over the bundled copies.
 * New `publish_wikibase_pages()` rewrites every generated page on the CODECHECK Wikibase from the register and the instance as they are now, skipping pages that have not changed (`make wikibase` in the register, register#50).
 * The Wikibase Main Page is generated too, and lists every generated page, including `Project:Example queries` (register#50).
