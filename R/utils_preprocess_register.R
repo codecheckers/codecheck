@@ -529,10 +529,60 @@ add_openalex_work_fields <- function(register_table, paper_references = NULL) {
   }
 
   register_table$`Work publication date` <- publication_dates
+  register_table <- add_journal_venue_issn(register_table, CONFIG$VENUE_DATA)
 
   cli::cli_alert_success(
     "Found {sum(!is.na(register_table$`Paper ISSN`))} publication ISSN{?s} and {sum(!is.na(register_table$`Work publication date`))} publication date{?s}"
   )
+  register_table
+}
+
+#' Fill in the publication of a journal's own works that OpenAlex cannot place
+#'
+#' The publication normally comes from the work's OpenAlex record and never
+#' from the register's `Venue` column, because a conference venue spans several
+#' publications over the years. A journal is the exception: a check of type
+#' `journal` is of a work submitted to that journal, so the venue *is* the
+#' publication. Lifecycle Journal is the case this exists for: CrossRef
+#' registers its articles as posted content without an ISSN, so OpenAlex has
+#' no source for them and the works got no "published in" statement
+#' (codecheckers/register#50).
+#'
+#' Only a work OpenAlex knows but cannot place - an OpenAlex ID, and neither an
+#' ISSN nor a source name - is filled in. A work whose record names a source,
+#' such as a preprint server, keeps what OpenAlex says.
+#'
+#' @param register_table The register table, with `Type`, `Venue`, `OpenAlex`,
+#'   `Paper ISSN` and `Paper venue` columns
+#' @param venues The venues table from `venues.csv`, with `name`, `longname`
+#'   and `identifiers`; `NULL` leaves the table unchanged
+#' @return The register table, with `Paper ISSN` and `Paper venue` filled in
+#'   from the venue where that applies
+#' @keywords internal
+add_journal_venue_issn <- function(register_table, venues) {
+  needed <- c("Type", "Venue", "OpenAlex", "Paper ISSN", "Paper venue")
+  if (is.null(venues) || !all(needed %in% names(register_table)) ||
+      !all(c("name", "identifiers") %in% names(venues))) {
+    return(register_table)
+  }
+
+  fill <- which(register_table$Type == "journal" &
+                  !is.na(register_table$OpenAlex) &
+                  is.na(register_table$`Paper ISSN`) &
+                  is.na(register_table$`Paper venue`))
+  n_filled <- 0L
+  for (i in fill) {
+    venue <- venues[match(register_table$Venue[i], venues$name), , drop = FALSE]
+    if (is.na(venue$name)) next
+    issn <- wikidata_transform(venue$identifiers, "issn")
+    if (is.na(issn)) next
+    register_table$`Paper ISSN`[i] <- issn
+    register_table$`Paper venue`[i] <- if (is.null(venue$longname) || is.na(venue$longname)) venue$name else venue$longname
+    n_filled <- n_filled + 1L
+  }
+  if (n_filled > 0) {
+    cli::cli_alert_success("Took the publication ISSN of {n_filled} work{?s} from the journal's venue (OpenAlex had no source)")
+  }
   register_table
 }
 

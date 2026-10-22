@@ -384,3 +384,41 @@ packed <- codecheck:::wikibase_entity_payload(
   c(local, list(P236 = "P24")))
 expect_equal(Filter(function(claim) claim$mainsnak$property == "P24",
                     packed$claims)[[1]]$mainsnak$datavalue$value, "2047-217X")
+
+# A journal's own works that OpenAlex cannot place ----
+
+# Lifecycle Journal articles are posted content without an ISSN at CrossRef, so
+# OpenAlex has no source for them. For a check of type journal the venue is the
+# publication, and its ISSN from venues.csv stands in (register#50).
+journal_venues <- data.frame(
+  name = c("Lifecycle Journal", "AGILEGIS", "GigaScience"),
+  longname = c("Lifecycle Journal", "AGILE GIScience Series", "GigaScience"),
+  identifiers = c("ISSN|fa-book|3069-2229", "ISSN|fa-book|2700-8150", "ISSN|fa-book|2047-217X"),
+  stringsAsFactors = FALSE
+)
+unplaced <- data.frame(
+  Type = c("journal", "conference", "journal", "journal", "journal"),
+  Venue = c("Lifecycle Journal", "AGILEGIS", "GigaScience", "GigaScience", "Lifecycle Journal"),
+  OpenAlex = c("https://openalex.org/W1", "https://openalex.org/W2", "https://openalex.org/W3",
+               "https://openalex.org/W4", NA),
+  `Paper ISSN` = c(NA, NA, NA, "0027-8424", NA),
+  `Paper venue` = c(NA, NA, "bioRxiv", "PNAS", NA),
+  check.names = FALSE, stringsAsFactors = FALSE
+)
+placed <- codecheck:::add_journal_venue_issn(unplaced, journal_venues)
+expect_equal(placed$`Paper ISSN`[1], "3069-2229")
+expect_equal(placed$`Paper venue`[1], "Lifecycle Journal")
+# A conference venue is not a publication: AGILE papers appeared in different
+# series over the years.
+expect_true(is.na(placed$`Paper ISSN`[2]))
+# A source OpenAlex does name - a preprint server without an ISSN - is kept.
+expect_true(is.na(placed$`Paper ISSN`[3]))
+expect_equal(placed$`Paper venue`[3], "bioRxiv")
+# What OpenAlex knows is never overwritten.
+expect_equal(placed$`Paper ISSN`[4], "0027-8424")
+# A work OpenAlex does not know at all is not placed either.
+expect_true(is.na(placed$`Paper ISSN`[5]))
+
+# Without venues, or before the enrichment columns exist, nothing changes.
+expect_identical(codecheck:::add_journal_venue_issn(unplaced, NULL), unplaced)
+expect_identical(codecheck:::add_journal_venue_issn(unplaced[, 1:3], journal_venues), unplaced[, 1:3])

@@ -27,6 +27,7 @@
 
 ## Bug Fixes
 
+* A checked work of a `journal` venue that OpenAlex knows but cannot place (no source, no ISSN), such as a Lifecycle Journal article, takes its publication ISSN from the venue's `identifiers` in `venues.csv`, so the Wikidata export states where it was published (`P1433`) (register#50).
 * The certificate's warning box shows a warning sign instead of a blank on each side of "WARNING".
 * `register_render(parallel = TRUE)` no longer fails random certificates, by requiring rmarkdown 2.32 or later (codecheckers/codecheck#88).
 * A failed page render no longer leaves temporary files or a `libs/` folder behind in the page's directory (codecheckers/codecheck#88).

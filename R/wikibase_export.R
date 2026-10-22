@@ -387,6 +387,7 @@ read_register_records <- function(dir) {
       certificates$`Work publication date`[i] <- fields$publication_date %||% NA_character_
     }
   }
+  certificates <- add_journal_venue_issn(certificates, venues)
 
   list(certificates = certificates, venues = venues)
 }
