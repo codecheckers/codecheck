@@ -338,3 +338,45 @@ expect_equal(unname(ids$certificate["2020-001"]), "Q130000001")
 expect_equal(length(ids$certificate), 1L)
 expect_equal(codecheck:::wikidata_id_for("certificate", "2020-001"), "Q130000001")
 expect_null(codecheck:::wikidata_id_for("certificate", "2020-002"))
+
+# A venue is never an article that carries its journal's ISSN ----
+
+# An import pipeline writes the journal's ISSN onto each article as a P236 of its
+# own. The search finds the journal and the article alike, and whichever came
+# last became the "published in" of every work in that journal.
+issn_claims <- function(classes) list(
+  P31 = lapply(classes, function(q) list(mainsnak = list(datavalue = list(type = "wikibase-entityid", value = list(id = q))))),
+  P236 = list(list(mainsnak = list(datavalue = list(type = "string", value = "2045-2322"))))
+)
+searched <- character(0)
+fake_get <- function(handle, params, api) {
+  if (identical(params$list, "search")) {
+    searched <<- c(searched, params$srsearch)
+    return(list(query = list(search = list(list(title = "Q2261792"), list(title = "Q141408469")))))
+  }
+  list(entities = list(
+    Q2261792 = list(claims = issn_claims(c("Q5633421", "Q737498"))),
+    Q141408469 = list(claims = issn_claims("Q13442814"))
+  ))
+}
+with_mocked_codecheck(list(wikibase_get = fake_get), {
+  venue <- codecheck:::wikidata_resolve("venue", "2045-2322")
+  unfiltered <- codecheck:::wikidata_search_by_statement("P236", "2045-2322")
+})
+expect_equal(unname(venue["2045-2322"]), "Q2261792")
+expect_equal(searched[1], "haswbstatement:P236=2045-2322")
+# Without the exclusion the article wins, which is the bug this guards against.
+expect_equal(unname(unfiltered["2045-2322"]), "Q141408469")
+
+# The query service is asked to leave them out too.
+query <- NULL
+with_mocked_codecheck(list(wikibase_sparql = function(q, endpoint) { query <<- q; data.frame() }), {
+  codecheck:::wikidata_resolve("venue", "2045-2322", method = "sparql")
+})
+expect_true(grepl("FILTER NOT EXISTS", query, fixed = TRUE))
+expect_true(grepl("wd:Q13442814", query, fixed = TRUE))
+# A kind without exclusions is queried as before.
+with_mocked_codecheck(list(wikibase_sparql = function(q, endpoint) { query <<- q; data.frame() }), {
+  codecheck:::wikidata_resolve("paper", "10.1/X", method = "sparql")
+})
+expect_false(grepl("FILTER", query, fixed = TRUE))

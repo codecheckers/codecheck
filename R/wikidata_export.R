@@ -30,12 +30,16 @@ wikidata_resolve <- function(kind, keys, method = c("search", "sparql")) {
   if (length(keys) == 0) return(found)
 
   if (method == "search") {
-    return(wikidata_search_by_statement(model$property, keys))
+    return(wikidata_search_by_statement(model$property, keys, exclude = model$exclude))
   }
 
+  exclude <- if (length(model$exclude) > 0) {
+    paste0(" FILTER NOT EXISTS { VALUES ?class { ", paste0("wd:", model$exclude, collapse = " "),
+           " } ?item wdt:P31 ?class. }")
+  } else ""
   for (chunk in wikibase_values_chunks(keys, size = 60)) {
     query <- paste0("SELECT ?item ?value WHERE { VALUES ?value { ", chunk,
-                    " } ?item wdt:", model$property, " ?value. }")
+                    " } ?item wdt:", model$property, " ?value.", exclude, " }")
     result <- wikibase_sparql(query, model$endpoint)
     if (nrow(result) == 0) next
     qids <- sub("^.*/", "", result$item)
@@ -74,9 +78,12 @@ haswbstatement_search <- function(property, values) {
 #' @param property the Wikidata property to match on, e.g. `"P356"`
 #' @param values the identifier values
 #' @param size how many values to put in one search
+#' @param exclude classes whose instances never match: an item that is an
+#'   instance (`P31`) of one of them is skipped even though it carries the value
 #' @return a named character vector, value to QID, holding only what exists
 #' @keywords internal
-wikidata_search_by_statement <- function(property, values, size = 20) {
+wikidata_search_by_statement <- function(property, values, size = 20,
+                                         exclude = character(0)) {
   values <- unique(stats::na.omit(values))
   found <- stats::setNames(character(0), character(0))
   if (length(values) == 0) return(found)
@@ -102,6 +109,10 @@ wikidata_search_by_statement <- function(property, values, size = 20) {
         action = "wbgetentities", ids = paste(batch, collapse = "|"), props = "claims"
       ), api = WIKIDATA_API)$entities
       for (id in names(entities)) {
+        classes <- vapply(entities[[id]]$claims$P31 %||% list(), function(claim) {
+          claim$mainsnak$datavalue$value$id %||% NA_character_
+        }, character(1))
+        if (any(classes %in% exclude)) next
         for (claim in entities[[id]]$claims[[property]]) {
           value <- claim$mainsnak$datavalue$value
           if (!is.character(value)) next

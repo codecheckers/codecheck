@@ -4,7 +4,12 @@
 \alias{wikidata_search_by_statement}
 \title{Find items by a statement they carry, through the search index}
 \usage{
-wikidata_search_by_statement(property, values, size = 20)
+wikidata_search_by_statement(
+  property,
+  values,
+  size = 20,
+  exclude = character(0)
+)
 }
 \arguments{
 \item{property}{the Wikidata property to match on, e.g. `"P356"`}
@@ -12,6 +17,9 @@ wikidata_search_by_statement(property, values, size = 20)
 \item{values}{the identifier values}
 
 \item{size}{how many values to put in one search}
+
+\item{exclude}{classes whose instances never match: an item that is an
+instance (`P31`) of one of them is skipped even though it carries the value}
 }
 \value{
 a named character vector, value to QID, holding only what exists

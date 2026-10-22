@@ -526,11 +526,16 @@ WIKIDATA_MODEL <- list(
     # conference is not a publication at all. venues.csv identifiers (ISSN,
     # ROR) are a cross-check for the venues the register itself shows, not the
     # authority for what a given paper was published in.
+    # Articles and preprints are excluded: an import pipeline running since
+    # 2026 writes the journal's ISSN onto each article as a P236 of its own -
+    # Q141408469 carries Scientific Reports' - and an ISSN that matched one of
+    # those made that article the "published in" of every work in the journal.
     resolve = list(
       property = "P236",
       field = "issn",
       transform = "issn",
-      endpoint = "main"
+      endpoint = "main",
+      exclude = c(WIKIDATA_ITEMS$scholarly_article, WIKIDATA_ITEMS$preprint)
     ),
     create = list(wikidata = FALSE, wikibase = TRUE),
     statements = list(

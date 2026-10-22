@@ -28,6 +28,7 @@
 
 ## Bug Fixes
 
+* The Wikidata export no longer resolves a journal's ISSN to an article that carries the same ISSN (`P236`), which an import pipeline writes onto articles: such an article became the `published in` of every new work in that journal, e.g. Q141408469 for Scientific Reports. Venue resolution now skips instances of scholarly article and preprint (register#50).
 * A checked work of a `journal` venue that OpenAlex knows but cannot place (no source, no ISSN), such as a Lifecycle Journal article, takes its publication ISSN from the venue's `identifiers` in `venues.csv`, so the Wikidata export states where it was published (`P1433`) (register#50).
 * The certificate's warning box shows a warning sign instead of a blank on each side of "WARNING".
 * `register_render(parallel = TRUE)` no longer fails random certificates, by requiring rmarkdown 2.32 or later (codecheckers/codecheck#88).
