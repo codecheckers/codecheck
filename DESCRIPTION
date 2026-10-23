@@ -65,4 +65,4 @@ Suggests:
     skimr,
     rprojroot
 URL: http://codecheck.org.uk/codecheck/, https://github.com/codecheckers/codecheck
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 8.1.1
