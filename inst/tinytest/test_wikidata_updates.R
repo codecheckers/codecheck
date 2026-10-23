@@ -9,7 +9,10 @@ item <- function(id) claim("wikibase-entityid", list(id = id))
 
 expect_equal(codecheck:::quickstatements_token_key("Q42"), "Q42")
 expect_equal(codecheck:::quickstatements_token_key("+2025-05-15T00:00:00Z/11"), "2025-05-15")
-expect_equal(codecheck:::quickstatements_token_key("en:\"A \\\"quoted\\\" title\""), "A \"QUOTED\" TITLE")
+expect_equal(codecheck:::quickstatements_token_key("en:\"A \"quoted\" title\""), "A \"QUOTED\" TITLE")
+# A title stored with the backslashes of an escaped batch is a different title.
+expect_false(codecheck:::quickstatements_token_key("en:\"A \"quoted\" title\"") ==
+               codecheck:::wikidata_claim_key(claim("monolingualtext", list(text = "A \\\"quoted\\\" title", language = "en"))))
 # Wikidata stores DOIs uppercased, mostly; the comparison does not care.
 expect_equal(codecheck:::quickstatements_token_key("\"10.71240/lcyc.052239\""), "10.71240/LCYC.052239")
 
@@ -83,3 +86,68 @@ ids <- codecheck:::wikidata_logged_batch_ids(log)
 expect_true(all(c("1788464327978", "270374") %in% ids))
 # A batch that was only prepared created nothing.
 expect_false("999999" %in% ids)
+
+# What the export wrote itself, and the register no longer supports ----
+
+ours <- list(list(snaks = list(P854 = list(list(datavalue = list(
+  value = "https://codecheck.org.uk/register/certs/2026-001/"))))))
+theirs <- list(list(snaks = list(P248 = list(list(datavalue = list(value = list(id = "Q5188229")))))))
+with_refs <- function(claim, references) { claim$references <- references; claim }
+
+expect_equal(codecheck:::wikidata_claim_provenance(with_refs(item("Q1"), ours)), "ours")
+expect_equal(codecheck:::wikidata_claim_provenance(with_refs(item("Q1"), c(ours, theirs))), "shared")
+expect_equal(codecheck:::wikidata_claim_provenance(with_refs(item("Q1"), theirs)), "theirs")
+expect_equal(codecheck:::wikidata_claim_provenance(item("Q1")), "theirs")
+
+# Values are written back exactly as stored, which is how QuickStatements finds
+# the statement to remove.
+expect_equal(codecheck:::wikidata_claim_token(claim("time", list(time = "+2026-04-29T00:00:00Z", precision = 11))),
+             "+2026-04-29T00:00:00Z/11")
+expect_equal(codecheck:::wikidata_claim_token(claim("string", "W4415698124")), "\"W4415698124\"")
+expect_equal(codecheck:::wikidata_claim_token(item("Q50812078")), "Q50812078")
+
+# 2026-001: OpenAlex answered the preprint's DOI with the published article, and
+# the export wrote that article's OpenAlex ID, date and journal onto the
+# preprint. Now the model writes the preprint's own date and nothing else.
+preprint_claims <- list(
+  P31 = list(with_refs(item("Q580922"), ours)),
+  P1476 = list(with_refs(claim("monolingualtext", list(text = "A \\\"kite\\\" study", language = "en")), ours)),
+  P10283 = list(with_refs(claim("string", "W4415698124"), ours)),
+  P577 = list(with_refs(claim("time", list(time = "+2026-04-29T00:00:00Z", precision = 11)), ours)),
+  P1433 = list(with_refs(item("Q50812078"), c(ours, theirs)))
+)
+preprint_commands <- c("Q9\tP31\tQ580922", "Q9\tP577\t+2025-10-30T00:00:00Z/11",
+                       "Q9\tP1476\ten:\"A \"kite\" study\"")
+fixed <- codecheck:::wikidata_missing_statements(
+  preprint_commands, preprint_claims, item = "Q9",
+  properties = c("P31", "P1476", "P10283", "P577", "P1433"),
+  rejected = list(P10283 = "W4415698124", P1433 = "Q50812078", P577 = "2026-04-29"))
+
+# The OpenAlex ID is known to be wrong; the date and the title are replaced by
+# the model's own, and the title is removed with the backslashes it is stored
+# with, which is how QuickStatements finds it.
+expect_equal(sort(fixed$command[fixed$action == "remove"]),
+             sort(c("-Q9\tP10283\t\"W4415698124\"", "-Q9\tP577\t+2026-04-29T00:00:00Z/11",
+                    "-Q9\tP1476\ten:\"A \\\"kite\\\" study\"")))
+expect_equal(fixed$action[fixed$property == "P1476" & !is.na(fixed$proposed)], "add")
+# The wrong date is removed, so the right one is an addition, not a difference.
+expect_equal(fixed$action[fixed$property == "P577" & !is.na(fixed$proposed)], "add")
+# Somebody else referenced the journal too: reported, not removed.
+expect_equal(fixed$action[fixed$property == "P1433"], "shared")
+expect_true(is.na(fixed$command[fixed$property == "P1433"]))
+# What the model still writes stays.
+expect_false("P31" %in% fixed$property)
+
+# What the model writes nothing for is not wrong for that reason: the arXiv
+# preprint keeps "published in arXiv" after the register lost its OpenAlex
+# record, and the certificate its "review of" when the work cannot be resolved.
+arxiv_claims <- list(P1433 = list(with_refs(item("Q118398"), ours)),
+                     P10283 = list(with_refs(claim("string", "W6948154681"), ours)))
+kept <- codecheck:::wikidata_missing_statements(
+  character(0), arxiv_claims, item = "Q8", properties = c("P1433", "P10283"),
+  rejected = list(P10283 = "W6948154681"))
+expect_equal(kept$property, "P10283")
+expect_equal(kept$action, "remove")
+
+# Without the item and the model's properties, nothing is ever removed.
+expect_false(any(codecheck:::wikidata_missing_statements(preprint_commands, preprint_claims)$action == "remove"))

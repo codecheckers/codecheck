@@ -126,18 +126,27 @@ wikidata_search_by_statement <- function(property, values, size = 20,
 }
 #' Render one value as QuickStatements v1 writes it
 #'
+#' QuickStatements takes a statement's string value literally between its
+#' enclosing quotes, so a quote inside it must not be escaped: the batch that
+#' created the works stored the backslashes of `How close is \\"close\\"?` as
+#' part of the title (Q141269461). A label or description is unescaped by
+#' QuickStatements - the same item's label came out right - so those keep the
+#' escaping.
+#'
 #' @param datatype the property's Wikibase datatype
 #' @param value the value
+#' @param escape whether to escape double quotes, for labels and descriptions
 #' @return the value as a QuickStatements token
 #' @keywords internal
-quickstatements_value <- function(datatype, value) {
+quickstatements_value <- function(datatype, value, escape = FALSE) {
+  if (escape) value <- gsub("\"", "\\\\\"", value)
   switch(
     datatype,
     "wikibase-item" = value,
     # Day precision, which is all a check date claims.
     time = paste0("+", value, "T00:00:00Z/11"),
-    monolingualtext = paste0("en:\"", gsub("\"", "\\\\\"", value), "\""),
-    paste0("\"", gsub("\"", "\\\\\"", value), "\"")
+    monolingualtext = paste0("en:\"", value, "\""),
+    paste0("\"", value, "\"")
   )
 }
 
@@ -169,11 +178,11 @@ quickstatements_for_entity <- function(kind, row, qid = NULL, resolve = NULL) {
     description <- render(model$description)
     if (!is.null(label)) {
       if (nchar(label) > 250) label <- paste0(substr(label, 1, 247), "...")
-      commands <- c(commands, paste(subject, "Len", quickstatements_value("string", label), sep = "\t"))
+      commands <- c(commands, paste(subject, "Len", quickstatements_value("string", label, escape = TRUE), sep = "\t"))
     }
     if (!is.null(description)) {
       commands <- c(commands, paste(subject, "Den",
-                                    quickstatements_value("string", description), sep = "\t"))
+                                    quickstatements_value("string", description, escape = TRUE), sep = "\t"))
     }
   }
 

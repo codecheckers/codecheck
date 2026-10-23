@@ -376,11 +376,36 @@ read_register_records <- function(dir) {
   for (column in c("Paper ISSN", "Paper venue", "Work publication date")) {
     if (!column %in% names(certificates)) certificates[[column]] <- NA_character_
   }
-  fill <- which(is.na(certificates$`Paper ISSN`) & !is.na(certificates$OpenAlex))
-  for (i in fill) {
-    fields <- tryCatch(get_openalex_work_fields_cached_result(certificates$OpenAlex[i])$value,
+  certificates$`Rejected OpenAlex` <- NA_character_
+  for (i in which(!is.na(certificates$OpenAlex))) {
+    result <- tryCatch(get_openalex_work_fields_cached_result(certificates$OpenAlex[i]),
                        error = function(e) NULL)
+    fields <- result$value
     if (is.null(fields)) next
+    # A record that describes another work - the published version a preprint
+    # was merged into - is that work's OpenAlex ID, publication and date, none
+    # of which are true of the work the export describes. The certificate page
+    # still links the record; Wikidata's work item does not get it. A
+    # register.json rendered before the render rejected such records still
+    # carries their values, so they are dropped here too. So is an ID whose
+    # record OpenAlex deleted when it merged the preprint away: it identifies
+    # nothing any more.
+    #
+    # The ID is kept as `Rejected OpenAlex`, so that preview_wikidata_updates()
+    # can take back what an earlier export wrote from it.
+    if (identical(result$status, "absent") ||
+        !openalex_record_is_work(fields$doi, certificates$`Paper reference`[i])) {
+      if (identical(certificates$`Work publication date`[i], fields$publication_date)) {
+        fallback <- get_fallback_publication_date(certificates$`Paper reference`[i])
+        certificates$`Work publication date`[i] <- fallback$value
+      }
+      certificates$`Paper ISSN`[i] <- NA_character_
+      certificates$`Paper venue`[i] <- NA_character_
+      certificates$`Rejected OpenAlex`[i] <- certificates$OpenAlex[i]
+      certificates$OpenAlex[i] <- NA_character_
+      next
+    }
+    if (!is.na(certificates$`Paper ISSN`[i])) next
     certificates$`Paper ISSN`[i] <- fields$issn %||% NA_character_
     certificates$`Paper venue`[i] <- fields$venue %||% NA_character_
     if (is.na(certificates$`Work publication date`[i])) {

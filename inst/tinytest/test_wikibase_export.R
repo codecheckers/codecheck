@@ -1,4 +1,5 @@
 tinytest::using(ttdo)
+source("mocks.R")
 
 # Everything up to wikibase_entity_payload() is pure: rows and a mapping in,
 # the data a write would send out. That is what makes a rehearsal meaningful,
@@ -422,3 +423,29 @@ expect_true(is.na(placed$`Paper ISSN`[5]))
 # Without venues, or before the enrichment columns exist, nothing changes.
 expect_identical(codecheck:::add_journal_venue_issn(unplaced, NULL), unplaced)
 expect_identical(codecheck:::add_journal_venue_issn(unplaced[, 1:3], journal_venues), unplaced[, 1:3])
+
+# An OpenAlex record that describes another work ----
+
+# OpenAlex merges a preprint into its published version, so looking the
+# preprint's DOI up answers with the journal article.
+expect_false(codecheck:::openalex_record_is_work(
+  "https://doi.org/10.1371/journal.pone.0295003", "https://doi.org/10.1101/2023.07.11.548542"))
+expect_true(codecheck:::openalex_record_is_work(
+  "https://doi.org/10.71240/lcyc.052239", "https://doi.org/10.71240/LCYC.052239"))
+# OpenAlex spells some old DOIs with slashes where CrossRef has underscores.
+expect_true(codecheck:::openalex_record_is_work(
+  "https://doi.org/10.1088/0954-898x/3/1/008", "https://doi.org/10.1088/0954-898X_3_1_008"))
+# What cannot be compared passes.
+expect_true(codecheck:::openalex_record_is_work(NA_character_, "https://doi.org/10.1/x"))
+expect_true(codecheck:::openalex_record_is_work("https://doi.org/10.1/x", "https://arxiv.org/abs/2104.00718"))
+expect_true(codecheck:::openalex_record_is_work("https://doi.org/10.1/x", NULL))
+
+merged <- function(openalex_id) list(status = "found", value = list(
+  issn = "1932-6203", venue = "PLoS ONE", publication_date = "2023-11-30",
+  doi = "https://doi.org/10.1371/journal.pone.0295003"))
+with_mocked_codecheck(list(get_openalex_work_fields_cached_result = merged), {
+  of_preprint <- codecheck:::get_openalex_work_fields_for("W4389166412", "https://doi.org/10.1101/2023.07.11.548542")
+  of_article <- codecheck:::get_openalex_work_fields_for("W4389166412", "https://doi.org/10.1371/journal.pone.0295003")
+})
+expect_true(all(is.na(unlist(of_preprint$value[c("issn", "venue", "publication_date")]))))
+expect_equal(of_article$value$issn, "1932-6203")

@@ -219,3 +219,117 @@ get_page_publication_date_cached_result <- function(url) {
     lookup = function() get_page_publication_date_result(url)
   )
 }
+
+#' The publication date of a DOI's own record
+#'
+#' Asked before the landing page when OpenAlex has no date for a work, or a
+#' date that belongs to another work: the registration agency holds what the
+#' depositor registered, and for a preprint that is the day it was posted.
+#' Landing pages are less reliable for exactly the works that need this - the
+#' bioRxiv page of 2023-011 gives `citation_publication_date` 2023/01/01, and a
+#' Copernicus discussion page shows the date of the final article.
+#'
+#' CrossRef's `posted` date comes first, as the date of posted content, then
+#' the dates of publication online, in print and of issue. DataCite records the
+#' versions of an arXiv preprint as `Submitted` dates, and the earliest full
+#' date among `Submitted`, `Available` and `Issued` is the first public
+#' version; the bare `publicationYear` is the last resort.
+#'
+#' @param reference The paper reference; anything that is not a DOI is absent
+#' @return A list with `status` ("found", "absent" or "failed") and `value`,
+#'   an ISO "YYYY-MM-DD" string or NA_character_
+#' @keywords internal
+get_registry_publication_date_result <- function(reference) {
+  absent <- list(status = "absent", value = NA_character_)
+  doi <- tolower(wikidata_transform(reference %||% NA_character_, "doi"))
+  if (is.na(doi)) return(absent)
+
+  agency <- lookup_registration_agency(doi)
+  if (is.null(agency)) return(list(status = "failed", value = NA_character_))
+  encoded <- utils::URLencode(doi, reserved = TRUE)
+  url <- switch(agency,
+    Crossref = paste0("https://api.crossref.org/works/", encoded),
+    DataCite = paste0("https://api.datacite.org/dois/", encoded),
+    return(absent))
+
+  response <- tryCatch(codecheck_GET(url), error = function(e) NULL)
+  if (is.null(response)) return(list(status = "failed", value = NA_character_))
+  if (httr::status_code(response) != 200) {
+    return(if (httr::status_code(response) == 404) absent
+           else list(status = "failed", value = NA_character_))
+  }
+  body <- tryCatch(jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
+                                      simplifyVector = FALSE),
+                   error = function(e) NULL)
+  if (is.null(body)) return(list(status = "failed", value = NA_character_))
+
+  raw <- if (agency == "Crossref") crossref_publication_date(body$message)
+         else datacite_publication_date(body$data$attributes)
+  parsed <- parse_partial_publication_date(raw)
+  if (is.na(parsed)) absent else list(status = "found", value = parsed)
+}
+
+#' The date a CrossRef record says the work was made public
+#'
+#' @param message the `message` of a CrossRef works response
+#' @return the date as "Y-M-D", "Y-M" or "Y", or `NA`
+#' @keywords internal
+crossref_publication_date <- function(message) {
+  for (field in c("posted", "published-online", "published-print", "issued")) {
+    parts <- suppressWarnings(as.integer(unlist(message[[field]]$`date-parts`[[1]])))
+    parts <- parts[!is.na(parts)]
+    if (length(parts) > 0) return(paste(parts, collapse = "-"))
+  }
+  NA_character_
+}
+
+#' The date a DataCite record says the work was made public
+#'
+#' @param attributes the `data$attributes` of a DataCite DOI response
+#' @return the date as "YYYY-MM-DD" or a partial date, or `NA`
+#' @keywords internal
+datacite_publication_date <- function(attributes) {
+  dates <- Filter(function(d) isTRUE(d$dateType %in% c("Submitted", "Available", "Issued")),
+                  attributes$dates %||% list())
+  values <- vapply(dates, function(d) as.character(d$date %||% NA_character_), character(1))
+  full <- sort(substr(values[grepl("^\\d{4}-\\d{2}-\\d{2}", values)], 1, 10))
+  if (length(full) > 0) return(full[1])
+  partial <- sort(values[!is.na(values)])
+  if (length(partial) > 0) return(partial[1])
+  if (is.null(attributes$publicationYear)) NA_character_ else as.character(attributes$publicationYear)
+}
+
+#' Cached version of get_registry_publication_date_result
+#'
+#' Keyed on the reference. Cleared by \code{\link{register_clear_cache}}.
+#'
+#' @inheritParams get_registry_publication_date_result
+#' @noRd
+get_registry_publication_date_cached_result <- function(reference) {
+  cached_lookup_result(
+    key = list("registry_publication_date", reference),
+    dirs = c("codecheck", "registry_publication_date"),
+    lookup = function() get_registry_publication_date_result(reference)
+  )
+}
+
+#' A work's publication date when OpenAlex has none of its own
+#'
+#' The registry first, then the landing page, see
+#' [get_registry_publication_date_result()].
+#'
+#' @param reference The paper reference
+#' @return A list with `status`, `value` and `source` ("registry" or "page")
+#' @keywords internal
+get_fallback_publication_date <- function(reference) {
+  for (source in c("registry", "page")) {
+    lookup <- if (source == "registry") get_registry_publication_date_cached_result
+              else get_page_publication_date_cached_result
+    result <- tryCatch(lookup(reference),
+                       error = function(e) list(status = "failed", value = NA_character_))
+    if (identical(result$status, "found") && !is.na(result$value)) {
+      return(c(result, source = source))
+    }
+  }
+  list(status = "absent", value = NA_character_, source = NA_character_)
+}

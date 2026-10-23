@@ -2,6 +2,7 @@
 
 ## New Features
 
+* `preview_wikidata_updates()` also removes statements the export wrote itself - all of whose references point into the register - when their value is known to be wrong (an OpenAlex ID whose record was deleted or describes another DOI, and that record's venue and date) or the model now writes another value, before adding the replacements. A value the model merely no longer knows stays. Statements the export wrote together with others are reported as `shared` and left alone (register#50).
 * New `preview_wikidata_updates()` writes a second QuickStatements batch, `wikidata-updates.qs`, with every statement of the model that items already on Wikidata do not carry, and a report `wikidata-updates.csv` that also lists the statements whose value differs from the item's, which are not written. Each item is marked as created by the CODECHECK export (a batch in the edit log), by another QuickStatements batch, or otherwise (register#50).
 * New `generate_rules_pages()`, called by `register_render()`, writes a human-readable page per rules file to `docs/rules/<version>/`. The pages are reachable by direct URL only: not linked, not in the sitemap, `noindex`. The register's own `rules-*.yml` take precedence over the bundled copies.
 * New `publish_wikibase_pages()` rewrites every generated page on the CODECHECK Wikibase from the register and the instance as they are now, skipping pages that have not changed (`make wikibase` in the register, register#50).
@@ -28,6 +29,10 @@
 
 ## Bug Fixes
 
+* QuickStatements batches no longer escape double quotes in statement values: QuickStatements stores them literally, so the titles of three items on Wikidata carry backslashes (`How close is \"close\"?`). Labels and descriptions, which QuickStatements does unescape, stay escaped (register#50).
+* When OpenAlex has no publication date of the work's own, the date now comes from the DOI's registration agency - CrossRef's `posted` date, DataCite's first `Submitted` or `Issued` date - before the landing page, whose meta tags give the bioRxiv preprint of 2023-011 as 2023-01-01 and the discussion paper of 2026-001 as the date of its final article (register#50).
+* The Wikidata export drops an OpenAlex ID whose record OpenAlex deleted, as it does when it merges a preprint into its published version (register#50).
+* A checked work's publication, ISSN and date are no longer taken from an OpenAlex record that describes another work. OpenAlex merges a preprint into its published version, so the preprint of 2023-011 was listed as published in PLOS ONE, with the article's date, and the Wikidata export wrote that, and the article's OpenAlex ID, onto the preprint's item. The record's DOI now has to match the paper's; the certificate page still links the record (register#50).
 * The Wikidata export no longer resolves a journal's ISSN to an article that carries the same ISSN (`P236`), which an import pipeline writes onto articles: such an article became the `published in` of every new work in that journal, e.g. Q141408469 for Scientific Reports. Venue resolution now skips instances of scholarly article and preprint (register#50).
 * A checked work of a `journal` venue that OpenAlex knows but cannot place (no source, no ISSN), such as a Lifecycle Journal article, takes its publication ISSN from the venue's `identifiers` in `venues.csv`, so the Wikidata export states where it was published (`P1433`) (register#50).
 * The certificate's warning box shows a warning sign instead of a blank on each side of "WARNING".

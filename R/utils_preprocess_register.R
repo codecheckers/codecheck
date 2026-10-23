@@ -479,8 +479,10 @@ add_openalex_ids <- function(register_table, register) {
 #' @param register_table The register table, with an `OpenAlex` column
 #' @param paper_references Optional character vector, same length and order
 #'   as `register_table`'s rows, of each work's `paper.reference` URL from its
-#'   `codecheck.yml`. Used only as a fallback (see below); pass NULL/omit to
-#'   skip it (e.g. for a per-certificate re-render with a one-row table).
+#'   `codecheck.yml`. Used to reject a record that describes another work
+#'   (see [openalex_record_is_work()]) and as the fallback for the date (see
+#'   below); pass NULL/omit to skip both (e.g. for a per-certificate re-render
+#'   with a one-row table).
 #' @return The register table with added "Paper ISSN", "Paper venue" and
 #'   "Work publication date" columns
 add_openalex_work_fields <- function(register_table, paper_references = NULL) {
@@ -489,11 +491,12 @@ add_openalex_work_fields <- function(register_table, paper_references = NULL) {
   }
   cli::cli_alert_info("Looking up the publication of each work")
 
-  fields <- lapply(register_table$OpenAlex, function(id) {
+  fields <- lapply(seq_along(register_table$OpenAlex), function(i) {
+    id <- register_table$OpenAlex[i]
     if (is.na(id)) return(list(issn = NA_character_, venue = NA_character_,
                                publication_date = NA_character_))
     tryCatch(
-      get_openalex_work_fields_cached_result(id)$value,
+      get_openalex_work_fields_for(id, paper_references[i])$value,
       error = function(e) list(issn = NA_character_, venue = NA_character_,
                                publication_date = NA_character_)
     )
@@ -504,27 +507,28 @@ add_openalex_work_fields <- function(register_table, paper_references = NULL) {
   publication_dates <- vapply(fields, function(f) f$publication_date %||% NA_character_, character(1))
 
   # OpenAlex has no record at all for some works (an arXiv preprint, a
-  # conference proceedings entry, an institutional repository item, ...) -
-  # for those, fall back to reading the date straight off the paper's own
-  # reference URL: citation_* meta tags, schema.org JSON-LD, or (for a
-  # reference that is itself a PDF) the PDF's own metadata.
+  # conference proceedings entry, an institutional repository item, ...), and
+  # for a preprint merged into its published version only the article's - for
+  # those, ask the DOI's registration agency, then read the date straight off
+  # the paper's own reference URL: citation_* meta tags, schema.org JSON-LD, or
+  # (for a reference that is itself a PDF) the PDF's own metadata.
   if (!is.null(paper_references) && length(paper_references) == length(publication_dates)) {
-    n_from_page <- 0L
+    found <- c(registry = 0L, page = 0L)
     for (i in seq_along(publication_dates)) {
       if (!is.na(publication_dates[i])) next
       reference <- paper_references[i]
       if (is.na(reference) || !nzchar(reference)) next
-      page_result <- tryCatch(
-        get_page_publication_date_cached_result(reference),
-        error = function(e) list(status = "failed", value = NA_character_)
-      )
-      if (identical(page_result$status, "found") && !is.na(page_result$value)) {
-        publication_dates[i] <- page_result$value
-        n_from_page <- n_from_page + 1L
+      result <- get_fallback_publication_date(reference)
+      if (identical(result$status, "found")) {
+        publication_dates[i] <- result$value
+        found[[result$source]] <- found[[result$source]] + 1L
       }
     }
-    if (n_from_page > 0) {
-      cli::cli_alert_success("Found {n_from_page} publication date{?s} directly from the paper's own page (OpenAlex had none)")
+    if (found[["registry"]] > 0) {
+      cli::cli_alert_success("Found {found[['registry']]} publication date{?s} in the DOI's own registry record (OpenAlex had none)")
+    }
+    if (found[["page"]] > 0) {
+      cli::cli_alert_success("Found {found[['page']]} publication date{?s} directly from the paper's own page (OpenAlex had none)")
     }
   }
 

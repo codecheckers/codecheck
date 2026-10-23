@@ -341,11 +341,11 @@ get_openalex_id_cached_result <- function(paper_reference, paper_title = NULL, f
 #'
 #' @param openalex_id The OpenAlex work URL or ID
 #' @return A list with `status` ("found", "absent" or "failed") and `value`, a
-#'   list with `issn`, `venue` and `publication_date`, each possibly `NA`
+#'   list with `issn`, `venue`, `publication_date` and `doi`, each possibly `NA`
 #' @noRd
 get_openalex_work_fields_result <- function(openalex_id) {
   empty <- list(issn = NA_character_, venue = NA_character_,
-                publication_date = NA_character_)
+                publication_date = NA_character_, doi = NA_character_)
   if (is.null(openalex_id) || length(openalex_id) != 1 || is.na(openalex_id) ||
       !nzchar(openalex_id)) {
     return(list(status = "absent", value = empty))
@@ -375,7 +375,10 @@ get_openalex_work_fields_result <- function(openalex_id) {
     # the register's own venues.csv only covers the venues that commission
     # checks, not the journals the checked works appeared in.
     venue = source$display_name %||% NA_character_,
-    publication_date = data$publication_date %||% NA_character_
+    publication_date = data$publication_date %||% NA_character_,
+    # The DOI of the work the record describes, which is not always the one it
+    # was found by: see openalex_record_is_work().
+    doi = data$doi %||% NA_character_
   ))
 }
 
@@ -389,12 +392,61 @@ get_openalex_work_fields_result <- function(openalex_id) {
 #' @noRd
 get_openalex_work_fields_cached_result <- function(openalex_id) {
   cached_lookup_result(
-    # "v2": the cached values from before the venue name was read have the
+    # "v3": the cached values from before the record's DOI was read have the
     # wrong shape, and a stale cache is worse than one refetch per work.
-    key = list("openalex_work_fields", openalex_id, "v2"),
+    key = list("openalex_work_fields", openalex_id, "v3"),
     dirs = c("codecheck", "openalex_work_fields"),
     lookup = function() get_openalex_work_fields_result(openalex_id)
   )
+}
+
+#' Whether an OpenAlex record describes the work the register references
+#'
+#' OpenAlex merges a preprint into its published version: looking up the
+#' preprint's DOI answers with the journal article's record, so its venue,
+#' ISSN and publication date are the article's, not the preprint's. The bioRxiv
+#' preprint of certificate 2023-011 came back as the PLOS ONE article, and the
+#' export stated that the preprint was published in PLOS ONE. A Zenodo record
+#' found by its version DOI answers with the concept DOI's record likewise.
+#'
+#' The comparison treats `_` and `/` alike, because OpenAlex spells some old
+#' DOIs with slashes where CrossRef registered underscores - 2020-002's
+#' `10.1088/0954-898X_3_1_008` is `10.1088/0954-898x/3/1/008` there.
+#'
+#' @param record_doi The DOI of the OpenAlex record
+#' @param paper_reference The paper reference from the register
+#' @return `FALSE` only when both are DOIs and they differ; a record without a
+#'   DOI or a reference that is not one cannot be compared, and passes
+#' @keywords internal
+openalex_record_is_work <- function(record_doi, paper_reference) {
+  normalise <- function(x) {
+    doi <- wikidata_transform(x %||% NA_character_, "doi")
+    gsub("_", "/", doi, fixed = TRUE)
+  }
+  record <- normalise(record_doi)
+  paper <- normalise(paper_reference)
+  if (is.na(record) || is.na(paper)) return(TRUE)
+  identical(record, paper)
+}
+
+#' The publication facts of a work, if its OpenAlex record is the work's own
+#'
+#' [get_openalex_work_fields_cached_result()] for a work and its reference: when
+#' the record describes another work (see [openalex_record_is_work()]), the
+#' ISSN, venue and publication date are those of that other work and are
+#' returned as `NA`, so the callers fall back as they would for a work without
+#' a record.
+#'
+#' @param openalex_id The OpenAlex work URL or ID
+#' @param paper_reference The paper reference from the register
+#' @return A list with `status` and `value`, as the cached lookup
+#' @keywords internal
+get_openalex_work_fields_for <- function(openalex_id, paper_reference) {
+  result <- get_openalex_work_fields_cached_result(openalex_id)
+  if (!openalex_record_is_work(result$value$doi, paper_reference)) {
+    result$value[c("issn", "venue", "publication_date")] <- NA_character_
+  }
+  result
 }
 
 #' Extracts the paper DOI from the config_yml of the paper,
@@ -639,19 +691,16 @@ add_paper_details_md <- function(md_content, repo_link, openalex_id = NULL, abst
   # table in scope.
   publication_date <- if (!is.na(openalex_id)) {
     tryCatch(
-      get_openalex_work_fields_cached_result(openalex_id)$value$publication_date,
+      get_openalex_work_fields_for(openalex_id, config_yml$paper$reference)$value$publication_date,
       error = function(e) NA_character_
     )
   } else {
     NA_character_
   }
   if (is.null(publication_date) || is.na(publication_date)) {
-    page_result <- tryCatch(
-      get_page_publication_date_cached_result(config_yml$paper$reference),
-      error = function(e) list(status = "failed", value = NA_character_)
-    )
-    if (identical(page_result$status, "found")) {
-      publication_date <- page_result$value
+    fallback <- get_fallback_publication_date(config_yml$paper$reference %||% NA_character_)
+    if (identical(fallback$status, "found")) {
+      publication_date <- fallback$value
     }
   }
   if (!is.null(publication_date) && !is.na(publication_date)) {

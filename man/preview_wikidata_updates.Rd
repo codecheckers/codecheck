@@ -28,7 +28,8 @@ export's own items by}
 \item{origin}{whether to look up who created each item, one request per item}
 }
 \value{
-the plan, invisibly: one row per statement to add or that differs,
+the plan, invisibly: one row per statement to add, to remove, or
+  that differs or is shared,
   with the item, its origin and creator, the property, the proposed and the
   current value, the action and the command
 }
@@ -40,10 +41,14 @@ gained after the item was created, or a value the register learned later.
 Nothing is sent.
 }
 \details{
-Only additions are written. A statement whose property the item already
-carries with another value is a difference, listed in the report but not in
-the batch: on Wikidata it would become a second value rather than a
-correction.
+A statement whose property the item already carries with another value is
+a difference, listed in the report but not in the batch: on Wikidata it
+would become a second value rather than a correction. Statements the export
+wrote itself are the exception: when their only references point into the
+register and the model no longer produces their value, the batch removes
+them, before it adds anything, so a corrected value takes the place of the
+wrong one. One the export wrote together with somebody else is reported as
+`"shared"` and left alone. See [wikidata_missing_statements()].
 
 Each item is marked with where it came from. `"codecheck export"` is an item
 a batch in the edit log created, so the additions finish the export's own

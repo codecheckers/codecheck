@@ -4,17 +4,24 @@
 \alias{quickstatements_value}
 \title{Render one value as QuickStatements v1 writes it}
 \usage{
-quickstatements_value(datatype, value)
+quickstatements_value(datatype, value, escape = FALSE)
 }
 \arguments{
 \item{datatype}{the property's Wikibase datatype}
 
 \item{value}{the value}
+
+\item{escape}{whether to escape double quotes, for labels and descriptions}
 }
 \value{
 the value as a QuickStatements token
 }
 \description{
-Render one value as QuickStatements v1 writes it
+QuickStatements takes a statement's string value literally between its
+enclosing quotes, so a quote inside it must not be escaped: the batch that
+created the works stored the backslashes of `How close is \\"close\\"?` as
+part of the title (Q141269461). A label or description is unescaped by
+QuickStatements - the same item's label came out right - so those keep the
+escaping.
 }
 \keyword{internal}

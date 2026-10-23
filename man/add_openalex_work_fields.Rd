@@ -11,8 +11,10 @@ add_openalex_work_fields(register_table, paper_references = NULL)
 
 \item{paper_references}{Optional character vector, same length and order
 as `register_table`'s rows, of each work's `paper.reference` URL from its
-`codecheck.yml`. Used only as a fallback (see below); pass NULL/omit to
-skip it (e.g. for a per-certificate re-render with a one-row table).}
+`codecheck.yml`. Used to reject a record that describes another work
+(see [openalex_record_is_work()]) and as the fallback for the date (see
+below); pass NULL/omit to skip both (e.g. for a per-certificate re-render
+with a one-row table).}
 }
 \value{
 The register table with added "Paper ISSN", "Paper venue" and

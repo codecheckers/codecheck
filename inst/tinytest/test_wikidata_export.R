@@ -27,9 +27,12 @@ expect_equal(codecheck:::quickstatements_value("wikibase-item", "Q42"), "Q42")
 expect_equal(codecheck:::quickstatements_value("time", "2019-02-14"), "+2019-02-14T00:00:00Z/11")
 expect_equal(codecheck:::quickstatements_value("monolingualtext", "A title"), "en:\"A title\"")
 expect_equal(codecheck:::quickstatements_value("external-id", "10.1/A"), "\"10.1/A\"")
-# A quote in a title would otherwise end the value early and shift every
-# following column of the command.
-expect_equal(codecheck:::quickstatements_value("string", 'He said "no"'), '"He said \\"no\\""')
+# QuickStatements stores a statement's string literally: escaping the quotes in
+# a title put the backslashes into the title on Wikidata (Q141269461). Labels
+# and descriptions are unescaped by QuickStatements and stay escaped.
+expect_equal(codecheck:::quickstatements_value("string", 'He said "no"'), '"He said "no""')
+expect_equal(codecheck:::quickstatements_value("monolingualtext", 'He said "no"'), 'en:"He said "no""')
+expect_equal(codecheck:::quickstatements_value("string", 'He said "no"', escape = TRUE), '"He said \\"no\\""')
 
 # Commands for one entity ----
 
