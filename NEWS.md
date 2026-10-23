@@ -29,6 +29,7 @@
 
 ## Bug Fixes
 
+* `preview_wikidata_export()` holds back a work or certificate whose DOI does not resolve yet, instead of creating it: a bot removes an unregistered DOI from the item as invalid, and the export, which finds items by their DOI, loses the item. That happened to 2026-025's work, created a week before its DOI was registered (register#50).
 * QuickStatements batches no longer escape double quotes in statement values: QuickStatements stores them literally, so the titles of three items on Wikidata carry backslashes (`How close is \"close\"?`). Labels and descriptions, which QuickStatements does unescape, stay escaped (register#50).
 * When OpenAlex has no publication date of the work's own, the date now comes from the DOI's registration agency - CrossRef's `posted` date, DataCite's first `Submitted` or `Issued` date - before the landing page, whose meta tags give the bioRxiv preprint of 2023-011 as 2023-01-01 and the discussion paper of 2026-001 as the date of its final article (register#50).
 * The Wikidata export drops an OpenAlex ID whose record OpenAlex deleted, as it does when it merges a preprint into its published version (register#50).

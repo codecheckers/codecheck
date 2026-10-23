@@ -383,3 +383,37 @@ with_mocked_codecheck(list(wikibase_sparql = function(q, endpoint) { query <<- q
   codecheck:::wikidata_resolve("paper", "10.1/X", method = "sparql")
 })
 expect_false(grepl("FILTER", query, fixed = TRUE))
+
+# A work whose DOI does not resolve yet is held back ----
+
+# The register often has a paper before its publisher has registered the DOI. A
+# bot removes such a DOI from the item as invalid, and the export, which finds
+# works by their DOI, then loses the item: 2026-025's work was created on
+# 2026-10-07, its DOI removed on 2026-10-11 and registered on 2026-10-16.
+pending <- list(
+  certificates = data.frame(
+    `Certificate ID` = c("2026-024", "2026-025"),
+    `Certificate Link` = c("https://codecheck.org.uk/register/certs/2026-024/",
+                           "https://codecheck.org.uk/register/certs/2026-025/"),
+    `Paper reference` = c("https://doi.org/10.1234/registered", "https://doi.org/10.1038/pending"),
+    Report = c("https://doi.org/10.5281/zenodo.1", "https://doi.org/10.5281/zenodo.2"),
+    Title = c("Registered", "Pending"), Venue = "codecheck", Type = "community",
+    `Check date` = "2026-10-01", check.names = FALSE, stringsAsFactors = FALSE),
+  venues = data.frame(name = "codecheck", longname = "CODECHECK", identifiers = NA_character_,
+                      website_url = NA_character_, stringsAsFactors = FALSE)
+)
+pending$certificates$Codechecker <- I(list(list(), list()))
+asked_doi <- character(0)
+with_mocked_codecheck(list(
+  wikidata_resolve = function(kind, keys, method = "search") stats::setNames(character(0), character(0)),
+  doi_registered = function(doi) { asked_doi <<- c(asked_doi, doi); doi != "10.1038/PENDING" }
+), {
+  plan <- codecheck:::wikidata_export_plan(pending)
+})
+papers <- plan[plan$kind == "paper", ]
+expect_equal(papers$action[papers$key == "10.1038/PENDING"], "held")
+expect_equal(papers$commands[papers$key == "10.1038/PENDING"], 0L)
+expect_equal(papers$action[papers$key == "10.1234/REGISTERED"], "create")
+expect_false(any(grepl("10.1038/PENDING", attr(plan, "batches")$paper, fixed = TRUE)))
+# Only what would be created is asked about.
+expect_true("10.1038/PENDING" %in% asked_doi)

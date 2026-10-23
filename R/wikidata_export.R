@@ -124,6 +124,23 @@ wikidata_search_by_statement <- function(property, values, size = 20,
   }
   found
 }
+#' Whether a DOI resolves
+#'
+#' Asks the DOI resolver's handle API, which answers 200 for a registered DOI
+#' and 404 for one that is not, without following the DOI to its landing page.
+#'
+#' @param doi the DOI, bare
+#' @return `TRUE`, `FALSE`, or `NA` when the resolver could not be asked
+#' @keywords internal
+doi_registered <- function(doi) {
+  response <- tryCatch(
+    codecheck_GET(paste0("https://doi.org/api/handles/", utils::URLencode(doi, reserved = TRUE))),
+    error = function(e) NULL)
+  if (is.null(response)) return(NA)
+  status <- httr::status_code(response)
+  if (status == 200) TRUE else if (status == 404) FALSE else NA
+}
+
 #' Render one value as QuickStatements v1 writes it
 #'
 #' QuickStatements takes a statement's string value literally between its
@@ -326,9 +343,15 @@ wikidata_export_plan <- function(records, method = c("search", "sparql")) {
       if (is.na(key)) next
       qid <- unname(existing[key])
       row <- table[i, , drop = FALSE]
+      # A DOI that does not resolve yet - the register often holds a paper
+      # before its publisher has registered the DOI - is not created: a bot
+      # removes it from the item as invalid, and the item is then lost to an
+      # export that finds works by their DOI. 2026-025's work was created on
+      # 2026-10-07, its DOI removed on 2026-10-11 and registered on 2026-10-16.
+      held <- is.na(qid) && !isTRUE(doi_registered(key))
       # An item that exists already keeps its statements: this preview is about
       # what is missing, not about re-asserting what Wikidata has.
-      entity_commands <- if (is.na(qid)) {
+      entity_commands <- if (is.na(qid) && !held) {
         quickstatements_for_entity(kind, row, qid = NULL, resolve = resolve)
       } else {
         character(0)
@@ -336,7 +359,7 @@ wikidata_export_plan <- function(records, method = c("search", "sparql")) {
       commands <- c(commands, entity_commands)
       planned[[length(planned) + 1]] <- data.frame(
         kind = kind, key = key, wikidata = qid %||% NA_character_,
-        action = if (is.na(qid)) "create" else "exists",
+        action = if (!is.na(qid)) "exists" else if (held) "held" else "create",
         commands = length(entity_commands), stringsAsFactors = FALSE
       )
     }
@@ -441,6 +464,11 @@ preview_wikidata_export <- function(dir = "../register", out_dir = ".",
 
   cli::cli_alert_success("{sum(papers$action == 'create')} work{?s} to create, {sum(papers$action == 'exists')} already on Wikidata")
   cli::cli_alert_success("{sum(certificates$action == 'create')} certificate{?s} to create, {sum(certificates$action == 'exists')} already there")
+  held <- out[which(out$action == "held"), ]
+  if (nrow(held) > 0) {
+    cli::cli_alert_warning("Held back, their DOI does not resolve (yet): {.val {held$key}}")
+    cli::cli_alert_info("A bot removes an unregistered DOI from an item; run this again once the publisher has registered it")
+  }
   if (unlinked > 0 && sum(papers$action == "create") > 0) {
     cli::cli_alert_warning("{unlinked} certificate{?s} cannot state {.emph review of} until the works batch has run")
     cli::cli_alert_info("Run the works batch first, then generate this again: QuickStatements can only refer to an item it just created")
@@ -502,7 +530,8 @@ wikidata_preview_wikitext <- function(preview, certificates, batches,
   # for it, or the fact that this run would create one.
   status <- function(rows, i) {
     if (length(i) == 0 || is.na(i)) return("&mdash;")
-    if (rows$action[i] == "exists") wikidata_link(rows$wikidata[i]) else "'''to create'''"
+    if (rows$action[i] == "exists") wikidata_link(rows$wikidata[i])
+    else if (rows$action[i] == "held") "held: DOI not registered yet" else "'''to create'''"
   }
 
   # Whether register.csv records the item Wikidata holds for the certificate -
