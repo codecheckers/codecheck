@@ -27,3 +27,5 @@
 "2026-10-08T02:07:33+0200","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","60 commands"
 "2026-10-08T02:09:09+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1791418031151/","wikidata-certificates","submitted","wikidata-certificates",NA
 "2026-10-08T02:18:31+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1791418412639","fix-review-of-2026-022-to-026","submitted","fix-review-of-2026-022-to-026",NA
+"2026-10-22T22:29:21+0200","wikidata","quickstatements","batch","wikidata/wikidata-updates.qs","wikidata-updates","prepared","wikidata-updates","40 commands"
+"2026-10-23T13:55:38+0200","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2/291974/","wikidata-updates","submitted","wikidata-updates","background run, batch #291974; 40 statements (P10283, P577, P1433) on 38 existing items, 80 edits, 0 reverted"
