@@ -1,0 +1,35 @@
+# The publication date of a DOI's own record
+
+Asked before the landing page when OpenAlex has no date for a work, or a
+date that belongs to another work: the registration agency holds what
+the depositor registered, and for a preprint that is the day it was
+posted. Landing pages are less reliable for exactly the works that need
+this - the bioRxiv page of 2023-011 gives \`citation_publication_date\`
+2023/01/01, and a Copernicus discussion page shows the date of the final
+article.
+
+## Usage
+
+``` r
+get_registry_publication_date_result(reference)
+```
+
+## Arguments
+
+- reference:
+
+  The paper reference; anything that is not a DOI is absent
+
+## Value
+
+A list with \`status\` ("found", "absent" or "failed") and \`value\`, an
+ISO "YYYY-MM-DD" string or NA_character\_
+
+## Details
+
+CrossRef's \`posted\` date comes first, as the date of posted content,
+then the dates of publication online, in print and of issue. DataCite
+records the versions of an arXiv preprint as \`Submitted\` dates, and
+the earliest full date among \`Submitted\`, \`Available\` and \`Issued\`
+is the first public version; the bare \`publicationYear\` is the last
+resort.

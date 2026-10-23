@@ -57,7 +57,12 @@ same fact within minutes and does not care which graph an item ended up in.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">wikidata_search_by_statement</span><span class="op">(</span><span class="va">property</span>, <span class="va">values</span>, size <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">wikidata_search_by_statement</span><span class="op">(</span></span>
+<span>  <span class="va">property</span>,</span>
+<span>  <span class="va">values</span>,</span>
+<span>  size <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>  exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -74,6 +79,11 @@ same fact within minutes and does not care which graph an item ended up in.</p>
 
 <dt id="arg-size">size<a class="anchor" aria-label="anchor" href="#arg-size"></a></dt>
 <dd><p>how many values to put in one search</p></dd>
+
+
+<dt id="arg-exclude">exclude<a class="anchor" aria-label="anchor" href="#arg-exclude"></a></dt>
+<dd><p>classes whose instances never match: an item that is an
+instance (`P31`) of one of them is skipped even though it carries the value</p></dd>
 
 </dl></div>
     <div class="section level2">

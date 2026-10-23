@@ -640,6 +640,9 @@
 - [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
   : Preview the export to Wikidata
 
+- [`preview_wikidata_updates()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_updates.md)
+  : Preview the additions to items already on Wikidata
+
 - [`prune_libs()`](http://codecheck.org.uk/codecheck/reference/prune_libs.md)
   : Prune Unreferenced Library Directories
 

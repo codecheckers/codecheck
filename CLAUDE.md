@@ -247,3 +247,11 @@ Venue, Issue, Report, Check date.
   between requests
 - **Venue names**: Short names in CSV mapped to display names via
   `CONFIG$DICT_VENUE_NAMES`
+
+## Global rules
+
+This applies only if a user-level `~/.claude/CLAUDE.md` exists;
+otherwise ignore this section. That file holds rules for all projects,
+with IDs such as G1.1. Whenever one of them changes what you do, say so
+in your reply and name the rule, e.g. “I found X. I did not do Y but
+suggest Z, following global rule G1.1.”

@@ -10,7 +10,12 @@ graph an item ended up in.
 ## Usage
 
 ``` r
-wikidata_search_by_statement(property, values, size = 20)
+wikidata_search_by_statement(
+  property,
+  values,
+  size = 20,
+  exclude = character(0)
+)
 ```
 
 ## Arguments
@@ -26,6 +31,11 @@ wikidata_search_by_statement(property, values, size = 20)
 - size:
 
   how many values to put in one search
+
+- exclude:
+
+  classes whose instances never match: an item that is an instance
+  (\`P31\`) of one of them is skipped even though it carries the value
 
 ## Value
 
