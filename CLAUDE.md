@@ -138,3 +138,13 @@ The `../register` repo contains `register.csv` (data) and `docs/` (output, deplo
 - **Log format**: Certificate operations prefix with cert ID for parallel log readability
 - **Rate limiting**: Set `GITHUB_PAT` env var; Zenodo has 1s delay between requests
 - **Venue names**: Short names in CSV mapped to display names via `CONFIG$DICT_VENUE_NAMES`
+
+## Global rules
+
+<!-- Source: own rule, added 2026-10-23; see ~/.claude/CLAUDE.md, rule G0.2. -->
+
+This applies only if a user-level `~/.claude/CLAUDE.md` exists; otherwise
+ignore this section. That file holds rules for all projects, with IDs such as
+G1.1. Whenever one of them changes what you do, say so in your reply and name
+the rule, e.g. "I found X. I did not do Y but suggest Z, following global rule
+G1.1."
