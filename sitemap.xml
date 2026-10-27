@@ -511,6 +511,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_id_for.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_item_claims.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_item_creations.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_item_names.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_item_origin.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_kind_noun.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_logged_batch_ids.html</loc></url>
@@ -518,6 +519,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_missing_statements.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_model.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_model_object.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_name_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_pending.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_preview_wikitext.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_properties.html</loc></url>
@@ -531,6 +533,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_submitted_batches.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_transform.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_update_plan.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/wikidata_value_present.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/with_elapsed_log.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_meta_json.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/write_schema_org_jsonld.html</loc></url>

@@ -5,6 +5,14 @@
 ### New Features
 
 - [`preview_wikidata_updates()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_updates.md)
+  reports fewer false differences: an author name string (`P2093`)
+  counts as present when it is the label or alias of one of the item’s
+  author items (`P50`), names compare without case, diacritics, spaces
+  and punctuation, titles without a trailing full stop, and a date at
+  the precision the item stores it with (1982-04-01 is in 1982-04). In
+  the register this took the report from 77 differing statements to 15
+  (register#50).
+- [`preview_wikidata_updates()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_updates.md)
   also removes statements the export wrote itself - all of whose
   references point into the register - when their value is known to be
   wrong (an OpenAlex ID whose record was deleted or describes another

@@ -59,7 +59,8 @@ carries with other values is a difference, reported but never written.</p>
 <span>  <span class="va">claims</span>,</span>
 <span>  item <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  properties <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>  rejected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  rejected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  author_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -88,6 +89,12 @@ empty for no removals</p></dd>
 <dt id="arg-rejected">rejected<a class="anchor" aria-label="anchor" href="#arg-rejected"></a></dt>
 <dd><p>a named list, property to the values (as
 [wikidata_claim_key()] gives them) known to be wrong for this item</p></dd>
+
+
+<dt id="arg-author-names">author_names<a class="anchor" aria-label="anchor" href="#arg-author-names"></a></dt>
+<dd><p>the names (labels and aliases) of the item's authors
+as items (`P50`), see [wikidata_item_names()]: a name string (`P2093`)
+that is one of them is an author the item has already</p></dd>
 
 </dl></div>
     <div class="section level2">
