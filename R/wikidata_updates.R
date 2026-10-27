@@ -65,6 +65,52 @@ wikidata_claim_key <- function(claim) {
   toupper(key %||% NA_character_)
 }
 
+#' The comparable form of a person's name
+#'
+#' Case, diacritics, spaces and punctuation are spelling, not identity:
+#' "Emanuël A. P. Habets" and "Emanuel A.P. Habets" are one name. Initials
+#' are not expanded, so "J J Hopfield" and "John Hopfield" stay apart.
+#'
+#' @param name names
+#' @return the names as uppercase ASCII letters and digits only
+#' @keywords internal
+wikidata_name_key <- function(name) {
+  ascii <- iconv(name, from = "UTF-8", to = "ASCII//TRANSLIT")
+  ascii[is.na(ascii)] <- name[is.na(ascii)]
+  toupper(gsub("[^[:alnum:]]", "", ascii))
+}
+
+#' Whether a proposed value is one the item carries already
+#'
+#' Keys as [quickstatements_token_key()] and [wikidata_claim_key()] give
+#' them, compared as the property's values mean the same: a title regardless
+#' of a trailing full stop, a date at the precision the item stores it with -
+#' 1982-04-01 is in 1982-04, which Wikidata keeps as `1982-04-00` - and a name
+#' string as a name (see [wikidata_name_key()]).
+#'
+#' @param property the property
+#' @param proposed one proposed key
+#' @param current the keys the item has for the property
+#' @return `TRUE` if one of `current` is the proposed value
+#' @keywords internal
+wikidata_value_present <- function(property, proposed, current) {
+  if (length(current) == 0) return(FALSE)
+  if (property == "P1476") {
+    strip <- function(x) sub("[.[:space:]]+$", "", x)
+    return(strip(proposed) %in% strip(current))
+  }
+  if (property == "P2093") {
+    return(wikidata_name_key(proposed) %in% wikidata_name_key(current))
+  }
+  dates <- grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", current)
+  if (grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", proposed) && any(dates)) {
+    width <- ifelse(substr(current, 6, 7) == "00", 4,
+                    ifelse(substr(current, 9, 10) == "00", 7, 10))
+    return(any(dates & substr(current, 1, width) == substr(proposed, 1, width)))
+  }
+  proposed %in% current
+}
+
 #' Whether a claim was written by the CODECHECK export alone
 #'
 #' Every statement the export writes carries a reference URL into the register
@@ -140,12 +186,16 @@ wikidata_claim_token <- function(claim) {
 #'   empty for no removals
 #' @param rejected a named list, property to the values (as
 #'   [wikidata_claim_key()] gives them) known to be wrong for this item
+#' @param author_names the names (labels and aliases) of the item's authors
+#'   as items (`P50`), see [wikidata_item_names()]: a name string (`P2093`)
+#'   that is one of them is an author the item has already
 #' @return a `data.frame` with `property`, `proposed`, `current`, `action`
 #'   (`"add"`, `"differs"`, `"remove"` or `"shared"`) and `command`
 #' @keywords internal
 wikidata_missing_statements <- function(commands, claims, item = NULL,
                                         properties = character(0),
-                                        rejected = list()) {
+                                        rejected = list(),
+                                        author_names = character(0)) {
   empty <- data.frame(property = character(0), proposed = character(0),
                       current = character(0), action = character(0),
                       command = character(0), stringsAsFactors = FALSE)
@@ -169,7 +219,9 @@ wikidata_missing_statements <- function(commands, claims, item = NULL,
         provenance <- wikidata_claim_provenance(claim)
         wrong <- key %in% toupper(rejected[[property]] %||% character(0)) ||
           length(desired_keys(property)) > 0
-        if (is.na(key) || key %in% desired_keys(property) || provenance == "theirs" || !wrong) {
+        desired_here <- any(vapply(desired_keys(property), wikidata_value_present,
+                                   logical(1), property = property, current = key))
+        if (is.na(key) || desired_here || provenance == "theirs" || !wrong) {
           kept[[length(kept) + 1]] <- claim
           next
         }
@@ -199,7 +251,9 @@ wikidata_missing_statements <- function(commands, claims, item = NULL,
 
   additions <- lapply(desired, function(d) {
     values <- current(d$property)
-    if (d$key %in% values) return(NULL)
+    if (wikidata_value_present(d$property, d$key, values)) return(NULL)
+    if (d$property == "P2093" &&
+        wikidata_value_present("P2093", d$key, author_names)) return(NULL)
     data.frame(
       property = d$property, proposed = d$key,
       current = if (length(values) == 0) NA_character_ else paste(values, collapse = "; "),
@@ -292,6 +346,35 @@ wikidata_item_claims <- function(qids) {
     }
   }
   claims
+}
+
+#' The names of each item
+#'
+#' Labels and aliases in English and in the language-neutral `mul`, where
+#' people's names increasingly live, read with `wbgetentities`, 50 items a
+#' request.
+#'
+#' @param qids the items
+#' @return a named list, QID to its names
+#' @keywords internal
+wikidata_item_names <- function(qids) {
+  result <- list()
+  qids <- unique(stats::na.omit(qids))
+  for (batch in split(qids, ceiling(seq_along(qids) / 50))) {
+    entities <- wikibase_get(NULL, list(
+      action = "wbgetentities", ids = paste(batch, collapse = "|"),
+      props = "labels|aliases", languages = "en|mul"
+    ), api = WIKIDATA_API)$entities
+    for (id in names(entities)) {
+      entity <- entities[[id]]
+      values <- c(vapply(entity$labels %||% list(), function(l) l$value, character(1)),
+                  unlist(lapply(entity$aliases %||% list(), function(a) {
+                    vapply(a, function(l) l$value, character(1))
+                  })))
+      result[[entity$redirects$from %||% id]] <- unique(unname(values))
+    }
+  }
+  result
 }
 
 #' The values known to be wrong on each existing work
@@ -394,6 +477,10 @@ wikidata_update_plan <- function(records, method = c("search", "sparql"),
   batch_ids <- wikidata_logged_batch_ids(log_file)
 
   rejected <- wikidata_rejected_values(existing, claims, method = method)
+  authors <- function(qid) {
+    vapply(claims[[qid]]$P50 %||% list(), wikidata_claim_key, character(1))
+  }
+  author_names <- wikidata_item_names(unlist(lapply(items, authors)))
 
   plan <- lapply(seq_along(existing), function(j) {
     e <- existing[[j]]
@@ -401,7 +488,8 @@ wikidata_update_plan <- function(records, method = c("search", "sparql"),
     properties <- unique(vapply(wikidata_statements(e$kind), function(s) s$property, character(1)))
     missing <- wikidata_missing_statements(commands, claims[[e$item]] %||% list(),
                                            item = e$item, properties = properties,
-                                           rejected = rejected[[j]])
+                                           rejected = rejected[[j]],
+                                           author_names = unlist(author_names[authors(e$item)]))
     if (nrow(missing) == 0) return(NULL)
     created <- if (is.null(creations)) NULL else creations[creations$item == e$item, ]
     cbind(

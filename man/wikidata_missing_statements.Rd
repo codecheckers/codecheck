@@ -9,7 +9,8 @@ wikidata_missing_statements(
   claims,
   item = NULL,
   properties = character(0),
-  rejected = list()
+  rejected = list(),
+  author_names = character(0)
 )
 }
 \arguments{
@@ -25,6 +26,10 @@ empty for no removals}
 
 \item{rejected}{a named list, property to the values (as
 [wikidata_claim_key()] gives them) known to be wrong for this item}
+
+\item{author_names}{the names (labels and aliases) of the item's authors
+as items (`P50`), see [wikidata_item_names()]: a name string (`P2093`)
+that is one of them is an author the item has already}
 }
 \value{
 a `data.frame` with `property`, `proposed`, `current`, `action`

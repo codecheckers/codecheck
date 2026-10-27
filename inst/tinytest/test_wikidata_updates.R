@@ -52,6 +52,33 @@ expect_equal(missing$current[missing$property == "P577"], "2025-04-01")
 # Authors as items count as authors: no name strings on top of them.
 expect_equal(missing$action[missing$property == "P2093"], "differs")
 
+# Unless the name string is one of the names of those authors.
+with_names <- codecheck:::wikidata_missing_statements(commands, claims,
+                                                      author_names = c("Ada King", "Ada Lovelace"))
+expect_false("P2093" %in% with_names$property)
+expect_equal(with_names$action[with_names$property == "P577"], "differs")
+
+# Names compare without case, diacritics, spaces and punctuation, but initials
+# are not expanded.
+expect_true(codecheck:::wikidata_value_present("P2093", "EMANUEL A.P. HABETS", "EMANUËL A. P. HABETS"))
+expect_true(codecheck:::wikidata_value_present("P2093", "CARSTEN KEßLER", "Carsten Keßler"))
+expect_false(codecheck:::wikidata_value_present("P2093", "J J HOPFIELD", "John Hopfield"))
+expect_false(codecheck:::wikidata_value_present("P2093", "MATIAS CARDOSO1", "MATIAS CARDOSO"))
+# A title is the same title without its trailing full stop.
+expect_true(codecheck:::wikidata_value_present("P1476", "SHINYLEARNER: A TOOL.", "SHINYLEARNER: A TOOL"))
+expect_false(codecheck:::wikidata_value_present("P1476", "GRADIENT BOOSTED", "GRADIENT BOOSTING"))
+# A date matches at the precision the item stores it with.
+expect_true(codecheck:::wikidata_value_present("P577", "1982-04-01", "1982-04-00"))
+expect_true(codecheck:::wikidata_value_present("P577", "1982-04-01", "1982-00-00"))
+expect_false(codecheck:::wikidata_value_present("P577", "1982-04-01", "1982-05-00"))
+expect_false(codecheck:::wikidata_value_present("P577", "2021-02-12", "2021-02-14"))
+expect_true(codecheck:::wikidata_value_present("P10283", "W1", c("W2", "W1")))
+expect_false(codecheck:::wikidata_value_present("P10283", "W1", character(0)))
+month <- codecheck:::wikidata_missing_statements(
+  "Q1\tP577\t+1982-04-01T00:00:00Z/11",
+  list(P577 = list(claim("time", list(time = "+1982-04-00T00:00:00Z", precision = 10)))))
+expect_equal(nrow(month), 0L)
+
 expect_equal(nrow(codecheck:::wikidata_missing_statements(character(0), claims)), 0L)
 # A label or description command is not a statement.
 expect_equal(nrow(codecheck:::wikidata_missing_statements("Q1\tLen\t\"x\"", list())), 0L)
