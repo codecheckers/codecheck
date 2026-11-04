@@ -304,6 +304,24 @@ add_check_time <- function(register_table, register) {
     if (!is.null(config_yml)) {
       check_time <- config_yml$check_time
     }
+    # A certificate without a check date drops out of every statistic and
+    # leaves its works and person pages with nothing to count, so say why
+    # it has none - this is the line to look for when a page's statistics
+    # come out empty or a render fails on one (codecheckers/register#241).
+    cert_id <- register[i, ]$Certificate
+    if (is.null(config_yml)) {
+      warning(cert_id, " | No check date: codecheck.yml from ", register[i, ]$Repo,
+              " could not be read (see the warning about retrieving it)", call. = FALSE)
+    } else if (is.null(check_time) || length(check_time) == 0 || all(is.na(check_time)) ||
+               (is.character(check_time) && !nzchar(trimws(check_time[1])))) {
+      warning(cert_id, " | No check date: codecheck.yml from ", register[i, ]$Repo,
+              " has no check_time", call. = FALSE)
+      # NA, not NULL: c() would drop a NULL and leave the dates one short
+      check_time <- NA
+    } else if (is.na(parsedate::parse_date(as.character(check_time[1])))) {
+      warning(cert_id, " | No check date: check_time '", check_time, "' in codecheck.yml from ",
+              register[i, ]$Repo, " could not be parsed", call. = FALSE)
+    }
 
     check_times <- c(check_times, check_time)
   }

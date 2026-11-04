@@ -59,6 +59,17 @@ with_mocked_codecheck(list(get_codecheck_yml = failing_get_codecheck_yml), {
                  pattern = "Could not retrieve codecheck.yml")
   expect_true(is.na(times$`Check date`[1]))
   expect_equal(times$`Check date`[2], "2020-02-02")
+  # ... and the missing date is reported per certificate, with its reason,
+  # since it is what later leaves a page with nothing to count (register#241)
+  check_time_warnings <- character(0)
+  withCallingHandlers(add_check_time_(register, register), warning = function(w) {
+    check_time_warnings <<- c(check_time_warnings, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  })
+  expect_true(any(grepl("^2020-001 \\| No check date: codecheck.yml from osf::AAAAA could not be read",
+                        check_time_warnings)),
+              info = paste(check_time_warnings, collapse = " / "))
+  expect_false(any(grepl("^2020-002 \\| No check date", check_time_warnings)))
 
   # report links ----
   reports <- NULL

@@ -310,9 +310,79 @@ detect_report_platform <- function(url) {
 #' Computes per-year breakdowns of checks, venues, codecheckers, and report
 #' platforms. Used to enrich statistics.json (addresses register#144).
 #'
+#' A page with no certificate that has both a check date and a type gets
+#' empty per-type counts rather than an error (codecheckers/register#241).
+#' Any other error is re-raised with `context` and the page's certificates
+#' and check dates in its message, so a failed render names the page.
+#'
 #' @param register_table The full preprocessed register table (before column filtering)
+#' @param context Optional description of the page, e.g. `"works page 10.1234/abc"`,
+#'   used in the error message
 #' @return A list of annual statistics
-compute_annual_stats <- function(register_table) {
+compute_annual_stats <- function(register_table, context = NULL) {
+  tryCatch(
+    compute_annual_stats_unchecked(register_table),
+    error = function(e) {
+      stop(annual_stats_error_message(register_table, context, e), call. = FALSE)
+    }
+  )
+}
+
+#' The error message for a page whose annual statistics failed
+#'
+#' @param register_table The page's register table
+#' @param context Description of the page, or NULL
+#' @param e The original error
+#' @return A single string
+#' @keywords internal
+annual_stats_error_message <- function(register_table, context, e) {
+  cert_col <- intersect(c("Certificate ID", "Certificate"), names(register_table))
+  certs <- if (length(cert_col) > 0) as.character(unlist(register_table[[cert_col[1]]])) else character(0)
+  dates <- if ("Check date" %in% names(register_table)) {
+    as.character(unlist(register_table$`Check date`))
+  } else {
+    rep("<no Check date column>", length(certs))
+  }
+  types <- if ("Type" %in% names(register_table)) as.character(unlist(register_table$Type)) else rep(NA_character_, length(certs))
+  rows <- if (length(certs) == length(dates) && length(certs) == length(types) && length(certs) > 0) {
+    paste0(certs, " (check date ", ifelse(is.na(dates), "NA", dates),
+           ", type ", ifelse(is.na(types), "NA", types), ")", collapse = ", ")
+  } else {
+    paste0(nrow(register_table), " row(s)")
+  }
+  paste0(
+    "Could not compute annual statistics for ",
+    if (is.null(context)) "a page" else context,
+    " with ", nrow(register_table), " certificate(s): ", rows,
+    ". Error: ", conditionMessage(e)
+  )
+}
+
+#' Count unique values per group, as a list sorted by group name
+#'
+#' `tapply()` on zero rows (or on groups that are all NA) returns an array
+#' without names, which `order(names(...))` cannot sort; this returns an
+#' empty list instead.
+#'
+#' @param values Values to count
+#' @param groups Group of each value; NA groups are dropped
+#' @return A named list of integer counts, possibly empty
+#' @keywords internal
+count_unique_by <- function(values, groups) {
+  keep <- !is.na(groups)
+  if (!any(keep)) {
+    return(list())
+  }
+  counts <- tapply(values[keep], groups[keep], function(v) length(unique(v)))
+  as.list(counts[order(names(counts))])
+}
+
+#' Compute annual statistics without error context, see compute_annual_stats()
+#'
+#' @param register_table The full preprocessed register table
+#' @return A list of annual statistics
+#' @keywords internal
+compute_annual_stats_unchecked <- function(register_table) {
   stats <- list()
 
   if (!("Check date" %in% names(register_table))) {
@@ -338,16 +408,14 @@ compute_annual_stats <- function(register_table) {
       type_vec <- register_table$Type[valid]
       venue_vec <- register_table$Venue[valid]
       # Count unique venues per type
-      type_venue_df <- data.frame(type = type_vec, venue = venue_vec, stringsAsFactors = FALSE)
-      venues_per_type <- tapply(type_venue_df$venue, type_venue_df$type, function(v) length(unique(v)))
-      stats$venues_per_type <- as.list(venues_per_type[order(names(venues_per_type))])
+      stats$venues_per_type <- count_unique_by(venue_vec, type_vec)
 
       # --- Checks per year, per venue type (non-cumulative) ---
       yr_vec_type <- years[valid]
       type_year_df <- data.frame(year = yr_vec_type, type = type_vec, stringsAsFactors = FALSE)
       checks_per_type_per_year <- list()
       for (y in all_years) {
-        sub <- type_year_df$type[type_year_df$year == y]
+        sub <- type_year_df$type[type_year_df$year == y & !is.na(type_year_df$type)]
         if (length(sub) > 0) {
           checks_per_type_per_year[[y]] <- as.list(table(sub)[order(names(table(sub)))])
         }
@@ -469,9 +537,11 @@ compute_annual_stats <- function(register_table) {
     yr_vec <- years[valid]
     has_report <- !is.na(report_vec) & nchar(report_vec) > 0
 
-    platforms <- sapply(report_vec[has_report], function(url) {
-      detect_report_platform(url)
-    }, USE.NAMES = FALSE)
+    # vapply(), not sapply(): on zero reports sapply() returns list(), which
+    # sort() below rejects ("'x' must be atomic", register#241)
+    platforms <- vapply(report_vec[has_report], function(url) {
+      as.character(detect_report_platform(url))[1]
+    }, character(1), USE.NAMES = FALSE)
     plat_years <- yr_vec[has_report]
 
     # Per-year breakdown by platform
@@ -518,7 +588,12 @@ compute_annual_stats <- function(register_table) {
     page_type_by_venue <- NULL
     if ("Type" %in% names(register_table)) {
       type_vec <- register_table$Type[valid]
-      page_type_by_venue <- tapply(type_vec, venue_vec, function(t) names(sort(table(t), decreasing = TRUE))[1])
+      # NA_character_, not NULL, for a venue whose certificates all lack a
+      # type: table() of only NAs has no names (register#241)
+      page_type_by_venue <- tapply(type_vec, venue_vec, function(t) {
+        counts <- table(t)
+        if (length(counts) == 0) NA_character_ else names(sort(counts, decreasing = TRUE))[1]
+      })
     }
 
     # First/last year a certificate was checked for each venue, e.g. "2021" or
@@ -835,7 +910,15 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   # so they keep the shorter stats.json name.
   is_main_register <- !is.null(full_register_table)
   if (is_main_register) {
-    annual <- compute_annual_stats(full_register_table)
+    page_name <- table_details[["name"]]
+    page_context <- if (is.na(filter)) {
+      "the main register"
+    } else if (is.null(page_name) || all(is.na(page_name))) {
+      paste0("the ", filter, " overview")
+    } else {
+      paste0(filter, " page ", paste(page_name, collapse = " "), " (", output_dir, ")")
+    }
+    annual <- compute_annual_stats(full_register_table, context = page_context)
     stats_data <- c(stats_data, annual)
   }
   # A venue page's file carries structured venue metadata (name, type,

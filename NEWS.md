@@ -30,6 +30,9 @@
 
 ## Bug Fixes
 
+* `register_render()` no longer fails on a works or person page whose certificates have no check date or no type, e.g. when a `codecheck.yml` could not be fetched: `compute_annual_stats()` returns empty per-type and per-venue counts for such a page instead of stopping with `argument 1 is not a vector` (register#241).
+* A certificate without a check date is reported as a warning naming it and the reason: `codecheck.yml` could not be read, has no `check_time`, or its `check_time` could not be parsed. A `codecheck.yml` without `check_time` now gets an NA check date, where before its missing value dropped out of the column of dates and left it one entry short (register#241).
+* When `register_render()` fails, it prints the warnings raised before the error, which it otherwise holds back until the end, and an error in the annual statistics names the page and lists its certificates with their check dates and types (register#241).
 * `preview_wikidata_export()` holds back a work or certificate whose DOI does not resolve yet, instead of creating it: a bot removes an unregistered DOI from the item as invalid, and the export, which finds items by their DOI, loses the item. That happened to 2026-025's work, created a week before its DOI was registered (register#50).
 * QuickStatements batches no longer escape double quotes in statement values: QuickStatements stores them literally, so the titles of three items on Wikidata carry backslashes (`How close is \"close\"?`). Labels and descriptions, which QuickStatements does unescape, stay escaped (register#50).
 * When OpenAlex has no publication date of the work's own, the date now comes from the DOI's registration agency - CrossRef's `posted` date, DataCite's first `Submitted` or `Issued` date - before the landing page, whose meta tags give the bioRxiv preprint of 2023-011 as 2023-01-01 and the discussion paper of 2026-001 as the date of its final article (register#50).

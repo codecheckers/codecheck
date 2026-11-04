@@ -219,23 +219,19 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
     warning = function(w) {
       captured_warnings <<- c(captured_warnings, conditionMessage(w))
       invokeRestart("muffleWarning")
+    },
+    # The warnings are held back until the end of the render, so an error
+    # would otherwise discard them - and they are usually what explains it:
+    # a codecheck.yml that could not be fetched shows up as a warning first
+    # and as a crash on some page much later (codecheckers/register#241).
+    # A calling handler runs before the error unwinds, so they are printed
+    # right above the error message, which then propagates unchanged.
+    error = function(e) {
+      report_captured_warnings(captured_warnings, failed = TRUE)
     }
   ))
 
-  # Display captured warnings as structured log entries
-  if (length(captured_warnings) > 0) {
-    # Deduplicate with counts: show each unique warning once, with [xN] prefix if repeated
-    warn_table <- sort(table(captured_warnings), decreasing = TRUE)
-    cli::cli_h2("{length(captured_warnings)} warning{?s} ({length(warn_table)} unique)")
-    for (msg in names(warn_table)) {
-      count <- warn_table[[msg]]
-      if (count > 1) {
-        cli::cli_alert_warning("[x{count}] {msg}")
-      } else {
-        cli::cli_alert_warning("{msg}")
-      }
-    }
-  }
+  report_captured_warnings(captured_warnings)
 
   # Audit the Zenodo records against the community curation policy. This is a
   # maintainer signal only: a finding, an outage or an unexpected error here
@@ -454,7 +450,7 @@ register_update_stats <- function(docs_dir = "docs",
     source = paste0(CONFIG$HREF_DETAILS$json$base_url, "register", CONFIG$HREF_DETAILS$json$ext),
     cert_count = nrow(main_data)
   )
-  annual <- compute_annual_stats(main_data)
+  annual <- compute_annual_stats(main_data, context = paste0("the main register (", main_json_path, ")"))
   stats_data <- c(stats_data, annual)
 
   # Add codechecker_count from codecheckers index.json if available (addresses register#77)
@@ -737,4 +733,36 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
   if (nrow(failed_rules) > 0) {
     stop(rules_failure_message(failed_rules, "the register"), call. = FALSE)
   }
+}
+
+#' Print the warnings collected during a render as structured log entries
+#'
+#' Each unique warning is shown once, prefixed with `[xN]` when it was raised
+#' more than once.
+#'
+#' @param captured_warnings Character vector of warning messages
+#' @param failed Whether the render stopped with an error; the heading then
+#'   says these are the warnings raised before the failure
+#' @return Invisibly, `captured_warnings`
+#' @keywords internal
+report_captured_warnings <- function(captured_warnings, failed = FALSE) {
+  if (length(captured_warnings) == 0) {
+    if (failed) cli::cli_alert_info("No warnings before the render failed")
+    return(invisible(captured_warnings))
+  }
+  warn_table <- sort(table(captured_warnings), decreasing = TRUE)
+  if (failed) {
+    cli::cli_h2("{length(captured_warnings)} warning{?s} ({length(warn_table)} unique) before the render failed")
+  } else {
+    cli::cli_h2("{length(captured_warnings)} warning{?s} ({length(warn_table)} unique)")
+  }
+  for (msg in names(warn_table)) {
+    count <- warn_table[[msg]]
+    if (count > 1) {
+      cli::cli_alert_warning("[x{count}] {msg}")
+    } else {
+      cli::cli_alert_warning("{msg}")
+    }
+  }
+  invisible(captured_warnings)
 }
