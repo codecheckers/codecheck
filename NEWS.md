@@ -1,4 +1,4 @@
-# codecheck (development version)
+# codecheck 0.32.0
 
 ## New Features
 
