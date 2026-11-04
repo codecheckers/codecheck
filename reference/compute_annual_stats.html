@@ -9,7 +9,7 @@ platforms. Used to enrich statistics.json (addresses register#144)."></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.31.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.32.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,7 @@ platforms. Used to enrich statistics.json (addresses register#144).</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">compute_annual_stats</span><span class="op">(</span><span class="va">register_table</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">compute_annual_stats</span><span class="op">(</span><span class="va">register_table</span>, context <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,10 +58,22 @@ platforms. Used to enrich statistics.json (addresses register#144).</p>
 <dl><dt id="arg-register-table">register_table<a class="anchor" aria-label="anchor" href="#arg-register-table"></a></dt>
 <dd><p>The full preprocessed register table (before column filtering)</p></dd>
 
+
+<dt id="arg-context">context<a class="anchor" aria-label="anchor" href="#arg-context"></a></dt>
+<dd><p>Optional description of the page, e.g. `"works page 10.1234/abc"`,
+used in the error message</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of annual statistics</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>A page with no certificate that has both a check date and a type gets
+empty per-type counts rather than an error (codecheckers/register#241).
+Any other error is re-raised with `context` and the page's certificates
+and check dates in its message, so a failed render names the page.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

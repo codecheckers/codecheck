@@ -73,6 +73,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/adjust_cert_links_relative.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/align_wikibase_query_comments.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/all_codechecker_records.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/annual_stats_error_message.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/as_latex_url.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/bare_doi.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/blocknote_pdf_blocks.html</loc></url>
@@ -131,10 +132,12 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/compare_figures.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/complete_codecheck_yml.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/compute_annual_stats.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/compute_annual_stats_unchecked.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/convert_cert_pdf_to_png.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/copy_manifest_files.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/copy_package_javascript.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/copy_register_css.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/count_unique_by.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_all_codecheckers_table.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_all_organisations_table.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/create_all_persons_table.html</loc></url>
@@ -407,6 +410,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_register_md.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_statistics_page.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_wikibase_query.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/report_captured_warnings.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/report_researchequals_policy_findings.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/report_zenodo_policy_findings.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/researchequals_collection_url.html</loc></url>

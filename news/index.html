@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.31.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.32.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="codecheck-development-version">codecheck (development version)<a class="anchor" aria-label="anchor" href="#codecheck-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.32.0" id="codecheck-0320">codecheck 0.32.0<a class="anchor" aria-label="anchor" href="#codecheck-0320"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-0-32-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-32-0"></a></h3>
 <ul><li>
 <code><a href="../reference/preview_wikidata_updates.html">preview_wikidata_updates()</a></code> reports fewer false differences: an author name string (<code>P2093</code>) counts as present when it is the label or alias of one of the item’s author items (<code>P50</code>), names compare without case, diacritics, spaces and punctuation, titles without a trailing full stop, and a date at the precision the item stores it with (1982-04-01 is in 1982-04). In the register this took the report from 77 differing statements to 15 (register#50).</li>
 <li>
@@ -80,8 +80,12 @@
 <li>Rule <code>CC-CFG-005</code> <code>manifest-item-file</code> accepts a single manifest item with only a <code>comment</code>, for a check without output files.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-0-32-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-32-0"></a></h3>
 <ul><li>
+<code><a href="../reference/register_render.html">register_render()</a></code> no longer fails on a works or person page whose certificates have no check date or no type, e.g. when a <code>codecheck.yml</code> could not be fetched: <code><a href="../reference/compute_annual_stats.html">compute_annual_stats()</a></code> returns empty per-type and per-venue counts for such a page instead of stopping with <code>argument 1 is not a vector</code> (register#241).</li>
+<li>A certificate without a check date is reported as a warning naming it and the reason: <code>codecheck.yml</code> could not be read, has no <code>check_time</code>, or its <code>check_time</code> could not be parsed. A <code>codecheck.yml</code> without <code>check_time</code> now gets an NA check date, where before its missing value dropped out of the column of dates and left it one entry short (register#241).</li>
+<li>When <code><a href="../reference/register_render.html">register_render()</a></code> fails, it prints the warnings raised before the error, which it otherwise holds back until the end, and an error in the annual statistics names the page and lists its certificates with their check dates and types (register#241).</li>
+<li>
 <code><a href="../reference/preview_wikidata_export.html">preview_wikidata_export()</a></code> holds back a work or certificate whose DOI does not resolve yet, instead of creating it: a bot removes an unregistered DOI from the item as invalid, and the export, which finds items by their DOI, loses the item. That happened to 2026-025’s work, created a week before its DOI was registered (register#50).</li>
 <li>QuickStatements batches no longer escape double quotes in statement values: QuickStatements stores them literally, so the titles of three items on Wikidata carry backslashes (<code>How close is \"close\"?</code>). Labels and descriptions, which QuickStatements does unescape, stay escaped (register#50).</li>
 <li>When OpenAlex has no publication date of the work’s own, the date now comes from the DOI’s registration agency - CrossRef’s <code>posted</code> date, DataCite’s first <code>Submitted</code> or <code>Issued</code> date - before the landing page, whose meta tags give the bioRxiv preprint of 2023-011 as 2023-01-01 and the discussion paper of 2026-001 as the date of its final article (register#50).</li>

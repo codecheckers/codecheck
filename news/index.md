@@ -1,6 +1,6 @@
 # Changelog
 
-## codecheck (development version)
+## codecheck 0.32.0
 
 ### New Features
 
@@ -108,6 +108,25 @@
 
 ### Bug Fixes
 
+- [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  no longer fails on a works or person page whose certificates have no
+  check date or no type, e.g. when a `codecheck.yml` could not be
+  fetched:
+  [`compute_annual_stats()`](http://codecheck.org.uk/codecheck/reference/compute_annual_stats.md)
+  returns empty per-type and per-venue counts for such a page instead of
+  stopping with `argument 1 is not a vector` (register#241).
+- A certificate without a check date is reported as a warning naming it
+  and the reason: `codecheck.yml` could not be read, has no
+  `check_time`, or its `check_time` could not be parsed. A
+  `codecheck.yml` without `check_time` now gets an NA check date, where
+  before its missing value dropped out of the column of dates and left
+  it one entry short (register#241).
+- When
+  [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  fails, it prints the warnings raised before the error, which it
+  otherwise holds back until the end, and an error in the annual
+  statistics names the page and lists its certificates with their check
+  dates and types (register#241).
 - [`preview_wikidata_export()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_export.md)
   holds back a work or certificate whose DOI does not resolve yet,
   instead of creating it: a bot removes an unregistered DOI from the
