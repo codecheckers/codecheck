@@ -1,7 +1,13 @@
+{{#only_other}}
+<div class="related-work-note">This DOI is another reference to the same work as {{#primary}}<a href="{{page_url}}">{{doi}}</a>{{^last}}, {{/last}}{{/primary}}, as recorded by the certificates below. The title and authors come from those certificates.</div>
+{{/only_other}}
 <div class="venue-metadata">
 <div class="venue-metadata-text">
 <ul class="venue-metadata-list">
-<li><i class="ai ai-doi"></i> <span class="venue-metadata-label">DOI:</span> <a href="{{doi_url}}" target="_blank" rel="noopener">{{doi}}</a></li>
+<li><i class="ai ai-doi"></i> <span class="venue-metadata-label">DOI:</span> <a href="{{doi_url}}" target="_blank" rel="noopener">{{doi}}</a>{{#doi_reference_type}} {{> reference_type}}{{/doi_reference_type}}</li>
+{{#has_related}}
+<li><span class="venue-metadata-label">Same work as:</span> {{#related}}{{#has_page}}<a href="{{page_url}}">{{doi}}</a>{{/has_page}}{{^has_page}}<a href="{{url}}" target="_blank" rel="noopener" title="External page, not a DOI: no CODECHECK work page">{{label}}</a>{{/has_page}}{{#reference_type}} {{> reference_type}}{{/reference_type}}{{^last}}; {{/last}}{{/related}}</li>
+{{/has_related}}
 {{#has_publication_date}}
 <li><span class="venue-metadata-label">Work publication date:</span> {{publication_date}}</li>
 {{/has_publication_date}}

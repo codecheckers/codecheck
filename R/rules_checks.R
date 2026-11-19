@@ -42,6 +42,13 @@ has_value <- function(value) {
     (!is.character(value) || any(nzchar(trimws(value))))
 }
 
+#' Is a reference a single http(s) URL, without surrounding text?
+#' @keywords internal
+#' @noRd
+is_bare_url <- function(x) {
+  grepl("^https?://[^[:space:]]+$", trimws(x))
+}
+
 #' Items of a `codecheck.yml` node that is a sequence of named items
 #'
 #' A single item can be written without the sequence dash, in which case the

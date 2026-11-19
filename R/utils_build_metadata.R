@@ -198,6 +198,8 @@ generate_cert_schema_org <- function(cert_id, config_yml, abstract_data = NULL,
     if (!is.na(openalex_id)) {
       same_as <- c(same_as, openalex_id)
     }
+    # the paper's further references are references to the same work
+    same_as <- c(same_as, get_reference_other(config_yml)$url)
     if (length(same_as) == 1) {
       paper$sameAs <- same_as
     } else if (length(same_as) > 1) {
@@ -600,6 +602,8 @@ generate_work_schema_org <- function(doi, register_table) {
   }
   work_qid <- wikidata_id_for("paper", doi)
   if (!is.null(work_qid)) article$sameAs <- c(article$sameAs, wikidata_entity_url(work_qid))
+  # the other references of the same work, see build_work_relations()
+  article$sameAs <- c(article$sameAs, vapply(fields$related, function(r) r$url, character(1)))
   if (length(fields$authors) > 0) {
     article$author <- lapply(fields$authors, function(a) {
       person <- list(`@type` = "Person", name = a$name)

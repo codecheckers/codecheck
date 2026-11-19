@@ -437,6 +437,13 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
     cert_json$codecheck$manifest <- config_yml$manifest
   }
 
+  # The type of the reference, and the further references with theirs, all
+  # left out where unknown or absent
+  reference_type <- get_reference_type(config_yml$paper$reference)$type
+  if (!is.na(reference_type)) cert_json$paper$reference_type <- reference_type
+  reference_other <- reference_other_json(typed_reference_other(config_yml))
+  if (length(reference_other) > 0) cert_json$paper$reference_other <- reference_other
+
   # Add OpenAlex link (addresses register#185)
   if (is.null(openalex_id)) {
     openalex_id <- tryCatch(

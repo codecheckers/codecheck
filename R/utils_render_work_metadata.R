@@ -19,7 +19,9 @@
 #'   `publication_date` (`NA_character_` if none), `venues` (unique,
 #'   comma-joined), `check_count`, `first_check_date`, `last_check_date`, and
 #'   `authors` (a list of `name`/`orcid` lists, `orcid` `NULL` when not known -
-#'   possibly an empty list).
+#'   possibly an empty list), `related` (the work's other references, see
+#'   [get_work_related_references()]) and `only_other` (whether every
+#'   certificate on the page names this DOI as a further reference only).
 #' @keywords internal
 get_work_metadata_fields <- function(doi, register_table) {
   # "Paper Title" only survives to this point on the HTML/md path (see
@@ -92,7 +94,10 @@ get_work_metadata_fields <- function(doi, register_table) {
     check_count = nrow(register_table),
     first_check_date = if (length(check_dates) > 0) check_dates[1] else NA_character_,
     last_check_date = if (length(check_dates) > 0) check_dates[length(check_dates)] else NA_character_,
-    authors = authors
+    authors = authors,
+    related = get_work_related_references(doi),
+    only_other = "Referenced as" %in% names(register_table) && nrow(register_table) > 0 &&
+      all(register_table$`Referenced as` == "Other reference")
   )
 }
 
@@ -143,13 +148,24 @@ generate_work_metadata_html <- function(table_details, register_table) {
   has_venues <- length(fields$venues) > 0
   has_authors <- nzchar(authors_html)
   has_dates <- !is.na(fields$first_check_date)
+  works_base <- if (base_path == ".") "works/" else paste0(base_path, "/works/")
+  related <- reference_list_data(fields$related, works_base)
+  # the references of the certificates on a page that only lists further
+  # references, for the note that says what this DOI is
+  primary <- Filter(function(r) isTRUE(r$is_reference), fields$related)
 
-  template_path <- system.file("extdata", "templates/general/work_metadata.html", package = "codecheck")
-  template <- paste(readLines(template_path, warn = FALSE), collapse = "\n")
+  template <- template_text("general/work_metadata.html")
 
   data <- list(
     doi = fields$doi,
     doi_url = paste0(CONFIG$HYPERLINKS[["doi"]], fields$doi),
+    # the DOI as a URL: a bare "10..." is not recognised as a DOI reference
+    doi_reference_type = do.call(reference_type_data,
+                                 get_reference_type(paste0(CONFIG$HYPERLINKS[["doi"]], fields$doi))),
+    has_related = length(related) > 0,
+    related = related,
+    only_other = isTRUE(fields$only_other) && length(primary) > 0,
+    primary = reference_list_data(primary, works_base),
     has_openalex = has_openalex,
     openalex = fields$openalex,
     has_publication_date = has_publication_date,
@@ -167,7 +183,7 @@ generate_work_metadata_html <- function(table_details, register_table) {
     single_check = fields$check_count == 1
   )
 
-  whisker.render(template, data)
+  whisker.render(template, data, partials = reference_partials())
 }
 
 #' Generate the work metadata YAML frontmatter block for register.md

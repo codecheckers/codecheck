@@ -27,10 +27,12 @@ CONFIG$MD_TABLE_COLUMN_WIDTHS <- list(
     # Paper Title carries the most content (full titles), Report is just a
     # short DOI/link - it previously had this backwards (register#84 followup).
     venues = "|:--------|:------------|:-------------------------------------------------------|:---------------|",
-    # Works filter: Certificate | Report | Venue | Type | Check date. The page's
-    # own h1 already names the work, so Paper Title is dropped (like Venue/Type
-    # are for venues above) - same as "general" minus that one column.
-    works = "|:-------|:--------------------------------------------------|:---------------|:---|:--------------------------|"
+    # Works filter: Certificate | Report | Venue | Type | Check date |
+    # Referenced as. The page's own h1 already names the work, so Paper Title
+    # is dropped (like Venue/Type are for venues above). "Referenced as" says
+    # whether the certificate's reference or one of its further references
+    # (reference-other) is this page's DOI.
+    works = "|:-------|:--------------------------------------------------|:---------------|:---|:-------------|:-------------|"
   ),
 
   non_reg = list(
@@ -82,10 +84,10 @@ CONFIG$REGISTER_COLUMNS <- list(
   # codecheck.yml and identifiers without needing the un-dropped
   # full_register_table.
   works = list(
-    html = c("Certificate", "Report", "Venue", "Type", "Check date", "Repository", "OpenAlex", "Work publication date"),
-    md = c("Certificate", "Report", "Venue", "Type", "Check date"),
-    csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date"),
-    json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date")
+    html = c("Certificate", "Report", "Venue", "Type", "Check date", "Referenced as", "Repository", "OpenAlex", "Work publication date"),
+    md = c("Certificate", "Report", "Venue", "Type", "Check date", "Referenced as"),
+    csv = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Referenced as"),
+    json = c("Certificate ID", "Certificate Link", "Repository", "Repository Link", "Report", "Title", "Paper reference", "OpenAlex", "Venue", "Type", "Check date", "Referenced as")
   ),
 
   # Person-specific views. "Role" (author/codechecker) is what
@@ -409,6 +411,8 @@ CONFIG$FILTER_SUBCAT_COLUMNS <- list(
 
 # OTHERS
 CONFIG$DICT_ORCID_ID_NAME <- list()
+# DOI -> the other references of the same work, see build_work_relations()
+CONFIG$WORK_RELATIONS <- list()
 CONFIG$DICT_GITHUB_USERNAME_NAME <- list()  # Maps GitHub usernames to codechecker names
 
 # Delaying requests by 1 second to adhere to the rate limit of 60 requests/minute for Zenodo

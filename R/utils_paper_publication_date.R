@@ -240,12 +240,45 @@ get_page_publication_date_cached_result <- function(url) {
 #'   an ISO "YYYY-MM-DD" string or NA_character_
 #' @keywords internal
 get_registry_publication_date_result <- function(reference) {
-  absent <- list(status = "absent", value = NA_character_)
+  registry_date_result(get_registry_record_result(reference))
+}
+
+#' The publication date in a registry record lookup, as a date lookup result
+#'
+#' @param record A result of [get_registry_record_result()]
+#' @return A list with `status` and `value`, see
+#'   [get_registry_publication_date_result()]
+#' @keywords internal
+registry_date_result <- function(record) {
+  if (!identical(record$status, "found")) {
+    return(list(status = record$status, value = NA_character_))
+  }
+  parsed <- parse_partial_publication_date(record$value$publication_date)
+  if (is.na(parsed)) list(status = "absent", value = NA_character_)
+  else list(status = "found", value = parsed)
+}
+
+#' What a DOI's registration agency records about the work
+#'
+#' One request to doi.org for the agency, one to Crossref or DataCite for the
+#' record. The record answers more than one question - when the work was made
+#' public (see [get_registry_publication_date_result()]) and what type of work
+#' it is (see [get_reference_type()]) - so it is fetched, and cached, once.
+#'
+#' @param reference The paper reference; anything that is not a DOI is absent
+#' @return A list with `status` ("found", "absent" or "failed") and `value`,
+#'   a list with `agency`, `publication_date` (as the record states it, see
+#'   [crossref_publication_date()]) and `type` (see
+#'   [crossref_reference_type()]), or `NULL`
+#' @keywords internal
+get_registry_record_result <- function(reference) {
+  absent <- list(status = "absent", value = NULL)
+  failed <- list(status = "failed", value = NULL)
   doi <- tolower(wikidata_transform(reference %||% NA_character_, "doi"))
   if (is.na(doi)) return(absent)
 
   agency <- lookup_registration_agency(doi)
-  if (is.null(agency)) return(list(status = "failed", value = NA_character_))
+  if (is.null(agency)) return(failed)
   encoded <- utils::URLencode(doi, reserved = TRUE)
   url <- switch(agency,
     Crossref = paste0("https://api.crossref.org/works/", encoded),
@@ -253,20 +286,39 @@ get_registry_publication_date_result <- function(reference) {
     return(absent))
 
   response <- tryCatch(codecheck_GET(url), error = function(e) NULL)
-  if (is.null(response)) return(list(status = "failed", value = NA_character_))
+  if (is.null(response)) return(failed)
   if (httr::status_code(response) != 200) {
-    return(if (httr::status_code(response) == 404) absent
-           else list(status = "failed", value = NA_character_))
+    return(if (httr::status_code(response) == 404) absent else failed)
   }
   body <- tryCatch(jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
                                       simplifyVector = FALSE),
                    error = function(e) NULL)
-  if (is.null(body)) return(list(status = "failed", value = NA_character_))
+  if (is.null(body)) return(failed)
 
-  raw <- if (agency == "Crossref") crossref_publication_date(body$message)
-         else datacite_publication_date(body$data$attributes)
-  parsed <- parse_partial_publication_date(raw)
-  if (is.na(parsed)) absent else list(status = "found", value = parsed)
+  crossref <- agency == "Crossref"
+  record <- if (crossref) body$message else body$data$attributes
+  list(status = "found", value = list(
+    agency = agency,
+    publication_date = (if (crossref) crossref_publication_date else datacite_publication_date)(record),
+    type = (if (crossref) crossref_reference_type else datacite_reference_type)(record)))
+}
+
+#' Cached version of get_registry_record_result
+#'
+#' Keyed on the lowercased DOI. Cleared by \code{\link{register_clear_cache}}.
+#'
+#' @inheritParams get_registry_record_result
+#' @noRd
+get_registry_record_cached_result <- function(reference) {
+  doi <- tolower(wikidata_transform(reference %||% NA_character_, "doi"))
+  if (is.na(doi)) return(list(status = "absent", value = NULL))
+  cached_lookup_result(
+    # the record holds the display label of the type, so a change to
+    # crossref_reference_type()/datacite_reference_type() bumps the version
+    key = list("registry_record", doi, "v1"),
+    dirs = c("codecheck", "registry_record"),
+    lookup = function() get_registry_record_result(reference)
+  )
 }
 
 #' The date a CrossRef record says the work was made public
@@ -301,16 +353,13 @@ datacite_publication_date <- function(attributes) {
 
 #' Cached version of get_registry_publication_date_result
 #'
-#' Keyed on the reference. Cleared by \code{\link{register_clear_cache}}.
+#' Shares the cached registry record with [get_reference_type()]. Cleared by
+#' \code{\link{register_clear_cache}}.
 #'
 #' @inheritParams get_registry_publication_date_result
 #' @noRd
 get_registry_publication_date_cached_result <- function(reference) {
-  cached_lookup_result(
-    key = list("registry_publication_date", reference),
-    dirs = c("codecheck", "registry_publication_date"),
-    lookup = function() get_registry_publication_date_result(reference)
-  )
+  registry_date_result(get_registry_record_cached_result(reference))
 }
 
 #' A work's publication date when OpenAlex has none of its own

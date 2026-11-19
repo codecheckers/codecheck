@@ -1,0 +1,28 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message": {
+    "DOI": "10.1101/2023.07.11.548542",
+    "type": "posted-content",
+    "subtype": "preprint",
+    "posted": {
+      "date-parts": [
+        [
+          2023,
+          7,
+          12
+        ]
+      ]
+    },
+    "issued": {
+      "date-parts": [
+        [
+          2023,
+          7,
+          12
+        ]
+      ]
+    },
+    "published-online": null
+  }
+}

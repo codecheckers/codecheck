@@ -275,11 +275,13 @@ create_register_files <- function(register_table, filter_by, outputs, parallel =
         distinct(`Certificate ID`, Codechecker, .keep_all = TRUE)
     }
 
-    # A certificate with no DOI-identified paper simply has no work page
+    # One row per certificate and DOI it names, its reference and its
+    # further references (reference-other), see explode_work_records(). A
+    # certificate with no DOI-identified paper simply has no work page
     # (#150) - dropped here, from the grouping copy only, so it still
     # appears normally under every other filter.
     else if (filter == "works") {
-      grouping_table <- grouping_table %>% filter(!is.na(Work))
+      grouping_table <- explode_work_records(grouping_table)
     }
 
     # Explode the Person list column (one list of {orcid, name, role}

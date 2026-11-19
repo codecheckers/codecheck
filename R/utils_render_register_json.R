@@ -746,6 +746,7 @@ build_work_stats_field <- function(doi, register_table) {
   nullable <- function(x) if (is.null(x) || (length(x) == 1 && is.na(x))) NA_character_ else x
   list(
     doi = fields$doi,
+    type = nullable(get_reference_type(paste0(CONFIG$HYPERLINKS[["doi"]], doi))$type),
     title = nullable(fields$title),
     openalex = nullable(fields$openalex),
     wikidata = nullable(wikidata_id_for("paper", doi)),
@@ -754,6 +755,12 @@ build_work_stats_field <- function(doi, register_table) {
     authors = lapply(fields$authors, function(a) list(
       name = a$name,
       orcid = nullable(a$orcid)
+    )),
+    # the other references of the same work, see build_work_relations()
+    related = lapply(fields$related, function(r) list(
+      url = r$url,
+      doi = nullable(r$doi),
+      type = nullable(r$type)
     ))
   )
 }
@@ -832,6 +839,11 @@ render_register_json <- function(register_table, table_details, filter, full_reg
   # way to tell the two roles apart.
   if (!is.na(filter) && filter == "persons" && "Role" %in% names(register_table_json)) {
     columns_to_keep <- c(columns_to_keep, "Role")
+  }
+  # Likewise, a work's register.json keeps whether each certificate names
+  # the work's DOI as its reference or as one of its further references.
+  if (!is.na(filter) && filter == "works" && "Referenced as" %in% names(register_table_json)) {
+    columns_to_keep <- c(columns_to_keep, "Referenced as")
   }
 
   # Main register.json: sorted by certificate identifier (done in render_register())

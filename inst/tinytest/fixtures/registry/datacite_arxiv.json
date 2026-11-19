@@ -1,0 +1,65 @@
+{
+  "data": {
+    "id": "10.48550/arxiv.2104.00718",
+    "attributes": {
+      "doi": "10.48550/arxiv.2104.00718",
+      "publisher": "arXiv",
+      "types": {
+        "resourceTypeGeneral": "Text",
+        "resourceType": "Article"
+      },
+      "dates": [
+        {
+          "date": "2021-04-01T18:53:48Z",
+          "dateType": "Submitted",
+          "dateInformation": "v1"
+        },
+        {
+          "date": "2021-04-05T00:01:26Z",
+          "dateType": "Updated",
+          "dateInformation": "v1"
+        },
+        {
+          "date": "2021-05-10T15:22:05Z",
+          "dateType": "Submitted",
+          "dateInformation": "v2"
+        },
+        {
+          "date": "2021-05-11T00:39:14Z",
+          "dateType": "Updated",
+          "dateInformation": "v2"
+        },
+        {
+          "date": "2021-07-07T15:06:02Z",
+          "dateType": "Submitted",
+          "dateInformation": "v3"
+        },
+        {
+          "date": "2021-07-08T00:20:27Z",
+          "dateType": "Updated",
+          "dateInformation": "v3"
+        },
+        {
+          "date": "2021-07-14T17:51:38Z",
+          "dateType": "Submitted",
+          "dateInformation": "v4"
+        },
+        {
+          "date": "2021-08-25T13:35:31Z",
+          "dateType": "Updated",
+          "dateInformation": "v4"
+        },
+        {
+          "date": "2021-04",
+          "dateType": "Available",
+          "dateInformation": "v1"
+        },
+        {
+          "date": "2021",
+          "dateType": "Issued"
+        }
+      ],
+      "publicationYear": 2021
+    }
+  }
+}

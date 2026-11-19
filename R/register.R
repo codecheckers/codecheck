@@ -538,6 +538,16 @@ register_update_stats <- function(docs_dir = "docs",
       doi <- paste(path_parts[-1], collapse = "/")
       sub_stats$work <- build_work_stats_field(doi, sub_data)
       stats_filename <- "index.json"
+      # The links between work pages come from every certificate's
+      # codecheck.yml, which this fast path does not read: keep the ones the
+      # last full render wrote.
+      # Read as a data frame, so that a null comes back as NA and is written
+      # as null again (na = "null" below), not as {}.
+      if (length(sub_stats$work$related) == 0) {
+        previous <- tryCatch(jsonlite::fromJSON(file.path(sub_dir, stats_filename)),
+                             error = function(e) NULL)
+        if (length(previous$work$related) > 0) sub_stats$work$related <- previous$work$related
+      }
     }
 
     # A person's stats.json carries their role counts (codecheckers/
@@ -639,6 +649,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
   work_certs <- character(0)
   work_keys <- character(0)
   work_titles <- character(0)
+  work_other <- list()
   person_certs <- character(0)
   person_orcids <- character(0)
   person_names <- character(0)
@@ -683,6 +694,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
       work_certs <- c(work_certs, as.character(entry$Certificate))
       work_keys <- c(work_keys, normalize_work_key(codecheck_yaml$paper$reference))
       work_titles <- c(work_titles, if (!is.null(codecheck_yaml$paper$title)) codecheck_yaml$paper$title else NA_character_)
+      work_other[[length(work_other) + 1]] <- get_reference_other(codecheck_yaml, as.character(entry$Certificate))
 
       for (author in codecheck_yaml$paper$authors) {
         orcid <- normalize_orcid(author$ORCID)
@@ -706,7 +718,7 @@ register_check <- function(register = read.csv("register.csv", as.is = TRUE, com
   reports <- if (length(report_entries) > 0) do.call(rbind, report_entries) else NULL
 
   tryCatch({
-    check_near_duplicate_works(work_certs, work_keys, work_titles)
+    check_near_duplicate_works(work_certs, work_keys, work_titles, work_other)
     check_orcid_conflicts(person_certs, person_orcids, person_names)
     if (!is.null(reports)) check_duplicate_reports(reports$Certificate, reports$Report)
   }, error = function(e) {

@@ -442,6 +442,27 @@ h1 {
     color: #6c757d;
 }
 
+/* The type of a referenced work, e.g. "Preprint", from the DOI's registry
+   record: on certificate pages (title, other references) and work pages */
+.reference-kind {
+    display: inline-block;
+    font-size: 0.78em;
+    padding: 0.05em 0.45em;
+    margin-left: 0.35em;
+    border: 1px solid #ced4da;
+    border-radius: 0.6em;
+    color: #495057;
+    vertical-align: middle;
+}
+
+/* A work page of a DOI that certificates name only as a further reference */
+.related-work-note {
+    border-left: 3px solid #2c7a7b;
+    padding: 0.4em 0.9em;
+    margin: 0.5em 0 1em;
+    background: rgba(44, 122, 123, 0.06);
+}
+
 .venue-metadata-description {
     color: #6c757d;
     margin: 0.9rem 0 1rem;

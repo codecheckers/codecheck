@@ -1,0 +1,27 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message": {
+    "DOI": "10.1371/journal.pone.0295003",
+    "type": "journal-article",
+    "published-online": {
+      "date-parts": [
+        [
+          2023,
+          11,
+          30
+        ]
+      ]
+    },
+    "published-print": null,
+    "issued": {
+      "date-parts": [
+        [
+          2023,
+          11,
+          30
+        ]
+      ]
+    }
+  }
+}

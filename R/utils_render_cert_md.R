@@ -622,7 +622,15 @@ add_paper_details_md <- function(md_content, repo_link, openalex_id = NULL, abst
   work_key <- normalize_work_key(config_yml$paper$reference)
   paper_title_url <- if (!is.na(work_key)) paste0("../../works/", work_key, "/") else config_yml$paper$reference
   paper_title_hyperlink <- paste0("[", config_yml$paper$title, "]", "(", paper_title_url, ")")
-  md_content <- gsub("\\$paper_title\\$", paper_title_hyperlink, md_content)
+  # The type of work the reference is, e.g. "Journal article", for comparison
+  # with the types of the other references below
+  paper_title_hyperlink <- paste(c(paper_title_hyperlink,
+                                   reference_type_html(get_reference_type(config_yml$paper$reference))),
+                                 collapse = " ")
+  md_content <- gsub("$paper_title$", paper_title_hyperlink, md_content, fixed = TRUE)
+  md_content <- gsub("$paper_reference_other$",
+                     paper_reference_other_html(config_yml),
+                     md_content, fixed = TRUE)
   # md_content <- gsub("\\$paper_link\\$", config_yml$paper$reference, md_content)
 
   # Formatting the authors list: each ORCID-bearing author's name links to
@@ -812,4 +820,25 @@ add_codecheck_details_md <- function(md_content, repo_link, cert_type, cert_venu
   md_content <- gsub("\\$codecheck_venue\\$", venue_link, md_content)
 
   return(md_content)
+}
+
+#' The certificate page's "Other references" paragraph
+#'
+#' The paper's further references (`paper.reference-other`, see
+#' [get_reference_other()]) in the style of the authors line: a DOI links to
+#' its own work page, its DOI icon to doi.org, and a web address links out.
+#'
+#' @param config_yml The parsed `codecheck.yml`
+#' @return An HTML string, `""` when there are no further references
+#' @keywords internal
+paper_reference_other_html <- function(config_yml) {
+  refs <- typed_reference_other(config_yml)
+  if (nrow(refs) == 0) {
+    return("")
+  }
+  references <- lapply(seq_len(nrow(refs)), function(i) as.list(refs[i, , drop = FALSE]))
+  # Certificate pages are at docs/certs/YYYY-NNN/, two levels above works/
+  whisker::whisker.render(template_text("cert/reference_other.html"),
+                          list(references = reference_list_data(references, "../../works/")),
+                          partials = reference_partials())
 }

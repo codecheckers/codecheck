@@ -1,0 +1,20 @@
+{
+  "data": {
+    "id": "10.5281/zenodo.23913180",
+    "attributes": {
+      "doi": "10.5281/zenodo.23913180",
+      "publisher": "CODECHECK Community on Zenodo",
+      "types": {
+        "resourceTypeGeneral": "Report",
+        "resourceType": ""
+      },
+      "dates": [
+        {
+          "date": "2026-11-03",
+          "dateType": "Issued"
+        }
+      ],
+      "publicationYear": 2026
+    }
+  }
+}

@@ -122,8 +122,9 @@ generate_sitemap <- function(register_table,
       priority = "0.9"
     )
 
-    works <- unique(register_table$Work[!is.na(register_table$Work)])
-    for (doi in works) {
+    # every work page, also those of DOIs only ever named as a further
+    # reference, which the works overview does not list
+    for (doi in all_work_keys(register_table)) {
       urls[[length(urls) + 1]] <- list(
         loc = paste0(base_url, "/works/", doi, "/"),
         lastmod = lastmod,

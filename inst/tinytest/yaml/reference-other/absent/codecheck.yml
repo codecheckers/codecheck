@@ -1,0 +1,25 @@
+---
+# Fixture for the reference-other tests (test_reference_other.R): no reference-other
+# 10.5555 is the Crossref test prefix, none of these DOIs resolve.
+version: https://codecheck.org.uk/spec/config/2.0
+
+paper:
+  title: Linked versions of a checked work
+  authors:
+    - name: Josiah Carberry
+      ORCID: 0000-0002-1825-0097
+  reference: https://doi.org/10.5555/ro-reference
+
+manifest:
+  - file: Fig1.pdf
+    comment: manuscript Figure 1
+
+codechecker:
+  - name: Stephen J. Eglen
+    ORCID: 0000-0001-8607-8025
+
+summary: The check was straightforward.
+repository: https://github.com/codecheckers/example
+check_time: "2026-11-17 10:00:00"
+certificate: 2026-901
+report: https://doi.org/10.5072/zenodo.145250

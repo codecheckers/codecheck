@@ -202,9 +202,30 @@ normalize_title_for_comparison <- function(title) {
 #' @param work_keys Character vector of normalized work keys (see
 #'   [normalize_work_key()]), same length/order as `certs`.
 #' @param titles Character vector of paper titles, same length/order.
+#' @param other_refs Optional list of data frames, each certificate's further
+#'   references (see [get_reference_other()]), same length/order. Certificates
+#'   whose DOIs are linked through them are one work (see
+#'   [build_work_relations()]) - recording the other version is exactly what
+#'   this warning asks for - and are not reported.
 #' @return None; a `warning()` per group of near-duplicates found.
 #' @keywords internal
-check_near_duplicate_works <- function(certs, work_keys, titles) {
+check_near_duplicate_works <- function(certs, work_keys, titles, other_refs = NULL) {
+  related <- if (is.null(other_refs)) list() else build_work_relations(certs, work_keys, other_refs)
+  # Whether the certificates at these positions all reference one work: each
+  # names at least one DOI, and every DOI is the first one's or related to it.
+  # A certificate whose reference is not a DOI counts through its further
+  # references.
+  linked <- function(group) {
+    dois <- lapply(group, function(i) {
+      d <- c(work_keys[i], if (!is.null(other_refs)) other_refs[[i]]$doi)
+      d[!is.na(d)]
+    })
+    if (any(lengths(dois) == 0)) return(FALSE)
+    first <- dois[[1]][1]
+    work <- c(first, related[[first]]$doi)
+    all(vapply(dois, function(d) any(d %in% work), logical(1)))
+  }
+
   norm_titles <- vapply(titles, normalize_title_for_comparison, character(1))
   usable <- !is.na(norm_titles)
   if (!any(usable)) {
@@ -215,7 +236,7 @@ check_near_duplicate_works <- function(certs, work_keys, titles) {
   for (group in groups) {
     if (length(group) < 2) next
     keys <- work_keys[group]
-    if (length(unique(keys)) > 1) {
+    if (length(unique(keys)) > 1 && !linked(group)) {
       detail <- paste(
         sprintf("%s (%s)", certs[group], ifelse(is.na(keys), "no DOI", keys)),
         collapse = ", "

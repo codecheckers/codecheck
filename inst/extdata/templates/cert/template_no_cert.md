@@ -19,6 +19,7 @@ The certificate can be found at this $codecheck_report_subtext$
 
   <div class="card-body d-flex flex-column">
   <p><strong>Title</strong>: $paper_title$</p>
+  $paper_reference_other$
   <p><strong>$author_names_heading$</strong>: $paper_authors$</p>
 
   <!-- Abstract section -->

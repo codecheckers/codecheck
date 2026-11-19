@@ -418,6 +418,9 @@ create_temp_register_with_codechecker <- function(register_table){
   # Flatten the Codechecker column (convert list elements to comma-separated strings)
   # This is done since jsons cannot handle list columns directly
   register_table$Codechecker <- sapply(register_table$Codechecker, function(x) paste(x, collapse = ","))
+  # CSV has no list columns: the other filters' records (Person, Work other,
+  # ...) are not needed by the codechecker pages read from this file
+  register_table <- register_table[, !vapply(register_table, is.list, logical(1)), drop = FALSE]
   write.csv(register_table, CONFIG$DIR_TEMP_REGISTER_CODECHECKER)
 }
 

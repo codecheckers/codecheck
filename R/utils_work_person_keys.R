@@ -47,28 +47,56 @@ normalize_work_key <- function(paper_reference) {
   tolower(m[1, 2])
 }
 
-#' Add the `Work` grouping column to the register table
+#' Add the `Work` grouping columns to the register table
 #'
 #' One row per certificate, so the same DOI checked by several certificates
 #' repeats the same key - `create_register_files()`'s existing group-by
 #' machinery then puts them on one work page automatically.
 #'
+#' The certificate's further references (`paper.reference-other`, see
+#' [get_reference_other()]) go into the `Work other` list column, each DOI
+#' with its own OpenAlex ID and publication date (see
+#' [get_other_reference_fields()]), so that [explode_work_records()] can list
+#' the certificate on those DOIs' work pages too. Which work pages are one
+#' work is stored in `CONFIG$WORK_RELATIONS` (see [build_work_relations()]),
+#' for the pages of certificates and works to link to each other, with the type
+#' of each related DOI (see [add_reference_types()]).
+#'
 #' @param register_table The register table
 #' @param register The register from register.csv
-#' @return The register table with a `Work` column added
+#' @return The register table with `Work` and `Work other` columns added
 #' @keywords internal
 add_work_key <- function(register_table, register) {
-  work_keys <- vapply(seq_len(nrow(register)), function(i) {
-    config_yml <- get_codecheck_yml_or_null(register[i, ]$Repository, register[i, ]$Certificate)
-    if (is.null(config_yml) || is.null(config_yml$paper$reference)) {
-      return(NA_character_)
+  n <- nrow(register)
+  work_keys <- rep(NA_character_, n)
+  other_refs <- vector("list", n)
+  for (i in seq_len(n)) {
+    cert_id <- register[i, ]$Certificate
+    config_yml <- get_codecheck_yml_or_null(register[i, ]$Repository, cert_id)
+    if (!is.null(config_yml) && !is.null(config_yml$paper$reference)) {
+      work_keys[i] <- normalize_work_key(config_yml$paper$reference)
     }
-    normalize_work_key(config_yml$paper$reference)
-  }, character(1))
+    refs <- get_reference_other(config_yml, cert_id)
+    fields <- lapply(refs$url[!is.na(refs$doi)], get_other_reference_fields)
+    # rep(), not a bare NA: most certificates have no further references, and
+    # a zero-row data frame takes no length-one column
+    refs$openalex <- rep(NA_character_, nrow(refs))
+    refs$publication_date <- rep(NA_character_, nrow(refs))
+    refs$openalex[!is.na(refs$doi)] <- vapply(fields, function(f) f$openalex, character(1))
+    refs$publication_date[!is.na(refs$doi)] <- vapply(fields, function(f) f$publication_date, character(1))
+    other_refs[[i]] <- refs
+  }
 
   register_table$Work <- work_keys
+  register_table$`Work other` <- other_refs
+  # the types once here, rather than on each of the pages and files that show them
+  CONFIG$WORK_RELATIONS <- lapply(
+    build_work_relations(as.character(register$Certificate), work_keys, other_refs),
+    add_reference_types)
+
   n_found <- sum(!is.na(work_keys))
-  cli::cli_alert_success("Resolved {n_found}/{nrow(register)} certificates to a DOI-keyed work")
+  n_other <- sum(vapply(other_refs, function(r) sum(!is.na(r$doi)), integer(1)))
+  cli::cli_alert_success("Resolved {n_found}/{n} certificates to a DOI-keyed work, with {n_other} further DOI{?s}")
   register_table
 }
 

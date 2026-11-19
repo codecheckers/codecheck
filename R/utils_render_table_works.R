@@ -9,6 +9,8 @@
 #' @return A list with a single element, the works table.
 #' @keywords internal
 create_all_works_table <- function(register_table) {
+  # also certificates whose reference is no DOI, for the counts below
+  all_certificates <- register_table
   register_table <- register_table %>% filter(!is.na(Work))
 
   if (nrow(register_table) == 0) {
@@ -28,7 +30,9 @@ create_all_works_table <- function(register_table) {
     )) %>%
     select(Work, Title)
 
-  check_counts <- register_table %>% count(Work, name = "no_checks")
+  # every certificate that names the DOI, also as a further reference, as its
+  # own work page lists them; the rows stay the references only
+  check_counts <- explode_work_records(all_certificates) %>% count(Work, name = "no_checks")
 
   new_table <- register_table %>%
     select(Work) %>%

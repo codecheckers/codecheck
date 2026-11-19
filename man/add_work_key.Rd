@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_work_person_keys.R
 \name{add_work_key}
 \alias{add_work_key}
-\title{Add the `Work` grouping column to the register table}
+\title{Add the `Work` grouping columns to the register table}
 \usage{
 add_work_key(register_table, register)
 }
@@ -12,11 +12,21 @@ add_work_key(register_table, register)
 \item{register}{The register from register.csv}
 }
 \value{
-The register table with a `Work` column added
+The register table with `Work` and `Work other` columns added
 }
 \description{
 One row per certificate, so the same DOI checked by several certificates
 repeats the same key - `create_register_files()`'s existing group-by
 machinery then puts them on one work page automatically.
+}
+\details{
+The certificate's further references (`paper.reference-other`, see
+[get_reference_other()]) go into the `Work other` list column, each DOI
+with its own OpenAlex ID and publication date (see
+[get_other_reference_fields()]), so that [explode_work_records()] can list
+the certificate on those DOIs' work pages too. Which work pages are one
+work is stored in `CONFIG$WORK_RELATIONS` (see [build_work_relations()]),
+for the pages of certificates and works to link to each other, with the type
+of each related DOI (see [add_reference_types()]).
 }
 \keyword{internal}
