@@ -8,7 +8,7 @@ resolution with the `pdfimages` tool from poppler-utils, JPEG images as
 JPEG and all others as PNG, and images smaller than `min_size` pixels in
 width or height (e.g., logos, icons) are skipped. With
 `method = "pages"`, whole pages are rendered with
-[`pdftools::pdf_convert()`](https://docs.ropensci.org/pdftools//reference/pdf_render_page.html)
+[`pdftools::pdf_convert()`](https://docs.ropensci.org/pdftools/reference/pdf_render_page.html)
 instead, e.g., for vector figures that are not embedded as images; crop
 them with
 [`magick::image_crop()`](https://docs.ropensci.org/magick/reference/transform.html)

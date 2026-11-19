@@ -6,7 +6,8 @@ sequence (\`CC-REG-002\`), that every \`Type\` is one of the four venue
 types (\`CC-REG-004\`), that every \`Venue\` is listed in \`venues.csv\`
 (\`CC-REG-005\`), and that every \`Issue\` number is an issue of
 codecheckers/register (\`CC-REG-006\`) whose title carries the
-certificate identifier (\`CC-REG-007\`). Severities come from the rule
+certificate identifier (\`CC-REG-007\`) and whose labels name the row's
+\`Type\` and \`Venue\` (\`CC-REG-008\`). Severities come from the rule
 file, as for \[validate_codecheck_yml_rules()\]. \[register_check()\]
 runs this first.
 
@@ -57,9 +58,11 @@ validate_register_rules(
 - get_issues:
 
   Function of no arguments returning the register repository's issues as
-  a data frame of \`number\` and \`title\`, called once, and only when
-  the register has an \`Issue\` number; when it fails, \`CC-REG-006\`
-  and \`CC-REG-007\` are skipped. Injectable for testing.
+  a data frame of \`number\` and \`title\`, and optionally a list column
+  \`labels\` of label names, called once, and only when the register has
+  an \`Issue\` number; when it fails, \`CC-REG-006\` to \`CC-REG-008\`
+  are skipped, and without \`labels\` \`CC-REG-008\` is. Injectable for
+  testing.
 
 ## Value
 

@@ -13,7 +13,7 @@ reviewed by hand, not merged silently.
 ## Usage
 
 ``` r
-check_near_duplicate_works(certs, work_keys, titles)
+check_near_duplicate_works(certs, work_keys, titles, other_refs = NULL)
 ```
 
 ## Arguments
@@ -30,6 +30,14 @@ check_near_duplicate_works(certs, work_keys, titles)
 - titles:
 
   Character vector of paper titles, same length/order.
+
+- other_refs:
+
+  Optional list of data frames, each certificate's further references
+  (see \[get_reference_other()\]), same length/order. Certificates whose
+  DOIs are linked through them are one work (see
+  \[build_work_relations()\]) - recording the other version is exactly
+  what this warning asks for - and are not reported.
 
 ## Value
 

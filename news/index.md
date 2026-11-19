@@ -1,5 +1,36 @@
 # Changelog
 
+## codecheck 0.32.0.9000
+
+### New Features
+
+- Certificate pages list the paper’s further references from
+  `paper.reference-other`, each DOI linked to its own work page and to
+  doi.org.
+- Every DOI in `reference-other` gets its own work page, listed in the
+  sitemap but not in the works overview.
+- Work pages of DOIs that reference the same work link to each other in
+  a “Same work as” row.
+- Work pages have a “Referenced as” column saying whether a certificate
+  names the DOI as its reference or as a further reference.
+- Certificate and work pages label each referenced DOI with its type
+  from its Crossref or DataCite record, such as Preprint or Journal
+  article, also in `index.json`.
+- New rules `CC-CFG-032` reference-other-prefers-doi and `CC-CFG-033`
+  reference-other-not-reference report a `reference-other` entry that is
+  not a DOI or repeats another reference.
+- New rule `CC-REG-008` issue-labels-match-row warns about a register
+  row whose issue labels do not name its `Type` and `Venue` (closes
+  codecheckers/codecheck#102, register#232).
+- [`register_check()`](http://codecheck.org.uk/codecheck/reference/register_check.md)
+  no longer reports two certificates as a possible same-paper duplicate
+  when `reference-other` links their DOIs.
+
+### Bug Fixes
+
+- `CC-CFG-030` reports a `reference-other` item written as a map instead
+  of passing the URL inside it.
+
 ## codecheck 0.32.0
 
 ### New Features
@@ -501,7 +532,7 @@
   `citation_online_date`/`citation_publication_date`/`citation_date`
   HTML meta tags, schema.org `datePublished` JSON-LD, or - for a
   reference that is itself a PDF - the PDF’s own `Created` metadata via
-  [`pdftools::pdf_info()`](https://docs.ropensci.org/pdftools//reference/pdftools.html).
+  [`pdftools::pdf_info()`](https://docs.ropensci.org/pdftools/reference/pdftools.html).
   New
   [`get_page_publication_date_result()`](http://codecheck.org.uk/codecheck/reference/get_page_publication_date_result.md)
   and helpers in `R/utils_paper_publication_date.R`. A partial date (a

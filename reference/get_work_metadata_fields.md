@@ -30,7 +30,10 @@ A list with \`title\`, \`doi\`, \`openalex\` (\`NA_character\_\` if
 none), \`publication_date\` (\`NA_character\_\` if none), \`venues\`
 (unique, comma-joined), \`check_count\`, \`first_check_date\`,
 \`last_check_date\`, and \`authors\` (a list of \`name\`/\`orcid\`
-lists, \`orcid\` \`NULL\` when not known - possibly an empty list).
+lists, \`orcid\` \`NULL\` when not known - possibly an empty list),
+\`related\` (the work's other references, see
+\[get_work_related_references()\]) and \`only_other\` (whether every
+certificate on the page names this DOI as a further reference only).
 
 ## Details
 

@@ -5,14 +5,16 @@
 (`CC-REG-004`), that every `Venue` is listed in `venues.csv`
 (`CC-REG-005`), and that every `Issue` number is an issue of
 codecheckers/register (`CC-REG-006`) whose title carries the certificate
-identifier (`CC-REG-007`). Severities come from the rule file, as for
+identifier (`CC-REG-007`) and whose labels name the row's `Type` and
+`Venue` (`CC-REG-008`). Severities come from the rule file, as for
 [validate_codecheck_yml_rules()]. [register_check()] runs this first."><meta property="og:description" content="Runs the rules about the register as a whole, rather than about one
 `codecheck.yml`: that certificate identifiers continue their year's sequence
 (`CC-REG-002`), that every `Type` is one of the four venue types
 (`CC-REG-004`), that every `Venue` is listed in `venues.csv`
 (`CC-REG-005`), and that every `Issue` number is an issue of
 codecheckers/register (`CC-REG-006`) whose title carries the certificate
-identifier (`CC-REG-007`). Severities come from the rule file, as for
+identifier (`CC-REG-007`) and whose labels name the row's `Type` and
+`Venue` (`CC-REG-008`). Severities come from the rule file, as for
 [validate_codecheck_yml_rules()]. [register_check()] runs this first."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -21,7 +23,7 @@ identifier (`CC-REG-007`). Severities come from the rule file, as for
 
     <a class="navbar-brand me-2" href="../index.html">codecheck</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.32.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.32.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +62,8 @@ identifier (`CC-REG-007`). Severities come from the rule file, as for
 (`CC-REG-004`), that every `Venue` is listed in `venues.csv`
 (`CC-REG-005`), and that every `Issue` number is an issue of
 codecheckers/register (`CC-REG-006`) whose title carries the certificate
-identifier (`CC-REG-007`). Severities come from the rule file, as for
+identifier (`CC-REG-007`) and whose labels name the row's `Type` and
+`Venue` (`CC-REG-008`). Severities come from the rule file, as for
 [validate_codecheck_yml_rules()]. [register_check()] runs this first.</p>
     </div>
 
@@ -111,9 +114,11 @@ an error stays an error.</p></dd>
 
 <dt id="arg-get-issues">get_issues<a class="anchor" aria-label="anchor" href="#arg-get-issues"></a></dt>
 <dd><p>Function of no arguments returning the register
-repository's issues as a data frame of `number` and `title`, called once,
-and only when the register has an `Issue` number; when it fails,
-`CC-REG-006` and `CC-REG-007` are skipped. Injectable for testing.</p></dd>
+repository's issues as a data frame of `number` and `title`, and
+optionally a list column `labels` of label names, called once, and only
+when the register has an `Issue` number; when it fails, `CC-REG-006` to
+`CC-REG-008` are skipped, and without `labels` `CC-REG-008` is.
+Injectable for testing.</p></dd>
 
 </dl></div>
     <div class="section level2">
