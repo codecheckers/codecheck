@@ -1,3 +1,9 @@
+# codecheck 0.32.0.9000
+
+## New Features
+
+* New rule `CC-REG-008` issue-labels-match-row warns about a register row whose issue labels do not name its `Type` and `Venue` (closes codecheckers/codecheck#102, register#232).
+
 # codecheck 0.32.0
 
 ## New Features

@@ -2,23 +2,23 @@
   "comment": "Written by codecheck::update_codecheck_rules(). The rules themselves are maintained in the register, see https://github.com/codecheckers/register/blob/master/RULES.md",
   "source": "https://raw.githubusercontent.com/codecheckers/register/master/",
   "via": "local register checkout",
-  "retrieved": "2026-10-13T12:15:36+0200",
+  "retrieved": "2026-11-19T12:27:32+0100",
   "files": [
     {
       "file": "rules-2.0.yml",
       "spec_version": "2.0",
-      "rules": 62,
-      "commit": "557e9eaab155f4821feedbba0d6537b38373a386",
-      "commit_date": "2026-10-13T10:15:10+0000",
-      "md5": "a042015a9b914cd6553e76f045a3f34f"
+      "rules": 63,
+      "commit": "65c7d224e0a529036357400367adcd4441c1531d",
+      "commit_date": "2026-10-20T08:50:04+0000",
+      "md5": "7d29ed5e2558f80d7383b20cb5d0fce8"
     },
     {
       "file": "rules-1.0.yml",
       "spec_version": "1.0",
-      "rules": 59,
-      "commit": "557e9eaab155f4821feedbba0d6537b38373a386",
-      "commit_date": "2026-10-13T10:15:10+0000",
-      "md5": "22980765fe96918fc8cf1f67e71c5b44"
+      "rules": 60,
+      "commit": "65c7d224e0a529036357400367adcd4441c1531d",
+      "commit_date": "2026-10-20T08:50:04+0000",
+      "md5": "dcf4dc70de9880866aff21247e145bd1"
     }
   ]
 }

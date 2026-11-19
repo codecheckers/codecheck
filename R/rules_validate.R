@@ -223,16 +223,19 @@ run_rules <- function(context, spec_version, rules = NULL, strict = FALSE,
 ##' (`CC-REG-004`), that every `Venue` is listed in `venues.csv`
 ##' (`CC-REG-005`), and that every `Issue` number is an issue of
 ##' codecheckers/register (`CC-REG-006`) whose title carries the certificate
-##' identifier (`CC-REG-007`). Severities come from the rule file, as for
+##' identifier (`CC-REG-007`) and whose labels name the row's `Type` and
+##' `Venue` (`CC-REG-008`). Severities come from the rule file, as for
 ##' [validate_codecheck_yml_rules()]. [register_check()] runs this first.
 ##'
 ##' @param register The register as a data frame, or a path to `register.csv`.
 ##' @param venues_file Path to `venues.csv`. When it does not exist, `CC-REG-005`
 ##'   is skipped.
 ##' @param get_issues Function of no arguments returning the register
-##'   repository's issues as a data frame of `number` and `title`, called once,
-##'   and only when the register has an `Issue` number; when it fails,
-##'   `CC-REG-006` and `CC-REG-007` are skipped. Injectable for testing.
+##'   repository's issues as a data frame of `number` and `title`, and
+##'   optionally a list column `labels` of label names, called once, and only
+##'   when the register has an `Issue` number; when it fails, `CC-REG-006` to
+##'   `CC-REG-008` are skipped, and without `labels` `CC-REG-008` is.
+##'   Injectable for testing.
 ##' @param spec_version Specification version whose rule file gives the
 ##'   severities, defaulting to the newest.
 ##' @inheritParams validate_codecheck_yml_rules
@@ -284,10 +287,17 @@ register_rules_context <- function(register, venues_file = "venues.csv",
     label <- register
     register <- utils::read.csv(register, as.is = TRUE, comment.char = "#")
   }
-  venues <- if (!is.null(venues_file) && file.exists(venues_file)) {
-    utils::read.csv(venues_file, as.is = TRUE)$name
+  # the name and label of every venue: CC-REG-005 needs the names,
+  # CC-REG-008 also the labels the issues carry
+  venue_table <- if (!is.null(venues_file) && file.exists(venues_file)) {
+    venues_csv <- utils::read.csv(venues_file, as.is = TRUE)
+    data.frame(name = venues_csv$name,
+               label = if ("label" %in% names(venues_csv)) venues_csv$label
+                       else rep(NA_character_, nrow(venues_csv)),
+               stringsAsFactors = FALSE)
   }
-  list(register = register, venues = venues, today = Sys.Date(), label = label,
+  list(register = register, venue_table = venue_table,
+       today = Sys.Date(), label = label,
        get_issues = get_issues, lookups = new.env(parent = emptyenv()))
 }
 

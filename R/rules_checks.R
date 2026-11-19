@@ -1272,13 +1272,13 @@ check_type_known <- function(context) {
 #' @noRd
 check_venue_known <- function(context) {
   register <- context$register
-  if (is.null(context$venues)) {
+  if (is.null(context$venue_table)) {
     return(rule_skip("no venues.csv to compare with"))
   }
   if (!"Venue" %in% names(register) || nrow(register) == 0) {
     return(rule_skip("no Venue column"))
   }
-  unknown <- !register$Venue %in% context$venues
+  unknown <- !register$Venue %in% context$venue_table$name
   if (!any(unknown)) {
     rule_pass()
   } else {
@@ -1340,7 +1340,8 @@ context_register_issues <- function(context) {
 #' All issues of the register repository, without its pull requests
 #'
 #' @param repo GitHub repository as "owner/name"
-#' @return A data frame of issue `number` and `title`.
+#' @return A data frame of issue `number` and `title`, and a list column
+#'   `labels` of each issue's label names, read by `CC-REG-008`.
 #' @keywords internal
 #' @noRd
 register_github_issues <- function(repo = "codecheckers/register") {
@@ -1348,9 +1349,13 @@ register_github_issues <- function(repo = "codecheckers/register") {
                    per_page = 100, .limit = Inf)
   # the endpoint lists pull requests too, but an Issue number must be an issue
   issues <- Filter(function(i) is.null(i$pull_request), issues)
-  data.frame(number = vapply(issues, function(i) as.integer(i$number), integer(1)),
-             title = vapply(issues, function(i) as.character(i$title), character(1)),
-             stringsAsFactors = FALSE)
+  result <- data.frame(number = vapply(issues, function(i) as.integer(i$number), integer(1)),
+                       title = vapply(issues, function(i) as.character(i$title), character(1)),
+                       stringsAsFactors = FALSE)
+  result$labels <- lapply(issues, function(i) {
+    vapply(i$labels, function(l) as.character(l$name), character(1))
+  })
+  result
 }
 
 #' The certificate identifiers an issue title names
@@ -1412,6 +1417,107 @@ check_issue_references_certificate <- function(context) {
   }
 }
 
+#' The venue that an issue's labels name, see `CC-REG-008`
+#'
+#' Ignoring case, a label equal to a venue's `name` in `venues.csv`, or to its
+#' `label` there when that is not a type (`check-nl`, `preprint`), names that
+#' venue; failing that, the type label names the venue when exactly one venue
+#' carries the type as its `label`.
+#'
+#' @param labels The issue's label names
+#' @param type_label The issue's one type label, or `NA`
+#' @param venues The `name` and `label` columns of `venues.csv`
+#' @return The names of the venues the labels name, possibly none or several
+#' @keywords internal
+#' @noRd
+issue_label_venues <- function(labels, type_label, venues) {
+  labels <- tolower(labels)
+  own_label <- ifelse(tolower(venues$label) %in% REGISTER_TYPES, NA_character_, tolower(venues$label))
+  named <- venues$name[tolower(venues$name) %in% labels |
+                         (!is.na(own_label) & own_label %in% labels)]
+  if (length(named) > 0 || is.na(type_label)) {
+    return(unique(named))
+  }
+  # which(): a venue without a label is not one that carries the type
+  carrying <- venues$name[which(tolower(venues$label) == type_label)]
+  if (length(carrying) == 1) carrying else character(0)
+}
+
+#' The labels a register row wants on its issue, see `CC-REG-008`
+#'
+#' Its type, and the venue's own `label` or else its `name`, unless the type
+#' label alone names the venue.
+#'
+#' @keywords internal
+#' @noRd
+issue_labels_wanted <- function(type, venue, venues) {
+  row <- venues[venues$name == venue, , drop = FALSE]
+  if (nrow(row) == 0) {
+    return(type)
+  }
+  if (identical(issue_label_venues(type, type, venues), venue)) {
+    return(type)
+  }
+  own <- row$label[1]
+  c(type, if (!is.na(own) && nzchar(own) && !tolower(own) %in% REGISTER_TYPES) own else venue)
+}
+
+#' @keywords internal
+#' @noRd
+check_issue_labels_match_row <- function(context) {
+  # rule: CC-REG-008 issue-labels-match-row
+  lookup <- register_issue_lookup(context)
+  if (!is.null(lookup$skip)) return(lookup$skip)
+  issues <- lookup$issues
+  if (!"labels" %in% names(issues)) {
+    return(rule_skip("the issue listing carries no labels"))
+  }
+  rows <- lookup$rows[lookup$rows$issue %in% issues$number, ]
+  if (nrow(rows) == 0) {
+    return(rule_skip("none of the issues exists, see CC-REG-006"))
+  }
+  register <- context$register
+  venues <- context$venue_table
+
+  findings <- character(0)
+  for (i in seq_len(nrow(rows))) {
+    row <- register[match(rows$certificate[i], register$Certificate), , drop = FALSE]
+    type <- tolower(row$Type %||% NA_character_)
+    venue <- row$Venue %||% NA_character_
+    labels <- issues$labels[[match(rows$issue[i], issues$number)]]
+    type_labels <- intersect(tolower(labels), REGISTER_TYPES)
+    type_label <- if (length(type_labels) == 1) type_labels else NA_character_
+
+    problems <- character(0)
+    if (length(type_labels) != 1) {
+      problems <- c(problems, sprintf("%d type labels", length(type_labels)))
+    } else if (!identical(type_label, type)) {
+      problems <- c(problems, sprintf("type label '%s', Type '%s'", type_label, type))
+    }
+    # a venue venues.csv does not list has no label to want, see CC-REG-005
+    if (!is.null(venues) && venue %in% venues$name) {
+      named <- issue_label_venues(labels, type_label, venues)
+      if (!identical(named, venue)) {
+        problems <- c(problems, if (length(named) == 0) "no venue named"
+                      else paste0("names ", paste0("'", named, "'", collapse = " and ")))
+      }
+    }
+    if (length(problems) > 0) {
+      wanted <- if (is.null(venues)) type else issue_labels_wanted(type, venue, venues)
+      findings <- c(findings, sprintf(
+        "%s (#%d: %s; labels [%s], wants [%s])", rows$certificate[i], rows$issue[i],
+        paste(problems, collapse = ", "), paste(labels, collapse = ", "),
+        paste(wanted, collapse = ", ")))
+    }
+  }
+
+  if (length(findings) == 0) {
+    rule_pass(paste(nrow(rows), "issue(s)"))
+  } else {
+    rule_fail(paste("issue labels that do not match the row:", paste(findings, collapse = "; ")))
+  }
+}
+
 #' The check function for each register-wide rule
 #'
 #' Kept apart from `rule_checks()`, so that validating a single `codecheck.yml`
@@ -1426,7 +1532,8 @@ register_rule_checks <- function() {
     "CC-REG-004" = "check_type_known",
     "CC-REG-005" = "check_venue_known",
     "CC-REG-006" = "check_issue_exists",
-    "CC-REG-007" = "check_issue_references_certificate"
+    "CC-REG-007" = "check_issue_references_certificate",
+    "CC-REG-008" = "check_issue_labels_match_row"
   )
 }
 
