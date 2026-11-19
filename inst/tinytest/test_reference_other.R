@@ -13,6 +13,69 @@ source(system.file("extdata", "config.R", package = "codecheck"))
 fixture <- function(case) file.path("yaml", "reference-other", case, "codecheck.yml")
 config <- function(case) yaml::read_yaml(fixture(case))
 
+# --- validation: every form of the field, from the file ---------------------
+
+# The rules on reference-other. CC-MET-009 asks every entry with HEAD/GET; the
+# mock answers 404 for a URL containing "does_not_exist" and 200 otherwise.
+other_rules <- c("CC-CFG-029", "CC-CFG-030", "CC-CFG-032", "CC-CFG-033", "CC-MET-009")
+outcomes <- function(case) {
+  with_mocked_codecheck(list(codecheck_GET = mock_codecheck_GET()), {
+    results <- validate_codecheck_yml_rules(fixture(case), rules = other_rules,
+                                            stop_on_error = FALSE, quiet = TRUE)
+  })
+  stats::setNames(results$outcome, results$id)[other_rules]
+}
+expected <- function(cfg029, cfg030, cfg032, cfg033, met009) {
+  stats::setNames(c(cfg029, cfg030, cfg032, cfg033, met009), other_rules)
+}
+
+#                                   029        030        032     033     MET-009
+expect_equal(outcomes("absent"),
+             expected("skipped",    "skipped",    "skipped", "skipped", "skipped"))
+expect_equal(outcomes("empty"),
+             expected("ok",      "ok",      "ok",   "ok",   "skipped"))
+expect_equal(outcomes("one-doi"),
+             expected("ok",      "ok",      "ok",   "ok",   "ok"))
+# "doi:10.5555/..." is a DOI, but not a URL the specification asks for; the
+# upper-case DOI repeats the first entry
+expect_equal(outcomes("mixed"),
+             expected("ok",      "warning", "info", "info", "ok"))
+expect_equal(outcomes("repeats-reference"),
+             expected("ok",      "ok",      "ok",   "info", "ok"))
+# a bare URL is not a sequence, and the rules on the entries do not run
+expect_equal(outcomes("scalar"),
+             expected("error",   "skipped",    "skipped", "skipped", "skipped"))
+# a map item is not flattened into the URL it holds
+expect_equal(outcomes("map-item"),
+             expected("ok",      "warning", "ok",   "ok",   "ok"))
+expect_equal(outcomes("free-text"),
+             expected("ok",      "warning", "ok",   "ok",   "ok"))
+expect_equal(outcomes("unresolvable"),
+             expected("ok",      "ok",      "ok",   "ok",   "warning"))
+expect_equal(outcomes("reference-not-doi"),
+             expected("ok",      "ok",      "ok",   "ok",   "ok"))
+
+# the details name the offending entries
+details <- function(case, rule) {
+  with_mocked_codecheck(list(codecheck_GET = mock_codecheck_GET()), {
+    validate_codecheck_yml_rules(fixture(case), rules = rule,
+                                 stop_on_error = FALSE, quiet = TRUE)$detail
+  })
+}
+expect_true(grepl("url: https://doi.org/10.5555/ro-preprint", details("map-item", "CC-CFG-030"), fixed = TRUE))
+expect_true(grepl("see the preprint on bioRxiv", details("free-text", "CC-CFG-030"), fixed = TRUE))
+expect_true(grepl("https://example.org/preprints/ro", details("mixed", "CC-CFG-032"), fixed = TRUE))
+expect_true(grepl("RO-PREPRINT", details("mixed", "CC-CFG-033"), fixed = TRUE))
+expect_true(grepl("RO-REFERENCE", details("repeats-reference", "CC-CFG-033"), fixed = TRUE))
+expect_true(grepl("does_not_exist", details("unresolvable", "CC-MET-009"), fixed = TRUE))
+
+# The new rules are 2.0 rules only, like the field.
+rules_1_0 <- codecheck_rules("1.0")
+rules_2_0 <- codecheck_rules("2.0")
+expect_false(any(c("CC-CFG-032", "CC-CFG-033") %in% rules_1_0$id))
+expect_true(all(c("CC-CFG-032", "CC-CFG-033") %in% rules_2_0$id))
+expect_equal(rules_2_0$severity[rules_2_0$id %in% c("CC-CFG-032", "CC-CFG-033")], c("info", "info"))
+
 # --- reading the field for rendering ------------------------------------------
 
 get_other <- codecheck:::get_reference_other

@@ -9,7 +9,7 @@ spec_version: "2.0"
 # page itself. Tools use it to date a configuration that names no version; see
 # "Choosing the specification version" in RULES.md.
 spec_date: 2026-09-11
-updated: 2026-10-20
+updated: 2026-11-17
 
 rules:
 
@@ -231,6 +231,20 @@ rules:
     status: active
     reference: "spec/config/2.0#author-and-submission-metadata"
     description: "A paper.reference that is a direct PDF link is a web archive snapshot, which is acceptable where no DOI or landing page exists"
+  - id: CC-CFG-032
+    name: reference-other-prefers-doi
+    area: config
+    severity: info
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "Every reference-other entry is a DOI, preferred over other URLs as for paper.reference; only a DOI gets its own work page in the register"
+  - id: CC-CFG-033
+    name: reference-other-not-reference
+    area: config
+    severity: info
+    status: active
+    reference: "spec/config/2.0#author-and-submission-metadata"
+    description: "No reference-other entry repeats paper.reference or another entry"
 
   # --- metadata ---
   - id: CC-MET-001

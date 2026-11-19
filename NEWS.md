@@ -7,8 +7,13 @@
 * Work pages of DOIs that reference the same work link to each other in a "Same work as" row.
 * Work pages have a "Referenced as" column saying whether a certificate names the DOI as its reference or as a further reference.
 * Certificate and work pages label each referenced DOI with its type from its Crossref or DataCite record, such as Preprint or Journal article, also in `index.json`.
+* New rules `CC-CFG-032` reference-other-prefers-doi and `CC-CFG-033` reference-other-not-reference report a `reference-other` entry that is not a DOI or repeats another reference.
 * New rule `CC-REG-008` issue-labels-match-row warns about a register row whose issue labels do not name its `Type` and `Venue` (closes codecheckers/codecheck#102, register#232).
 * `register_check()` no longer reports two certificates as a possible same-paper duplicate when `reference-other` links their DOIs.
+
+## Bug Fixes
+
+* `CC-CFG-030` reports a `reference-other` item written as a map instead of passing the URL inside it.
 
 # codecheck 0.32.0
 

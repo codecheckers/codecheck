@@ -50,7 +50,7 @@ as_2_0 <- without_report_check(
 # 2.0 has rules 1.0 does not, and never the other way round.
 expect_true(all(as_1_0$id %in% as_2_0$id))
 expect_equal(sort(setdiff(as_2_0$id, as_1_0$id)),
-             c("CC-CFG-029", "CC-CFG-030", "CC-MET-009"))
+             c("CC-CFG-029", "CC-CFG-030", "CC-CFG-032", "CC-CFG-033", "CC-MET-009"))
 
 # Two of the fixture's authors have no ORCID: advice under 1.0, a failure under
 # 2.0. Same check function, different severity, which is the point.

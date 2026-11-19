@@ -452,7 +452,7 @@ check_reference_is_url <- function(context) {
   if (!has_value(reference)) {
     return(rule_skip("no reference to inspect"))
   }
-  if (grepl("^https?://[^[:space:]]+$", trimws(reference))) {
+  if (is_bare_url(reference)) {
     rule_pass()
   } else {
     rule_fail(paste0("'", reference,
@@ -530,7 +530,18 @@ reference_other <- function(context) {
   if (from_file) other <- context$yml_seq$paper[["reference-other"]]
   is_sequence <- is.null(names(other)) &&
     (is.list(other) || (!from_file && is.atomic(other)))
-  list(is_sequence = is_sequence, entries = as.character(unlist(other)))
+  # An item that is itself a map or a list is not a reference, and must not be
+  # flattened into the URL it may contain: written out as YAML flow, it fails
+  # the URL form check like any other text.
+  entries <- if (is.list(other)) {
+    vapply(other, function(item) {
+      if (is.character(item) && length(item) == 1 && is.null(names(item))) item
+      else trimws(gsub("\n", " ", yaml::as.yaml(item), fixed = TRUE))
+    }, character(1), USE.NAMES = FALSE)
+  } else {
+    as.character(other)
+  }
+  list(is_sequence = is_sequence, entries = entries)
 }
 
 #' @keywords internal
@@ -555,12 +566,51 @@ check_reference_other_item_form <- function(context) {
     return(rule_skip("no reference-other sequence"))
   }
   entries <- other$entries
-  not_url <- entries[!grepl("^https?://[^[:space:]]+$", trimws(entries))]
+  not_url <- entries[!is_bare_url(entries)]
   if (length(not_url) == 0) {
     rule_pass()
   } else {
     rule_fail(paste("reference-other entries that are not resolvable URLs:",
                     paste(not_url, collapse = ", ")))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_reference_other_prefers_doi <- function(context) {
+  other <- reference_other(context)
+  if (is.null(other) || !other$is_sequence) {
+    return(rule_skip("no reference-other sequence"))
+  }
+  entries <- trimws(other$entries)
+  # entries that are not URLs at all are CC-CFG-030's to report
+  urls <- entries[is_bare_url(entries)]
+  not_doi <- urls[is.na(vapply(urls, normalize_work_key, character(1)))]
+  if (length(not_doi) == 0) {
+    rule_pass()
+  } else {
+    rule_fail(paste("reference-other entries that are not DOIs:",
+                    paste(not_doi, collapse = ", ")))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+check_reference_other_not_reference <- function(context) {
+  other <- reference_other(context)
+  if (is.null(other) || !other$is_sequence) {
+    return(rule_skip("no reference-other sequence"))
+  }
+  # the same identity rendering drops repeats by, see reference_key()
+  entries <- reference_key(other$entries)
+  reference <- context$yml$paper$reference
+  reference <- if (is.character(reference) && length(reference) == 1) reference_key(reference) else NA
+  repeats <- other$entries[duplicated(entries) | (!is.na(reference) & entries == reference)]
+  if (length(repeats) == 0) {
+    rule_pass()
+  } else {
+    rule_fail(paste("reference-other entries that repeat paper.reference or another entry:",
+                    paste(unique(repeats), collapse = ", ")))
   }
 }
 
@@ -1624,6 +1674,8 @@ rule_checks <- function() {
     "CC-CFG-029" = "check_reference_other_is_list",
     "CC-CFG-030" = "check_reference_other_item_form",
     "CC-CFG-031" = "check_reference_pdf_is_archived",
+    "CC-CFG-032" = "check_reference_other_prefers_doi",
+    "CC-CFG-033" = "check_reference_other_not_reference",
     "CC-MET-001" = "check_orcid_format",
     "CC-MET-002" = "check_orcid_resolves",
     "CC-MET-003" = "check_orcid_name_match",
