@@ -84,6 +84,16 @@
       "Bash(R -q -e 'tinytest::build_install_test\\(\".\"\\)' 2>&1 | grep -E \"FAILED|Showing\")"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "/home/daniel/git/codecheck/register"
+    ]
+  },
+  "sandbox": {
+    "filesystem": {
+      "allowWrite": [
+        "/home/daniel/git/codecheck/register"
+      ]
+    }
   }
 }
