@@ -1,0 +1,79 @@
+{
+  "_comment": "Trimmed copy of https://api.openalex.org/works/W4411175514 (retrieved 2026-11-19): the arXiv preprint of certificate 2025-019 (W4415061882) merged into its SSRN copy",
+  "id": "https://openalex.org/W4411175514",
+  "doi": "https://doi.org/10.2139/ssrn.5287999",
+  "title": "Fuzzy-Logic-Based Model Predictive Control: A Paradigm Integrating Optimal and Common-Sense Decision Making",
+  "publication_date": "2025-01-01",
+  "authorships": [
+    {
+      "author": {
+        "display_name": "Filip Surma",
+        "orcid": "https://orcid.org/0000-0002-6756-9598"
+      }
+    },
+    {
+      "author": {
+        "display_name": "Anahita Jamshidnejad",
+        "orcid": "https://orcid.org/0000-0001-9151-2607"
+      }
+    }
+  ],
+  "primary_location": {
+    "id": "doi:10.2139/ssrn.5287999",
+    "doi": "https://doi.org/10.2139/ssrn.5287999",
+    "landing_page_url": "https://doi.org/10.2139/ssrn.5287999",
+    "source": {
+      "id": "https://openalex.org/S4210172589",
+      "display_name": "SSRN Electronic Journal",
+      "issn_l": "1556-5068",
+      "issn": [
+        "1556-5068"
+      ],
+      "type": "repository"
+    }
+  },
+  "locations": [
+    {
+      "id": "doi:10.2139/ssrn.5287999",
+      "doi": "https://doi.org/10.2139/ssrn.5287999",
+      "landing_page_url": "https://doi.org/10.2139/ssrn.5287999",
+      "source": {
+        "id": "https://openalex.org/S4210172589",
+        "display_name": "SSRN Electronic Journal",
+        "issn_l": "1556-5068",
+        "issn": [
+          "1556-5068"
+        ],
+        "type": "repository"
+      }
+    },
+    {
+      "id": "pmh:oai:arXiv.org:2503.21065",
+      "doi": null,
+      "landing_page_url": "http://arxiv.org/abs/2503.21065",
+      "source": {
+        "id": "https://openalex.org/S4306400194",
+        "display_name": "arXiv (Cornell University)",
+        "issn_l": "2331-8422",
+        "issn": [
+          "2331-8422"
+        ],
+        "type": "repository"
+      }
+    },
+    {
+      "id": "doi:10.48550/arxiv.2503.21065",
+      "doi": "https://doi.org/10.48550/arxiv.2503.21065",
+      "landing_page_url": "https://doi.org/10.48550/arxiv.2503.21065",
+      "source": {
+        "id": "https://openalex.org/S4306400194",
+        "display_name": "arXiv (Cornell University)",
+        "issn_l": "2331-8422",
+        "issn": [
+          "2331-8422"
+        ],
+        "type": "repository"
+      }
+    }
+  ]
+}

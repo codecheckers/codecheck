@@ -17,8 +17,10 @@ A list with `status` and `value`, as the cached lookup
 \description{
 [get_openalex_work_fields_cached_result()] for a work and its reference: when
 the record describes another work (see [openalex_record_is_work()]), the
-ISSN, venue and publication date are those of that other work and are
-returned as `NA`, so the callers fall back as they would for a work without
-a record.
+ISSN, venue and publication date are those of that other work. The
+publication date is returned as `NA`, so the callers fall back as they would
+for a work without a record; the ISSN and venue are those of the record's
+location with the reference's DOI, if it has one (see
+[openalex_location_fields()]), and `NA` otherwise.
 }
 \keyword{internal}

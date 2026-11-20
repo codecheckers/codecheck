@@ -310,6 +310,13 @@ rules:
     status: active
     reference: "practice"
     description: "Every reference-other entry resolves"
+  - id: CC-MET-010
+    name: reference-other-openalex-copies
+    area: metadata
+    severity: info
+    status: active
+    reference: "practice"
+    description: "Every DOI that the paper's OpenAlex record lists for the work, such as another copy of a preprint that OpenAlex merged with it, is paper.reference or a reference-other entry"
 
   # --- bundle ---
   - id: CC-BUN-001

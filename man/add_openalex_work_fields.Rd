@@ -4,7 +4,12 @@
 \alias{add_openalex_work_fields}
 \title{Add the publication facts behind each OpenAlex ID (register#50)}
 \usage{
-add_openalex_work_fields(register_table, paper_references = NULL)
+add_openalex_work_fields(
+  register_table,
+  paper_references = NULL,
+  reference_others = NULL,
+  cert_ids = NULL
+)
 }
 \arguments{
 \item{register_table}{The register table, with an `OpenAlex` column}
@@ -15,6 +20,15 @@ as `register_table`'s rows, of each work's `paper.reference` URL from its
 (see [openalex_record_is_work()]) and as the fallback for the date (see
 below); pass NULL/omit to skip both (e.g. for a per-certificate re-render
 with a one-row table).}
+
+\item{reference_others}{Optional list, same length and order as
+`register_table`'s rows, of each work's `paper.reference-other` URLs (see
+[get_reference_other()]). With it and `cert_ids`, every DOI the work's
+OpenAlex record lists that neither reference names is reported as a
+possible `reference-other` entry, see [suggest_reference_other()].}
+
+\item{cert_ids}{Optional character vector of the certificate identifiers,
+same length and order as `register_table`'s rows}
 }
 \value{
 The register table with added "Paper ISSN", "Paper venue" and

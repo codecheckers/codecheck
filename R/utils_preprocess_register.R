@@ -442,6 +442,7 @@ add_openalex_ids <- function(register_table, register) {
   cli::cli_alert_info("Looking up OpenAlex IDs")
   openalex_ids <- c()
   paper_references <- c()
+  reference_others <- vector("list", nrow(register))
 
   for (i in seq_len(nrow(register))) {
     cert_id <- register[i, ]$Certificate
@@ -474,15 +475,62 @@ add_openalex_ids <- function(register_table, register) {
       cert_id, c("paper", "openalex"), lookup$status, lookup$value,
       empty_value = NA_character_, prune_unavailable = isTRUE(CONFIG$PRUNE_UNAVAILABLE_METADATA)
     )
+    report_openalex_merge(cert_id, read_previous_cert_field(cert_id, c("paper", "openalex")),
+                          openalex_id)
     openalex_ids <- c(openalex_ids, openalex_id)
+    reference_others[[i]] <- if (is.null(config_yml)) character(0) else
+      get_reference_other(config_yml)$url
   }
 
   register_table$OpenAlex <- openalex_ids
   n_found <- sum(!is.na(openalex_ids))
   cli::cli_alert_success("Found {n_found}/{nrow(register)} OpenAlex IDs")
 
-  register_table <- add_openalex_work_fields(register_table, paper_references)
+  register_table <- add_openalex_work_fields(register_table, paper_references,
+                                             reference_others, register$Certificate)
   return(register_table)
+}
+
+#' Say when OpenAlex has merged a certificate's work into another record
+#'
+#' OpenAlex merges records it considers the same work, and the ID of the
+#' record merged away then redirects to the one it was merged into. The render
+#' keeps the ID this run found, which is the current one; this only makes the
+#' change visible, because the record behind it can describe another copy of
+#' the work (2025-019: the arXiv preprint merged into the SSRN copy, whose DOI
+#' is the record's) and so change the work's publication, and the certificate's
+#' `reference-other` may want the other copy's DOI (see
+#' [suggest_reference_other()]).
+#'
+#' Costs one cached request, and only for a certificate whose ID changed.
+#'
+#' @param cert_id The certificate identifier
+#' @param previous The OpenAlex ID of the previous rendering, or `NULL`/`NA`
+#' @param current The OpenAlex ID this render resolved, or `NA`
+#' @return `"merged"`, `"changed"` or `NA` (no change to report), invisibly
+#' @keywords internal
+report_openalex_merge <- function(cert_id, previous, current) {
+  previous <- wikidata_transform(previous %||% NA_character_, "openalex")
+  current <- wikidata_transform(current %||% NA_character_, "openalex")
+  if (is.na(previous) || is.na(current) || identical(previous, current)) {
+    return(invisible(NA_character_))
+  }
+  old <- tryCatch(get_openalex_work_fields_cached_result(paste0("https://openalex.org/", previous)),
+                  error = function(e) NULL)
+  redirected_to <- wikidata_transform(old$value$id %||% NA_character_, "openalex")
+  if (identical(redirected_to, current)) {
+    doi <- old$value$doi %||% NA_character_
+    # passed as a value, never as cli's glue template: a DOI may hold "{...}"
+    message <- paste0(
+      cert_id, " | OpenAlex ", previous, " was merged into ", current,
+      if (!is.na(doi)) paste0(" (primary DOI ", sub("^https?://doi\\.org/", "", doi), ")") else "",
+      ", using the current ID")
+    cli::cli_alert_info("{message}")
+    return(invisible("merged"))
+  }
+  message <- paste0(cert_id, " | OpenAlex ID changed from ", previous, " to ", current)
+  cli::cli_alert_info("{message}")
+  invisible("changed")
 }
 
 #' Add the publication facts behind each OpenAlex ID (register#50)
@@ -504,9 +552,17 @@ add_openalex_ids <- function(register_table, register) {
 #'   (see [openalex_record_is_work()]) and as the fallback for the date (see
 #'   below); pass NULL/omit to skip both (e.g. for a per-certificate re-render
 #'   with a one-row table).
+#' @param reference_others Optional list, same length and order as
+#'   `register_table`'s rows, of each work's `paper.reference-other` URLs (see
+#'   [get_reference_other()]). With it and `cert_ids`, every DOI the work's
+#'   OpenAlex record lists that neither reference names is reported as a
+#'   possible `reference-other` entry, see [suggest_reference_other()].
+#' @param cert_ids Optional character vector of the certificate identifiers,
+#'   same length and order as `register_table`'s rows
 #' @return The register table with added "Paper ISSN", "Paper venue" and
 #'   "Work publication date" columns
-add_openalex_work_fields <- function(register_table, paper_references = NULL) {
+add_openalex_work_fields <- function(register_table, paper_references = NULL,
+                                     reference_others = NULL, cert_ids = NULL) {
   if (!"OpenAlex" %in% colnames(register_table)) {
     return(register_table)
   }
@@ -522,6 +578,14 @@ add_openalex_work_fields <- function(register_table, paper_references = NULL) {
                                publication_date = NA_character_)
     )
   })
+
+  if (!is.null(paper_references) && !is.null(reference_others) && !is.null(cert_ids) &&
+      length(reference_others) == length(fields) && length(cert_ids) == length(fields)) {
+    for (i in seq_along(fields)) {
+      suggest_reference_other(cert_ids[i], openalex_record_dois(fields[[i]]),
+                              paper_references[i], reference_others[[i]])
+    }
+  }
 
   register_table$`Paper ISSN` <- vapply(fields, function(f) f$issn %||% NA_character_, character(1))
   register_table$`Paper venue` <- vapply(fields, function(f) f$venue %||% NA_character_, character(1))
@@ -560,6 +624,75 @@ add_openalex_work_fields <- function(register_table, paper_references = NULL) {
     "Found {sum(!is.na(register_table$`Paper ISSN`))} publication ISSN{?s} and {sum(!is.na(register_table$`Work publication date`))} publication date{?s}"
   )
   register_table
+}
+
+#' The DOIs of every copy of a work an OpenAlex record lists
+#'
+#' @param fields The value of [get_openalex_work_fields_cached_result()]
+#' @return Character vector of `https://doi.org/` URLs, possibly empty
+#' @keywords internal
+openalex_record_dois <- function(fields) {
+  dois <- c(fields$doi %||% NA_character_,
+            vapply(fields$locations %||% list(), function(l) l$doi %||% NA_character_, character(1)))
+  unique(dois[!is.na(dois) & nzchar(dois)])
+}
+
+#' DOIs of a work's other copies that its references do not name
+#'
+#' OpenAlex merges the records of copies of one work - a preprint on two
+#' servers, a preprint and its version of record - and lists each copy's DOI.
+#' A DOI there that is neither the `paper.reference` nor in `reference-other`
+#' is a candidate for `reference-other` (rule `CC-MET-010`). Only a candidate:
+#' OpenAlex merges can be wrong, so a person decides.
+#'
+#' DOIs compare as [openalex_record_is_work()] compares them, and a DOI that
+#' differs from a reference only by a trailing version (`v2`) is the same copy.
+#'
+#' @param record_dois The DOIs the record lists, see [openalex_record_dois()]
+#' @param paper_reference The paper reference
+#' @param reference_other The `reference-other` URLs, possibly empty
+#' @return Character vector of the candidate DOIs, as `https://doi.org/` URLs
+#'   in lower case
+#' @keywords internal
+missing_reference_other_dois <- function(record_dois, paper_reference, reference_other = character(0)) {
+  key <- function(x) {
+    if (length(x) == 0) return(character(0))
+    k <- vapply(x, function(d) openalex_doi_key(d), character(1), USE.NAMES = FALSE)
+    sub("[.]?v[0-9]+$", "", tolower(k))
+  }
+  record <- key(record_dois)
+  named <- key(c(paper_reference %||% NA_character_, reference_other))
+  # compared without the version, but suggested as OpenAlex has the DOI: the
+  # version is part of some DOIs (Research Square's .../v1)
+  missing <- !is.na(record) & !record %in% named[!is.na(named)] & !duplicated(record)
+  if (!any(missing)) return(character(0))
+  dois <- vapply(record_dois[missing], function(d) tolower(openalex_doi_key(d)), character(1),
+                 USE.NAMES = FALSE)
+  # not CONFIG$HYPERLINKS: the rule runs outside a render too
+  paste0("https://doi.org/", dois)
+}
+
+#' Report a work's other copies as possible `reference-other` entries
+#'
+#' The render's side of rule `CC-MET-010`, which reports the same in
+#' [validate_codecheck_yml_rules()]. Nothing is written: the message names the
+#' certificate and gives the YAML to add to its `codecheck.yml`.
+#'
+#' @param cert_id The certificate identifier
+#' @inheritParams missing_reference_other_dois
+#' @return The candidate DOIs, invisibly
+#' @keywords internal
+suggest_reference_other <- function(cert_id, record_dois, paper_reference, reference_other = character(0)) {
+  if (is.na(paper_reference %||% NA_character_)) return(invisible(character(0)))
+  missing <- missing_reference_other_dois(record_dois, paper_reference, reference_other)
+  if (length(missing) > 0) {
+    # passed as a value, never as cli's glue template: a DOI may hold "{...}"
+    message <- paste0(cert_id, " | OpenAlex lists further DOIs of this work, add them to ",
+                      "paper.reference-other in codecheck.yml if they are copies of it (CC-MET-010): ",
+                      "reference-other: [", paste(missing, collapse = ", "), "]")
+    cli::cli_alert_info("{message}")
+  }
+  invisible(missing)
 }
 
 #' Fill in the publication of a journal's own works that OpenAlex cannot place

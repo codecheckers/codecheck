@@ -364,22 +364,94 @@ get_openalex_work_fields_result <- function(openalex_id) {
   }
 
   data <- httr::content(response, "parsed")
-  source <- data$primary_location$source
-  # issn_l is the linking ISSN, the one identifier a publication has exactly one
-  # of; the issn list holds the print and electronic ones separately.
-  issn <- source$issn_l %||% (if (length(source$issn) > 0) source$issn[[1]] else NULL)
+  primary <- openalex_source_fields(data$primary_location$source)
 
   list(status = "found", value = list(
-    issn = if (is.null(issn)) NA_character_ else as.character(issn),
+    issn = primary$issn,
     # The publication's name, for the venue item the mirror creates for it:
     # the register's own venues.csv only covers the venues that commission
     # checks, not the journals the checked works appeared in.
-    venue = source$display_name %||% NA_character_,
+    venue = primary$venue,
     publication_date = data$publication_date %||% NA_character_,
     # The DOI of the work the record describes, which is not always the one it
     # was found by: see openalex_record_is_work().
-    doi = data$doi %||% NA_character_
+    doi = data$doi %||% NA_character_,
+    # The record's own ID, which is not the one asked for when OpenAlex has
+    # merged that record into this one: see report_openalex_merge().
+    id = data$id %||% NA_character_,
+    # Every copy of the work OpenAlex knows, with its own publication: a record
+    # merged from a preprint and another copy of it (2025-019: arXiv and SSRN)
+    # has the other copy as its primary location, and the referenced copy only
+    # here, see openalex_location_fields().
+    locations = openalex_locations(data$locations)
   ))
+}
+
+#' The ISSN and name of an OpenAlex source
+#'
+#' @param source A `source` of an OpenAlex location, or `NULL`
+#' @return A list with `issn` and `venue`, each possibly `NA`
+#' @keywords internal
+openalex_source_fields <- function(source) {
+  # issn_l is the linking ISSN, the one identifier a publication has exactly one
+  # of; the issn list holds the print and electronic ones separately.
+  issn <- source$issn_l %||% (if (length(source$issn) > 0) source$issn[[1]] else NULL)
+  list(issn = if (is.null(issn)) NA_character_ else as.character(issn),
+       venue = source$display_name %||% NA_character_)
+}
+
+#' The locations of an OpenAlex work that carry a DOI
+#'
+#' A location without a DOI (an OAI-PMH harvest, a repository landing page)
+#' identifies no copy that `paper.reference` or `reference-other` could name,
+#' so it is left out.
+#'
+#' @param locations The `locations` of an OpenAlex work
+#' @return A list of lists with `doi` (a `https://doi.org/` URL), `issn` and
+#'   `venue`
+#' @keywords internal
+openalex_locations <- function(locations) {
+  locations <- Filter(function(l) is.character(l$doi) && length(l$doi) == 1 &&
+                        !is.na(l$doi) && nzchar(l$doi), locations %||% list())
+  lapply(unname(locations), function(l) {
+    c(list(doi = l$doi), openalex_source_fields(l$source))
+  })
+}
+
+#' The comparable form of a DOI, as [openalex_record_is_work()] compares them
+#'
+#' @param x A DOI, as a URL or bare, or `NA`
+#' @return The bare, lower-case DOI with `_` read as `/`, or `NA`
+#' @keywords internal
+openalex_doi_key <- function(x) {
+  # "doi:10..." as well: reference-other accepts that spelling, see get_reference_other()
+  x <- sub("^doi:\\s*", "", trimws(x %||% NA_character_), ignore.case = TRUE)
+  doi <- wikidata_transform(x, "doi")
+  gsub("_", "/", doi, fixed = TRUE)
+}
+
+#' The publication of the copy of a work a reference names
+#'
+#' When an OpenAlex record describes another copy of the work as its primary
+#' location, the location whose DOI is the reference's still says where the
+#' referenced copy appeared.
+#'
+#' @param fields The value of [get_openalex_work_fields_cached_result()]
+#' @param paper_reference The paper reference from the register
+#' @return A list with `issn` and `venue`, both `NA` when no location carries
+#'   the reference's DOI
+#' @keywords internal
+openalex_location_fields <- function(fields, paper_reference) {
+  none <- list(issn = NA_character_, venue = NA_character_)
+  paper <- openalex_doi_key(paper_reference)
+  if (is.na(paper)) return(none)
+  for (location in fields$locations %||% list()) {
+    if (identical(openalex_doi_key(location$doi), paper)) {
+      return(list(issn = location$issn %||% NA_character_,
+                  venue = location$venue %||% NA_character_))
+    }
+  }
+  none
 }
 
 #' Cached version of get_openalex_work_fields_result
@@ -392,9 +464,10 @@ get_openalex_work_fields_result <- function(openalex_id) {
 #' @noRd
 get_openalex_work_fields_cached_result <- function(openalex_id) {
   cached_lookup_result(
-    # "v3": the cached values from before the record's DOI was read have the
-    # wrong shape, and a stale cache is worse than one refetch per work.
-    key = list("openalex_work_fields", openalex_id, "v3"),
+    # "v4": the cached values from before the record's ID and locations were
+    # read have the wrong shape, and a stale cache is worse than one refetch
+    # per work.
+    key = list("openalex_work_fields", openalex_id, "v4"),
     dirs = c("codecheck", "openalex_work_fields"),
     lookup = function() get_openalex_work_fields_result(openalex_id)
   )
@@ -419,12 +492,8 @@ get_openalex_work_fields_cached_result <- function(openalex_id) {
 #'   DOI or a reference that is not one cannot be compared, and passes
 #' @keywords internal
 openalex_record_is_work <- function(record_doi, paper_reference) {
-  normalise <- function(x) {
-    doi <- wikidata_transform(x %||% NA_character_, "doi")
-    gsub("_", "/", doi, fixed = TRUE)
-  }
-  record <- normalise(record_doi)
-  paper <- normalise(paper_reference)
+  record <- openalex_doi_key(record_doi)
+  paper <- openalex_doi_key(paper_reference)
   if (is.na(record) || is.na(paper)) return(TRUE)
   identical(record, paper)
 }
@@ -433,9 +502,11 @@ openalex_record_is_work <- function(record_doi, paper_reference) {
 #'
 #' [get_openalex_work_fields_cached_result()] for a work and its reference: when
 #' the record describes another work (see [openalex_record_is_work()]), the
-#' ISSN, venue and publication date are those of that other work and are
-#' returned as `NA`, so the callers fall back as they would for a work without
-#' a record.
+#' ISSN, venue and publication date are those of that other work. The
+#' publication date is returned as `NA`, so the callers fall back as they would
+#' for a work without a record; the ISSN and venue are those of the record's
+#' location with the reference's DOI, if it has one (see
+#' [openalex_location_fields()]), and `NA` otherwise.
 #'
 #' @param openalex_id The OpenAlex work URL or ID
 #' @param paper_reference The paper reference from the register
@@ -444,7 +515,10 @@ openalex_record_is_work <- function(record_doi, paper_reference) {
 get_openalex_work_fields_for <- function(openalex_id, paper_reference) {
   result <- get_openalex_work_fields_cached_result(openalex_id)
   if (!openalex_record_is_work(result$value$doi, paper_reference)) {
-    result$value[c("issn", "venue", "publication_date")] <- NA_character_
+    located <- openalex_location_fields(result$value, paper_reference)
+    result$value$issn <- located$issn
+    result$value$venue <- located$venue
+    result$value$publication_date <- NA_character_
   }
   result
 }

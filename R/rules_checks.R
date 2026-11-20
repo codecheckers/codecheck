@@ -827,6 +827,26 @@ check_paper_reference_resolves <- function(context) {
 
 #' @keywords internal
 #' @noRd
+check_reference_other_openalex_copies <- function(context) {
+  paper <- context_paper_metadata(context)
+  if (paper$status != "ok") {
+    return(rule_skip(paper_metadata_skip_detail(paper)))
+  }
+  other <- reference_other(context)
+  if (!is.null(other) && !other$is_sequence) {
+    return(rule_skip("reference-other is not a sequence, see CC-CFG-029"))
+  }
+  entries <- if (is.null(other)) character(0) else other$entries
+  missing <- missing_reference_other_dois(paper$record$dois, context$yml$paper$reference, entries)
+  if (length(missing) == 0) {
+    return(rule_pass())
+  }
+  rule_fail(paste("OpenAlex lists further DOIs of the work; if they are copies of it, add to",
+                  "reference-other:", paste(missing, collapse = ", ")))
+}
+
+#' @keywords internal
+#' @noRd
 check_paper_title_match <- function(context) {
   paper <- context_paper_metadata(context)
   if (paper$status != "ok") {
@@ -1179,7 +1199,10 @@ openalex_paper_record <- function(work) {
     list(name = trimws(as.character(authorship$author$display_name %||% "")),
          ORCID = authorship$author$orcid)
   })
-  list(title = work$title %||% work$display_name, author = authors)
+  list(title = work$title %||% work$display_name, author = authors,
+       # every copy of the work OpenAlex knows, for CC-MET-010
+       dois = openalex_record_dois(list(doi = work$doi,
+                                        locations = openalex_locations(work$locations))))
 }
 
 #' Why a comparison with OpenAlex could not run
@@ -1685,6 +1708,7 @@ rule_checks <- function() {
     "CC-MET-007" = "check_paper_author_name_match",
     "CC-MET-008" = "check_paper_author_orcid_match",
     "CC-MET-009" = "check_reference_other_resolves",
+    "CC-MET-010" = "check_reference_other_openalex_copies",
     "CC-BUN-001" = "check_manifest_files_exist",
     "CC-BUN-002" = "check_codecheck_directory_present",
     "CC-BUN-003" = "check_report_file_present",

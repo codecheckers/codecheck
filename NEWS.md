@@ -10,9 +10,12 @@
 * New rules `CC-CFG-032` reference-other-prefers-doi and `CC-CFG-033` reference-other-not-reference report a `reference-other` entry that is not a DOI or repeats another reference.
 * New rule `CC-REG-008` issue-labels-match-row warns about a register row whose issue labels do not name its `Type` and `Venue` (closes codecheckers/codecheck#102, register#232).
 * `register_check()` no longer reports two certificates as a possible same-paper duplicate when `reference-other` links their DOIs.
+* `register_render()` reports a certificate whose OpenAlex ID changed since the previous rendering, and says when OpenAlex merged the old record into the new one; the render keeps the current ID (register#247).
+* New rule `CC-MET-010` reference-other-openalex-copies lists the DOIs the paper's OpenAlex record holds for further copies of the work that neither `reference` nor `reference-other` names, as candidates for `reference-other`; `register_render()` reports the same per certificate (register#247).
 
 ## Bug Fixes
 
+* A checked work whose OpenAlex record describes another copy of it keeps the publication of its own copy when the record lists that copy: the arXiv preprint of 2025-019, merged into its SSRN copy, lost its ISSN and venue in `register.json` and the Wikidata export (register#247).
 * `CC-CFG-030` reports a `reference-other` item written as a map instead of passing the URL inside it.
 
 # codecheck 0.32.0

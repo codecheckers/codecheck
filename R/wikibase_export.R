@@ -392,15 +392,23 @@ read_register_records <- function(dir) {
     # nothing any more.
     #
     # The ID is kept as `Rejected OpenAlex`, so that preview_wikidata_updates()
-    # can take back what an earlier export wrote from it.
+    # can take back what an earlier export wrote from it. The publication of
+    # the referenced copy is kept when the record lists it as one of its
+    # locations: a preprint merged with another copy of itself is still on its
+    # own server (2025-019, see openalex_location_fields()).
     if (identical(result$status, "absent") ||
         !openalex_record_is_work(fields$doi, certificates$`Paper reference`[i])) {
       if (identical(certificates$`Work publication date`[i], fields$publication_date)) {
         fallback <- get_fallback_publication_date(certificates$`Paper reference`[i])
         certificates$`Work publication date`[i] <- fallback$value
       }
-      certificates$`Paper ISSN`[i] <- NA_character_
-      certificates$`Paper venue`[i] <- NA_character_
+      located <- if (identical(result$status, "absent")) {
+        list(issn = NA_character_, venue = NA_character_)
+      } else {
+        openalex_location_fields(fields, certificates$`Paper reference`[i])
+      }
+      certificates$`Paper ISSN`[i] <- located$issn
+      certificates$`Paper venue`[i] <- located$venue
       certificates$`Rejected OpenAlex`[i] <- certificates$OpenAlex[i]
       certificates$OpenAlex[i] <- NA_character_
       next
