@@ -51,10 +51,14 @@
 <li>New rule <code>CC-REG-008</code> issue-labels-match-row warns about a register row whose issue labels do not name its <code>Type</code> and <code>Venue</code> (closes codecheckers/codecheck#102, register#232).</li>
 <li>
 <code><a href="../reference/register_check.html">register_check()</a></code> no longer reports two certificates as a possible same-paper duplicate when <code>reference-other</code> links their DOIs.</li>
+<li>
+<code><a href="../reference/register_render.html">register_render()</a></code> reports a certificate whose OpenAlex ID changed since the previous rendering, and says when OpenAlex merged the old record into the new one; the render keeps the current ID (register#247).</li>
+<li>New rule <code>CC-MET-010</code> reference-other-openalex-copies lists the DOIs the paper’s OpenAlex record holds for further copies of the work that neither <code>reference</code> nor <code>reference-other</code> names, as candidates for <code>reference-other</code>; <code><a href="../reference/register_render.html">register_render()</a></code> reports the same per certificate (register#247).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-32-0-9000">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-32-0-9000"></a></h3>
-<ul><li>
+<ul><li>A checked work whose OpenAlex record describes another copy of it keeps the publication of its own copy when the record lists that copy: the arXiv preprint of 2025-019, merged into its SSRN copy, lost its ISSN and venue in <code>register.json</code> and the Wikidata export (register#247).</li>
+<li>
 <code>CC-CFG-030</code> reports a <code>reference-other</code> item written as a map instead of passing the URL inside it.</li>
 </ul></div>
 </div>

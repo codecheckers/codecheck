@@ -10,7 +10,12 @@ running over several years, a different publication.
 ## Usage
 
 ``` r
-add_openalex_work_fields(register_table, paper_references = NULL)
+add_openalex_work_fields(
+  register_table,
+  paper_references = NULL,
+  reference_others = NULL,
+  cert_ids = NULL
+)
 ```
 
 ## Arguments
@@ -27,6 +32,20 @@ add_openalex_work_fields(register_table, paper_references = NULL)
   work (see \[openalex_record_is_work()\]) and as the fallback for the
   date (see below); pass NULL/omit to skip both (e.g. for a
   per-certificate re-render with a one-row table).
+
+- reference_others:
+
+  Optional list, same length and order as \`register_table\`'s rows, of
+  each work's \`paper.reference-other\` URLs (see
+  \[get_reference_other()\]). With it and \`cert_ids\`, every DOI the
+  work's OpenAlex record lists that neither reference names is reported
+  as a possible \`reference-other\` entry, see
+  \[suggest_reference_other()\].
+
+- cert_ids:
+
+  Optional character vector of the certificate identifiers, same length
+  and order as \`register_table\`'s rows
 
 ## Value
 

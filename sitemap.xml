@@ -344,6 +344,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/lookup_venue_row.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/manifest_pandoc.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/markdown_link_to_html.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/missing_reference_other_dois.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_codechecker_list.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_doi.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_name_for_comparison.html</loc></url>
@@ -353,7 +354,12 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_title_for_comparison.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_work_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_api_key.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/openalex_doi_key.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/openalex_location_fields.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/openalex_locations.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/openalex_record_dois.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_record_is_work.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/openalex_source_fields.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_url_with_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/orcid_affiliation_row.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/orcid_date.html</loc></url>
@@ -430,6 +436,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_statistics_page.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/render_wikibase_query.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/report_captured_warnings.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/report_openalex_merge.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/report_researchequals_policy_findings.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/report_zenodo_policy_findings.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/researchequals_collection_url.html</loc></url>
@@ -456,6 +463,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_github_repo_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_person_name.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_venue_hashtags.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/suggest_reference_other.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/sync_persons_file.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/template_text.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/truncate_text.html</loc></url>

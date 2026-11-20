@@ -60,7 +60,12 @@ years, a different publication.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_openalex_work_fields</span><span class="op">(</span><span class="va">register_table</span>, paper_references <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_openalex_work_fields</span><span class="op">(</span></span>
+<span>  <span class="va">register_table</span>,</span>
+<span>  paper_references <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reference_others <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cert_ids <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -78,6 +83,19 @@ as `register_table`'s rows, of each work's `paper.reference` URL from its
 (see [openalex_record_is_work()]) and as the fallback for the date (see
 below); pass NULL/omit to skip both (e.g. for a per-certificate re-render
 with a one-row table).</p></dd>
+
+
+<dt id="arg-reference-others">reference_others<a class="anchor" aria-label="anchor" href="#arg-reference-others"></a></dt>
+<dd><p>Optional list, same length and order as
+`register_table`'s rows, of each work's `paper.reference-other` URLs (see
+[get_reference_other()]). With it and `cert_ids`, every DOI the work's
+OpenAlex record lists that neither reference names is reported as a
+possible `reference-other` entry, see [suggest_reference_other()].</p></dd>
+
+
+<dt id="arg-cert-ids">cert_ids<a class="anchor" aria-label="anchor" href="#arg-cert-ids"></a></dt>
+<dd><p>Optional character vector of the certificate identifiers,
+same length and order as `register_table`'s rows</p></dd>
 
 </dl></div>
     <div class="section level2">
