@@ -14,14 +14,7 @@ record <- jsonlite::fromJSON(record_json, simplifyVector = FALSE)
 arxiv <- "https://doi.org/10.48550/arXiv.2503.21065"
 ssrn <- "https://doi.org/10.2139/ssrn.5287999"
 
-# An httr response carrying the record, for the parser.
-openalex_response <- function(url, ...) {
-  structure(list(url = url, status_code = 200L,
-                 headers = structure(list(`content-type` = "application/json; charset=utf-8"),
-                                     class = c("insensitive", "list")),
-                 all_headers = list(), content = charToRaw(record_json)),
-            class = "response")
-}
+openalex_response <- function(url, ...) mock_json_response(url, record_json)
 
 # --- reading the record --------------------------------------------------------
 

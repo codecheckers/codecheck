@@ -363,7 +363,7 @@ get_openalex_work_fields_result <- function(openalex_id) {
                 value = empty))
   }
 
-  data <- httr::content(response, "parsed")
+  data <- openalex_drop_preprint_journals(httr::content(response, "parsed"))
   primary <- openalex_source_fields(data$primary_location$source)
 
   list(status = "found", value = list(
@@ -385,6 +385,31 @@ get_openalex_work_fields_result <- function(openalex_id) {
     # here, see openalex_location_fields().
     locations = openalex_locations(data$locations)
   ))
+}
+
+#' An OpenAlex work without the journal sources of a preprint
+#'
+#' A preprint did not appear in a journal, whatever source OpenAlex gives its
+#' locations (2024-016: a Zenodo preprint naming the journal it was submitted
+#' to). Such a source is dropped, as if the location had none, unless the
+#' location is the published version: a record OpenAlex merged from a preprint
+#' and its article may be typed a preprint, and the article keeps its journal.
+#'
+#' @param data An OpenAlex work, as parsed from the API
+#' @return `data` with those sources set to `NULL`
+#' @keywords internal
+openalex_drop_preprint_journals <- function(data) {
+  if (!identical(data$type, "preprint")) return(data)
+  drop <- function(location) {
+    if (identical(location$source$type, "journal") &&
+        !identical(location$version, "publishedVersion")) {
+      location$source <- NULL
+    }
+    location
+  }
+  if (!is.null(data$primary_location)) data$primary_location <- drop(data$primary_location)
+  data$locations <- lapply(data$locations, drop)
+  data
 }
 
 #' The ISSN and name of an OpenAlex source
@@ -464,10 +489,9 @@ openalex_location_fields <- function(fields, paper_reference) {
 #' @noRd
 get_openalex_work_fields_cached_result <- function(openalex_id) {
   cached_lookup_result(
-    # "v4": the cached values from before the record's ID and locations were
-    # read have the wrong shape, and a stale cache is worse than one refetch
-    # per work.
-    key = list("openalex_work_fields", openalex_id, "v4"),
+    # Bump the version whenever the shape or meaning of the cached value
+    # changes: a stale cache is worse than one refetch per work.
+    key = list("openalex_work_fields", openalex_id, "v5"),
     dirs = c("codecheck", "openalex_work_fields"),
     lookup = function() get_openalex_work_fields_result(openalex_id)
   )

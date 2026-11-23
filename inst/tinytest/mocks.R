@@ -47,6 +47,22 @@ mock_response <- function(url, status = 200L) {
 }
 
 
+#' A mock_response() carrying a JSON body, enough for httr::content(), also
+#' with "parsed", which looks the content type up case-insensitively.
+#'
+#' @param body a JSON string, or an R value to serialise
+mock_json_response <- function(url, body, status = 200L) {
+  response <- mock_response(url, status)
+  response$headers <- structure(list(`content-type` = "application/json; charset=utf-8"),
+                                class = c("insensitive", "list"))
+  if (!is.character(body)) {
+    body <- jsonlite::toJSON(body, auto_unbox = TRUE, null = "null")
+  }
+  response$content <- charToRaw(as.character(body))
+  response
+}
+
+
 #' A codecheck_GET() answering from a table of URL patterns instead of the network.
 #'
 #' @param status_by_pattern named list, fixed-string pattern -> status code

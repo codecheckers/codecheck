@@ -17,6 +17,7 @@
 
 * A checked work whose OpenAlex record describes another copy of it keeps the publication of its own copy when the record lists that copy: the arXiv preprint of 2025-019, merged into its SSRN copy, lost its ISSN and venue in `register.json` and the Wikidata export (register#247).
 * `CC-CFG-030` reports a `reference-other` item written as a map instead of passing the URL inside it.
+* A preprint no longer gets the journal named in its repository record as its venue, as 2024-016 got Geospatial Health.
 
 # codecheck 0.32.0
 
