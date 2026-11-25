@@ -169,9 +169,29 @@ with_mocked_codecheck(list(codecheck_GET = registry_GET, lookup_registration_age
   expect_equal(codecheck:::get_registry_record_result("https://example.org/paper")$status, "absent")
 })
 
-# A web address has no type, and a failed lookup none either.
+# A web address has no type, and a failed lookup none either - but says so, as
+# one that may have a type the next time.
 expect_equal(codecheck:::get_reference_type("https://example.org/paper"),
-             list(type = NA_character_, agency = NA_character_))
+             list(type = NA_character_, agency = NA_character_, status = "absent"))
+with_mocked_codecheck(list(get_registry_record_cached_result = function(reference) list(status = "failed", value = NULL)), {
+  expect_equal(codecheck:::get_reference_type("https://doi.org/10.1234/offline"),
+               list(type = NA_character_, agency = NA_character_, status = "failed"))
+})
+
+# A DOI that does not exist has no record, and that does not change by asking
+# again; doi.org that cannot be asked is a failure.
+doira <- function(answer) function(url, ...) mock_json_response(url, list(answer))
+with_mocked_codecheck(list(codecheck_GET = doira(list(DOI = "10.1234/typo", status = "DOI does not exist"))), {
+  expect_true(is.na(codecheck:::lookup_registration_agency("10.1234/typo")))
+  expect_equal(codecheck:::get_registry_record_result("https://doi.org/10.1234/typo")$status, "absent")
+})
+with_mocked_codecheck(list(codecheck_GET = doira(list(DOI = "10.1234/x", RA = "Crossref"))), {
+  expect_equal(codecheck:::lookup_registration_agency("10.1234/x"), "Crossref")
+})
+with_mocked_codecheck(list(codecheck_GET = function(url, ...) mock_response(url, 503L)), {
+  expect_null(codecheck:::lookup_registration_agency("10.1234/x"))
+  expect_equal(codecheck:::get_registry_record_result("https://doi.org/10.1234/x")$status, "failed")
+})
 expect_equal(codecheck:::reference_type_html(list(type = NA_character_, agency = NA_character_)), "")
 label <- codecheck:::reference_type_html(list(type = "Preprint", agency = "Crossref"))
 expect_true(grepl('class="reference-kind"', label, fixed = TRUE))

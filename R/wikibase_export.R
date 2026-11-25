@@ -382,6 +382,7 @@ read_register_records <- function(dir) {
   for (column in c("Paper ISSN", "Paper venue", "Work publication date", "Paper reference type")) {
     if (!column %in% names(certificates)) certificates[[column]] <- NA_character_
   }
+  certificates$`Paper reference type` <- registry_reference_types(certificates)
   certificates$`Paper kind` <- paper_kind(certificates$`Paper reference type`, certificates$Venue)
   certificates$`Rejected OpenAlex` <- NA_character_
   for (i in which(!is.na(certificates$OpenAlex))) {
@@ -441,6 +442,35 @@ read_register_records <- function(dir) {
        other_works = reference_other_works(certificates, dir))
 }
 
+#' The type of each checked work, asking the registry where the render has none
+#'
+#' A render whose registry lookup failed leaves the type out of the
+#' certificate's JSON, as it does for a DOI without a record, and
+#' [paper_kind()] would then type the work by the register's venue: a wrong
+#' `P31` to write, or a right one to remove. So the export asks again, through
+#' the same cache, and stops if the registry still cannot be asked.
+#'
+#' @param certificates the certificates of [read_register_records()]
+#' @return the `Paper reference type` column, filled where the registry knows it
+#' @keywords internal
+registry_reference_types <- function(certificates) {
+  types <- certificates$`Paper reference type`
+  failed <- character(0)
+  for (i in which(is.na(types))) {
+    looked_up <- get_reference_type(certificates$`Paper reference`[i])
+    if (identical(looked_up$status, "failed")) {
+      failed <- c(failed, certificates$`Certificate ID`[i])
+    }
+    types[i] <- looked_up$type
+  }
+  if (length(failed) > 0) {
+    stop("The registry lookup failed for the paper of ", paste(failed, collapse = ", "),
+         ": without its type the export would type it by its venue. Run this again later.",
+         call. = FALSE)
+  }
+  types
+}
+
 #' Whether a further reference is the preprint or the article of a work
 #'
 #' Only these two are versions of a checked work that the export links: a
@@ -480,13 +510,27 @@ reference_other_works <- function(certificates, dir) {
   for (i in seq_len(nrow(certificates))) {
     for (ref in certificates$`Paper reference other`[[i]]) {
       key <- wikidata_transform(ref$url %||% NA_character_, "doi")
-      kind <- reference_version_kind(ref$type %||% NA_character_)
+      if (is.na(key) || key %in% taken) next
+      type <- ref$type %||% NA_character_
+      # as registry_reference_types() does for the checked works: a render whose
+      # lookup failed left the type out, and the work would be skipped
+      if (is.na(type)) {
+        looked_up <- get_reference_type(ref$url)
+        if (identical(looked_up$status, "failed")) {
+          stop(certificates$`Certificate ID`[i], " | the registry lookup failed for ", ref$url,
+               ". Run this again later.", call. = FALSE)
+        }
+        type <- looked_up$type
+      }
+      kind <- reference_version_kind(type)
       # only the other version, which wikibase_version_links() links: a second
       # copy of the same kind would be an item linked to nothing
-      if (is.na(key) || is.na(kind) || identical(kind, certificates$`Paper kind`[i]) ||
-          key %in% taken) next
+      if (is.na(kind) || identical(kind, certificates$`Paper kind`[i])) next
       taken <- c(taken, key)
-      row <- reference_other_work_row(ref, kind, certificates$`Certificate Link`[i], dir)
+      row <- tryCatch(
+        reference_other_work_row(ref, kind, certificates$`Certificate Link`[i], dir),
+        error = function(e) stop(certificates$`Certificate ID`[i], " | ", conditionMessage(e),
+                                 call. = FALSE))
       if (is.character(row)) {
         cli::cli_alert_warning("{certificates$`Certificate ID`[i]} | {row} for {ref$url}, no item for it")
         next
@@ -503,9 +547,13 @@ reference_other_works <- function(certificates, dir) {
 #' @keywords internal
 #' @noRd
 reference_other_work_row <- function(ref, kind, certificate_link, dir) {
-  record <- tryCatch(get_registry_record_cached_result(ref$url), error = function(e) NULL)
+  record <- tryCatch(get_registry_record_cached_result(ref$url),
+                     error = function(e) list(status = "failed", value = NULL))
+  if (identical(record$status, "absent")) return("no registry record")
+  # Skipped, the work's item would lose its version links in the next updates
+  # run; a record without a title, or none, stays that way and is skipped.
   if (!identical(record$status, "found")) {
-    return(paste("the registry lookup", if (is.null(record)) "failed" else record$status))
+    stop("the registry lookup failed for ", ref$url, ". Run this again later.", call. = FALSE)
   }
   meta <- record$value
   if (is.na(meta$title %||% NA_character_)) return("no title in its registry record")

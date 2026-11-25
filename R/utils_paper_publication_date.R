@@ -279,6 +279,8 @@ get_registry_record_result <- function(reference) {
 
   agency <- lookup_registration_agency(doi)
   if (is.null(agency)) return(failed)
+  # a DOI that does not exist is as absent as one without a record, and stays so
+  if (is.na(agency)) return(absent)
   encoded <- utils::URLencode(doi, reserved = TRUE)
   url <- switch(agency,
     Crossref = paste0("https://api.crossref.org/works/", encoded),

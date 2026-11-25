@@ -92,12 +92,14 @@ with_mocked_codecheck(list(get_registry_record_cached_result = registry,
   expect_false(jov %in% codecheck:::reference_other_works(certificates_twice, dir)$`Paper reference`)
 })
 
-# A reference whose registry record cannot be had, or has no title, gets no item
+# A reference whose registry record has no title, or that has no record, gets
+# no item
 untitled <- certificates[1, ]
 untitled$`Paper reference other` <- I(list(list(other("https://doi.org/10.1234/untitled", "Journal article"),
-                                                 other("https://doi.org/10.1234/offline", "Journal article"))))
+                                                 other("https://doi.org/10.1234/unregistered", "Journal article"))))
 lookup <- function(reference) {
   if (grepl("offline", reference)) return(list(status = "failed", value = NULL))
+  if (grepl("unregistered", reference)) return(list(status = "absent", value = NULL))
   list(status = "found", value = list(type = "Journal article", title = NA_character_))
 }
 said <- character(0)
@@ -109,7 +111,63 @@ with_mocked_codecheck(list(get_registry_record_cached_result = lookup), {
 })
 expect_null(none)
 expect_true(any(grepl("no title in its registry record for https://doi.org/10.1234/untitled", said, fixed = TRUE)))
-expect_true(any(grepl("the registry lookup failed for https://doi.org/10.1234/offline", said, fixed = TRUE)))
+expect_true(any(grepl("no registry record for https://doi.org/10.1234/unregistered", said, fixed = TRUE)))
+# One whose lookup failed stops the export: skipped, the next updates run would
+# remove the version links its item has
+offline <- certificates[1, ]
+offline$`Paper reference other` <- I(list(list(other("https://doi.org/10.1234/offline", "Journal article"))))
+with_mocked_codecheck(list(get_registry_record_cached_result = lookup), {
+  expect_error(codecheck:::reference_other_works(offline, dir),
+               "2024-016 | the registry lookup failed for https://doi.org/10.1234/offline", fixed = TRUE)
+})
+
+# A further reference the render could not type is typed by the export, and one
+# the registry still cannot answer for stops it
+untyped_other <- certificates[1, ]
+untyped_other$`Paper reference other` <- I(list(list(other(article, NA))))
+untyped_other$`Paper reference other`[[1]][[1]]$type <- NULL
+with_mocked_codecheck(list(get_registry_record_cached_result = registry,
+                           get_openalex_work_fields_for = openalex_fields), {
+  expect_equal(codecheck:::reference_other_works(untyped_other, dir)$`Paper reference`, article)
+})
+with_mocked_codecheck(list(get_registry_record_cached_result = function(reference) list(status = "failed", value = NULL)), {
+  expect_error(codecheck:::reference_other_works(untyped_other, dir),
+               "2024-016 | the registry lookup failed for https://doi.org/10.4081/gh.2025.1326", fixed = TRUE)
+})
+
+# --- the type of a checked work the render could not look up ----------------------
+
+untyped <- data.frame(
+  `Certificate ID` = c("2024-001", "2025-020", "2020-010", "2020-099"),
+  `Paper reference` = c("https://doi.org/10.1098/rsos.191613", "https://doi.org/10.31234/osf.io/gj76p",
+                        "https://doi.org/10.25561/77482", NA),
+  `Paper reference type` = c(NA, "Preprint", NA, NA),
+  check.names = FALSE, stringsAsFactors = FALSE)
+asked <- character(0)
+registry_types <- function(reference) {
+  asked <<- c(asked, reference)
+  if (grepl("rsos", reference)) return(list(status = "found", value = list(type = "Journal article")))
+  list(status = "absent", value = NULL)
+}
+with_mocked_codecheck(list(get_registry_record_cached_result = registry_types), {
+  types <- codecheck:::registry_reference_types(untyped)
+})
+# The render's type is kept, a missing one is asked for, and no record stays NA
+# so that paper_kind() falls back to the venue
+expect_equal(types, c("Journal article", "Preprint", NA, NA))
+expect_false(any(grepl("gj76p", asked)))
+offline_types <- function(reference) {
+  if (grepl("rsos", reference)) return(list(status = "failed", value = NULL))
+  list(status = "absent", value = NULL)
+}
+with_mocked_codecheck(list(get_registry_record_cached_result = offline_types), {
+  expect_error(codecheck:::registry_reference_types(untyped),
+               "The registry lookup failed for the paper of 2024-001", fixed = TRUE)
+})
+with_mocked_codecheck(list(get_registry_record_cached_result = function(reference) stop("timeout")), {
+  expect_equal(codecheck:::get_reference_type("https://doi.org/10.1234/x")$status, "failed")
+})
+expect_equal(codecheck:::get_reference_type(NA)$status, "absent")
 # OpenAlex without a date of the work's own leaves it to the registry record
 undated <- function(openalex_id, paper_reference) {
   list(status = "found", value = list(issn = NA_character_, venue = NA_character_,

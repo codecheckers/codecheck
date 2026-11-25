@@ -168,6 +168,39 @@ if (length(json_data$codecheck$codecheckers) > 0) {
   )
 }
 
+# Test 12: a registry lookup that failed is said, not taken for a DOI without a
+# type, and the type is left out
+source("mocks.R")
+failed_type <- function(reference) list(type = NA_character_, agency = NA_character_, status = "failed")
+said <- character(0)
+with_mocked_codecheck(list(get_reference_type = failed_type), {
+  withCallingHandlers(generate_cert_json(test_cert_id, test_repo, test_type, test_venue),
+                      message = function(m) {
+                        said <<- c(said, conditionMessage(m))
+                        invokeRestart("muffleMessage")
+                      })
+})
+expect_true(any(grepl("2020-001 | the registry lookup for https://doi.org/10.1093/gigascience/giaa026 failed",
+                      said, fixed = TRUE)), info = paste(said, collapse = "\n"))
+expect_null(jsonlite::read_json(json_path)$paper$reference_type)
+
+# and for a further reference, whose type is left out of reference_other
+failed_other <- function(config_yml) data.frame(
+  url = "https://doi.org/10.1234/offline", doi = "10.1234/offline", type = NA_character_,
+  agency = NA_character_, status = "failed", stringsAsFactors = FALSE)
+said <- character(0)
+with_mocked_codecheck(list(typed_reference_other = failed_other), {
+  withCallingHandlers(generate_cert_json(test_cert_id, test_repo, test_type, test_venue),
+                      message = function(m) {
+                        said <<- c(said, conditionMessage(m))
+                        invokeRestart("muffleMessage")
+                      })
+})
+expect_true(any(grepl("2020-001 | the registry lookup for https://doi.org/10.1234/offline failed",
+                      said, fixed = TRUE)), info = paste(said, collapse = "\n"))
+expect_equal(jsonlite::read_json(json_path)$paper$reference_other,
+             list(list(url = "https://doi.org/10.1234/offline", doi = "10.1234/offline")))
+
 # Cleanup
 CONFIG$CERTS_DIR[["cert"]] <- original_certs_dir
 unlink(test_output_dir, recursive = TRUE)

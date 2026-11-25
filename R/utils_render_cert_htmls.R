@@ -439,9 +439,16 @@ generate_cert_json <- function(cert_id, repo_link, cert_type, cert_venue,
 
   # The type of the reference, and the further references with theirs, all
   # left out where unknown or absent
-  reference_type <- get_reference_type(config_yml$paper$reference)$type
-  if (!is.na(reference_type)) cert_json$paper$reference_type <- reference_type
-  reference_other <- reference_other_json(typed_reference_other(config_yml))
+  reference_type <- get_reference_type(config_yml$paper$reference)
+  if (!is.na(reference_type$type)) cert_json$paper$reference_type <- reference_type$type
+  if (identical(reference_type$status, "failed")) {
+    cli::cli_alert_warning("{cert_id} | the registry lookup for {config_yml$paper$reference} failed, its type is left out; render again later")
+  }
+  typed_other <- typed_reference_other(config_yml)
+  for (url in typed_other$url[typed_other$status %in% "failed"]) {
+    cli::cli_alert_warning("{cert_id} | the registry lookup for {url} failed, its type is left out; render again later")
+  }
+  reference_other <- reference_other_json(typed_other)
   if (length(reference_other) > 0) cert_json$paper$reference_other <- reference_other
 
   # Add OpenAlex link (addresses register#185)

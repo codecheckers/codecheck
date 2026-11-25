@@ -10,7 +10,8 @@ add_reference_types(refs)
 \item{refs}{A data frame with `url` and `doi` columns}
 }
 \value{
-`refs` with `type` and `agency` columns
+`refs` with `type`, `agency` and `status` columns, see
+  [get_reference_type()]
 }
 \description{
 Add the `type` and `agency` of each DOI to a data frame of references

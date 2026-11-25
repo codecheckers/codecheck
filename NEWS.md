@@ -25,6 +25,9 @@
 * The Wikidata export keeps the OpenAlex ID of a record OpenAlex merged from copies of the same preprint, as for 2024-016 and 2025-019 (register#247).
 * The Wikidata export retries a search Wikidata is too busy to answer, and stops rather than plan to create items that already exist.
 * `preview_wikidata_updates()` takes an author name with initials, such as "J J Hopfield", as the same person as the written-out name on Wikidata.
+* The Wikidata export stops when a DOI's registry lookup failed instead of typing the work by its venue (register#247).
+* `register_render()` warns when the registry lookup for a paper's DOI or a further reference failed, instead of leaving out the type silently.
+* A DOI that does not exist counts as having no registry record rather than as a failed lookup.
 
 # codecheck 0.32.0
 

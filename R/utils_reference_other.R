@@ -93,12 +93,14 @@ typed_reference_other <- function(config_yml) {
 #' Add the `type` and `agency` of each DOI to a data frame of references
 #'
 #' @param refs A data frame with `url` and `doi` columns
-#' @return `refs` with `type` and `agency` columns
+#' @return `refs` with `type`, `agency` and `status` columns, see
+#'   [get_reference_type()]
 #' @keywords internal
 add_reference_types <- function(refs) {
   types <- lapply(refs$url, get_reference_type)
   refs$type <- vapply(types, function(t) t$type, character(1))
   refs$agency <- vapply(types, function(t) t$agency, character(1))
+  refs$status <- vapply(types, function(t) t$status %||% NA_character_, character(1))
   refs
 }
 
@@ -110,22 +112,23 @@ add_reference_types <- function(refs) {
 #' journal article's record (see [openalex_record_is_work()]).
 #'
 #' @param reference A paper reference; anything that is not a DOI has no type
-#' @return A list with `type` (a display label, `NA` when unknown) and
-#'   `agency` ("Crossref", "DataCite" or `NA`)
+#' @return A list with `type` (a display label, `NA` when unknown), `agency`
+#'   ("Crossref", "DataCite" or `NA`) and `status`: `"found"`, `"absent"` when
+#'   there is no DOI or no record, or `"failed"` when the registry could not be
+#'   asked - a type that is unknown for now, not one that is not there
 #' @keywords internal
 get_reference_type <- function(reference) {
-  unknown <- list(type = NA_character_, agency = NA_character_)
+  unknown <- function(status) list(type = NA_character_, agency = NA_character_, status = status)
   if (is.null(reference) || length(reference) != 1 || is.na(reference) ||
       is.na(normalize_work_key(reference))) {
-    return(unknown)
+    return(unknown("absent"))
   }
   record <- tryCatch(get_registry_record_cached_result(reference),
-                     error = function(e) NULL)
-  if (is.null(record) || !identical(record$status, "found")) {
-    return(unknown)
-  }
+                     error = function(e) list(status = "failed", value = NULL))
+  if (!identical(record$status, "found")) return(unknown(record$status))
   list(type = record$value$type %||% NA_character_,
-       agency = record$value$agency %||% NA_character_)
+       agency = record$value$agency %||% NA_character_,
+       status = "found")
 }
 
 #' The type label of a Crossref record

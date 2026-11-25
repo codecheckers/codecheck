@@ -10,8 +10,10 @@ get_reference_type(reference)
 \item{reference}{A paper reference; anything that is not a DOI has no type}
 }
 \value{
-A list with `type` (a display label, `NA` when unknown) and
-  `agency` ("Crossref", "DataCite" or `NA`)
+A list with `type` (a display label, `NA` when unknown), `agency`
+  ("Crossref", "DataCite" or `NA`) and `status`: `"found"`, `"absent"` when
+  there is no DOI or no record, or `"failed"` when the registry could not be
+  asked - a type that is unknown for now, not one that is not there
 }
 \description{
 Read from the record at the DOI's registration agency, which is the one

@@ -900,7 +900,7 @@ check_paper_title_match <- function(context) {
 #' @noRd
 lookup_registered_subtitle <- function(doi) {
   agency <- lookup_registration_agency(doi)
-  if (is.null(agency)) {
+  if (is.null(agency) || is.na(agency)) {
     return(list(skip = "the DOI's registration agency could not be determined"))
   }
   encoded <- utils::URLencode(doi, reserved = TRUE)
@@ -923,7 +923,11 @@ lookup_registered_subtitle <- function(doi) {
   list(registry = agency, subtitles = subtitles)
 }
 
-#' The registration agency of a DOI, e.g. "Crossref", or `NULL` if unknown
+#' The registration agency of a DOI, e.g. "Crossref"
+#'
+#' @return The agency; `NA` when doi.org answers that the DOI has none, as it
+#'   does with "DOI does not exist" or "Invalid DOI"; `NULL` when it could not
+#'   be asked or answered something unexpected
 #' @keywords internal
 #' @noRd
 lookup_registration_agency <- function(doi) {
@@ -933,9 +937,16 @@ lookup_registration_agency <- function(doi) {
     return(NULL)
   }
   tryCatch({
-    agency <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
-                                 simplifyVector = FALSE)[[1]]$RA
-    if (is.character(agency) && length(agency) == 1) agency else NULL
+    answer <- jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
+                                 simplifyVector = FALSE)[[1]]
+    agency <- answer$RA
+    if (is.character(agency) && length(agency) == 1) {
+      agency
+    } else if (is.character(answer$status) && length(answer$status) == 1) {
+      NA_character_
+    } else {
+      NULL
+    }
   }, error = function(e) NULL)
 }
 

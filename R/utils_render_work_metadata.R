@@ -160,8 +160,8 @@ generate_work_metadata_html <- function(table_details, register_table) {
     doi = fields$doi,
     doi_url = paste0(CONFIG$HYPERLINKS[["doi"]], fields$doi),
     # the DOI as a URL: a bare "10..." is not recognised as a DOI reference
-    doi_reference_type = do.call(reference_type_data,
-                                 get_reference_type(paste0(CONFIG$HYPERLINKS[["doi"]], fields$doi))),
+    doi_reference_type = with(get_reference_type(paste0(CONFIG$HYPERLINKS[["doi"]], fields$doi)),
+                              reference_type_data(type, agency)),
     has_related = length(related) > 0,
     related = related,
     only_other = isTRUE(fields$only_other) && length(primary) > 0,
