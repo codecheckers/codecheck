@@ -5,14 +5,19 @@ if (config_path == "" || !file.exists(config_path)) {
   exit_file("Package not installed properly")
 }
 source(config_path)
+source("mocks.R")
 
 tmp <- tempdir()
 CONFIG$CERTS_DIR[["cert"]] <- tmp
 
-expect_silent({ result <- codecheck:::download_cert_pdf("https://doi.org/10.17605/osf.io/CSB7R", "9999-000") })
-expect_equal(result, 1)
-expect_true(file.exists(file.path(tmp, "9999-000", "cert.pdf")))
-expect_true(file.size(file.path(tmp, "9999-000", "cert.pdf")) > 300000)
+# the download link first, so that an OSF outage skips the download's checks
+if (!is.null(live_or_outage(codecheck:::get_cert_link("https://doi.org/10.17605/osf.io/CSB7R", "9999-000"),
+                            "OSF", OSF_OUTAGE))) {
+  expect_silent({ result <- codecheck:::download_cert_pdf("https://doi.org/10.17605/osf.io/CSB7R", "9999-000") })
+  expect_equal(result, 1)
+  expect_true(file.exists(file.path(tmp, "9999-000", "cert.pdf")))
+  expect_true(file.size(file.path(tmp, "9999-000", "cert.pdf")) > 300000)
+}
 
 expect_silent({ result <- codecheck:::download_cert_pdf("https://doi.org/10.5281/zenodo.15630442", "9999-001") })
 expect_equal(result, 1)

@@ -5,9 +5,11 @@ if (config_path == "" || !file.exists(config_path)) {
   exit_file("Package not installed properly")
 }
 source(config_path)
+source("mocks.R")
 
-expect_equal(codecheck:::get_cert_link("https://doi.org/10.17605/osf.io/CSB7R", "999-010"),
-             "https://osf.io/download/36nsb/")
+osf_link <- live_or_outage(codecheck:::get_cert_link("https://doi.org/10.17605/osf.io/CSB7R", "999-010"),
+                           "OSF", OSF_OUTAGE)
+if (!is.null(osf_link)) expect_equal(osf_link, "https://osf.io/download/36nsb/")
 expect_equal(codecheck:::get_cert_link("https://doi.org/10.5281/zenodo.15630442", "999-020"),
              "https://zenodo.org/api/records/15630442/files/CODECHECK_report_FBM.pdf/content")
 # ResearchEquals resolves the DOI to a version UUID, and the API answers with

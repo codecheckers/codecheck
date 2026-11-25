@@ -126,3 +126,27 @@ mock_zenodo_vocabularies <- function() {
     }
   }
 }
+
+#' Run a lookup against a live service, or skip it when the service is down
+#'
+#' A test that calls a service live checks the package's handling of its
+#' answers, not the service's uptime: an OSF outage, answering 500 for an hour,
+#' failed R CMD check of a release. An error whose message matches `outage`
+#' becomes a message and `NULL`, so the caller leaves out the assertions on
+#' the result; any other error is raised as before.
+#'
+#' @param expr the lookup
+#' @param service the service's name, for the message
+#' @param outage a regular expression for the errors that mean the service is
+#'   down, e.g. an HTTP 5xx status
+#' @return the value of `expr`, or `NULL` during an outage
+live_or_outage <- function(expr, service, outage) {
+  tryCatch(expr, error = function(e) {
+    if (!grepl(outage, conditionMessage(e))) stop(e)
+    message(service, " is down, skipping its checks: ", conditionMessage(e))
+    NULL
+  })
+}
+
+# get_osf_cert_link() on an OSF API that answers 5xx or not at all
+OSF_OUTAGE <- "Failed to retrieve files: (5[0-9]{2}|no response)"
