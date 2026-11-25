@@ -69,7 +69,7 @@ wikidata_claim_key <- function(claim) {
 #'
 #' Case, diacritics, spaces and punctuation are spelling, not identity:
 #' "Emanuël A. P. Habets" and "Emanuel A.P. Habets" are one name. Initials
-#' are not expanded, so "J J Hopfield" and "John Hopfield" stay apart.
+#' are compared separately, see [wikidata_names_by_initials()].
 #'
 #' @param name names
 #' @return the names as uppercase ASCII letters and digits only
@@ -78,6 +78,37 @@ wikidata_name_key <- function(name) {
   ascii <- iconv(name, from = "UTF-8", to = "ASCII//TRANSLIT")
   ascii[is.na(ascii)] <- name[is.na(ascii)]
   toupper(gsub("[^[:alnum:]]", "", ascii))
+}
+
+#' Whether a name with initials is one of these names written out
+#'
+#' "J J Hopfield" is "John J. Hopfield" and "A. G. Toxopeus" is "Albertus G
+#' Toxopeus": the family names are the same, and each given name is the other's
+#' or the initial of it. Strict on purpose: the same number of given names, so
+#' "J J Hopfield" is not "John Hopfield", and the family name is the last one.
+#'
+#' @param proposed one name
+#' @param current names to compare with
+#' @return `TRUE` if one of `current` matches
+#' @keywords internal
+wikidata_names_by_initials <- function(proposed, current) {
+  parts <- function(name) {
+    words <- strsplit(trimws(gsub("[.[:space:]]+", " ", name)), " ", fixed = TRUE)[[1]]
+    wikidata_name_key(words)
+  }
+  wanted <- parts(proposed)
+  current <- current[!is.na(current)]
+  if (length(wanted) < 2 || length(current) == 0) return(FALSE)
+  matches <- function(name) {
+    have <- parts(name)
+    if (length(have) != length(wanted)) return(FALSE)
+    n <- length(wanted)
+    if (have[n] != wanted[n]) return(FALSE)
+    all(mapply(function(a, b) {
+      a == b || ((nchar(a) == 1 || nchar(b) == 1) && substr(a, 1, 1) == substr(b, 1, 1))
+    }, wanted[-n], have[-n]))
+  }
+  any(vapply(current, matches, logical(1)))
 }
 
 #' Whether a proposed value is one the item carries already
@@ -100,7 +131,8 @@ wikidata_value_present <- function(property, proposed, current) {
     return(strip(proposed) %in% strip(current))
   }
   if (property == "P2093") {
-    return(wikidata_name_key(proposed) %in% wikidata_name_key(current))
+    return(wikidata_name_key(proposed) %in% wikidata_name_key(current) ||
+             wikidata_names_by_initials(proposed, current))
   }
   dates <- grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", current)
   if (grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", proposed) && any(dates)) {

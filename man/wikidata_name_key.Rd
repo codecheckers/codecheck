@@ -15,6 +15,6 @@ the names as uppercase ASCII letters and digits only
 \description{
 Case, diacritics, spaces and punctuation are spelling, not identity:
 "Emanuël A. P. Habets" and "Emanuel A.P. Habets" are one name. Initials
-are not expanded, so "J J Hopfield" and "John Hopfield" stay apart.
+are compared separately, see [wikidata_names_by_initials()].
 }
 \keyword{internal}
