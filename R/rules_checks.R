@@ -1135,39 +1135,40 @@ lookup_openalex_paper <- function(reference) {
                 detail = "the paper reference is not a DOI"))
   }
 
-  # The filter endpoint rather than /works/doi:..., because a DOI that OpenAlex
-  # holds twice - it happens - is then a list of two rather than an error.
-  url <- paste0("https://api.openalex.org/works?filter=doi:",
-                utils::URLencode(doi, reserved = TRUE))
-  response <- tryCatch(codecheck_GET_openalex(url), error = function(e) e)
-  if (inherits(response, "error")) {
-    return(list(status = "unreachable", doi = doi,
-                detail = paste("could not reach OpenAlex:", conditionMessage(response))))
+  # The filter first, because a DOI that OpenAlex holds twice - it happens - is
+  # then a list of two rather than an error. It only matches a record's own
+  # DOI, though; /works/doi: also answers for the DOIs of a record's further
+  # copies, such as the version DOI of a Zenodo record whose own DOI is the
+  # concept DOI (2024-016).
+  search <- get_openalex_json(paste0("https://api.openalex.org/works?filter=doi:",
+                                     utils::URLencode(doi, reserved = TRUE)), doi)
+  if (search$status == "failed") {
+    return(list(status = "unreachable", doi = doi, detail = search$detail))
   }
-  if (is.null(response)) {
-    return(list(status = "unreachable", doi = doi,
-                detail = paste("could not reach OpenAlex for", doi)))
+  results <- search$body$results
+  if (length(results) > 0) {
+    return(list(status = "ok", doi = doi,
+                record = openalex_paper_record(results[[1]]),
+                # Several records for one DOI means the comparisons ran
+                # against whichever OpenAlex listed first, which is worth
+                # saying rather than deciding silently.
+                detail = if (length(results) > 1) {
+                  paste("OpenAlex has", length(results), "records for", doi,
+                        "- compared with the first")
+                }))
   }
-  status <- httr::status_code(response)
-  if (status == 200) {
-    results <- tryCatch(
-      jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
-                         simplifyVector = FALSE)$results,
-      error = function(e) NULL)
-    if (length(results) > 0) {
-      return(list(status = "ok", doi = doi,
-                  record = openalex_paper_record(results[[1]]),
-                  # Several records for one DOI means the comparisons ran
-                  # against whichever OpenAlex listed first, which is worth
-                  # saying rather than deciding silently.
-                  detail = if (length(results) > 1) {
-                    paste("OpenAlex has", length(results), "records for", doi,
-                          "- compared with the first")
-                  }))
-    }
-  } else if (status != 404) {
-    return(list(status = "unreachable", doi = doi,
-                detail = paste("OpenAlex answered", status, "for", doi)))
+  copy <- get_openalex_json(paste0("https://api.openalex.org/works/doi:",
+                                   utils::URLencode(doi, reserved = TRUE)), doi)
+  if (copy$status == "failed") {
+    return(list(status = "unreachable", doi = doi, detail = copy$detail))
+  }
+  if (copy$status == "found" && !is.null(copy$body$id)) {
+    record_doi <- doi_from_reference(copy$body$doi %||% "")
+    return(list(status = "ok", doi = doi, record = openalex_paper_record(copy$body),
+                detail = if (!identical(tolower(record_doi), tolower(doi))) {
+                  paste0("a copy in ", sub("^https?://openalex\\.org/", "", copy$body$id),
+                         if (!is.na(record_doi)) paste(" with DOI", record_doi))
+                }))
   }
 
   handle <- tryCatch(
@@ -1183,6 +1184,35 @@ lookup_openalex_paper <- function(reference) {
   } else {
     list(status = "not_found", doi = doi, detail = paste(doi, "is not a registered DOI"))
   }
+}
+
+#' An OpenAlex API answer, parsed
+#'
+#' @return A list with `status`: "found" with the parsed `body`, "absent" for a
+#'   404, or "failed" with a `detail` saying why
+#' @keywords internal
+#' @noRd
+get_openalex_json <- function(url, doi) {
+  response <- tryCatch(codecheck_GET_openalex(url), error = function(e) e)
+  if (inherits(response, "error")) {
+    return(list(status = "failed",
+                detail = paste("could not reach OpenAlex:", conditionMessage(response))))
+  }
+  if (is.null(response)) {
+    return(list(status = "failed", detail = paste("could not reach OpenAlex for", doi)))
+  }
+  status <- httr::status_code(response)
+  if (status == 404) return(list(status = "absent"))
+  if (status != 200) {
+    return(list(status = "failed", detail = paste("OpenAlex answered", status, "for", doi)))
+  }
+  body <- tryCatch(jsonlite::fromJSON(httr::content(response, as = "text", encoding = "UTF-8"),
+                                      simplifyVector = FALSE),
+                   error = function(e) NULL)
+  if (is.null(body)) {
+    return(list(status = "failed", detail = paste("OpenAlex answered unreadably for", doi)))
+  }
+  list(status = "found", body = body)
 }
 
 #' An OpenAlex work as the metadata rules read it

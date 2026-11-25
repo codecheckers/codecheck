@@ -6,27 +6,27 @@ source("mocks.R")
 # An OpenAlex API and DOI handle service answering from fixtures instead of the
 # network: `works` maps a DOI to the list of works OpenAlex holds for it, and
 # `handles` lists the DOIs registered anywhere, whether OpenAlex knows them or
-# not. `crossref` maps a DOI to the `message` Crossref holds for it, and
+# not. `copies` maps a DOI to the work that holds it as a further copy.
+# `crossref` maps a DOI to the `message` Crossref holds for it, and
 # `datacite` to the `titles` DataCite holds for it; each is the DOI's
 # registration agency, unless `agencies` maps it to another one.
 mock_openalex_GET <- function(works = list(), handles = names(works),
                               urls = list(), crossref = list(), datacite = list(),
-                              agencies = list()) {
+                              agencies = list(), copies = list()) {
   agencies <- c(agencies, setNames(as.list(rep("Crossref", length(crossref))), names(crossref)),
                 setNames(as.list(rep("DataCite", length(datacite))), names(datacite)))
   function(url, ...) {
-    json_response <- function(body) {
-      response <- mock_response(url, 200L)
-      response$headers <- list(`content-type` = "application/json")
-      response$content <- charToRaw(as.character(
-        jsonlite::toJSON(body, auto_unbox = TRUE, null = "null")))
-      response
-    }
+    json_response <- function(body) mock_json_response(url, body)
     if (grepl("api.openalex.org/works?filter=doi:", url, fixed = TRUE)) {
       doi <- utils::URLdecode(sub("^.*filter=doi:", "", url))
       results <- if (doi %in% names(works)) works[[doi]] else list()
       return(json_response(list(meta = list(count = length(results)),
                                 results = results)))
+    }
+    if (grepl("api.openalex.org/works/doi:", url, fixed = TRUE)) {
+      doi <- utils::URLdecode(sub("^.*/works/doi:", "", url))
+      if (!doi %in% names(copies)) return(mock_response(url, 404L))
+      return(json_response(copies[[doi]]))
     }
     if (grepl("api.crossref.org/works/", url, fixed = TRUE)) {
       doi <- utils::URLdecode(sub("^.*/works/", "", url))
@@ -215,6 +215,41 @@ result <- with_api(mock_openalex_GET(handles = "10.5281/zenodo.1234"),
 expect_true(result$valid)
 expect_equal(outcome_of(result, "CC-MET-004"), "ok")
 expect_equal(outcome_of(result, "CC-MET-005"), "skipped")
+
+# Test 10b: A DOI OpenAlex holds as a further copy of a record, not as the
+# record's own DOI, is compared with that record (2024-016: a Zenodo version
+# DOI, whose record has the concept DOI)
+concept_work <- c(paper_work, list(id = "https://openalex.org/W6893062762",
+                                   doi = "https://doi.org/10.5281/zenodo.1233"))
+paper_yml("https://doi.org/10.5281/zenodo.1234")
+result <- with_api(mock_openalex_GET(handles = "10.5281/zenodo.1234",
+                                     copies = list("10.5281/zenodo.1234" = concept_work)),
+                   validate_quietly(test_yml))
+expect_true(result$valid)
+for (id in c("CC-MET-004", "CC-MET-005", "CC-MET-006", "CC-MET-007", "CC-MET-008")) {
+  expect_equal(outcome_of(result, id), "ok", info = id)
+}
+expect_true(grepl("a copy in W6893062762 with DOI 10.5281/zenodo.1233",
+                  result$results$detail[result$results$id == "CC-MET-004"], fixed = TRUE))
+# A record without a DOI of its own is still compared, without naming one
+no_doi_work <- c(paper_work, list(id = "https://openalex.org/W6893062762", doi = NULL))
+result <- with_api(mock_openalex_GET(handles = "10.5281/zenodo.1234",
+                                     copies = list("10.5281/zenodo.1234" = no_doi_work)),
+                   validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-005"), "ok")
+expect_equal(result$results$detail[result$results$id == "CC-MET-004"],
+             "OpenAlex record for 10.5281/zenodo.1234; a copy in W6893062762")
+
+# Test 10c: OpenAlex failing on that second lookup makes the rules skip, rather
+# than call the DOI not indexed
+failing_copies <- function(url, ...) {
+  if (grepl("api.openalex.org/works/doi:", url, fixed = TRUE)) return(mock_response(url, 503L))
+  mock_openalex_GET(handles = "10.5281/zenodo.1234")(url, ...)
+}
+result <- with_api(failing_copies, validate_quietly(test_yml))
+expect_equal(outcome_of(result, "CC-MET-004"), "skipped")
+expect_true(grepl("OpenAlex answered 503",
+                  result$results$detail[result$results$id == "CC-MET-004"], fixed = TRUE))
 
 # Test 11: A reference that is not a DOI is checked as a URL
 paper_yml("http://papers.invalid/paper.pdf")
