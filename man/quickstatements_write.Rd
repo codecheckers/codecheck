@@ -10,7 +10,8 @@ quickstatements_write(
   dir = ".",
   target = c("wikidata", "wikibase"),
   file = NULL,
-  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT
+  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT,
+  tool = NULL
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ quickstatements_write(
 
 \item{chunk_size}{how many items one file may create before it is split;
 see [QUICKSTATEMENTS_EDIT_LIMIT]}
+
+\item{tool}{the QuickStatements to paste it into, when not the target's
+usual one: a batch that sets ranks needs QuickStatements 3.0}
 }
 \value{
 the paths of the written files, invisibly

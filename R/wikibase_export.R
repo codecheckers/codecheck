@@ -338,16 +338,20 @@ read_register_records <- function(dir) {
     detail <- file.path(dir, "docs", "certs", id, "index.json")
     codecheckers <- list()
     authors <- list()
+    other <- list()
     if (file.exists(detail)) {
       parsed <- jsonlite::fromJSON(detail, simplifyDataFrame = FALSE)
       codecheckers <- parsed$codecheck$codecheckers %||% list()
       authors <- parsed$paper$authors %||% list()
+      other <- parsed$paper$reference_other %||% list()
+      entry[["Paper reference type"]] <- parsed$paper$reference_type
     }
     entry <- lapply(entry, function(field) {
       if (is.null(field) || length(field) == 0) NA_character_ else as.character(field)[1]
     })
     attr(entry, "codecheckers") <- codecheckers
     attr(entry, "authors") <- authors
+    attr(entry, "other") <- other
     entry
   })
 
@@ -358,6 +362,7 @@ read_register_records <- function(dir) {
   certificates <- lapply(certificates, function(entry) {
     codecheckers <- attr(entry, "codecheckers")
     authors <- attr(entry, "authors")
+    other <- attr(entry, "other")
     missing <- setdiff(columns, names(entry))
     entry[missing] <- NA_character_
     row <- as.data.frame(entry[columns], check.names = FALSE, stringsAsFactors = FALSE)
@@ -365,6 +370,7 @@ read_register_records <- function(dir) {
     # row holding one list, rather than none or three.
     row$Codechecker <- I(list(codecheckers))
     row$`Paper authors` <- I(list(authors))
+    row$`Paper reference other` <- I(list(other))
     row
   })
 
@@ -373,9 +379,10 @@ read_register_records <- function(dir) {
   # A register.json rendered before these columns existed still exports with
   # them: the lookup is the same cached one the render uses, so this costs
   # nothing once the register has been rendered with them.
-  for (column in c("Paper ISSN", "Paper venue", "Work publication date")) {
+  for (column in c("Paper ISSN", "Paper venue", "Work publication date", "Paper reference type")) {
     if (!column %in% names(certificates)) certificates[[column]] <- NA_character_
   }
+  certificates$`Paper kind` <- paper_kind(certificates$`Paper reference type`, certificates$Venue)
   certificates$`Rejected OpenAlex` <- NA_character_
   for (i in which(!is.na(certificates$OpenAlex))) {
     result <- tryCatch(get_openalex_work_fields_cached_result(certificates$OpenAlex[i]),
@@ -395,22 +402,30 @@ read_register_records <- function(dir) {
     # can take back what an earlier export wrote from it. The publication of
     # the referenced copy is kept when the record lists it as one of its
     # locations: a preprint merged with another copy of itself is still on its
-    # own server (2025-019, see openalex_location_fields()).
-    if (identical(result$status, "absent") ||
-        !openalex_record_is_work(fields$doi, certificates$`Paper reference`[i])) {
+    # own server (2025-019, see openalex_location_fields()). Such a record of
+    # the same kind is the work's own, and its ID is kept too, see
+    # openalex_record_is_copy().
+    reference <- certificates$`Paper reference`[i]
+    absent <- identical(result$status, "absent")
+    if (absent || !openalex_record_is_work(fields$doi, reference)) {
       if (identical(certificates$`Work publication date`[i], fields$publication_date)) {
-        fallback <- get_fallback_publication_date(certificates$`Paper reference`[i])
-        certificates$`Work publication date`[i] <- fallback$value
+        certificates$`Work publication date`[i] <- get_fallback_publication_date(reference)$value
       }
-      located <- if (identical(result$status, "absent")) {
+      located <- if (absent) {
         list(issn = NA_character_, venue = NA_character_)
       } else {
-        openalex_location_fields(fields, certificates$`Paper reference`[i])
+        openalex_location_fields(fields, reference)
       }
       certificates$`Paper ISSN`[i] <- located$issn
       certificates$`Paper venue`[i] <- located$venue
-      certificates$`Rejected OpenAlex`[i] <- certificates$OpenAlex[i]
-      certificates$OpenAlex[i] <- NA_character_
+      if (absent || !openalex_record_is_copy(fields, reference, certificates$`Paper kind`[i])) {
+        certificates$`Rejected OpenAlex`[i] <- certificates$OpenAlex[i]
+        certificates$OpenAlex[i] <- NA_character_
+      } else {
+        # the record's own ID: the one register.json holds may have been
+        # merged away since its cached lookup
+        certificates$OpenAlex[i] <- fields$id %||% certificates$OpenAlex[i]
+      }
       next
     }
     if (!is.na(certificates$`Paper ISSN`[i])) next
@@ -422,7 +437,133 @@ read_register_records <- function(dir) {
   }
   certificates <- add_journal_venue_issn(certificates, venues)
 
-  list(certificates = certificates, venues = venues)
+  list(certificates = certificates, venues = venues,
+       other_works = reference_other_works(certificates, dir))
+}
+
+#' Whether a further reference is the preprint or the article of a work
+#'
+#' Only these two are versions of a checked work that the export links: a
+#' dataset or software named in `reference-other` is not.
+#'
+#' @param type a reference type, see [get_reference_type()]
+#' @return `"preprint"`, `"article"` or `NA`, per element
+#' @keywords internal
+reference_version_kind <- function(type) {
+  kind <- rep(NA_character_, length(type))
+  kind[type %in% "Preprint"] <- "preprint"
+  kind[type %in% c("Journal article", "Conference paper")] <- "article"
+  kind
+}
+
+#' The works the certificates name in `reference-other`, as export rows
+#'
+#' A preprint and its article are both given an item, so that the one the
+#' check was made on can say it is a version of the other (codecheckers/register#247).
+#' Only a further reference that is not itself a checked work is a row here,
+#' and only the other version: an article of a checked preprint, a preprint of
+#' a checked article. Its OpenAlex ID is the one its work page holds, which
+#' the render rejects for a record of another copy even of the same kind (see
+#' [openalex_record_is_copy()]), so such a reference has none. What the register knows of it comes from
+#' its DOI's registry record (title, authors, date) and from the OpenAlex ID
+#' the render found for its work page (publication); the reference statements
+#' point at the certificate that names it.
+#'
+#' @param certificates the certificates of [read_register_records()]
+#' @param dir the register repository
+#' @return a `data.frame` with the paper columns the model reads, or `NULL`
+#' @keywords internal
+reference_other_works <- function(certificates, dir) {
+  if (!"Paper reference other" %in% names(certificates)) return(NULL)
+  taken <- wikidata_transform(certificates$`Paper reference`, "doi")
+  rows <- list()
+  for (i in seq_len(nrow(certificates))) {
+    for (ref in certificates$`Paper reference other`[[i]]) {
+      key <- wikidata_transform(ref$url %||% NA_character_, "doi")
+      kind <- reference_version_kind(ref$type %||% NA_character_)
+      # only the other version, which wikibase_version_links() links: a second
+      # copy of the same kind would be an item linked to nothing
+      if (is.na(key) || is.na(kind) || identical(kind, certificates$`Paper kind`[i]) ||
+          key %in% taken) next
+      taken <- c(taken, key)
+      row <- reference_other_work_row(ref, kind, certificates$`Certificate Link`[i], dir)
+      if (is.character(row)) {
+        cli::cli_alert_warning("{certificates$`Certificate ID`[i]} | {row} for {ref$url}, no item for it")
+        next
+      }
+      rows[[length(rows) + 1]] <- row
+    }
+  }
+  if (length(rows) == 0) return(NULL)
+  do.call(rbind, rows)
+}
+
+#' One further reference as an export row, or why there is none
+#' @return a one-row `data.frame`, or a string saying why there is none
+#' @keywords internal
+#' @noRd
+reference_other_work_row <- function(ref, kind, certificate_link, dir) {
+  record <- tryCatch(get_registry_record_cached_result(ref$url), error = function(e) NULL)
+  if (!identical(record$status, "found")) {
+    return(paste("the registry lookup", if (is.null(record)) "failed" else record$status))
+  }
+  meta <- record$value
+  if (is.na(meta$title %||% NA_character_)) return("no title in its registry record")
+
+  # The render resolved the DOI's OpenAlex ID for its work page, and rejected a
+  # record of another work there, see get_other_reference_fields(); that needs
+  # the render's CONFIG, which an export does not load, so the page is read.
+  page <- file.path(dir, "docs", "works", ref$doi %||% "", "index.json")
+  openalex <- if (!is.null(ref$doi) && file.exists(page)) {
+    jsonlite::fromJSON(page, simplifyDataFrame = FALSE)$work$openalex %||% NA_character_
+  } else {
+    NA_character_
+  }
+  fields <- list()
+  if (!is.na(openalex)) {
+    got <- tryCatch(get_openalex_work_fields_for(openalex, ref$url), error = function(e) NULL)
+    if (identical(got$status, "found")) fields <- got$value
+  }
+
+  row <- data.frame(
+    `Paper reference` = ref$url,
+    Title = meta$title,
+    `Paper kind` = kind,
+    OpenAlex = openalex,
+    `Work publication date` = if (is.na(fields$publication_date %||% NA)) {
+      registry_date_result(record)$value
+    } else fields$publication_date,
+    `Paper ISSN` = fields$issn %||% NA_character_,
+    `Paper venue` = fields$venue %||% NA_character_,
+    `Certificate Link` = certificate_link,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  row$`Paper authors` <- I(list(as.list(meta$authors %||% character(0))))
+  row
+}
+
+#' Whether a checked work is a preprint or an article
+#'
+#' The type of the referenced DOI's own record, as the certificate page shows
+#' it, decides. The register's `preprint` venue says only that the check was
+#' made at the preprint stage: three certificates with it reference the
+#' journal article published since (2023-012, 2024-001, 2026-023), and sixteen
+#' preprints were checked for other venues. It is the fallback for a reference
+#' without a typed DOI record.
+#'
+#' @param reference_type the reference's type, e.g. "Preprint" or "Journal
+#'   article", or `NA`
+#' @param venue the register's `Venue`
+#' @return `"preprint"` or `"article"`, per element
+#' @keywords internal
+paper_kind <- function(reference_type, venue) {
+  venue <- venue %||% rep(NA_character_, length(reference_type))
+  kind <- reference_version_kind(reference_type)
+  # a typed reference of another kind, a report or a book chapter, is no preprint
+  kind[is.na(kind) & !is.na(reference_type)] <- "article"
+  untyped <- is.na(kind)
+  kind[untyped] <- ifelse(!is.na(venue[untyped]) & venue[untyped] == "preprint", "preprint", "article")
+  kind
 }
 
 #' Which entities the instance already holds, by identifier
@@ -513,6 +654,7 @@ wikibase_export_rows <- function(records) {
     wikidata_transform(certificates$`Paper reference`, "doi")
   ), , drop = FALSE]
   papers <- papers[!is.na(wikibase_key_column(papers, "paper")), , drop = FALSE]
+  papers <- wikibase_version_links(bind_export_rows(papers, records$other_works), certificates)
 
   # Only venues with an ISSN: that is what the model resolves a venue by, and a
   # venue nothing can be matched on would be a new item on every run.
@@ -527,8 +669,12 @@ wikibase_export_rows <- function(records) {
   # record says - otherwise a work's "published in" statement has no target and
   # is dropped, and the mirror stops matching what the export means.
   if ("Paper ISSN" %in% names(certificates)) {
-    publications <- certificates[which(!is.na(certificates$`Paper ISSN`) &
-                                         !certificates$`Paper ISSN` %in% venues$issn), ]
+    # and the publications of the works named in reference-other
+    named <- c("Paper ISSN", "Paper venue")
+    publications <- rbind(certificates[, named, drop = FALSE],
+                          if (!is.null(records$other_works)) records$other_works[, named, drop = FALSE])
+    publications <- publications[which(!is.na(publications$`Paper ISSN`) &
+                                         !publications$`Paper ISSN` %in% venues$issn), , drop = FALSE]
     publications <- publications[!duplicated(publications$`Paper ISSN`), , drop = FALSE]
     if (nrow(publications) > 0) {
       extra <- data.frame(
@@ -548,6 +694,55 @@ wikibase_export_rows <- function(records) {
   }
 
   list(person = people, venue = venues, paper = papers, certificate = certificates)
+}
+
+#' Rows of one kind from two tables, each filled up with the other's columns
+#'
+#' @param rows a `data.frame` of export rows
+#' @param extra a `data.frame` of more rows, or `NULL`
+#' @return `rows` and `extra`, bound, as a `data.frame`
+#' @keywords internal
+bind_export_rows <- function(rows, extra) {
+  if (is.null(extra) || nrow(extra) == 0) return(rows)
+  as.data.frame(dplyr::bind_rows(rows, extra), check.names = FALSE)
+}
+
+#' Link each preprint to its article, and back
+#'
+#' A certificate whose reference is a preprint and that names the article in
+#' `reference-other` - or the other way round - makes the preprint a "version
+#' of" the article and the article one that "has version" the preprint, the
+#' convention on Wikidata (P629 on 156 preprints, P747 on 64 articles). The
+#' certificate's "review of" stays with the work it checked.
+#'
+#' @param papers the paper rows
+#' @param certificates the certificates, with `Paper kind` and `Paper reference
+#'   other`
+#' @return `papers` with list columns `Version of` and `Has version`, DOI URLs
+#' @keywords internal
+wikibase_version_links <- function(papers, certificates) {
+  # one preprint-article pair per further reference of the other kind
+  pairs <- list()
+  if ("Paper reference other" %in% names(certificates)) {
+    for (i in seq_len(nrow(certificates))) {
+      kind <- certificates$`Paper kind`[i]
+      for (ref in certificates$`Paper reference other`[[i]]) {
+        other <- reference_version_kind(ref$type %||% NA_character_)
+        if (is.na(other) || is.null(ref$doi) || identical(other, kind)) next
+        both <- c(certificates$`Paper reference`[i], ref$url)
+        pairs[[length(pairs) + 1]] <- if (identical(kind, "preprint")) both else rev(both)
+      }
+    }
+  }
+  preprints <- vapply(pairs, `[`, character(1), 1)
+  articles <- vapply(pairs, `[`, character(1), 2)
+  keys <- wikibase_key_column(papers, "paper")
+  linked <- function(from, to) {
+    I(lapply(keys, function(key) unique(to[wikidata_transform(from, "doi") %in% key])))
+  }
+  papers$`Version of` <- linked(preprints, articles)
+  papers$`Has version` <- linked(articles, preprints)
+  papers
 }
 
 #' The identifier column of a table of rows, for a kind

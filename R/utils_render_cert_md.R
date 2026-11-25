@@ -379,6 +379,9 @@ get_openalex_work_fields_result <- function(openalex_id) {
     # The record's own ID, which is not the one asked for when OpenAlex has
     # merged that record into this one: see report_openalex_merge().
     id = data$id %||% NA_character_,
+    # "preprint", "article", ...: whether a merged record is the same kind of
+    # copy as the work, see openalex_record_is_copy()
+    type = data$type %||% NA_character_,
     # Every copy of the work OpenAlex knows, with its own publication: a record
     # merged from a preprint and another copy of it (2025-019: arXiv and SSRN)
     # has the other copy as its primary location, and the referenced copy only
@@ -491,7 +494,7 @@ get_openalex_work_fields_cached_result <- function(openalex_id) {
   cached_lookup_result(
     # Bump the version whenever the shape or meaning of the cached value
     # changes: a stale cache is worse than one refetch per work.
-    key = list("openalex_work_fields", openalex_id, "v5"),
+    key = list("openalex_work_fields", openalex_id, "v6"),
     dirs = c("codecheck", "openalex_work_fields"),
     lookup = function() get_openalex_work_fields_result(openalex_id)
   )
@@ -520,6 +523,27 @@ openalex_record_is_work <- function(record_doi, paper_reference) {
   paper <- openalex_doi_key(paper_reference)
   if (is.na(record) || is.na(paper)) return(TRUE)
   identical(record, paper)
+}
+
+#' Whether an OpenAlex record of another copy is the record of the work too
+#'
+#' OpenAlex merges copies of a work into one record, whose DOI is then one of
+#' them: the arXiv preprint of 2025-019 is a location of the record of its SSRN
+#' copy, the version DOI of 2024-016's Zenodo preprint one of the record of the
+#' concept DOI. Such a record is the work's when it lists the work's DOI as a
+#' location and is of the same kind. A preprint merged into its published
+#' article (2023-011, PLOS ONE) is not: the record is the article's.
+#'
+#' @param fields the value of [get_openalex_work_fields_cached_result()]
+#' @param paper_reference the paper reference
+#' @param paper_kind `"preprint"` or `"article"`, see [paper_kind()]
+#' @return `TRUE` or `FALSE`
+#' @keywords internal
+openalex_record_is_copy <- function(fields, paper_reference, paper_kind) {
+  paper <- openalex_doi_key(paper_reference)
+  located <- vapply(fields$locations %||% list(), function(l) openalex_doi_key(l$doi), character(1))
+  !is.na(paper) && paper %in% located &&
+    isTRUE(paper_kind %in% c("preprint", "article")) && identical(fields$type, paper_kind)
 }
 
 #' The publication facts of a work, if its OpenAlex record is the work's own

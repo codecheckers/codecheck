@@ -170,6 +170,16 @@ WIKIDATA_ITEMS <- list(
   codecheck_register = "Q141254857"
 )
 
+#' "redirect", the reason for deprecated rank (P2241) of an identifier its
+#' issuer merged into another
+#'
+#' Only for the Wikidata batch that sets ranks, see
+#' [wikidata_redirected_values()]: not in [WIKIDATA_ITEMS], whose items the
+#' CODECHECK Wikibase mirrors.
+#'
+#' @keywords internal
+WIKIDATA_REDIRECT <- "Q45403344"
+
 #' The platforms a certificate itself is published on
 #'
 #' A certificate is deposited on Zenodo, OSF or ResearchEquals, and that is a
@@ -434,17 +444,16 @@ WIKIDATA_MODEL <- list(
         "instance_of", "P31", "instance of", datatype = "wikibase-item",
         list(
           kind = "switch",
-          field = "Venue",
+          field = "Paper kind",
           cases = list(preprint = WIKIDATA_ITEMS$preprint),
           default = WIKIDATA_ITEMS$scholarly_article
         ),
         required = TRUE,
         note = paste(
-          "the register's `preprint` venue is the codechecker stating that the",
-          "checked work is a preprint, which is a fact about the paper rather",
-          "than about a venue - unlike the publication itself, which is read",
-          "from the paper's own record. A Crossref type of `posted-content`",
-          "corroborates it"
+          "the type of the referenced DOI's own Crossref or DataCite record,",
+          "which the certificate page shows; the register's `preprint` venue",
+          "only says the check was made at the preprint stage, and is the",
+          "fallback for a reference without a typed record, see paper_kind()"
         )
       ),
       wikidata_statement(
@@ -479,6 +488,20 @@ WIKIDATA_MODEL <- list(
         "publication_date", "P577", "publication date", datatype = "time",
         list(kind = "field", field = "Work publication date", transform = "date_day"),
         note = "the work's own publication date, from its OpenAlex record"
+      ),
+      wikidata_statement(
+        "version_of", "P629", "edition or translation of", datatype = "wikibase-item",
+        list(kind = "entity", entity = "paper", field = "Version of"),
+        note = paste(
+          "on a preprint, its journal article named in reference-other; the",
+          "certificate's review of stays with the checked version, see",
+          "wikibase_version_links()"
+        )
+      ),
+      wikidata_statement(
+        "has_version", "P747", "has edition or translation", datatype = "wikibase-item",
+        list(kind = "entity", entity = "paper", field = "Has version"),
+        note = "on an article, its preprint: the inverse of the statement above"
       ),
       wikidata_statement(
         "published_in", "P1433", "published in", datatype = "wikibase-item",

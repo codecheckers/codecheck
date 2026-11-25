@@ -300,7 +300,41 @@ get_registry_record_result <- function(reference) {
   list(status = "found", value = list(
     agency = agency,
     publication_date = (if (crossref) crossref_publication_date else datacite_publication_date)(record),
-    type = (if (crossref) crossref_reference_type else datacite_reference_type)(record)))
+    type = (if (crossref) crossref_reference_type else datacite_reference_type)(record),
+    # for an item of a further reference, which the register knows nothing else
+    # about: its title and authors may differ from those of the checked work
+    title = registry_title(if (crossref) record$title else
+                             lapply(record$titles, function(t) t$title)),
+    authors = registry_authors(if (crossref) record$author else record$creators)))
+}
+
+#' The first title of a registry record, without markup and surplus space
+#'
+#' @param titles a list of title strings
+#' @return a string, or `NA`
+#' @keywords internal
+registry_title <- function(titles) {
+  titles <- unlist(titles)
+  if (length(titles) == 0 || is.na(titles[1])) return(NA_character_)
+  title <- trimws(gsub("\\s+", " ", gsub("<[^>]+>", "", titles[1])))
+  if (nzchar(title)) title else NA_character_
+}
+
+#' The author names of a registry record, "Given Family" where it has both
+#'
+#' @param people the `author` list of a Crossref record or the `creators` of a
+#'   DataCite one
+#' @return a character vector
+#' @keywords internal
+registry_authors <- function(people) {
+  names <- vapply(people %||% list(), function(person) {
+    given <- person$given %||% person$givenName
+    family <- person$family %||% person$familyName
+    name <- if (!is.null(given) && !is.null(family)) paste(given, family) else
+      person$name %||% family %||% NA_character_
+    as.character(name)[1]
+  }, character(1))
+  names[!is.na(names) & nzchar(trimws(names))]
 }
 
 #' Cached version of get_registry_record_result
@@ -314,8 +348,9 @@ get_registry_record_cached_result <- function(reference) {
   if (is.na(doi)) return(list(status = "absent", value = NULL))
   cached_lookup_result(
     # the record holds the display label of the type, so a change to
-    # crossref_reference_type()/datacite_reference_type() bumps the version
-    key = list("registry_record", doi, "v1"),
+    # crossref_reference_type()/datacite_reference_type() bumps the version;
+    # v2 added the title and authors
+    key = list("registry_record", doi, "v2"),
     dirs = c("codecheck", "registry_record"),
     lookup = function() get_registry_record_result(reference)
   )

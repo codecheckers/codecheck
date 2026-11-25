@@ -134,6 +134,8 @@ quickstatements_chunks <- function(commands, size = QUICKSTATEMENTS_EDIT_LIMIT) 
 #' @param file the log path, or `NULL` to use the option
 #' @param chunk_size how many items one file may create before it is split;
 #'   see [QUICKSTATEMENTS_EDIT_LIMIT]
+#' @param tool the QuickStatements to paste it into, when not the target's
+#'   usual one: a batch that sets ranks needs QuickStatements 3.0
 #' @return the paths of the written files, invisibly
 #' @details
 #' A batch that would create more items than Wikidata lets an account edit in a
@@ -145,14 +147,15 @@ quickstatements_chunks <- function(commands, size = QUICKSTATEMENTS_EDIT_LIMIT) 
 quickstatements_write <- function(commands, batch, dir = ".",
                                   target = c("wikidata", "wikibase"),
                                   file = NULL,
-                                  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT) {
+                                  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT,
+                                  tool = NULL) {
   target <- match.arg(target)
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
   chunks <- quickstatements_chunks(commands, chunk_size)
   names <- if (length(chunks) == 1) batch else
     sprintf("%s-%02d", batch, seq_along(chunks))
 
-  where <- if (target == "wikidata") "https://quickstatements.toolforge.org/"
+  where <- tool %||% if (target == "wikidata") "https://quickstatements.toolforge.org/"
            else WIKIBASE_INSTANCE$quickstatements
   if (length(chunks) > 1) {
     cli::cli_alert_warning(

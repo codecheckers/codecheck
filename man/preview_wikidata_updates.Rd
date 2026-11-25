@@ -28,8 +28,8 @@ export's own items by}
 \item{origin}{whether to look up who created each item, one request per item}
 }
 \value{
-the plan, invisibly: one row per statement to add, to remove, or
-  that differs or is shared,
+the plan, invisibly: one row per statement to add, to remove, to
+  deprecate, or that differs or is shared,
   with the item, its origin and creator, the property, the proposed and the
   current value, the action and the command
 }

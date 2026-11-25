@@ -314,7 +314,8 @@ wikidata_export_plan <- function(records, method = c("search", "sparql")) {
   # community that maintains it. Resolving them is still worth a query, because
   # a work this export creates should say where it appeared, and most journals
   # do have an item.
-  issns <- unique(stats::na.omit(records$certificates$`Paper ISSN`))
+  issns <- unique(stats::na.omit(c(records$certificates$`Paper ISSN`,
+                                   records$other_works$`Paper ISSN`)))
   if (length(issns) > 0) {
     known$venue <- wikidata_resolve("venue", issns, method = method)
     cli::cli_alert_info("venue: {length(issns)} publication{?s} in the register, {length(known$venue)} on Wikidata")

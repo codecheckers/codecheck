@@ -134,3 +134,60 @@ expect_equal(met010("absent", only_reference)$outcome, "ok")
 # The rule is a 2.0 rule only, like the field.
 expect_false("CC-MET-010" %in% codecheck_rules("1.0")$id)
 expect_equal(codecheck_rules("2.0")$severity[codecheck_rules("2.0")$id == "CC-MET-010"], "info")
+
+# --- a merged record of the same work ---------------------------------------------
+
+# The record of the SSRN copy is 2025-019's too: a preprint that lists the arXiv
+# preprint as a location. 2023-011's bioRxiv preprint, merged into the PLOS ONE
+# article, is not the article's record's work.
+preprint_record <- modifyList(fields, list(type = "preprint"))
+expect_true(codecheck:::openalex_record_is_copy(preprint_record, arxiv, "preprint"))
+expect_false(codecheck:::openalex_record_is_copy(preprint_record, arxiv, "article"))
+expect_false(codecheck:::openalex_record_is_copy(modifyList(fields, list(type = "article")), arxiv, "preprint"))
+expect_false(codecheck:::openalex_record_is_copy(preprint_record, "https://doi.org/10.1234/other", "preprint"))
+# a record read before the type was cached says nothing
+expect_false(codecheck:::openalex_record_is_copy(fields, arxiv, "preprint"))
+
+# --- deprecating the merged ID on Wikidata ----------------------------------------
+
+id_claim <- function(id, rank = "normal") {
+  list(mainsnak = list(datavalue = list(type = "string", value = id)), rank = rank)
+}
+merged_into <- function(openalex_id) {
+  list(status = "found", value = modifyList(preprint_record, list(id = "https://openalex.org/W4411175514")))
+}
+existing <- list(list(kind = "paper", item = "Q141269463",
+                      row = data.frame(`Paper reference` = arxiv, `Paper kind` = "preprint",
+                                       OpenAlex = "https://openalex.org/W4411175514",
+                                       check.names = FALSE, stringsAsFactors = FALSE)))
+item_claims <- list(Q141269463 = list(P10283 = list(id_claim("W4415061882"))))
+with_mocked_codecheck(list(get_openalex_work_fields_cached_result = merged_into), {
+  expect_equal(codecheck:::wikidata_redirected_values(existing, item_claims),
+               list(list(P10283 = "W4415061882")))
+  # one deprecated already is done
+  expect_equal(codecheck:::wikidata_redirected_values(
+    existing, list(Q141269463 = list(P10283 = list(id_claim("W4415061882", "deprecated"))))),
+    list(list()))
+  # and a merged ID is not a wrong one, which would be removed
+  expect_equal(length(codecheck:::wikidata_rejected_values(existing, item_claims)[[1]]), 0L)
+})
+
+commands <- "Q141269463\tP10283\t\"W4411175514\"\tS854\t\"https://codecheck.org.uk/register/certs/2025-019/\""
+missing <- codecheck:::wikidata_missing_statements(commands, item_claims$Q141269463,
+                                                   item = "Q141269463", properties = "P10283",
+                                                   redirected = list(P10283 = "W4415061882"))
+# The old ID is deprecated with reason redirect, in QuickStatements 3.0 syntax
+expect_equal(missing$action, c("deprecate", "add"))
+expect_equal(missing$command[1], "Q141269463\tP10283\t\"W4415061882\"\tR-\tP2241\tQ45403344")
+# and the current one is added, not reported as a second value
+expect_equal(missing$command[2], commands)
+# Once the old ID is deprecated, the current one is still an addition: the
+# deprecated value does not occupy the property
+deprecated <- codecheck:::wikidata_missing_statements(
+  commands, list(P10283 = list(id_claim("W4415061882", "deprecated"))),
+  item = "Q141269463", properties = "P10283")
+expect_equal(deprecated$action, "add")
+# Without the redirect, the export's model value replaces nothing it did not write
+plain <- codecheck:::wikidata_missing_statements(commands, item_claims$Q141269463,
+                                                 item = "Q141269463", properties = "P10283")
+expect_false("deprecate" %in% plain$action)

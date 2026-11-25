@@ -134,6 +134,7 @@ expect_true(any(grepl("no known map", codecheck::validate_wikidata_model(unknown
 
 paper_type <- Filter(function(s) s$property == "P31", codecheck::wikidata_statements("paper"))[[1]]
 expect_equal(paper_type$value$kind, "switch")
+expect_equal(paper_type$value$field, "Paper kind")
 expect_equal(paper_type$value$cases$preprint, "Q580922")
 expect_equal(paper_type$value$default, "Q13442814")
 
@@ -141,6 +142,12 @@ expect_equal(paper_type$value$default, "Q13442814")
 # a type that moved it to the main graph would break the link.
 expect_true(all(c(paper_type$value$cases$preprint, paper_type$value$default) %in%
                   c("Q580922", "Q13442814")))
+
+# The reference's own type decides, the register's preprint venue only without one
+expect_equal(codecheck:::paper_kind(
+  c("Preprint", "Journal article", "Journal article", "Preprint", NA, NA, NA),
+  c("codecheck NL", "preprint", "GigaScience", "preprint", "preprint", "GigaScience", NA)),
+  c("preprint", "article", "article", "preprint", "preprint", "article", "article"))
 
 # Endpoints follow the query service graph split ----
 

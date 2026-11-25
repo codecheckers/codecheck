@@ -189,13 +189,18 @@ wikidata_claim_token <- function(claim) {
 #' @param author_names the names (labels and aliases) of the item's authors
 #'   as items (`P50`), see [wikidata_item_names()]: a name string (`P2093`)
 #'   that is one of them is an author the item has already
+#' @param redirected a named list, property to the values (as
+#'   [wikidata_claim_key()] gives them) to deprecate as redirects, see
+#'   [wikidata_redirected_values()]
 #' @return a `data.frame` with `property`, `proposed`, `current`, `action`
-#'   (`"add"`, `"differs"`, `"remove"` or `"shared"`) and `command`
+#'   (`"add"`, `"differs"`, `"remove"`, `"shared"` or `"deprecate"`) and
+#'   `command`
 #' @keywords internal
 wikidata_missing_statements <- function(commands, claims, item = NULL,
                                         properties = character(0),
                                         rejected = list(),
-                                        author_names = character(0)) {
+                                        author_names = character(0),
+                                        redirected = list()) {
   empty <- data.frame(property = character(0), proposed = character(0),
                       current = character(0), action = character(0),
                       command = character(0), stringsAsFactors = FALSE)
@@ -216,6 +221,20 @@ wikidata_missing_statements <- function(commands, claims, item = NULL,
       kept <- list()
       for (claim in claims[[property]]) {
         key <- wikidata_claim_key(claim)
+        # Out of date rather than wrong: deprecated, which leaves the
+        # property free for the current value, see wikidata_redirected_values()
+        if (!is.na(key) && key %in% toupper(redirected[[property]] %||% character(0))) {
+          removals[[length(removals) + 1]] <- data.frame(
+            property = property, proposed = NA_character_, current = key,
+            action = "deprecate",
+            command = quickstatements_deprecate_redirect(item, property, key),
+            stringsAsFactors = FALSE)
+          next
+        }
+        if (identical(claim$rank, "deprecated")) {
+          kept[[length(kept) + 1]] <- claim
+          next
+        }
         provenance <- wikidata_claim_provenance(claim)
         wrong <- key %in% toupper(rejected[[property]] %||% character(0)) ||
           length(desired_keys(property)) > 0
@@ -239,14 +258,19 @@ wikidata_missing_statements <- function(commands, claims, item = NULL,
     }
   }
 
+  # A deprecated value is no longer the item's, and leaves the property free
+  # for the current one: the OpenAlex ID it was merged into is an addition.
+  live <- function(property) {
+    Filter(function(claim) !identical(claim$rank, "deprecated"), claims[[property]] %||% list())
+  }
   current <- function(property) {
-    keys <- vapply(claims[[property]] %||% list(), wikidata_claim_key, character(1))
+    keys <- vapply(live(property), wikidata_claim_key, character(1))
     keys[!is.na(keys)]
   }
   carried <- function(property) {
     group <- Filter(function(g) property %in% g, WIKIDATA_EQUIVALENT_PROPERTIES)
     properties <- if (length(group) > 0) group[[1]] else property
-    any(vapply(properties, function(p) length(claims[[p]] %||% list()) > 0, logical(1)))
+    any(vapply(properties, function(p) length(live(p)) > 0, logical(1)))
   }
 
   additions <- lapply(desired, function(d) {
@@ -410,7 +434,8 @@ wikidata_rejected_values <- function(existing, claims, method = "search") {
                          error = function(e) NULL)
       if (is.null(result) || identical(result$status, "failed")) next
       if (identical(result$status, "absent") ||
-          !openalex_record_is_work(result$value$doi, reference)) {
+          (!openalex_record_is_work(result$value$doi, reference) &&
+           !openalex_record_is_copy(result$value, reference, e$row$`Paper kind` %||% NA_character_))) {
         wrong[[id]] <- result$value
       }
     }
@@ -432,6 +457,60 @@ wikidata_rejected_values <- function(existing, claims, method = "search") {
       P577 = stats::na.omit(dates)
     )
   })
+}
+
+#' The OpenAlex IDs on each existing work that OpenAlex merged into its record
+#'
+#' An ID that now redirects to the record the export writes is not wrong, it
+#' is out of date: the convention on Wikidata keeps such an identifier with
+#' deprecated rank and the reason "redirect" (P2241 = Q45403344), rather than
+#' removing it (2025-019: W4415061882, merged into W4411175514).
+#'
+#' @inheritParams wikidata_rejected_values
+#' @return a list parallel to `existing`, each a named list of property to
+#'   values, as `wikidata_rejected_values()` returns them
+#' @keywords internal
+wikidata_redirected_values <- function(existing, claims) {
+  lapply(existing, function(e) {
+    if (e$kind != "paper") return(list())
+    current <- wikidata_transform(e$row$OpenAlex %||% NA_character_, "openalex")
+    if (is.na(current)) return(list())
+    carried <- Filter(function(claim) !identical(claim$rank, "deprecated"),
+                      claims[[e$item]]$P10283 %||% list())
+    ids <- setdiff(stats::na.omit(wikidata_transform(
+      vapply(carried, wikidata_claim_key, character(1)), "openalex")), current)
+    redirected <- Filter(function(id) {
+      result <- tryCatch(get_openalex_work_fields_cached_result(paste0("https://openalex.org/", id)),
+                         error = function(e) NULL)
+      identical(result$status, "found") &&
+        identical(wikidata_transform(result$value$id %||% NA_character_, "openalex"), current)
+    }, ids)
+    if (length(redirected) == 0) list() else list(P10283 = unname(redirected))
+  })
+}
+
+#' QuickStatements 3.0, the one that sets ranks
+#'
+#' Run by Wikimedia Brasil. Classic QuickStatements, which runs every other
+#' batch, cannot set a rank, see
+#' <https://www.wikidata.org/wiki/Help:QuickStatements#Limitations>.
+#'
+#' @keywords internal
+QUICKSTATEMENTS_RANKS <- "https://qs-dev.toolforge.org/"
+
+#' The QuickStatements 3.0 command that deprecates a redirected identifier
+#'
+#' For [QUICKSTATEMENTS_RANKS], which takes the rank as an `R-` field and
+#' keeps a statement that exists rather than adding it again.
+#'
+#' @param item the item
+#' @param property the identifier property
+#' @param value the identifier
+#' @return a tab-separated command
+#' @keywords internal
+quickstatements_deprecate_redirect <- function(item, property, value) {
+  paste(item, property, quickstatements_value("external-id", value), "R-",
+        "P2241", WIKIDATA_REDIRECT, sep = "\t")
 }
 
 #' Plan the additions to items that already exist on Wikidata
@@ -477,6 +556,7 @@ wikidata_update_plan <- function(records, method = c("search", "sparql"),
   batch_ids <- wikidata_logged_batch_ids(log_file)
 
   rejected <- wikidata_rejected_values(existing, claims, method = method)
+  redirected <- wikidata_redirected_values(existing, claims)
   authors <- function(qid) {
     vapply(claims[[qid]]$P50 %||% list(), wikidata_claim_key, character(1))
   }
@@ -489,7 +569,8 @@ wikidata_update_plan <- function(records, method = c("search", "sparql"),
     missing <- wikidata_missing_statements(commands, claims[[e$item]] %||% list(),
                                            item = e$item, properties = properties,
                                            rejected = rejected[[j]],
-                                           author_names = unlist(author_names[authors(e$item)]))
+                                           author_names = unlist(author_names[authors(e$item)]),
+                                           redirected = redirected[[j]])
     if (nrow(missing) == 0) return(NULL)
     created <- if (is.null(creations)) NULL else creations[creations$item == e$item, ]
     cbind(
@@ -540,8 +621,8 @@ wikidata_update_plan <- function(records, method = c("search", "sparql"),
 #' @param records already-read records, as from [read_register_records()]
 #' @param method how to resolve against Wikidata, see [preview_wikidata_export()]
 #' @param origin whether to look up who created each item, one request per item
-#' @return the plan, invisibly: one row per statement to add, to remove, or
-#'   that differs or is shared,
+#' @return the plan, invisibly: one row per statement to add, to remove, to
+#'   deprecate, or that differs or is shared,
 #'   with the item, its origin and creator, the property, the proposed and the
 #'   current value, the action and the command
 #' @examples
@@ -572,6 +653,7 @@ preview_wikidata_updates <- function(dir = "../register", out_dir = ".",
   utils::write.csv(plan, report, row.names = FALSE)
   cli::cli_alert_info("Report of {nrow(plan)} statement{?s} written to {.file {report}}")
 
+  deprecations <- plan[plan$action == "deprecate", ]
   removals <- plan[plan$action == "remove", ]
   additions <- plan[plan$action == "add", ]
   differences <- plan[plan$action == "differs", ]
@@ -596,6 +678,28 @@ preview_wikidata_updates <- function(dir = "../register", out_dir = ".",
     }
   } else {
     cli::cli_alert_success("Nothing to add or remove")
+  }
+  if (nrow(deprecations) > 0) {
+    quickstatements_write(deprecations$command, "wikidata-ranks", dir = out_dir,
+                          target = "wikidata", file = log_file,
+                          tool = QUICKSTATEMENTS_RANKS)
+    cli::cli_alert_warning(paste(
+      "{nrow(deprecations)} OpenAlex ID{?s} OpenAlex merged into the current record, to deprecate",
+      "with reason redirect: run {.file wikidata-ranks.qs} in QuickStatements 3.0",
+      "after any {.file wikidata-updates.qs}, or set the rank by hand:"))
+    for (i in seq_len(nrow(deprecations))) {
+      cli::cli_bullets(c(" " = paste0(
+        "{.url https://www.wikidata.org/wiki/", deprecations$item[i], "}: ",
+        deprecations$property[i], " ", deprecations$current[i],
+        " deprecated, qualifier P2241 reason for deprecated rank = ", WIKIDATA_REDIRECT, " redirect")))
+    }
+  } else {
+    # as preview_wikidata_export() does with a batch that has been run
+    stale <- file.path(out_dir, "wikidata-ranks.qs")
+    if (file.exists(stale)) {
+      file.remove(stale)
+      cli::cli_alert_info("No OpenAlex ID left to deprecate: removed {.file {stale}}, which has been run")
+    }
   }
   if (nrow(differences) > 0) {
     cli::cli_alert_warning("{nrow(differences)} statement{?s} differ{?s/} from what the item carries: not in the batch, see the report")

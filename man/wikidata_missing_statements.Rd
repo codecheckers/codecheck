@@ -10,7 +10,8 @@ wikidata_missing_statements(
   item = NULL,
   properties = character(0),
   rejected = list(),
-  author_names = character(0)
+  author_names = character(0),
+  redirected = list()
 )
 }
 \arguments{
@@ -30,10 +31,15 @@ empty for no removals}
 \item{author_names}{the names (labels and aliases) of the item's authors
 as items (`P50`), see [wikidata_item_names()]: a name string (`P2093`)
 that is one of them is an author the item has already}
+
+\item{redirected}{a named list, property to the values (as
+[wikidata_claim_key()] gives them) to deprecate as redirects, see
+[wikidata_redirected_values()]}
 }
 \value{
 a `data.frame` with `property`, `proposed`, `current`, `action`
-  (`"add"`, `"differs"`, `"remove"` or `"shared"`) and `command`
+  (`"add"`, `"differs"`, `"remove"`, `"shared"` or `"deprecate"`) and
+  `command`
 }
 \description{
 Compares the commands the model would write on an item with the claims the
