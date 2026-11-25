@@ -63,6 +63,16 @@
   (register#247).
 - The Wikidata export retries a search Wikidata is too busy to answer,
   and stops rather than plan to create items that already exist.
+- [`preview_wikidata_updates()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_updates.md)
+  takes an author name with initials, such as “J J Hopfield”, as the
+  same person as the written-out name on Wikidata.
+- The Wikidata export stops when a DOI’s registry lookup failed instead
+  of typing the work by its venue (register#247).
+- [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
+  warns when the registry lookup for a paper’s DOI or a further
+  reference failed, instead of leaving out the type silently.
+- A DOI that does not exist counts as having no registry record rather
+  than as a failed lookup.
 
 ## codecheck 0.32.0
 

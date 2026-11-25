@@ -17,4 +17,5 @@ add_reference_types(refs)
 
 ## Value
 
-\`refs\` with \`type\` and \`agency\` columns
+\`refs\` with \`type\`, \`agency\` and \`status\` columns, see
+\[get_reference_type()\]
