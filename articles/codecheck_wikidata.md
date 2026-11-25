@@ -423,6 +423,29 @@ In the register, `make wikibase` is the dry run and
 `../codecheck/wikidata/wikibase-log.csv` unless `WIKIBASE_LOG` names
 another. They read `docs/register.json`, so render first.
 
+## Keeping existing items up to date
+
+``` r
+
+preview_wikidata_updates("../register", out_dir = "wikidata",
+                         log_file = "wikidata/wikibase-log.csv")
+```
+
+This writes `wikidata-updates.qs` with every statement of the model that
+items already on Wikidata lack, and the removals of statements the
+export wrote itself that the register no longer supports;
+`wikidata-updates.csv` reports each one. In the register,
+`make wikidata_updates` runs it.
+
+An OpenAlex ID that OpenAlex has merged into the record the export now
+writes is not removed but deprecated, with reason for deprecated rank
+(`P2241`) redirect (`Q45403344`). Classic QuickStatements cannot set a
+rank, so these go into a batch of their own, `wikidata-ranks.qs`, for
+[QuickStatements 3.0](https://qs-dev.toolforge.org/). Run it after
+`wikidata-updates.qs`, which adds the current ID, or set the ranks by
+hand from the list the preview prints. The Wikibase holds only what the
+register says and so only the current ID.
+
 ## The edit log
 
 With `options(codecheck.wikibase_log = ...)` set, every write appends a
@@ -489,6 +512,22 @@ nothing is lost.
   additionally holds an item for every publication the works name, since
   `venues.csv` covers only the venues that commission checks; on
   Wikidata those publications are resolved, never created.
+- **A checked work is typed by its DOI’s own record.** `P31` is preprint
+  or scholarly article as the reference’s Crossref or DataCite record
+  types it; the register’s `preprint` venue only decides for a reference
+  without one.
+- **Only the checked version is reviewed.** When a certificate names the
+  preprint of the checked article, or the article of the checked
+  preprint, in `reference-other`, that other version gets an item too,
+  on both targets, and the two are linked: the preprint is `P629` a
+  version of the article, which `P747` has it as a version. The
+  certificate’s `P6977` review of stays with the version that was
+  checked. A further copy of the same kind, a second preprint server,
+  gets no item. When both versions are new, the link is written by the
+  next
+  [`preview_wikidata_updates()`](http://codecheck.org.uk/codecheck/reference/preview_wikidata_updates.md),
+  once both have items. The Wikibase needs the two properties first: run
+  `bootstrap_wikibase(dry_run = FALSE)` once.
 - **Statements on items that already exist are not overwritten.** A
   certificate or work Wikidata already holds keeps the label,
   description and statements somebody else chose.

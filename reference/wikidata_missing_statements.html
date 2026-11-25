@@ -60,7 +60,8 @@ carries with other values is a difference, reported but never written.</p>
 <span>  item <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  properties <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>  rejected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  author_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span>  author_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>  redirected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -96,11 +97,18 @@ empty for no removals</p></dd>
 as items (`P50`), see [wikidata_item_names()]: a name string (`P2093`)
 that is one of them is an author the item has already</p></dd>
 
+
+<dt id="arg-redirected">redirected<a class="anchor" aria-label="anchor" href="#arg-redirected"></a></dt>
+<dd><p>a named list, property to the values (as
+[wikidata_claim_key()] gives them) to deprecate as redirects, see
+[wikidata_redirected_values()]</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>a `data.frame` with `property`, `proposed`, `current`, `action`
-  (`"add"`, `"differs"`, `"remove"` or `"shared"`) and `command`</p>
+  (`"add"`, `"differs"`, `"remove"`, `"shared"` or `"deprecate"`) and
+  `command`</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

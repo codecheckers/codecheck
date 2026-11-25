@@ -48,9 +48,10 @@ preview_wikidata_updates(
 
 ## Value
 
-the plan, invisibly: one row per statement to add, to remove, or that
-differs or is shared, with the item, its origin and creator, the
-property, the proposed and the current value, the action and the command
+the plan, invisibly: one row per statement to add, to remove, to
+deprecate, or that differs or is shared, with the item, its origin and
+creator, the property, the proposed and the current value, the action
+and the command
 
 ## Details
 

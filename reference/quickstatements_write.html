@@ -63,7 +63,8 @@ half-succeeded is unreconstructable, since the register will have moved on.</p>
 <span>  dir <span class="op">=</span> <span class="st">"."</span>,</span>
 <span>  target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"wikidata"</span>, <span class="st">"wikibase"</span><span class="op">)</span>,</span>
 <span>  file <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  chunk_size <span class="op">=</span> <span class="va">QUICKSTATEMENTS_EDIT_LIMIT</span></span>
+<span>  chunk_size <span class="op">=</span> <span class="va">QUICKSTATEMENTS_EDIT_LIMIT</span>,</span>
+<span>  tool <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -94,6 +95,11 @@ half-succeeded is unreconstructable, since the register will have moved on.</p>
 <dt id="arg-chunk-size">chunk_size<a class="anchor" aria-label="anchor" href="#arg-chunk-size"></a></dt>
 <dd><p>how many items one file may create before it is split;
 see [QUICKSTATEMENTS_EDIT_LIMIT]</p></dd>
+
+
+<dt id="arg-tool">tool<a class="anchor" aria-label="anchor" href="#arg-tool"></a></dt>
+<dd><p>the QuickStatements to paste it into, when not the target's
+usual one: a batch that sets ranks needs QuickStatements 3.0</p></dd>
 
 </dl></div>
     <div class="section level2">

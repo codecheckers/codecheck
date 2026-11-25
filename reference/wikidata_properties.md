@@ -53,11 +53,13 @@ wikidata_properties()[, c("entity", "role", "property", "label")]
 #> 19       paper statement    P2093                 author name string
 #> 20       paper statement   P10283                        OpenAlex ID
 #> 21       paper statement     P577                   publication date
-#> 22       paper statement    P1433                       published in
-#> 23      person statement      P31                        instance of
-#> 24      person statement     P496                           ORCID iD
-#> 25       venue statement     P236                               ISSN
-#> 26       venue statement     P856                   official website
-#> 27        <NA> reference     P854                      reference URL
-#> 28        <NA> reference     P813                          retrieved
+#> 22       paper statement     P629          edition or translation of
+#> 23       paper statement     P747         has edition or translation
+#> 24       paper statement    P1433                       published in
+#> 25      person statement      P31                        instance of
+#> 26      person statement     P496                           ORCID iD
+#> 27       venue statement     P236                               ISSN
+#> 28       venue statement     P856                   official website
+#> 29        <NA> reference     P854                      reference URL
+#> 30        <NA> reference     P813                          retrieved
 ```

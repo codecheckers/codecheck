@@ -16,7 +16,8 @@ quickstatements_write(
   dir = ".",
   target = c("wikidata", "wikibase"),
   file = NULL,
-  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT
+  chunk_size = QUICKSTATEMENTS_EDIT_LIMIT,
+  tool = NULL
 )
 ```
 
@@ -46,6 +47,11 @@ quickstatements_write(
 
   how many items one file may create before it is split; see
   \[QUICKSTATEMENTS_EDIT_LIMIT\]
+
+- tool:
+
+  the QuickStatements to paste it into, when not the target's usual one:
+  a batch that sets ranks needs QuickStatements 3.0
 
 ## Value
 

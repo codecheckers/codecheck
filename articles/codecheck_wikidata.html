@@ -61,7 +61,7 @@
                         <h4 data-toc-skip class="author">Daniel
 Nüst</h4>
             
-            <h4 data-toc-skip class="date">2026-11-20</h4>
+            <h4 data-toc-skip class="date">2026-11-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/codecheckers/codecheck/blob/master/vignettes/codecheck_wikidata.Rmd" class="external-link"><code>vignettes/codecheck_wikidata.Rmd</code></a></small>
       <div class="d-none name"><code>codecheck_wikidata.Rmd</code></div>
@@ -460,6 +460,26 @@ EditGroups records.</p>
 <code>docs/register.json</code>, so render first.</p>
 </div>
 <div class="section level2">
+<h2 id="keeping-existing-items-up-to-date">Keeping existing items up to date<a class="anchor" aria-label="anchor" href="#keeping-existing-items-up-to-date"></a>
+</h2>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/preview_wikidata_updates.html">preview_wikidata_updates</a></span><span class="op">(</span><span class="st">"../register"</span>, out_dir <span class="op">=</span> <span class="st">"wikidata"</span>,</span>
+<span>                         log_file <span class="op">=</span> <span class="st">"wikidata/wikibase-log.csv"</span><span class="op">)</span></span></code></pre></div>
+<p>This writes <code>wikidata-updates.qs</code> with every statement of
+the model that items already on Wikidata lack, and the removals of
+statements the export wrote itself that the register no longer supports;
+<code>wikidata-updates.csv</code> reports each one. In the register,
+<code>make wikidata_updates</code> runs it.</p>
+<p>An OpenAlex ID that OpenAlex has merged into the record the export
+now writes is not removed but deprecated, with reason for deprecated
+rank (<code>P2241</code>) redirect (<code>Q45403344</code>). Classic
+QuickStatements cannot set a rank, so these go into a batch of their
+own, <code>wikidata-ranks.qs</code>, for <a href="https://qs-dev.toolforge.org/" class="external-link">QuickStatements 3.0</a>. Run it
+after <code>wikidata-updates.qs</code>, which adds the current ID, or
+set the ranks by hand from the list the preview prints. The Wikibase
+holds only what the register says and so only the current ID.</p>
+</div>
+<div class="section level2">
 <h2 id="the-edit-log">The edit log<a class="anchor" aria-label="anchor" href="#the-edit-log"></a>
 </h2>
 <p>With <code>options(codecheck.wikibase_log = ...)</code> set, every
@@ -467,7 +487,7 @@ write appends a row: time, target, action, kind, id, label, status,
 batch, detail. It covers both halves of the export - the API writes to
 the Wikibase, and the QuickStatements batches prepared for and submitted
 to Wikidata.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">log</span> <span class="op">&lt;-</span> <span class="fu">codecheck</span><span class="fu">:::</span><span class="fu"><a href="../reference/wikibase_log_read.html">wikibase_log_read</a></span><span class="op">(</span><span class="st">"wikibase-log.csv"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">log</span>, <span class="va">target</span> <span class="op">==</span> <span class="st">"wikidata"</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -527,6 +547,25 @@ such statement. The Wikibase additionally holds an item for every
 publication the works name, since <code>venues.csv</code> covers only
 the venues that commission checks; on Wikidata those publications are
 resolved, never created.</li>
+<li>
+<strong>A checked work is typed by its DOI’s own record.</strong>
+<code>P31</code> is preprint or scholarly article as the reference’s
+Crossref or DataCite record types it; the register’s
+<code>preprint</code> venue only decides for a reference without
+one.</li>
+<li>
+<strong>Only the checked version is reviewed.</strong> When a
+certificate names the preprint of the checked article, or the article of
+the checked preprint, in <code>reference-other</code>, that other
+version gets an item too, on both targets, and the two are linked: the
+preprint is <code>P629</code> a version of the article, which
+<code>P747</code> has it as a version. The certificate’s
+<code>P6977</code> review of stays with the version that was checked. A
+further copy of the same kind, a second preprint server, gets no item.
+When both versions are new, the link is written by the next
+<code><a href="../reference/preview_wikidata_updates.html">preview_wikidata_updates()</a></code>, once both have items. The
+Wikibase needs the two properties first: run
+<code>bootstrap_wikibase(dry_run = FALSE)</code> once.</li>
 <li>
 <strong>Statements on items that already exist are not
 overwritten.</strong> A certificate or work Wikidata already holds keeps
