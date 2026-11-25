@@ -1,6 +1,6 @@
 # Changelog
 
-## codecheck 0.32.0.9000
+## codecheck 0.33.0
 
 ### New Features
 
@@ -29,12 +29,11 @@
   reports a certificate whose OpenAlex ID changed since the previous
   rendering, and says when OpenAlex merged the old record into the new
   one; the render keeps the current ID (register#247).
-- New rule `CC-MET-010` reference-other-openalex-copies lists the DOIs
-  the paper’s OpenAlex record holds for further copies of the work that
-  neither `reference` nor `reference-other` names, as candidates for
-  `reference-other`;
+- New rule `CC-MET-010` reference-other-openalex-copies lists further
+  DOIs of the paper’s OpenAlex record as candidates for
+  `reference-other`, also reported by
   [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
-  reports the same per certificate (register#247).
+  (register#247).
 - The Wikidata export creates an item for the preprint or article named
   in `reference-other` and links both versions with `P629`/`P747`
   (register#247).
@@ -44,20 +43,19 @@
 
 ### Bug Fixes
 
-- A checked work whose OpenAlex record describes another copy of it
-  keeps the publication of its own copy when the record lists that copy:
-  the arXiv preprint of 2025-019, merged into its SSRN copy, lost its
-  ISSN and venue in `register.json` and the Wikidata export
+- A checked work whose OpenAlex record was merged into another copy
+  keeps its own ISSN and venue, as the arXiv preprint of 2025-019
   (register#247).
 - `CC-CFG-030` reports a `reference-other` item written as a map instead
   of passing the URL inside it.
 - A preprint no longer gets the journal named in its repository record
-  as its venue, as 2024-016 got Geospatial Health.
+  as its venue, as 2024-016 got Geospatial Health (register#247).
 - The `CC-MET` rules find the OpenAlex record of a paper whose DOI is
-  one of the record’s further copies, such as a Zenodo version DOI.
+  one of the record’s further copies, such as a Zenodo version DOI
+  (register#247).
 - The Wikidata export types a checked work as a preprint or a scholarly
   article by its DOI’s own record, not by the register’s `preprint`
-  venue, which mistyped 19 works.
+  venue, which mistyped 19 works (register#247).
 - The Wikidata export keeps the OpenAlex ID of a record OpenAlex merged
   from copies of the same preprint, as for 2024-016 and 2025-019
   (register#247).
