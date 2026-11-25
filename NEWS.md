@@ -23,6 +23,7 @@
 * The `CC-MET` rules find the OpenAlex record of a paper whose DOI is one of the record's further copies, such as a Zenodo version DOI.
 * The Wikidata export types a checked work as a preprint or a scholarly article by its DOI's own record, not by the register's `preprint` venue, which mistyped 19 works.
 * The Wikidata export keeps the OpenAlex ID of a record OpenAlex merged from copies of the same preprint, as for 2024-016 and 2025-019 (register#247).
+* The Wikidata export retries a search Wikidata is too busy to answer, and stops rather than plan to create items that already exist.
 
 # codecheck 0.32.0
 

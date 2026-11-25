@@ -90,10 +90,10 @@ wikidata_search_by_statement <- function(property, values, size = 20,
 
   for (chunk in split(values, ceiling(seq_along(values) / size))) {
     search <- haswbstatement_search(property, chunk)
-    hits <- wikibase_get(NULL, list(
+    hits <- wikidata_answer(wikibase_get(NULL, list(
       action = "query", list = "search", srsearch = search,
       srnamespace = 0, srlimit = length(chunk) * 2
-    ), api = WIKIDATA_API)$query$search
+    ), api = WIKIDATA_API), search)$query$search
     if (length(hits) == 0) next
     ids <- vapply(hits, function(hit) hit$title, character(1))
 
@@ -105,9 +105,9 @@ wikidata_search_by_statement <- function(property, values, size = 20,
     wanted <- stats::setNames(chunk, toupper(chunk))
 
     for (batch in split(ids, ceiling(seq_along(ids) / 50))) {
-      entities <- wikibase_get(NULL, list(
+      entities <- wikidata_answer(wikibase_get(NULL, list(
         action = "wbgetentities", ids = paste(batch, collapse = "|"), props = "claims"
-      ), api = WIKIDATA_API)$entities
+      ), api = WIKIDATA_API), "reading the items found")$entities
       for (id in names(entities)) {
         classes <- vapply(entities[[id]]$claims$P31 %||% list(), function(claim) {
           claim$mainsnak$datavalue$value$id %||% NA_character_
@@ -124,6 +124,27 @@ wikidata_search_by_statement <- function(property, values, size = 20,
   }
   found
 }
+
+#' Stop on an API answer that is an error
+#'
+#' An error answer has no search hits and no entities, which would otherwise
+#' read as "no item": with Wikidata's search overloaded, an export once planned
+#' to create 40 works and 24 certificates that were already there.
+#'
+#' @param answer the parsed API answer
+#' @param what what was asked, for the message
+#' @return `answer`, if it is not an error
+#' @keywords internal
+wikidata_answer <- function(answer, what) {
+  code <- answer$error$code
+  if (!is.null(code)) {
+    stop("Wikidata answered ", code, " for ", what, ": ",
+         answer$error$info %||% "no details", ". Nothing resolved, run this again later.",
+         call. = FALSE)
+  }
+  answer
+}
+
 #' Whether a DOI resolves
 #'
 #' Asks the DOI resolver's handle API, which answers 200 for a registered DOI

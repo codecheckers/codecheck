@@ -261,6 +261,8 @@ expect_true(grepl("''missing''",
 expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "maxlag", lag = 8))), 8)
 expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "ratelimited"))), 5)
 expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "readonly"))), 5)
+# Wikidata's search under load
+expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "cirrussearch-too-busy-error"))), 5)
 # The wait doubles per attempt, and is capped so a run cannot stall unnoticed.
 expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "maxlag", lag = 5)), attempt = 3), 20)
 expect_equal(codecheck:::wikibase_retry_after(list(error = list(code = "maxlag", lag = 30)), attempt = 5), 60)

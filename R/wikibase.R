@@ -80,7 +80,9 @@ wikibase_retry_after <- function(result, response = NULL, attempt = 1) {
       # any constant we could pick.
       return(backoff(result$error$lag %||% 5))
     }
-    if (code %in% c("ratelimited", "readonly")) return(backoff(5))
+    # cirrussearch-too-busy-error: Wikidata's search is overloaded and answers
+    # this for a share of the queries in a run, without an HTTP error.
+    if (code %in% c("ratelimited", "readonly", "cirrussearch-too-busy-error")) return(backoff(5))
     return(NA_real_)
   }
 

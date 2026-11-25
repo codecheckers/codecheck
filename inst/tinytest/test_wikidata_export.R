@@ -371,6 +371,27 @@ expect_equal(searched[1], "haswbstatement:P236=2045-2322")
 # Without the exclusion the article wins, which is the bug this guards against.
 expect_equal(unname(unfiltered["2045-2322"]), "Q141408469")
 
+# A search that answers with an error has found nothing, it has not found
+# that nothing is there: the export stops rather than plan to create the items.
+busy <- function(handle, params, api) {
+  if (identical(params$list, "search")) {
+    return(list(error = list(code = "cirrussearch-too-busy-error", info = "Search is currently too busy.")))
+  }
+  stop("no entities should be read")
+}
+with_mocked_codecheck(list(wikibase_get = busy), {
+  expect_error(codecheck:::wikidata_resolve("paper", "10.1234/ABC"),
+               "cirrussearch-too-busy-error for haswbstatement:P356=10.1234/ABC")
+})
+no_entities <- function(handle, params, api) {
+  if (identical(params$list, "search")) return(list(query = list(search = list(list(title = "Q1")))))
+  list(error = list(code = "maxlag", info = "Waiting for a database server"))
+}
+with_mocked_codecheck(list(wikibase_get = no_entities), {
+  expect_error(codecheck:::wikidata_search_by_statement("P356", "10.1234/ABC"),
+               "maxlag for reading the items found")
+})
+
 # The query service is asked to leave them out too.
 query <- NULL
 with_mocked_codecheck(list(wikibase_sparql = function(q, endpoint) { query <<- q; data.frame() }), {
