@@ -44,3 +44,16 @@
 "2026-11-25T13:09:26+0100","wikibase","create","property","P30","edition or translation of","done",NA,"P629"
 "2026-11-25T13:09:26+0100","wikibase","create","property","P31","has edition or translation","done",NA,"P747"
 "2026-11-25T13:09:28+0100","wikibase","edit","page","Project:Data model","data_model","done",NA,NA
+"2026-11-25T13:21:34+0100","wikidata","quickstatements","batch","wikidata/wikidata-works.qs","wikidata-works","prepared","wikidata-works","57 commands"
+"2026-11-25T13:21:34+0100","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","57 commands"
+"2026-11-25T13:24:36+0100","wikidata","quickstatements","batch","wikidata/wikidata-updates.qs","wikidata-updates","prepared","wikidata-updates","47 commands"
+"2026-11-25T13:24:37+0100","wikidata","quickstatements","batch","wikidata/wikidata-ranks.qs","wikidata-ranks","prepared","wikidata-ranks","1 commands"
+"2026-11-25T13:30:09+0100","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1795609724221/","wikidata-works","submitted","wikidata-works",NA
+"2026-11-25T15:37:38+0100","wikidata","quickstatements","batch","wikidata/wikidata-works.qs","wikidata-works","prepared","wikidata-works","462 commands"
+"2026-11-25T15:37:38+0100","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","360 commands"
+"2026-11-25T15:39:27+0100","wikidata","quickstatements","batch","wikidata/wikidata-certificates.qs","wikidata-certificates","prepared","wikidata-certificates","60 commands"
+"2026-11-25T15:57:08+0100","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1795618599347/","wikidata-certificates","submitted","wikidata-certificates",NA
+"2026-11-25T15:59:28+0100","wikidata","quickstatements","batch","wikidata/wikidata-updates.qs","wikidata-updates","prepared","wikidata-updates","51 commands"
+"2026-11-25T15:59:28+0100","wikidata","quickstatements","batch","wikidata/wikidata-ranks.qs","wikidata-ranks","prepared","wikidata-ranks","1 commands"
+"2026-11-25T18:38:34+0100","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv3/77731/","wikidata-ranks","submitted","wikidata-ranks",NA
+"2026-11-25T19:36:56+0100","wikidata","quickstatements","batch","https://editgroups.toolforge.org/b/QSv2T/1795628203335/","wikidata-updates","submitted","wikidata-updates",NA
