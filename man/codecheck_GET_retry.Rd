@@ -4,7 +4,7 @@
 \alias{codecheck_GET_retry}
 \title{Custom HTTP GET that retries transient failures}
 \usage{
-codecheck_GET_retry(url, ..., max_attempts = 4, max_wait = 30)
+codecheck_GET_retry(url, ..., max_attempts = 4, max_wait = 60)
 }
 \arguments{
 \item{url}{The URL to request}

@@ -104,6 +104,11 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   # end, rather than R's default "There were N warnings" prompt.
   captured_warnings <- character(0)
 
+  # Record every lookup of a remote resource that fails, see
+  # record_lookup_failure(); the render fails at its end when there are any.
+  failures_path <- start_lookup_failures()
+  on.exit(stop_lookup_failures(failures_path), add = TRUE)
+
   # With verbose = TRUE every log line is prefixed with the seconds elapsed
   # since here, so a slow phase is visible in a redirected log.
   register_table <- with_elapsed_log(enabled = verbose, withCallingHandlers(
@@ -233,6 +238,10 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
 
   report_captured_warnings(captured_warnings)
 
+  # The audits below are reports only and must not fail a render, so what they
+  # cannot look up is not recorded.
+  failures <- stop_lookup_failures(failures_path)
+
   # Audit the Zenodo records against the community curation policy. This is a
   # maintainer signal only: a finding, an outage or an unexpected error here
   # must never fail a render that otherwise succeeded.
@@ -267,6 +276,13 @@ register_render <- function(register = read.csv("register.csv", as.is = TRUE, co
   } else if (prune_unreferenced_libs) {
     cli::cli_alert_info("Skipping docs/libs pruning: not a complete, failure-free render")
   }
+
+  # A lookup that failed leaves its value out of this render, while the
+  # previous one may have had it: an OSF outage took certificates'
+  # codecheckers off the statistics pages, and CI committed that. Every page is
+  # written - a local run can be inspected - but the render fails, so CI
+  # commits nothing and a later render asks again, for the failed lookups only.
+  stop_on_lookup_failures(failures)
 
   cli::cli_alert_success("Register rendering complete")
   invisible(register_table)

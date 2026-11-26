@@ -43,6 +43,8 @@ get_cert_record_title <- function(report_link, cert_id) {
 get_cert_record_title_cached_result <- function(report_link, cert_id) {
   cached_lookup_result(
     key = list("cert_title", report_link),
+    # resolve_external_field() keeps the previous value
+    counts = FALSE,
     dirs = c("codecheck", "cert_title"),
     lookup = function() get_cert_record_title_result(report_link, cert_id)
   )

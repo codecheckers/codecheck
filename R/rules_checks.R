@@ -931,7 +931,7 @@ lookup_registered_subtitle <- function(doi) {
 #' @keywords internal
 #' @noRd
 lookup_registration_agency <- function(doi) {
-  response <- tryCatch(codecheck_GET(paste0("https://doi.org/doiRA/", doi)),
+  response <- tryCatch(codecheck_GET_retry(paste0("https://doi.org/doiRA/", doi)),
                        error = function(e) NULL)
   if (is.null(response) || httr::status_code(response) != 200) {
     return(NULL)

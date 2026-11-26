@@ -1,3 +1,7 @@
+# Live services may be down while the tests run; whether that fails a render
+# is tested in test_lookup_failures.R and Test 6b of test_register_edge_cases.R
+options(codecheck.fail_on_outages = FALSE)
+
 # Tests for prune_libs() (codecheckers/codecheck#89): removing docs/libs
 # directories no rendered HTML file references any more.
 

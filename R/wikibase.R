@@ -126,6 +126,9 @@ wikibase_request <- function(method, params, handle = NULL, what = "the API",
     wait <- wikibase_retry_after(result, response, attempt)
     if (is.na(wait)) return(result)
     if (attempt == attempts) {
+      # Out of attempts on what the server called temporary, see
+      # record_lookup_failure()
+      note_outage(paste(api, "-", what, "after", attempts, "attempts"))
       # Out of attempts: a transport failure is an error, an API answer is
       # whatever it is and the caller decides.
       if (inherits(result, "condition")) {

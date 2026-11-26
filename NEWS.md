@@ -1,5 +1,12 @@
 # codecheck 0.33.0.9000
 
+## Bug Fixes
+
+* `register_render()` fails after writing every page when a service did not answer, such as OSF during an outage, so CI commits no incomplete register (register#247).
+* The OpenAlex search for a paper without a DOI uses the author filter OpenAlex still supports, so these searches no longer always fail.
+* A GitLab server error or rate limit is reported as such rather than as a repository without a `codecheck.yml`.
+* A failed certificate download no longer leaves the error page behind as `cert.pdf`, which the next render took for the certificate.
+
 # codecheck 0.33.0
 
 ## New Features

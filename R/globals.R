@@ -23,15 +23,41 @@
 #' @param ... Additional arguments passed to \code{httr::GET()} - a caller's
 #'   own \code{httr::timeout()} here overrides the default.
 #' @param timeout_seconds Maximum time for the whole request/response cycle.
+#' @param record_outage Whether a server error, a rate limit or a failed
+#'   connection is noted as an outage, see [note_outage()];
+#'   \code{codecheck_GET_retry()} notes only the outcome of its attempts.
 #' @return An \code{httr} response object
-codecheck_GET <- function(url, ..., timeout_seconds = 30) {
+codecheck_GET <- function(url, ..., timeout_seconds = 30, record_outage = TRUE) {
   ua <- paste0("codecheck/", utils::packageVersion("codecheck"),
                " (https://codecheck.org.uk; mailto:daniel.nuest@tu-dresden.de)")
-  httr::GET(url,
-    httr::user_agent(ua),
-    httr::timeout(timeout_seconds),
-    ...
-  )
+  response <- tryCatch(
+    httr::GET(url,
+      httr::user_agent(ua),
+      httr::timeout(timeout_seconds),
+      ...
+    ),
+    error = function(e) {
+      if (record_outage && is_core_service(url) && is_outage_error(e)) {
+        note_outage(paste(url, "-", conditionMessage(e)))
+      }
+      stop(e)
+    })
+  if (record_outage && is_core_service(url) && is_outage_status(httr::status_code(response))) {
+    note_outage(paste(url, "- HTTP", httr::status_code(response)))
+  }
+  response
+}
+
+#' Whether an HTTP status says the service is unavailable for now
+#'
+#' A server error or a rate limit, as opposed to an answer: a 404 or a 400 will
+#' be the same next time. See [record_lookup_failure()].
+#'
+#' @param status an HTTP status code
+#' @return `TRUE` for 429 and 5xx
+#' @keywords internal
+is_outage_status <- function(status) {
+  isTRUE(status == 429 || status >= 500)
 }
 
 #' Custom HTTP GET that retries transient failures
@@ -53,16 +79,28 @@ codecheck_GET <- function(url, ..., timeout_seconds = 30) {
 #' @param max_attempts Maximum number of attempts, including the first one
 #' @param max_wait Longest wait between attempts, in seconds
 #' @return An \code{httr} response object, or NULL if every attempt errored
-codecheck_GET_retry <- function(url, ..., max_attempts = 4, max_wait = 30) {
+codecheck_GET_retry <- function(url, ..., max_attempts = 4, max_wait = 60) {
   response <- NULL
   wait <- 1
 
+  # only the outcome is noted, not an attempt that a later one makes good, see
+  # note_outage()
+  # of the services the register depends on, see is_core_service()
+  outage <- function(detail) {
+    if (is_core_service(url)) {
+      note_outage(paste(url, "-", detail, "after", attempt, if (attempt == 1) "attempt" else "attempts"))
+    }
+  }
+  error <- NULL
+  attempt <- 0
+
   for (attempt in seq_len(max_attempts)) {
-    response <- tryCatch(codecheck_GET(url, ...), error = function(e) NULL)
+    response <- tryCatch(codecheck_GET(url, ..., record_outage = FALSE),
+                         error = function(e) { error <<- e; NULL })
 
     if (!is.null(response)) {
       status <- httr::status_code(response)
-      if (status != 429 && status < 500) {
+      if (!is_outage_status(status)) {
         return(response)
       }
 
@@ -75,6 +113,7 @@ codecheck_GET_retry <- function(url, ..., max_attempts = 4, max_wait = 30) {
 
       # the quota is exhausted rather than the requests being too fast
       if (wait > max_wait) {
+        outage(paste("HTTP", status, "with a wait of", wait, "seconds"))
         return(response)
       }
     }
@@ -85,6 +124,12 @@ codecheck_GET_retry <- function(url, ..., max_attempts = 4, max_wait = 30) {
     }
   }
 
+  if (!is.null(response)) {
+    outage(paste("HTTP", httr::status_code(response)))
+  } else if (is.null(error) || is_outage_error(error)) {
+    # a malformed URL or a host that does not resolve is an answer
+    outage(if (is.null(error)) "no response" else conditionMessage(error))
+  }
   return(response)
 }
 

@@ -1,3 +1,7 @@
+# Live services may be down while the tests run; whether that fails a render
+# is tested in test_lookup_failures.R and Test 6b of test_register_edge_cases.R
+options(codecheck.fail_on_outages = FALSE)
+
 tinytest::using(ttdo)
 
 # Unit tests: parse_venue_identifiers() ----

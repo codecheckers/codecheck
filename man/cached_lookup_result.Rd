@@ -4,7 +4,7 @@
 \alias{cached_lookup_result}
 \title{Same as \code{\link{cached_lookup}}, but returns the full result}
 \usage{
-cached_lookup_result(key, dirs, lookup)
+cached_lookup_result(key, dirs, lookup, counts = TRUE)
 }
 \arguments{
 \item{key}{List of values identifying the lookup}
@@ -13,6 +13,10 @@ cached_lookup_result(key, dirs, lookup)
 
 \item{lookup}{Function of no arguments returning a list with elements
 `status` ("found", "absent" or "failed") and `value`}
+
+\item{counts}{Whether a lookup that fails because a service is down counts
+as missing data, see [collect_outages()]; not for a field whose previous
+value [resolve_external_field()] keeps}
 }
 \value{
 A list with `status` ("found", "absent" or "failed") and `value`

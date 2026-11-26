@@ -36,10 +36,19 @@ CODECHECKER_LIST_COLUMNS <- c("name", "handle", "ORCID", "contact", "fields", "l
 #' @importFrom utils read.csv
 #' @keywords internal
 fetch_codechecker_list_uncached <- function(url) {
+  # through codecheck_GET_retry(), which notes an outage: read.csv() on a URL
+  # hides the HTTP status in a separate warning
+  response <- codecheck_GET_retry(url)
+  if (is.null(response) || httr::status_code(response) != 200) {
+    warning("Failed to fetch ", basename(url), ": ",
+            if (is.null(response)) "no response" else paste("HTTP", httr::status_code(response)))
+    return(NULL)
+  }
   tryCatch({
-    read.csv(url, stringsAsFactors = FALSE, strip.white = TRUE)
+    read.csv(text = httr::content(response, as = "text", encoding = "UTF-8"),
+             stringsAsFactors = FALSE, strip.white = TRUE)
   }, error = function(e) {
-    warning("Failed to fetch ", basename(url), ": ", e$message)
+    warning("Failed to read ", basename(url), ": ", e$message)
     NULL
   })
 }
@@ -80,15 +89,18 @@ fetch_codechecker_list <- function(url, refresh = FALSE,
   }
 
   key <- list(url)
-  records <- fetch(url)
+  cached_copy <- function() tryCatch(R.cache::loadCache(key = key, dirs = CODECHECKER_LIST_CACHE_DIRS),
+                                     error = function(e) NULL)
+  # without a cached copy to fall back on, the profiles are missing from the
+  # pages: an outage then fails the render, see collect_outages()
+  records <- collect_outages(fetch(url), failed = function(r) is.null(r) && is.null(cached_copy()))
   if (!is.null(records)) {
     tryCatch(R.cache::saveCache(records, key = key, dirs = CODECHECKER_LIST_CACHE_DIRS),
              error = function(e) {
                warning("Could not cache ", basename(url), ": ", conditionMessage(e))
              })
   } else {
-    records <- tryCatch(R.cache::loadCache(key = key, dirs = CODECHECKER_LIST_CACHE_DIRS),
-                        error = function(e) NULL)
+    records <- cached_copy()
     if (!is.null(records)) {
       warning("Using the cached copy of ", basename(url), ", which may be outdated")
     }

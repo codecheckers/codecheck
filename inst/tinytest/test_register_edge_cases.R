@@ -1,3 +1,7 @@
+# Live services may be down while the tests run; whether that fails a render
+# is tested in test_lookup_failures.R and Test 6b of test_register_edge_cases.R
+options(codecheck.fail_on_outages = FALSE)
+
 tinytest::using(ttdo)
 
 # Load dependencies
@@ -263,6 +267,42 @@ expect_warning(
   "codechecker ORCID and GitHub username missing")
 expect_inherits(result, "data.frame")
 expect_equal(nrow(result), 4)
+unlink(test_dir, recursive = TRUE)
+
+# Test 6b: a codecheck.yml that could not be fetched once fails the render ----
+# (as any failed lookup of a remote resource does, see test_lookup_failures.R)
+# OSF failed during the enrichment at the start and answered again later: the
+# certificate was rendered but missing from the codechecker and statistics
+# pages, and CI committed that. Now every page is still written, but the render
+# fails, so that CI commits nothing.
+osf_calls <- 0
+osf_once_down <- function(repo) {
+  if (startsWith(repo, "osf::")) {
+    osf_calls <<- osf_calls + 1
+    if (osf_calls == 1) stop("OSF request failed after 4 attempts: lexical error: invalid char in json text. <html>")
+  }
+  mock_get_codecheck_yml(codechecker_without_ids)(repo)
+}
+test_dir <- file.path(tempdir(), "test_failed_fetch")
+if (dir.exists(test_dir)) unlink(test_dir, recursive = TRUE)
+dir.create(file.path(test_dir, "docs"), recursive = TRUE)
+setwd(test_dir)
+writeLines("name,longname,label\nAGILEGIS,AGILE Conference,conference\nGigaByte,GigaByte,journal\ncodecheck NL,CODECHECK NL,check-nl\ncodecheck,CODECHECK,community", "venues.csv")
+options(codecheck.fail_on_outages = TRUE)
+captured <- with_mocked_codecheck(
+  list(get_codecheck_yml_cached = osf_once_down, get_github_handle_by_name = function(name, ...) NULL),
+  capture_messages(render_register(register = multi_platform_register, outputs = c("json"),
+                                   from = 1, to = 4, venues_file = "venues.csv")))
+outcome <- captured$value
+said <- captured$said
+expect_true(is.character(outcome) &&
+              grepl("lookups? of remote resources failed \\(listed above\\)", outcome),
+            info = paste(outcome))
+expect_true(any(grepl("codecheck.yml from osf::bdu28", said, fixed = TRUE)))
+options(codecheck.fail_on_outages = FALSE)
+expect_true(osf_calls > 1, info = "a later step fetched it again")
+expect_true(file.exists(file.path(test_dir, "docs", "register.json")),
+            info = "the pages are written before the render fails")
 unlink(test_dir, recursive = TRUE)
 
 # A row whose repository has no codecheck.yml must not shorten the Codechecker

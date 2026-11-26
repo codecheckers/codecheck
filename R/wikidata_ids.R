@@ -84,7 +84,8 @@ wikidata_resolve_cached <- function(kind, keys) {
 
   unknown <- keys[!usable]
   if (length(unknown) > 0) {
-    found <- tryCatch(wikidata_resolve(kind, unknown, method = "search"),
+    # the works and people on the pages lose their items when this fails
+    found <- tryCatch(collect_outages(wikidata_resolve(kind, unknown, method = "search")),
                       error = function(e) {
                         cli::cli_alert_warning(
                           "Could not resolve {kind}s on Wikidata: {conditionMessage(e)}")

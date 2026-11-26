@@ -146,12 +146,16 @@ get_codecheck_yml_osf <- function(x) {
 #' @importFrom yaml yaml.load
 get_codecheck_yml_gitlab <- function(x) {
   link <- paste0("https://gitlab.com/", x, "/-/raw/main/codecheck.yml?inline=false")
-  response <- codecheck_GET(link)
-  
+  response <- codecheck_GET_retry(link)
+  if (is.null(response)) stop_noted_outage("GitLab did not answer for https://gitlab.com/", x)
+
   if (response$status == 200) {
     content <- httr::content(response, as = "text", encoding = "UTF-8")
     config_file <- yaml::yaml.load(content)
     return(config_file)
+  } else if (is_outage_status(response$status)) {
+    # GitLab is down or rate limits, which says nothing about the file
+    stop_noted_outage("GitLab answered ", response$status, " for https://gitlab.com/", x)
   } else {
     warning("codecheck.yml not found in repository https://gitlab.com/", x)
     return(NULL)
@@ -265,17 +269,42 @@ get_gitlab_readme_raw <- function(repo) {
 #' @importFrom zen4R ZenodoManager
 get_codecheck_yml_zenodo <- function(x, sandbox = FALSE) {
   record <- zenodo_record(x, sandbox = sandbox)
-  
-  if(!is.null(record)) {
-    files <- record$files
-    for(f in files) {
-      if(f$filename == "codecheck.yml") {
-        response <- codecheck_GET(f$download)
-        content <- httr::content(response, as = "text", encoding = "UTF-8")
-        config_file <- yaml::yaml.load(content)
-        return(config_file)
-      }
+
+  # zen4R answers NULL for a record it could not read, whatever the reason, and
+  # NULL is memoised as "no codecheck.yml": ask Zenodo itself, and read the
+  # record from its answer if it has recovered since.
+  # TODO(zen4R): file an upstream issue at https://github.com/eblondel/zen4R
+  # that getRecordById() does not tell a missing record from a failed request
+  downloads <- NULL
+  if (is.null(record) || inherits(record, "ZenodoException")) {
+    api <- if (sandbox) "https://sandbox.zenodo.org/api/records/" else "https://zenodo.org/api/records/"
+    probe <- codecheck_GET_retry(paste0(api, x))
+    if (is.null(probe) || is_outage_status(httr::status_code(probe))) {
+      stop_noted_outage("Zenodo could not be asked for record ", x, ": ",
+                        if (is.null(probe)) "no response" else paste("HTTP", httr::status_code(probe)))
     }
+    if (httr::status_code(probe) == 200) {
+      body <- httr::content(probe, as = "parsed")
+      downloads <- stats::setNames(
+        vapply(body$files %||% list(), function(f) f$links$self %||% NA_character_, character(1)),
+        vapply(body$files %||% list(), function(f) f$key %||% NA_character_, character(1)))
+    }
+  } else {
+    downloads <- stats::setNames(
+      vapply(record$files %||% list(), function(f) f$download %||% NA_character_, character(1)),
+      vapply(record$files %||% list(), function(f) f$filename %||% NA_character_, character(1)))
+  }
+
+  link <- unname(downloads["codecheck.yml"])
+  if (length(link) == 1 && !is.na(link)) {
+    response <- codecheck_GET_retry(link)
+    if (is.null(response) || is_outage_status(httr::status_code(response))) {
+      stop_noted_outage("Zenodo answered ",
+                        if (is.null(response)) "nothing" else paste("HTTP", httr::status_code(response)),
+                        " for the codecheck.yml of record ", x)
+    }
+    content <- httr::content(response, as = "text", encoding = "UTF-8")
+    return(yaml::yaml.load(content))
   }
   
   # record is null, or no file with the required name was in the list of files
@@ -347,7 +376,16 @@ get_codecheck_yml_cached <- R.cache::addMemoization(get_codecheck_yml_uncached)
 #' @export
 get_codecheck_yml <- function(x) {
   # rule: CC-BUN-004 repository-reachable
-  configuration <- get_codecheck_yml_cached(x)
+  # A fetch that fails is not memoised; one that fails because a service was
+  # down fails the render at its end, see collect_outages(). osfr and gh report
+  # an outage only in their error message.
+  configuration <- collect_outages(tryCatch(get_codecheck_yml_cached(x), error = function(e) {
+    # an outage the HTTP layer noted already is not listed a second time
+    if (!inherits(e, "codecheck_noted_outage") && is_outage_error(e)) {
+      note_outage(paste("codecheck.yml from", x, "-", conditionMessage(e)))
+    }
+    stop(e)
+  }))
   return(configuration)
 }
 

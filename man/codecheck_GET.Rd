@@ -4,7 +4,7 @@
 \alias{codecheck_GET}
 \title{Custom HTTP GET with proper User-Agent header and a bounded timeout}
 \usage{
-codecheck_GET(url, ..., timeout_seconds = 30)
+codecheck_GET(url, ..., timeout_seconds = 30, record_outage = TRUE)
 }
 \arguments{
 \item{url}{The URL to request}
@@ -13,6 +13,10 @@ codecheck_GET(url, ..., timeout_seconds = 30)
 own \code{httr::timeout()} here overrides the default.}
 
 \item{timeout_seconds}{Maximum time for the whole request/response cycle.}
+
+\item{record_outage}{Whether a server error, a rate limit or a failed
+connection is noted as an outage, see [note_outage()];
+\code{codecheck_GET_retry()} notes only the outcome of its attempts.}
 }
 \value{
 An \code{httr} response object

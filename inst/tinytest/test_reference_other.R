@@ -1,3 +1,7 @@
+# Live services may be down while the tests run; whether that fails a render
+# is tested in test_lookup_failures.R and Test 6b of test_register_edge_cases.R
+options(codecheck.fail_on_outages = FALSE)
+
 # Tests for paper.reference-other (configuration specification 2.0): what the
 # validation rules say about each form of the field, how rendering reads it,
 # the type of each reference from its DOI registry record, and how the work

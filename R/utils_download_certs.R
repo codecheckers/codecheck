@@ -34,10 +34,15 @@ download_cert_pdf <- function(report_link, cert_id){
 
     else {
       # Download the PDF file
+      # into a temporary file first: an error page or a download cut off must
+      # neither replace a good cert.pdf nor be taken for one by the next render
       pdf_path <- file.path(cert_sub_dir, "cert.pdf")
-      download_response <- codecheck_GET(cert_download_url, httr::write_disk(pdf_path, overwrite = TRUE))
+      partial <- paste0(pdf_path, ".download")
+      on.exit(unlink(partial), add = TRUE)
+      download_response <- codecheck_GET_retry(cert_download_url, httr::write_disk(partial, overwrite = TRUE))
 
-      if (httr::status_code(download_response) == 200) {
+      if (!is.null(download_response) && httr::status_code(download_response) == 200) {
+        file.rename(partial, pdf_path)
         cli::cli_alert_success("{cert_id} | Downloaded successfully")
         return(1)
       }
@@ -141,7 +146,8 @@ prefetch_cert_links <- function(register_table, parallel = FALSE, ncores = NULL)
   start_time <- Sys.time()
 
   links <- parallel::mclapply(seq_along(reports), function(i) {
-    tryCatch(get_cert_link(reports[[i]], cert_ids[[i]]),
+    # a failure here is resolved again, and counted, where the link is used
+    tryCatch(collect_outages(get_cert_link(reports[[i]], cert_ids[[i]])),
              error = function(e) NULL)
   }, mc.cores = ncores, mc.preschedule = TRUE)
 

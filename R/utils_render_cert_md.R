@@ -57,6 +57,8 @@ get_abstract <- function(register_repo) {
   # abstract from the register until the cache is cleared.
   cached_lookup(
     key = list("abstract", register_repo),
+    # resolve_external_field() keeps the previous value
+    counts = FALSE,
     dirs = c("codecheck", "abstract"),
     lookup = function() get_abstract_result(register_repo)
   )
@@ -74,6 +76,8 @@ get_abstract <- function(register_repo) {
 get_abstract_cached_result <- function(register_repo) {
   cached_lookup_result(
     key = list("abstract", register_repo),
+    # resolve_external_field() keeps the previous value
+    counts = FALSE,
     dirs = c("codecheck", "abstract"),
     lookup = function() get_abstract_result(register_repo)
   )
@@ -268,7 +272,9 @@ get_openalex_id_result <- function(paper_reference, paper_title = NULL, first_au
     if (!is.null(first_author_name) && nchar(first_author_name) > 0) {
       search_url <- paste0(
         search_url,
-        ",authorships.author.display_name:",
+        # OpenAlex dropped the authorships.author.display_name filter and
+        # answers 400 for it, so every title search failed
+        ",raw_author_name.search:",
         utils::URLencode(first_author_name, reserved = TRUE)
       )
     }
@@ -301,6 +307,8 @@ get_openalex_id_result <- function(paper_reference, paper_title = NULL, first_au
 get_openalex_id_cached <- function(paper_reference, paper_title = NULL, first_author_name = NULL) {
   cached_lookup(
     key = list("openalex_id", paper_reference, paper_title, first_author_name),
+    # resolve_external_field() keeps the previous value
+    counts = FALSE,
     dirs = c("codecheck", "openalex_id"),
     lookup = function() {
       get_openalex_id_result(paper_reference, paper_title, first_author_name)
@@ -320,6 +328,8 @@ get_openalex_id_cached <- function(paper_reference, paper_title = NULL, first_au
 get_openalex_id_cached_result <- function(paper_reference, paper_title = NULL, first_author_name = NULL) {
   cached_lookup_result(
     key = list("openalex_id", paper_reference, paper_title, first_author_name),
+    # resolve_external_field() keeps the previous value
+    counts = FALSE,
     dirs = c("codecheck", "openalex_id"),
     lookup = function() {
       get_openalex_id_result(paper_reference, paper_title, first_author_name)

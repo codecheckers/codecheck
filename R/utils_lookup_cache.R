@@ -17,10 +17,13 @@
 #' @param dirs Cache subdirectory below the R.cache root
 #' @param lookup Function of no arguments returning a list with elements
 #'   `status` ("found", "absent" or "failed") and `value`
+#' @param counts Whether a lookup that fails because a service is down counts
+#'   as missing data, see [collect_outages()]; not for a field whose previous
+#'   value [resolve_external_field()] keeps
 #' @importFrom R.cache loadCache saveCache
 #' @return The `value` element of the lookup result
-cached_lookup <- function(key, dirs, lookup) {
-  cached_lookup_result(key, dirs, lookup)$value
+cached_lookup <- function(key, dirs, lookup, counts = TRUE) {
+  cached_lookup_result(key, dirs, lookup, counts = counts)$value
 }
 
 #' Same as \code{\link{cached_lookup}}, but returns the full result
@@ -31,7 +34,7 @@ cached_lookup <- function(key, dirs, lookup) {
 #'
 #' @inheritParams cached_lookup
 #' @return A list with `status` ("found", "absent" or "failed") and `value`
-cached_lookup_result <- function(key, dirs, lookup) {
+cached_lookup_result <- function(key, dirs, lookup, counts = TRUE) {
   cached <- tryCatch(R.cache::loadCache(key = key, dirs = dirs),
                      error = function(e) NULL)
 
@@ -40,7 +43,9 @@ cached_lookup_result <- function(key, dirs, lookup) {
     return(cached)
   }
 
-  result <- lookup()
+  # an outage a request hit counts only if the lookup ends without a value,
+  # see collect_outages()
+  result <- collect_outages(lookup(), failed = function(r) counts && identical(r$status, "failed"))
 
   if (!identical(result$status, "failed")) {
     tryCatch(R.cache::saveCache(result, key = key, dirs = dirs),

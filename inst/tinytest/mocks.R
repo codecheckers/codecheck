@@ -150,3 +150,19 @@ live_or_outage <- function(expr, service, outage) {
 
 # get_osf_cert_link() on an OSF API that answers 5xx or not at all
 OSF_OUTAGE <- "Failed to retrieve files: (5[0-9]{2}|no response)"
+
+#' The messages an expression emits, e.g. cli's output, muffled
+#'
+#' @param expr the expression
+#' @return a list with `value`, the expression's value or the message of the
+#'   error it raised, and `said`, the messages
+capture_messages <- function(expr) {
+  said <- character(0)
+  value <- withCallingHandlers(
+    tryCatch(expr, error = function(e) conditionMessage(e)),
+    message = function(m) {
+      said <<- c(said, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    })
+  list(value = value, said = said)
+}

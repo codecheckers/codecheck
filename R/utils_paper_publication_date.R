@@ -287,7 +287,7 @@ get_registry_record_result <- function(reference) {
     DataCite = paste0("https://api.datacite.org/dois/", encoded),
     return(absent))
 
-  response <- tryCatch(codecheck_GET(url), error = function(e) NULL)
+  response <- tryCatch(codecheck_GET_retry(url), error = function(e) NULL)
   if (is.null(response)) return(failed)
   if (httr::status_code(response) != 200) {
     return(if (httr::status_code(response) == 404) absent else failed)
@@ -408,14 +408,19 @@ get_registry_publication_date_cached_result <- function(reference) {
 #' @return A list with `status`, `value` and `source` ("registry" or "page")
 #' @keywords internal
 get_fallback_publication_date <- function(reference) {
-  for (source in c("registry", "page")) {
-    lookup <- if (source == "registry") get_registry_publication_date_cached_result
-              else get_page_publication_date_cached_result
-    result <- tryCatch(lookup(reference),
-                       error = function(e) list(status = "failed", value = NA_character_))
-    if (identical(result$status, "found") && !is.na(result$value)) {
-      return(c(result, source = source))
+  # an outage of the registry is no loss when the page has the date
+  collect_outages(failed = function(r) !identical(r$status, "found"), {
+    found <- NULL
+    for (source in c("registry", "page")) {
+      lookup <- if (source == "registry") get_registry_publication_date_cached_result
+                else get_page_publication_date_cached_result
+      result <- tryCatch(lookup(reference),
+                         error = function(e) list(status = "failed", value = NA_character_))
+      if (identical(result$status, "found") && !is.na(result$value)) {
+        found <- c(result, source = source)
+        break
+      }
     }
-  }
-  list(status = "absent", value = NA_character_, source = NA_character_)
+    found %||% list(status = "absent", value = NA_character_, source = NA_character_)
+  })
 }

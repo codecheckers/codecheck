@@ -4,7 +4,7 @@
 \alias{cached_lookup}
 \title{Cache the result of a metadata lookup on disk, but only when conclusive}
 \usage{
-cached_lookup(key, dirs, lookup)
+cached_lookup(key, dirs, lookup, counts = TRUE)
 }
 \arguments{
 \item{key}{List of values identifying the lookup}
@@ -13,6 +13,10 @@ cached_lookup(key, dirs, lookup)
 
 \item{lookup}{Function of no arguments returning a list with elements
 `status` ("found", "absent" or "failed") and `value`}
+
+\item{counts}{Whether a lookup that fails because a service is down counts
+as missing data, see [collect_outages()]; not for a field whose previous
+value [resolve_external_field()] keeps}
 }
 \value{
 The `value` element of the lookup result
