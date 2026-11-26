@@ -8,7 +8,7 @@ that reject default libcurl requests, especially from CI runner IPs
 ## Usage
 
 ``` r
-codecheck_GET(url, ..., timeout_seconds = 30)
+codecheck_GET(url, ..., timeout_seconds = 30, record_outage = TRUE)
 ```
 
 ## Arguments
@@ -28,6 +28,13 @@ codecheck_GET(url, ..., timeout_seconds = 30)
 - timeout_seconds:
 
   Maximum time for the whole request/response cycle.
+
+- record_outage:
+
+  Whether a server error, a rate limit or a failed connection is noted
+  as an outage, see \[note_outage()\];
+  [`codecheck_GET_retry()`](http://codecheck.org.uk/codecheck/reference/codecheck_GET_retry.md)
+  notes only the outcome of its attempts.
 
 ## Value
 

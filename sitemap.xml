@@ -17,6 +17,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/CODECHECKER_LIST_COLUMNS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/CODECHECKER_LIST_URLS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/CODECHECK_MIN_LIB_FILE_SIZE.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/CORE_SERVICE_HOSTS.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/DONUT_CENTER.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/QUICKSTATEMENTS_EDIT_LIMIT.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/QUICKSTATEMENTS_RANKS.html</loc></url>
@@ -131,6 +132,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/codechecker_record_to_profile.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/codechecker_type_bar_html.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/codechecker_type_donut_svg.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/collect_outages.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/collection_applies.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/collection_definition.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/collection_name.html</loc></url>
@@ -326,8 +328,11 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/html_escape.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/include_validated_image.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/index.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/is_core_service.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_full_register_run.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_nonempty_string.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/is_outage_error.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/is_outage_status.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_placeholder_certificate.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_researchequals_report.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/is_zenodo_concept_doi.html</loc></url>
@@ -356,6 +361,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_ror.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_title_for_comparison.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/normalize_work_key.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/note_outage.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_api_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_doi_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/openalex_drop_preprint_journals.html</loc></url>
@@ -399,6 +405,7 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/read_register_records.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/read_register_wikidata.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/reconcile_wikibase_entity.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/record_lookup_failure.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/reference_key.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/reference_list_data.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/reference_other_json.html</loc></url>
@@ -475,6 +482,10 @@
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_github_repo_spec.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_person_name.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/split_venue_hashtags.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/start_lookup_failures.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/stop_lookup_failures.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/stop_noted_outage.html</loc></url>
+<url><loc>http://codecheck.org.uk/codecheck/reference/stop_on_lookup_failures.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/suggest_reference_other.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/sync_persons_file.html</loc></url>
 <url><loc>http://codecheck.org.uk/codecheck/reference/template_text.html</loc></url>

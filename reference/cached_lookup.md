@@ -9,7 +9,7 @@ how certificates lost their OpenAlex ID (register#185).
 ## Usage
 
 ``` r
-cached_lookup(key, dirs, lookup)
+cached_lookup(key, dirs, lookup, counts = TRUE)
 ```
 
 ## Arguments
@@ -26,6 +26,12 @@ cached_lookup(key, dirs, lookup)
 
   Function of no arguments returning a list with elements \`status\`
   ("found", "absent" or "failed") and \`value\`
+
+- counts:
+
+  Whether a lookup that fails because a service is down counts as
+  missing data, see \[collect_outages()\]; not for a field whose
+  previous value \[resolve_external_field()\] keeps
 
 ## Value
 

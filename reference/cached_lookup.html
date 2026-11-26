@@ -57,7 +57,7 @@ certificates lost their OpenAlex ID (register#185).</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cached_lookup</span><span class="op">(</span><span class="va">key</span>, <span class="va">dirs</span>, <span class="va">lookup</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cached_lookup</span><span class="op">(</span><span class="va">key</span>, <span class="va">dirs</span>, <span class="va">lookup</span>, counts <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,6 +75,12 @@ certificates lost their OpenAlex ID (register#185).</p>
 <dt id="arg-lookup">lookup<a class="anchor" aria-label="anchor" href="#arg-lookup"></a></dt>
 <dd><p>Function of no arguments returning a list with elements
 `status` ("found", "absent" or "failed") and `value`</p></dd>
+
+
+<dt id="arg-counts">counts<a class="anchor" aria-label="anchor" href="#arg-counts"></a></dt>
+<dd><p>Whether a lookup that fails because a service is down counts
+as missing data, see [collect_outages()]; not for a field whose previous
+value [resolve_external_field()] keeps</p></dd>
 
 </dl></div>
     <div class="section level2">

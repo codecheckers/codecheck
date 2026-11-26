@@ -11,7 +11,7 @@ missing metadata in the rendered register.
 ## Usage
 
 ``` r
-codecheck_GET_retry(url, ..., max_attempts = 4, max_wait = 30)
+codecheck_GET_retry(url, ..., max_attempts = 4, max_wait = 60)
 ```
 
 ## Arguments
