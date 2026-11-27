@@ -2,8 +2,20 @@
 
 ## codecheck 0.33.0.9000
 
+### New Features
+
+- The register data is published under CC0 1.0 instead of ODC-By, in the
+  FAIR Signposting links, the page footers and the Wikibase
+  `Project:Copyrights` page (register#225).
+- The register pages’ text is published under CC BY 4.0 instead of CC
+  BY-SA 4.0, like codecheck.org.uk (register#225).
+- The Wikibase `Project:Copyrights` page licenses the text in all
+  non-data namespaces under CC BY 4.0 (register#225).
+
 ### Bug Fixes
 
+- The licence links on the Wikibase `Project:Copyrights` page render as
+  links instead of raw wikitext.
 - [`register_render()`](http://codecheck.org.uk/codecheck/reference/register_render.md)
   fails after writing every page when a service did not answer, such as
   OSF during an outage, so CI commits no incomplete register

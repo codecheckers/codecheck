@@ -41,8 +41,15 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.33.0.9000" id="codecheck-03309000">codecheck 0.33.0.9000<a class="anchor" aria-label="anchor" href="#codecheck-03309000"></a></h2>
 <div class="section level3">
+<h3 id="new-features-0-33-0-9000">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-33-0-9000"></a></h3>
+<ul><li>The register data is published under CC0 1.0 instead of ODC-By, in the FAIR Signposting links, the page footers and the Wikibase <code>Project:Copyrights</code> page (register#225).</li>
+<li>The register pages’ text is published under CC BY 4.0 instead of CC BY-SA 4.0, like codecheck.org.uk (register#225).</li>
+<li>The Wikibase <code>Project:Copyrights</code> page licenses the text in all non-data namespaces under CC BY 4.0 (register#225).</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-0-33-0-9000">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-33-0-9000"></a></h3>
-<ul><li>
+<ul><li>The licence links on the Wikibase <code>Project:Copyrights</code> page render as links instead of raw wikitext.</li>
+<li>
 <code><a href="../reference/register_render.html">register_render()</a></code> fails after writing every page when a service did not answer, such as OSF during an outage, so CI commits no incomplete register (register#247).</li>
 <li>The OpenAlex search for a paper without a DOI uses the author filter OpenAlex still supports, so these searches no longer always fail.</li>
 <li>A GitLab server error or rate limit is reported as such rather than as a repository without a <code>codecheck.yml</code>.</li>
