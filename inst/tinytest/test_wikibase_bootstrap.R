@@ -417,6 +417,11 @@ expect_true(grepl("https://codecheck.org.uk/register/", copyright, fixed = TRUE)
 # The policy asks for text that permits both, so it has to be said in words.
 expect_true(grepl("commercial and non-commercial use", copyright, fixed = TRUE))
 expect_true(grepl("MIT License", copyright, fixed = TRUE))
+# ... and the text in every other namespace, not only the generated Project pages
+expect_true(grepl("all other namespaces", copyright, fixed = TRUE))
+expect_true(grepl("[https://creativecommons.org/licenses/by/4.0/ CC BY 4.0]", copyright, fixed = TRUE))
+# MediaWiki renders an external link only if it does not span a line break
+expect_false(any(grepl("\\[https?://[^]]*$", codecheck:::wikibase_copyright_wikitext())))
 
 # Three edits: the two pages, and the redirect from MediaWiki's own footer
 # target at the singular title.
