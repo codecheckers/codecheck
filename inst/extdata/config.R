@@ -435,11 +435,11 @@ CONFIG$CERTS_URL_PREFIX <- "https://doi.org/"
 # Licences advertised through the FAIR Signposting `license` links
 # (codecheckers/register#55). A certificate is CC-BY 4.0, which is what the
 # Zenodo community curation policy requires of every deposited certificate;
-# the register itself is a database, licensed ODC-By - see the LICENSE file of
-# the register repository, which puts the code under MIT and the data under
-# ODC-By.
+# the register data is dedicated to the public domain under CC0 1.0, replacing
+# ODC-By (codecheckers/register#225) - see the LICENSE file of the register
+# repository, which puts the code under MIT and the data under CC0.
 CONFIG$LICENSE_CERT <- "https://creativecommons.org/licenses/by/4.0/"
-CONFIG$LICENSE_REGISTER <- "https://opendatacommons.org/licenses/by/1-0/"
+CONFIG$LICENSE_REGISTER <- "https://creativecommons.org/publicdomain/zero/1.0/"
 
 # CITATION METADATA OF CERTIFICATE PAGES
 # The publisher of a CODECHECK certificate as a work, used for the Highwire

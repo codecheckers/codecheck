@@ -14,8 +14,8 @@ the page's wikitext
 }
 \description{
 The hosting policy requires the licensing statement to be visible on
-`Project:Copyrights`. The register's data is under ODC-BY rather than CC0, so
-the page states that rather than asserting a waiver nobody has granted, and
-says why the individual statements are nonetheless freely reusable.
+`Project:Copyrights`, and requires the structured data to be in the public
+domain or under CC0. The register's data is dedicated to the public domain
+under CC0 1.0 (codecheckers/register#225), and the page says so.
 }
 \keyword{internal}

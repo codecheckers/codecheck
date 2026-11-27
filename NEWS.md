@@ -1,5 +1,9 @@
 # codecheck 0.33.0.9000
 
+## New Features
+
+* The register data is published under CC0 1.0 instead of ODC-By, in the FAIR Signposting links, the page footers and the Wikibase `Project:Copyrights` page (register#225).
+
 ## Bug Fixes
 
 * `register_render()` fails after writing every page when a service did not answer, such as OSF during an outage, so CI commits no incomplete register (register#247).

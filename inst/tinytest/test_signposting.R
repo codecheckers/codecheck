@@ -86,8 +86,8 @@ work <- generate_work_signposting("10.1234/example.2025", work_table, has_jsonld
 expect_true(grepl('rel="cite-as" href="https://doi.org/10.1234/example.2025"', work, fixed = TRUE))
 expect_true(grepl("https://schema.org/ScholarlyArticle", work, fixed = TRUE))
 expect_true(grepl('rel="alternate" href="register.json"', work, fixed = TRUE))
-# the register data is ODC-By, unlike the CC-BY certificates
-expect_true(grepl("opendatacommons.org/licenses/by/1-0/", work, fixed = TRUE))
+# the register data is CC0, unlike the CC-BY certificates
+expect_true(grepl("creativecommons.org/publicdomain/zero/1.0/", work, fixed = TRUE))
 
 # --- person pages -----------------------------------------------------------
 

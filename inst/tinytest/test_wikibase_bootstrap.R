@@ -411,7 +411,8 @@ expect_true(grepl("codecheckers/register/issues", about, fixed = TRUE))
 expect_true(grepl("[[Project:Copyrights]]", about, fixed = TRUE))
 
 copyright <- paste(codecheck:::wikibase_copyright_wikitext(), collapse = "\n")
-expect_true(grepl("ODC-BY", copyright, fixed = TRUE))
+expect_true(grepl("CC0 1.0", copyright, fixed = TRUE))
+expect_true(grepl("creativecommons.org/publicdomain/zero/1.0/", copyright, fixed = TRUE))
 expect_true(grepl("https://codecheck.org.uk/register/", copyright, fixed = TRUE))
 # The policy asks for text that permits both, so it has to be said in words.
 expect_true(grepl("commercial and non-commercial use", copyright, fixed = TRUE))

@@ -95,9 +95,9 @@ wikibase_about_wikitext <- function(generated_at = Sys.time()) {
 #' The instance's Copyrights page
 #'
 #' The hosting policy requires the licensing statement to be visible on
-#' `Project:Copyrights`. The register's data is under ODC-BY rather than CC0, so
-#' the page states that rather than asserting a waiver nobody has granted, and
-#' says why the individual statements are nonetheless freely reusable.
+#' `Project:Copyrights`, and requires the structured data to be in the public
+#' domain or under CC0. The register's data is dedicated to the public domain
+#' under CC0 1.0 (codecheckers/register#225), and the page says so.
 #'
 #' @param generated_at the timestamp to stamp the page with
 #' @return the page's wikitext
@@ -112,15 +112,17 @@ wikibase_copyright_wikitext <- function(generated_at = Sys.time()) {
     "The items, properties and statements on this instance are derived from the",
     "[https://codecheck.org.uk/register/ CODECHECK Register], whose database is",
     "published under the",
-    "[https://opendatacommons.org/licenses/by/summary/ Open Data Commons Attribution",
-    "License (ODC-BY)].",
+    "[https://creativecommons.org/publicdomain/zero/1.0/ CC0 1.0 Universal]",
+    "public domain dedication. So is all structured data on this instance: anyone",
+    "may copy, modify and use it, also commercially, without asking permission.",
     "",
-    "The individual statements are bare facts &mdash; identifiers, DOIs, dates,",
-    "titles, ORCIDs and the links between them &mdash; and facts are not subject to",
-    "copyright. ODC-BY covers the register '''as a database''', and its attribution",
-    "requirement is met by naming the CODECHECK Register as the source; every",
-    "certificate item on this instance links back to its register entry and to its",
-    "report DOI, so a reuser is handed that attribution with the data.",
+    "This lets the statements be shared with [https://www.wikidata.org/ Wikidata],",
+    "whose data is CC0 as well. Credit is welcome but not required: every",
+    "certificate item links back to its register entry and to its report DOI.",
+    "",
+    "Earlier copies of the register were published under the",
+    "[https://opendatacommons.org/licenses/by/summary/ Open Data Commons Attribution",
+    "License (ODC-BY)], see the register's own statement linked below.",
     "",
     "This instance is a derived, disposable staging copy rather than a publication of",
     "the database in its own right: it is regenerated from the register on every run",
@@ -132,8 +134,8 @@ wikibase_copyright_wikitext <- function(generated_at = Sys.time()) {
     "[https://github.com/codecheckers/codecheck codecheck R package], which is",
     "published under the [https://opensource.org/licenses/MIT MIT License].",
     "",
-    "Both licenses permit commercial and non-commercial use and the creation of",
-    "derivative works.",
+    "Both CC0 and the MIT License permit commercial and non-commercial use and the",
+    "creation of derivative works.",
     "",
     "== The checks themselves ==",
     "",
